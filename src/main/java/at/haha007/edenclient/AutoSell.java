@@ -1,5 +1,6 @@
 package at.haha007.edenclient;
 
+import at.haha007.edenclient.command.Command;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
@@ -14,19 +15,19 @@ public class AutoSell {
 	private final Set<Item> autoSellItems = new HashSet<>();
 	private long lastAutoSell = 0;
 
-	public void onCommand(String[] command) {
+	public void onCommand(Command command, String label, String[] args) {
 
-		if (command.length < 2) {
-			sendChatMessage("/as add");
-			sendChatMessage("/as remove");
-			sendChatMessage("/as reset");
+		if (args.length != 1) {
+			sendChatMessage("/autosell add");
+			sendChatMessage("/autosell remove");
+			sendChatMessage("/autosell reset");
 			return;
 		}
 		ClientPlayerEntity player = MinecraftClient.getInstance().player;
 		if (player == null) return;
 		PlayerInventory inventory = player.inventory;
 
-		switch (command[1]) {
+		switch (args[0]) {
 			case "add":
 				autoSellItems.add(inventory.getMainHandStack().getItem());
 				sendChatMessage("added /sell " + inventory.getMainHandStack().getItem().getName().getString());

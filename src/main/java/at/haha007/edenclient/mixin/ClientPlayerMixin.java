@@ -1,6 +1,7 @@
 package at.haha007.edenclient.mixin;
 
 import at.haha007.edenclient.EdenClient;
+import at.haha007.edenclient.command.CommandManager;
 import net.minecraft.block.entity.SignBlockEntity;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
@@ -35,14 +36,16 @@ public class ClientPlayerMixin {
 		cancellable = true)
 	void sendMessage(String message, CallbackInfo ci) {
 		if (!message.startsWith("/")) return;
-		String[] split = message.toLowerCase().split(" ");
-		switch (split[0].replaceFirst("/", "")) {
-			case "as":
-			case "autosell":
-				EdenClient.INSTANCE.as.onCommand(split);
-				ci.cancel();
-				break;
-		}
+		if (CommandManager.onCommand(message)) ci.cancel();
+
+//		String[] split = message.toLowerCase().split(" ");
+//		switch (split[0].replaceFirst("/", "")) {
+//			case "as":
+//			case "autosell":
+//				EdenClient.INSTANCE.as.onCommand(split);
+//				ci.cancel();
+//				break;
+//		}
 	}
 
 
