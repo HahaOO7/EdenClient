@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "id": "edenclient",
+  "version": "${version}",
+
+  "name": "EdenClient",
+  "description": "Small mod to copy signs!",
+  "authors": [
+    "Haha007"
+  ],
+  "contact": {
+    "homepage": "https://fabricmc.net/",
+    "sources": "https://github.com/FabricMC/fabric-example-mod"
+  },
+
+  "license": "CC0-1.0",
+  "icon": "assets/modid/icon.png",
+
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+    ],
+    "client": [
+      "at.haha007.edenclient.EdenClient"
+    ]
+  },
+  "mixins": [
+    "modid.mixins.json"
+  ],
+
+  "depends": {
+    "fabricloader": ">=0.7.4",
+    "fabric": "*",
+    "minecraft": "1.16.x"
+  },
+  "suggests": {
+    "flamingo": "*"
+  }
+}
