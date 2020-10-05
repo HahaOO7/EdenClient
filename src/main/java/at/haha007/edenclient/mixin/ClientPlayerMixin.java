@@ -15,11 +15,12 @@ import static at.haha007.edenclient.EdenClient.copy;
 import static at.haha007.edenclient.EdenClient.shouldCopy;
 
 @Mixin(ClientPlayerEntity.class)
-public class ClientPlayerMixin {
+public abstract class ClientPlayerMixin {
+
 	@Inject(at = @At("HEAD"),
 		method = "openEditSignScreen",
 		cancellable = true)
-	private void init(SignBlockEntity sign, CallbackInfo info) {
+	private void onEditSign(SignBlockEntity sign, CallbackInfo info) {
 		if (!shouldCopy) return;
 
 		UpdateSignC2SPacket packet = new UpdateSignC2SPacket(sign.getPos(),
@@ -32,20 +33,18 @@ public class ClientPlayerMixin {
 	}
 
 	@Inject(at = @At("HEAD"),
+		method = "tickMovement",
+		cancellable = true)
+	void tickMovement(CallbackInfo ci) {
+		EdenClient.INSTANCE.autoMiner.tick();
+	}
+
+	@Inject(at = @At("HEAD"),
 		method = "sendChatMessage",
 		cancellable = true)
 	void sendMessage(String message, CallbackInfo ci) {
 		if (!message.startsWith("/")) return;
 		if (CommandManager.onCommand(message)) ci.cancel();
-
-//		String[] split = message.toLowerCase().split(" ");
-//		switch (split[0].replaceFirst("/", "")) {
-//			case "as":
-//			case "autosell":
-//				EdenClient.INSTANCE.as.onCommand(split);
-//				ci.cancel();
-//				break;
-//		}
 	}
 
 
