@@ -1,4 +1,4 @@
-package at.haha007.edenclient;
+package at.haha007.edenclient.mods;
 
 import at.haha007.edenclient.command.Command;
 import net.minecraft.client.MinecraftClient;

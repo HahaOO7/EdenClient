@@ -6,9 +6,9 @@
   "mixins": [
   ],
   "client": [
+    "ChatHudMixin",
     "ClientPlayerMixin",
     "PlayerControllerMixin",
-    "ChatHudMixin",
     "PlayerInventoryMixin"
   ],
   "injectors": {

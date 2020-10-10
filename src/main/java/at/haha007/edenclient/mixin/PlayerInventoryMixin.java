@@ -15,6 +15,6 @@ public class PlayerInventoryMixin {
 		at = @At("TAIL"),
 		method = "setStack")
 	void addItem(int slot, ItemStack stack, CallbackInfo ci) {
-		EdenClient.INSTANCE.as.onInventoryChange();
+		EdenClient.INSTANCE.autoSell.onInventoryChange();
 	}
 }

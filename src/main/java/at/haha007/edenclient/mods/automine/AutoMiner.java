@@ -1,41 +1,45 @@
-package at.haha007.edenclient.automine;
+package at.haha007.edenclient.mods.automine;
 
+import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.command.Command;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.item.Item;
 import net.minecraft.item.Items;
+import net.minecraft.util.ActionResult;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockBox;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedList;
+import java.util.Queue;
 
 public class AutoMiner {
 
 	private final MinecraftClient client = MinecraftClient.getInstance();
+	private boolean enabled = false;
 	private boolean toolEnabled = false;
 	private static final Item tool = Items.STICK;
 	private BlockBox selection;
-	private final List<Task> tasks = new ArrayList<>();
+	private final Queue<Task> tasks = new LinkedList<>();
 	private int task = 0;
 
 	public AutoMiner() {
-		tasks.add(new TaskMine());
-		tasks.add(new TaskCooldown(10));
-		tasks.add(new TaskLiquids());
-		tasks.add(new TaskCooldown(50));
-		tasks.add(new TaskDrop());
-		tasks.add(new TaskCooldown(50));
+		PlayerTickCallback.EVENT.register(this::tick);
 	}
 
-	public void tick() {
-		if (!toolEnabled) return;
-		selection = BlockBox.infinite();
-		if (!tasks.get(task % tasks.size()).tick(getPlayer())) task++;
+	public void setEnabled(boolean enabled) {
+		this.enabled = enabled;
+	}
+
+	public void setBox(BlockBox selection) {
+		this.selection = selection;
+	}
+
+	public ActionResult tick(ClientPlayerEntity entity) {
+		return ActionResult.PASS;
 	}
 
 	public void onCommand(Command command, String s, String[] strings) {
@@ -46,7 +50,7 @@ public class AutoMiner {
 		if (!toolEnabled) return false;
 		if (getPlayer().inventory.getMainHandStack().getItem() != tool) return false;
 
-		selection = new BlockBox(pos, pos);
+		setBox(new BlockBox(pos, pos));
 		return true;
 	}
 
@@ -64,6 +68,7 @@ public class AutoMiner {
 		selection.maxY = Math.max(selection.maxY, blockPos.getY());
 		selection.maxZ = Math.max(selection.maxZ, blockPos.getZ());
 
+		setBox(selection);
 		return true;
 	}
 
