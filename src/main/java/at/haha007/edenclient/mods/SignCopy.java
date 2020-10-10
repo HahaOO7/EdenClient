@@ -2,6 +2,7 @@ package at.haha007.edenclient.mods;
 
 import at.haha007.edenclient.callbacks.PlayerAttackBlockCallback;
 import at.haha007.edenclient.callbacks.PlayerEditSignCallback;
+import at.haha007.edenclient.command.Command;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.SignBlockEntity;

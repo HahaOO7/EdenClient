@@ -23,7 +23,7 @@ public class PlayerControllerMixin {
 		method = "interactBlock",
 		cancellable = true)
 	void interactBlock(ClientPlayerEntity player, ClientWorld world, Hand hand, BlockHitResult hitResult, CallbackInfoReturnable<ActionResult> ci) {
-		if (EdenClient.INSTANCE.autoMiner.interactBlock(world, hitResult)) ci.setReturnValue(ActionResult.FAIL);
+//		if (EdenClient.INSTANCE.autoMiner.interactBlock(world, hitResult)) ci.setReturnValue(ActionResult.FAIL);
 	}
 
 	@Inject(method = "attackBlock", at = @At("HEAD"), cancellable = true)
