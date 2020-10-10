@@ -1,5 +1,7 @@
 package at.haha007.edenclient.mods.automine;
 
+import at.haha007.edenclient.callbacks.PlayerAttackBlockCallback;
+import at.haha007.edenclient.callbacks.PlayerInteractBlockEvent;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.command.Command;
 import net.minecraft.client.MinecraftClient;
@@ -7,27 +9,32 @@ import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.item.Item;
 import net.minecraft.item.Items;
+import net.minecraft.text.LiteralText;
 import net.minecraft.util.ActionResult;
+import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockBox;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.Vec3d;
 
 import java.util.LinkedList;
 import java.util.Queue;
 
 public class AutoMiner {
 
-	private final MinecraftClient client = MinecraftClient.getInstance();
+	private final MinecraftClient MC = MinecraftClient.getInstance();
 	private boolean enabled = false;
 	private boolean toolEnabled = false;
 	private static final Item tool = Items.STICK;
 	private BlockBox selection;
 	private final Queue<Task> tasks = new LinkedList<>();
-	private int task = 0;
+	private final Queue<Vec3d> path = new LinkedList<>();
 
 	public AutoMiner() {
 		PlayerTickCallback.EVENT.register(this::tick);
+		PlayerAttackBlockCallback.EVENT.register(this::attackBlock);
+		PlayerInteractBlockEvent.EVENT.register(this::interactBlock);
 	}
 
 	public void setEnabled(boolean enabled) {
@@ -38,25 +45,79 @@ public class AutoMiner {
 		this.selection = selection;
 	}
 
-	public ActionResult tick(ClientPlayerEntity entity) {
+	public ActionResult tick(ClientPlayerEntity player) {
+		if (tasks.isEmpty()) nextTask();
+		if (tasks.isEmpty()) {
+			enabled = false;
+			sendMessage("autominer disabled");
+			return ActionResult.PASS;
+		}
+		if (!tasks.peek().tick(player)) tasks.remove();
+		if (!path.isEmpty()) tickMovement(player);
 		return ActionResult.PASS;
 	}
 
-	public void onCommand(Command command, String s, String[] strings) {
-		toolEnabled = !toolEnabled;
+	private void tickMovement(ClientPlayerEntity player) {
+		//move the player along the path
 	}
 
-	public boolean attackBlock(BlockPos pos, Direction direction) {
-		if (!toolEnabled) return false;
-		if (getPlayer().inventory.getMainHandStack().getItem() != tool) return false;
+	private void nextTask() {
+		//find the next target(s)
+		//find path towards target
+	}
+
+
+	//Command stuff
+
+	public void onCommand(Command command, String label, String[] args) {
+		if (args.length == 0) {
+			sendCommandHelp();
+			return;
+		}
+		switch (args[0].toLowerCase()) {
+			case "help":
+			case "h":
+				sendCommandHelp();
+				break;
+			case "tool":
+				toolEnabled = !toolEnabled;
+				sendMessage(toolEnabled ? "tool enabled" : "tool disabled");
+				break;
+			case "start":
+				enabled = true;
+				tasks.clear();
+				sendMessage("autominer enabled");
+				break;
+			case "stop":
+				enabled = false;
+				sendMessage("autominer disabled");
+				break;
+			case "toggle":
+				enabled = !enabled;
+				sendMessage(enabled ? "autominer enabled" : "autominer disabled");
+				if (enabled) tasks.clear();
+				break;
+		}
+	}
+
+	private void sendCommandHelp() {
+		sendMessage("/autominer");
+	}
+
+
+	//selection stuff
+
+	public ActionResult attackBlock(ClientPlayerEntity player, BlockPos pos, Direction direction) {
+		if (!toolEnabled || enabled) return ActionResult.PASS;
+		if (player.inventory.getMainHandStack().getItem() != tool) return ActionResult.PASS;
 
 		setBox(new BlockBox(pos, pos));
-		return true;
+		return ActionResult.FAIL;
 	}
 
-	public boolean interactBlock(ClientWorld world, BlockHitResult hitResult) {
-		if (!toolEnabled) return false;
-		if (getPlayer().inventory.getMainHandStack().getItem() != tool) return false;
+	public ActionResult interactBlock(ClientPlayerEntity player, ClientWorld world, Hand hand, BlockHitResult hitResult) {
+		if (!toolEnabled || enabled) return ActionResult.PASS;
+		if (player.inventory.getMainHandStack().getItem() != tool) return ActionResult.PASS;
 
 		BlockPos blockPos = hitResult.getBlockPos();
 
@@ -69,10 +130,11 @@ public class AutoMiner {
 		selection.maxZ = Math.max(selection.maxZ, blockPos.getZ());
 
 		setBox(selection);
-		return true;
+		return ActionResult.FAIL;
 	}
 
-	private ClientPlayerEntity getPlayer() {
-		return client.player;
+	//utility functions
+	private void sendMessage(String message) {
+		MC.inGameHud.getChatHud().addMessage(new LiteralText(message));
 	}
 }

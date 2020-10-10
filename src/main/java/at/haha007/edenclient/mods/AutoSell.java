@@ -60,7 +60,10 @@ public class AutoSell {
 		long time = System.currentTimeMillis();
 		if (time - lastAutoSell < 1000) return;
 
-		autoSellItems.stream().filter(item -> player.inventory.containsAny(Collections.singleton(item))).forEach(item -> player.sendChatMessage("/sell " + item.getName().getString()));
+		autoSellItems
+			.stream()
+			.filter(item -> player.inventory.containsAny(Collections.singleton(item)))
+			.forEach(item -> player.sendChatMessage("/sell " + item.getName().getString()));
 
 		lastAutoSell = time;
 	}

@@ -2,13 +2,10 @@ package at.haha007.edenclient.mods;
 
 import at.haha007.edenclient.callbacks.PlayerAttackBlockCallback;
 import at.haha007.edenclient.callbacks.PlayerEditSignCallback;
-import at.haha007.edenclient.command.Command;
-import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.SignBlockEntity;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.packet.c2s.play.UpdateSignC2SPacket;
 import net.minecraft.tag.ItemTags;
@@ -26,12 +23,6 @@ public class SignCopy {
 	}
 
 	private ActionResult onAttackBlock(ClientPlayerEntity entity, BlockPos pos, Direction side) {
-		BlockState state = MinecraftClient.getInstance().world.getBlockState(pos);
-		ItemStack stack = MinecraftClient.getInstance().player.inventory.getMainHandStack();
-		float toolMultiplier = stack.getMiningSpeedMultiplier(state);
-		float canHarvest = stack.isEffectiveOn(state) ? 1.5f : 5f;
-		System.out.println();
-
 		BlockEntity b = MinecraftClient.getInstance().world.getBlockEntity(pos);
 		if (!ItemTags.SIGNS.contains(MinecraftClient.getInstance().player.inventory.getMainHandStack().getItem()))
 			return ActionResult.PASS;
@@ -42,7 +33,7 @@ public class SignCopy {
 		shouldCopy = true;
 		SignBlockEntity sign = (SignBlockEntity) b;
 		CompoundTag tag = new CompoundTag();
-		tag = sign.toTag(tag);
+		sign.toTag(tag);
 		copy[0] = getString(tag.getString("Text1"));
 		copy[1] = getString(tag.getString("Text2"));
 		copy[2] = getString(tag.getString("Text3"));
