@@ -6,6 +6,7 @@ import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.Item;
 import net.minecraft.text.LiteralText;
+import net.minecraft.world.chunk.WorldChunk;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -13,6 +14,7 @@ import java.util.Set;
 
 public class AutoSell {
 	private final Set<Item> autoSellItems = new HashSet<>();
+	private long lastSell = 0;
 
 	public void onCommand(Command command, String label, String[] args) {
 
@@ -56,12 +58,13 @@ public class AutoSell {
 	}
 
 	private void executeAutoSell(ClientPlayerEntity player) {
-
+		long time = System.currentTimeMillis();
+		if (time - 200 < lastSell) return;
 		autoSellItems
 			.stream()
 			.filter(item -> player.inventory.containsAny(Collections.singleton(item)))
 			.forEach(item -> player.sendChatMessage("/sell " + item.getName().getString()));
-
+		lastSell = time;
 	}
 
 	private boolean isFullInventory(PlayerInventory inventory) {

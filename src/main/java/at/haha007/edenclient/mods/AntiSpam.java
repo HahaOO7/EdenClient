@@ -14,9 +14,12 @@ import net.minecraft.util.math.MathHelper;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 
 public class AntiSpam {
+	public static final Queue<Text> messagesToAdd = new LinkedList<Text>();
 	private final MinecraftClient MC = MinecraftClient.getInstance();
 	private Method addMessageMethod;
 	private boolean enabled = true;
@@ -135,18 +138,10 @@ public class AntiSpam {
 		if (spamCounter > 1)
 			chatText = new LiteralText(chatText.getString() + " [x" + spamCounter + "]");
 
-		try {
-			addMessage(chatText, chatLineId, MC.inGameHud.getTicks(), false);
-		} catch (InvocationTargetException | IllegalAccessException e) {
-			e.printStackTrace();
-		}
+		messagesToAdd.add(chatText);
 		return ActionResult.FAIL;
 	}
 
-	private void addMessage(Text message, int messageId, int timestamp, boolean bl) throws InvocationTargetException, IllegalAccessException {
-		addMessageMethod.setAccessible(true);
-		addMessageMethod.invoke(MC.inGameHud.getChatHud(), message, messageId, timestamp, bl);
-	}
 
 	public void onCommand(Command command, String s, String[] strings) {
 		if ((enabled = !enabled)) {
