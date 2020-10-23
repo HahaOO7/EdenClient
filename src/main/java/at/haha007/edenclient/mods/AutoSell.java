@@ -13,7 +13,6 @@ import java.util.Set;
 
 public class AutoSell {
 	private final Set<Item> autoSellItems = new HashSet<>();
-	private long lastAutoSell = 0;
 
 	public void onCommand(Command command, String label, String[] args) {
 
@@ -57,15 +56,12 @@ public class AutoSell {
 	}
 
 	private void executeAutoSell(ClientPlayerEntity player) {
-		long time = System.currentTimeMillis();
-		if (time - lastAutoSell < 1000) return;
 
 		autoSellItems
 			.stream()
 			.filter(item -> player.inventory.containsAny(Collections.singleton(item)))
 			.forEach(item -> player.sendChatMessage("/sell " + item.getName().getString()));
 
-		lastAutoSell = time;
 	}
 
 	private boolean isFullInventory(PlayerInventory inventory) {
