@@ -26,7 +26,6 @@ public class PlayerControllerMixin {
 		ActionResult result = PlayerInteractBlockEvent.EVENT.invoker().interact(player, world, hand, hitResult);
 		if (result == ActionResult.FAIL) ci.cancel();
 
-//		if (EdenClient.INSTANCE.autoMiner.interactBlock(world, hitResult)) ci.setReturnValue(ActionResult.FAIL);
 	}
 
 	@Inject(method = "attackBlock", at = @At("HEAD"), cancellable = true)

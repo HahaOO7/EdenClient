@@ -106,7 +106,7 @@ public class ChestShopMod {
 					stream().
 					filter(ChestShopEntry::canSell).
 					filter(entry -> entry.getItem().equalsIgnoreCase(item)).
-					sorted((a, b) -> Float.compare(a.getSellPricePerItem(), b.getSellPricePerItem())).
+					sorted((b, a) -> Float.compare(a.getSellPricePerItem(), b.getSellPricePerItem())).
 					limit(10).
 					forEach(cs -> sendMessage(String.format(
 						"%s[%d, %d, %d] for %.2f$/item",
@@ -121,9 +121,9 @@ public class ChestShopMod {
 				shops.
 					values().
 					stream().
-					filter(ChestShopEntry::canSell).
+					filter(ChestShopEntry::canBuy).
 					filter(entry -> entry.getItem().equalsIgnoreCase(item)).
-					sorted((b, a) -> Float.compare(a.getSellPricePerItem(), b.getSellPricePerItem())).
+					sorted((a, b) -> Float.compare(a.getBuyPricePerItem(), b.getBuyPricePerItem())).
 					limit(10).
 					forEach(cs -> sendMessage(String.format(
 						"%s[%d, %d, %d] for %.2f$/item",
@@ -131,25 +131,9 @@ public class ChestShopMod {
 						cs.getPos().getX(),
 						cs.getPos().getY(),
 						cs.getPos().getZ(),
-						cs.getSellPricePerItem())));
+						cs.getBuyPricePerItem())));
 				break;
 		}
-
-
-		shops.
-			values().
-			stream().
-			filter(ChestShopEntry::canBuy).
-			filter(entry -> entry.getItem().equalsIgnoreCase(item)).
-			min((a, b) -> Float.compare(a.getBuyPricePerItem(), b.getBuyPricePerItem())).
-			ifPresent(cs ->
-				sendMessage(String.format(
-					"Buy at %s[%d, %d, %d] for %.2f$/item",
-					cs.getOwner(),
-					cs.getPos().getX(),
-					cs.getPos().getY(),
-					cs.getPos().getZ(),
-					cs.getBuyPricePerItem())));
 
 	}
 
@@ -171,8 +155,8 @@ public class ChestShopMod {
 		ListTag list = tag.getList(worldName, 10);
 		list.forEach(nbt -> {
 			ChestShopEntry entry = new ChestShopEntry((CompoundTag) nbt);
-			if (entry.canSell() || entry.canBuy())
-				shops.put(entry.getPos(), entry);
+			System.out.println(entry.toString());
+			shops.put(entry.getPos(), entry);
 		});
 	}
 
