@@ -3,10 +3,10 @@ package at.haha007.edenclient.mods.CheshShop;
 import at.haha007.edenclient.utils.MathUtils;
 import net.minecraft.block.entity.SignBlockEntity;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3i;
 
 public class ChestShopEntry {
-	private BlockPos pos;
+	private Vec3i pos;
 	private int sellPrice = -1, buyPrice = -1;
 	private int amount;
 	private String owner;
@@ -54,9 +54,35 @@ public class ChestShopEntry {
 		}
 		pos = sign.getPos();
 		this.amount = amount;
-		this.isShop = true;
+		this.isShop = canBuy() || canSell();
 		this.owner = player;
 		this.item = item;
+	}
+
+	public ChestShopEntry(CompoundTag tag) {
+		isShop = true;
+		amount = tag.getInt("amount");
+		int[] ints = tag.getIntArray("pos");
+		pos = new Vec3i(ints[0], ints[1], ints[2]);
+		owner = tag.getString("owner");
+		item = tag.getString("item");
+		if (tag.contains("buyPrice"))
+			buyPrice = tag.getInt("buyPrice");
+		if (tag.contains("sellPrice"))
+			sellPrice = tag.getInt("sellPrice");
+	}
+
+	public CompoundTag toTag() {
+		CompoundTag tag = new CompoundTag();
+		tag.putIntArray("pos", new int[]{pos.getX(), pos.getY(), pos.getZ()});
+		tag.putString("owner", owner);
+		tag.putString("item", item);
+		tag.putInt("amount", amount);
+		if (canBuy())
+			tag.putInt("buyPrice", buyPrice);
+		if (canSell())
+			tag.putInt("sellPrice", sellPrice);
+		return tag;
 	}
 
 	public boolean isShop() {
@@ -95,7 +121,7 @@ public class ChestShopEntry {
 		return owner;
 	}
 
-	public BlockPos getPos() {
+	public Vec3i getPos() {
 		return pos;
 	}
 
@@ -125,4 +151,5 @@ public class ChestShopEntry {
 		}
 		return sb.toString();
 	}
+
 }
