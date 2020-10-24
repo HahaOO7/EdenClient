@@ -38,7 +38,7 @@ public class SignCopy {
 		copy[1] = getString(tag.getString("Text2"));
 		copy[2] = getString(tag.getString("Text3"));
 		copy[3] = getString(tag.getString("Text4"));
-		return ActionResult.FAIL;
+		return ActionResult.CONSUME;
 	}
 
 	private ActionResult onEditSign(ClientPlayerEntity player, SignBlockEntity sign) {
