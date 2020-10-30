@@ -25,11 +25,17 @@ public class ChestShopMod {
 	private int[] chunk = {0, 0};
 	private final File file;
 	private String worldName = "";
+	private CompoundTag tag;
 
 
 	public ChestShopMod() {
 		PlayerTickCallback.EVENT.register(this::tick);
 		file = new File(EdenClient.getDataFolder(), "ChestShop.mca");
+		try {
+			tag = NbtIo.readCompressed(file);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	private ActionResult tick(ClientPlayerEntity player) {
@@ -138,7 +144,6 @@ public class ChestShopMod {
 	}
 
 	private void saveConfig(String worldName) throws IOException {
-		CompoundTag tag = new CompoundTag();
 		ListTag list = new ListTag();
 		tag.put(worldName, list);
 
@@ -150,8 +155,7 @@ public class ChestShopMod {
 		NbtIo.writeCompressed(tag, file);
 	}
 
-	private void loadConfig(String worldName) throws IOException {
-		CompoundTag tag = NbtIo.readCompressed(file);
+	private void loadConfig(String worldName) {
 		ListTag list = tag.getList(worldName, 10);
 		list.forEach(nbt -> {
 			ChestShopEntry entry = new ChestShopEntry((CompoundTag) nbt);
