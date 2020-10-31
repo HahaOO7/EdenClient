@@ -32,6 +32,8 @@ public class ChestShopMod {
 		PlayerTickCallback.EVENT.register(this::tick);
 		file = new File(EdenClient.getDataFolder(), "ChestShop.mca");
 		try {
+			if (!file.exists()) if (file.createNewFile()) NbtIo.writeCompressed(new CompoundTag(), file);
+			else throw new IOException();
 			tag = NbtIo.readCompressed(file);
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -151,7 +153,6 @@ public class ChestShopMod {
 			values().
 			forEach(cs -> list.add(cs.toTag()));
 
-		if (!file.exists()) if (!file.createNewFile()) throw new IOException();
 		NbtIo.writeCompressed(tag, file);
 	}
 
