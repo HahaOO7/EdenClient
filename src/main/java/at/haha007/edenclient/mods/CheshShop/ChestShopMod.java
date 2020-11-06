@@ -89,31 +89,33 @@ public class ChestShopMod {
 	}
 
 	private boolean inDistance(Vec3i pos) {
-		return Math.abs(chunk[1] - (pos.getZ() << 4)) <= 2 && Math.abs(chunk[0] - (pos.getX() << 4)) <= 2;
+		return Math.abs(chunk[1] - (pos.getZ() << 4)) <= 3 && Math.abs(chunk[0] - (pos.getX() << 4)) <= 3;
 	}
 
 	public void onCommand(Command command, String s, String[] args) {
-		if (args.length < 2) {
+		if (args.length < 1) {
 			sendMessage("/chestshop sell itemtype");
 			sendMessage("/chestshop buy itemtype");
+			sendMessage("/chestshop reset");
 			return;
 		}
-
-		StringBuilder sb = new StringBuilder();
-		for (int i = 1; i < args.length; i++) {
-			sb.append(" ").append(args[i]);
-		}
-		String item = sb.toString().replaceFirst(" ", "");
 
 
 		switch (args[0].toLowerCase()) {
 			case "sell":
+				if (args.length < 2) {
+					sendMessage("/chestshop sell itemtype");
+					return;
+				}
+				String item = args[1];
+				if (!item.startsWith("minecraft:")) item = "minecraft:" + item;
 				sendMessage("Sell: ");
+				String finalItem1 = item;
 				shops.
 					values().
 					stream().
 					filter(ChestShopEntry::canSell).
-					filter(entry -> entry.getItem().equalsIgnoreCase(item)).
+					filter(entry -> entry.getItem().equalsIgnoreCase(finalItem1)).
 					sorted((b, a) -> Float.compare(a.getSellPricePerItem(), b.getSellPricePerItem())).
 					limit(10).
 					forEach(cs -> sendMessage(String.format(
@@ -125,12 +127,19 @@ public class ChestShopMod {
 						cs.getSellPricePerItem())));
 				break;
 			case "buy":
+				if (args.length < 2) {
+					sendMessage("/chestshop buy itemtype");
+					return;
+				}
+				item = args[1];
+				if (!item.startsWith("minecraft:")) item = "minecraft:" + item;
 				sendMessage("Buy: ");
+				String finalItem = item;
 				shops.
 					values().
 					stream().
 					filter(ChestShopEntry::canBuy).
-					filter(entry -> entry.getItem().equalsIgnoreCase(item)).
+					filter(entry -> entry.getItem().equalsIgnoreCase(finalItem)).
 					sorted((a, b) -> Float.compare(a.getBuyPricePerItem(), b.getBuyPricePerItem())).
 					limit(10).
 					forEach(cs -> sendMessage(String.format(
@@ -140,6 +149,20 @@ public class ChestShopMod {
 						cs.getPos().getY(),
 						cs.getPos().getZ(),
 						cs.getBuyPricePerItem())));
+				break;
+			case "reset":
+				try {
+					tag = new CompoundTag();
+					shops.clear();
+					saveConfig(worldName);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				break;
+			default:
+				sendMessage("/chestshop sell itemtype");
+				sendMessage("/chestshop buy itemtype");
+				sendMessage("/chestshop reset");
 				break;
 		}
 
