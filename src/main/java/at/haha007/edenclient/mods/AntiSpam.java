@@ -12,7 +12,6 @@ import net.minecraft.text.*;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.math.MathHelper;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.LinkedList;
 import java.util.List;
@@ -21,15 +20,9 @@ import java.util.Queue;
 public class AntiSpam {
 	public static final Queue<Text> messagesToAdd = new LinkedList<Text>();
 	private final MinecraftClient MC = MinecraftClient.getInstance();
-	private Method addMessageMethod;
 	private boolean enabled = true;
 
 	public AntiSpam() {
-		try {
-			addMessageMethod = ChatHud.class.getDeclaredMethod("addMessage", Text.class, int.class, int.class, boolean.class);
-		} catch (NoSuchMethodException e) {
-			e.printStackTrace();
-		}
 		AddChatMessageCallback.EVENT.register(this::onChat);
 	}
 
@@ -135,8 +128,11 @@ public class AntiSpam {
 			matchingLines = 0;
 		}
 
-		if (spamCounter > 1)
-			chatText = new LiteralText(chatText.getString() + " [x" + spamCounter + "]");
+		if (spamCounter > 1) {
+			chatText = chatText.copy().append(chatText).append(new LiteralText(" [x" + spamCounter + "]"));
+			//chatText = new LiteralText(chatText.getString() + " [x" + spamCounter + "]");
+
+		}
 
 		messagesToAdd.add(chatText);
 		return ActionResult.FAIL;

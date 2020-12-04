@@ -183,7 +183,6 @@ public class ChestShopMod {
 		ListTag list = tag.getList(worldName, 10);
 		list.forEach(nbt -> {
 			ChestShopEntry entry = new ChestShopEntry((CompoundTag) nbt);
-			System.out.println(entry.toString());
 			shops.put(entry.getPos(), entry);
 		});
 	}

@@ -5,6 +5,7 @@ import at.haha007.edenclient.command.CommandManager;
 import at.haha007.edenclient.mods.AntiSpam;
 import at.haha007.edenclient.mods.AutoSell;
 import at.haha007.edenclient.mods.CheshShop.ChestShopMod;
+import at.haha007.edenclient.mods.NbtInfo;
 import at.haha007.edenclient.mods.SignCopy;
 import fi.dy.masa.malilib.util.FileUtils;
 import net.fabricmc.api.ClientModInitializer;
@@ -16,10 +17,11 @@ public class EdenClient implements ClientModInitializer {
 	public AutoSell autoSell = new AutoSell();
 	public AntiSpam antiSpam = new AntiSpam();
 	public ChestShopMod chestShopMod = new ChestShopMod();
+	public NbtInfo nbtInfo = new NbtInfo();
 
 	public static File getDataFolder() {
 		File file = FileUtils.getConfigDirectory();
-		if (!file.exists()) file.mkdirs();
+		assert file.exists() || file.mkdirs();
 		return file;
 	}
 
@@ -31,7 +33,7 @@ public class EdenClient implements ClientModInitializer {
 		CommandManager.registerCommand(new Command(antiSpam::onCommand), "antispam");
 		CommandManager.registerCommand(new Command(chestShopMod::onCommand), "chestshop", "cs");
 		CommandManager.registerCommand(new Command(CommandManager::onCommand), "commands", "cmds");
-
+		CommandManager.registerCommand(new Command(nbtInfo::onCommand), "nbtinfo", "nbt");
 	}
 
 }

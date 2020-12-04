@@ -1,7 +1,7 @@
 package at.haha007.edenclient.mixin;
 
-import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.callbacks.PlayerEditSignCallback;
+import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.command.CommandManager;
 import net.minecraft.block.entity.SignBlockEntity;
 import net.minecraft.client.MinecraftClient;
