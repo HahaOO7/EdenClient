@@ -129,9 +129,7 @@ public class AntiSpam {
 		}
 
 		if (spamCounter > 1) {
-			chatText = chatText.copy().append(chatText).append(new LiteralText(" [x" + spamCounter + "]"));
-			//chatText = new LiteralText(chatText.getString() + " [x" + spamCounter + "]");
-
+			chatText = new LiteralText("").append(chatText).append(new LiteralText(" [x" + spamCounter + "]"));
 		}
 
 		messagesToAdd.add(chatText);
