@@ -8,6 +8,7 @@ import net.minecraft.item.Item;
 import net.minecraft.text.LiteralText;
 import net.minecraft.world.chunk.WorldChunk;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -37,6 +38,9 @@ public class AutoSell {
 				autoSellItems.remove(inventory.getMainHandStack().getItem());
 				sendChatMessage("removed /sell " + inventory.getMainHandStack().getItem().getName().getString());
 				break;
+			case "list":
+				sendChatMessage(autoSellItems.toString());
+				break;
 			case "reset":
 				autoSellItems.clear();
 				sendChatMessage("Removed all entries");
@@ -45,6 +49,7 @@ public class AutoSell {
 				sendChatMessage("/autosell add");
 				sendChatMessage("/autosell remove");
 				sendChatMessage("/autosell reset");
+				sendChatMessage("/autosell list");
 		}
 	}
 
