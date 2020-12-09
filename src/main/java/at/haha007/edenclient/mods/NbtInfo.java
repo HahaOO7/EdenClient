@@ -28,5 +28,6 @@ public class NbtInfo {
 
 	private void sendMessage(Text text) {
 		MinecraftClient.getInstance().inGameHud.getChatHud().addMessage(text);
+		System.out.println(text.getString());
 	}
 }

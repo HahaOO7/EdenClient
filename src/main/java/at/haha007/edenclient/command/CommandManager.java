@@ -20,7 +20,7 @@ public class CommandManager {
 
 	public static boolean onCommand(String command) {
 		String[] args = command.replaceFirst("/", "").split(" ");
-		Command cmd = commandMap.get(args[0]);
+		Command cmd = commandMap.get(args[0].toLowerCase());
 		if (cmd == null)
 			return false;
 		cmd.getExecutor().executeCommand(cmd, args[0], args.length > 1 ? Arrays.copyOfRange(args, 1, args.length) : new String[0]);
