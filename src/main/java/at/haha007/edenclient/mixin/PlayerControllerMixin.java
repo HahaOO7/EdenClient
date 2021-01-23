@@ -24,7 +24,10 @@ public class PlayerControllerMixin {
 		cancellable = true)
 	void interactBlock(ClientPlayerEntity player, ClientWorld world, Hand hand, BlockHitResult hitResult, CallbackInfoReturnable<ActionResult> ci) {
 		ActionResult result = PlayerInteractBlockEvent.EVENT.invoker().interact(player, world, hand, hitResult);
-		if (result == ActionResult.FAIL) ci.cancel();
+		if (result == ActionResult.FAIL) {
+			ci.setReturnValue(ActionResult.FAIL);
+			ci.cancel();
+		}
 
 	}
 

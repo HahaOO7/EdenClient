@@ -10,10 +10,6 @@ import net.minecraft.text.Text;
 
 public class NbtInfo {
 
-	public NbtInfo(){
-
-	}
-
 	public void onCommand(Command command, String label, String[] args) {
 		ClientPlayerEntity player = MinecraftClient.getInstance().player;
 		assert player != null;
