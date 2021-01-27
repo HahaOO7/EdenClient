@@ -66,7 +66,7 @@ public class AutoSell {
 		autoSellItems
 			.stream()
 			.filter(item -> player.inventory.containsAny(Collections.singleton(item)))
-			.forEach(item -> player.sendChatMessage("/sell " + item.getName().getString()));
+			.forEach(item -> player.sendChatMessage("/sell " + item.getName().getString().replace(' ', '_')));
 		lastSell = time;
 	}
 
