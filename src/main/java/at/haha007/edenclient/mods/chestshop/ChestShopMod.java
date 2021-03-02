@@ -3,7 +3,6 @@ package at.haha007.edenclient.mods.chestshop;
 import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.command.Command;
-import at.haha007.edenclient.mods.chestshop.ChestShopEntry;
 import fi.dy.masa.malilib.util.StringUtils;
 import net.minecraft.block.entity.SignBlockEntity;
 import net.minecraft.client.MinecraftClient;
@@ -27,6 +26,7 @@ public class ChestShopMod {
 	private final File file;
 	private String worldName = "";
 	private CompoundTag tag;
+	private boolean searchEnabled = true;
 
 
 	public ChestShopMod() {
@@ -44,7 +44,7 @@ public class ChestShopMod {
 	private ActionResult tick(ClientPlayerEntity player) {
 		int[] chunk = {player.chunkX, player.chunkZ};
 		if (Arrays.equals(this.chunk, chunk)) return ActionResult.PASS;
-
+		if (!searchEnabled) return ActionResult.PASS;
 		String world = StringUtils.getWorldOrServerName();
 		if (!worldName.equals(world)) {
 			try {
@@ -94,21 +94,27 @@ public class ChestShopMod {
 	}
 
 	public void onCommand(Command command, String s, String[] args) {
-		if (args.length < 2) {
+		if (args.length == 0) {
 			sendMessage("/chestshop sell itemtype");
 			sendMessage("/chestshop buy itemtype");
+			sendMessage("/chestshop toggle");
 			return;
 		}
 
 		StringBuilder sb = new StringBuilder();
-		for (int i = 1; i < args.length; i++) {
-			sb.append(" ").append(args[i]);
-		}
-		String item = sb.toString().replaceFirst(" ", "");
-
+		String item;
 
 		switch (args[0].toLowerCase()) {
+			case "toggle":
+				searchEnabled = !searchEnabled;
+				sendMessage("ChestShop search " + (searchEnabled ? "enabled" : "disabled"));
+				return;
 			case "sell":
+				if (args.length < 2) break;
+				for (int i = 1; i < args.length; i++) {
+					sb.append(" ").append(args[i]);
+				}
+				item = sb.toString().replaceFirst(" ", "");
 				sendMessage("Sell: ");
 				shops.
 					values().
@@ -124,8 +130,13 @@ public class ChestShopMod {
 						cs.getPos().getY(),
 						cs.getPos().getZ(),
 						cs.getSellPricePerItem())));
-				break;
+				return;
 			case "buy":
+				if (args.length < 2) break;
+				for (int i = 1; i < args.length; i++) {
+					sb.append(" ").append(args[i]);
+				}
+				item = sb.toString().replaceFirst(" ", "");
 				sendMessage("Buy: ");
 				shops.
 					values().
@@ -141,9 +152,12 @@ public class ChestShopMod {
 						cs.getPos().getY(),
 						cs.getPos().getZ(),
 						cs.getBuyPricePerItem())));
-				break;
+				return;
 		}
 
+		sendMessage("/chestshop sell itemtype");
+		sendMessage("/chestshop buy itemtype");
+		sendMessage("/chestshop toggle");
 	}
 
 	private void saveConfig(String worldName) throws IOException {
