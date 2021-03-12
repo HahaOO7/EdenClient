@@ -6,7 +6,8 @@ import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.text.LiteralText;
-import net.minecraft.text.Text;
+
+import static at.haha007.edenclient.utils.PlayerUtils.sendMessage;
 
 public class NbtInfo {
 
@@ -15,15 +16,10 @@ public class NbtInfo {
 		assert player != null;
 		PlayerInventory inv = player.inventory;
 		ItemStack stack = inv.getMainHandStack();
-		if(stack.isEmpty()){
+		if (stack.isEmpty()) {
 			sendMessage(new LiteralText("Item in die Hand!"));
-		}else{
+		} else {
 			sendMessage(stack.getOrCreateTag().toText());
 		}
-	}
-
-	private void sendMessage(Text text) {
-		MinecraftClient.getInstance().inGameHud.getChatHud().addMessage(text);
-		System.out.println(text.getString());
 	}
 }

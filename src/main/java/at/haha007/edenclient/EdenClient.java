@@ -20,6 +20,7 @@ public class EdenClient implements ClientModInitializer {
 	public void onInitializeClient() {
 		INSTANCE = this;
 		new SignCopy();
+		new BarrierDisplay();
 		CommandManager.registerCommand(new Command(autoSell::onCommand), "autosell", "as");
 		CommandManager.registerCommand(new Command(antiSpam::onCommand), "antispam");
 		CommandManager.registerCommand(new Command(CommandManager::onCommand), "commands", "cmds");
