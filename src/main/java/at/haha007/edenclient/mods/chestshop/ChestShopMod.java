@@ -3,6 +3,7 @@ package at.haha007.edenclient.mods.chestshop;
 import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.command.Command;
+import at.haha007.edenclient.utils.PlayerUtils;
 import fi.dy.masa.malilib.util.StringUtils;
 import net.minecraft.block.entity.SignBlockEntity;
 import net.minecraft.client.MinecraftClient;
@@ -10,8 +11,10 @@ import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtIo;
+import net.minecraft.server.PlayerManager;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.ActionResult;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.math.Vec3i;
 import net.minecraft.world.World;
 
@@ -181,8 +184,7 @@ public class ChestShopMod {
 	}
 
 	private void sendMessage(String message) {
-		MinecraftClient client = MinecraftClient.getInstance();
-		client.inGameHud.getChatHud().addMessage(new LiteralText(message));
+		PlayerUtils.sendMessage(new LiteralText(message).formatted(Formatting.GOLD));
 	}
 
 

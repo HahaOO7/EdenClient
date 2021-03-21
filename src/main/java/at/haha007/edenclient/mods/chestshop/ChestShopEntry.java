@@ -40,14 +40,11 @@ public class ChestShopEntry {
 			if (priceString.contains("b")) {
 				priceString = priceString.replace("b", "");
 				if (!MathUtils.isInteger(priceString)) continue;
-				int price = Integer.parseInt(priceString);
-				this.buyPrice = price;
+				this.buyPrice = Integer.parseInt(priceString);
 			} else if (priceString.contains("s")) {
 				priceString = priceString.replace("s", "");
 				if (!MathUtils.isInteger(priceString)) continue;
-				int price = Integer.parseInt(priceString);
-//				MinecraftClient.getInstance().inGameHud.getChatHud().addMessage(new LiteralText(String.format("%s buys %d %s for %d", player, amount, item, price)));
-				this.sellPrice = price;
+				this.sellPrice = Integer.parseInt(priceString);
 			} else {
 				return;
 			}

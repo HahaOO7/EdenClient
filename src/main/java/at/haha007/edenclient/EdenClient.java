@@ -4,6 +4,7 @@ import at.haha007.edenclient.command.Command;
 import at.haha007.edenclient.command.CommandManager;
 import at.haha007.edenclient.mods.*;
 import at.haha007.edenclient.mods.chestshop.ChestShopMod;
+import at.haha007.edenclient.utils.PerWorldConfig;
 import fi.dy.masa.malilib.util.FileUtils;
 import net.fabricmc.api.ClientModInitializer;
 
@@ -19,6 +20,7 @@ public class EdenClient implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
 		INSTANCE = this;
+		PerWorldConfig.getInstance();
 		new SignCopy();
 		new BarrierDisplay();
 		CommandManager.registerCommand(new Command(autoSell::onCommand), "autosell", "as");

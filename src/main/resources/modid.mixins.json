@@ -4,6 +4,7 @@
   "package": "at.haha007.edenclient.mixin",
   "compatibilityLevel": "JAVA_8",
   "mixins": [
+    "MinecraftClientGameMixin"
   ],
   "client": [
     "ChatHudMixin",
