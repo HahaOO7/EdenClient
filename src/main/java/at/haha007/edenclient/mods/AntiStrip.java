@@ -1,5 +1,7 @@
 package at.haha007.edenclient.mods;
 
+import at.haha007.edenclient.callbacks.ConfigLoadCallback;
+import at.haha007.edenclient.callbacks.ConfigSaveCallback;
 import at.haha007.edenclient.callbacks.PlayerInteractBlockEvent;
 import at.haha007.edenclient.command.Command;
 import at.haha007.edenclient.command.CommandManager;
@@ -8,6 +10,7 @@ import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.item.Item;
 import net.minecraft.item.Items;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.tag.BlockTags;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.ActionResult;
@@ -24,6 +27,8 @@ public class AntiStrip {
 
 	public AntiStrip() {
 		PlayerInteractBlockEvent.EVENT.register(this::onInteractBlock);
+		ConfigLoadCallback.EVENT.register(this::loadCfg);
+		ConfigSaveCallback.EVENT.register(this::saveCfg);
 		CommandManager.registerCommand(new Command(this::onCommand), "antistrip");
 		axeItems.add(Items.WOODEN_AXE);
 		axeItems.add(Items.STONE_AXE);
@@ -31,6 +36,19 @@ public class AntiStrip {
 		axeItems.add(Items.GOLDEN_AXE);
 		axeItems.add(Items.DIAMOND_AXE);
 		axeItems.add(Items.NETHERITE_AXE);
+	}
+
+	private ActionResult loadCfg(CompoundTag compoundTag) {
+		CompoundTag tag = compoundTag.getCompound("antiStrip");
+		enabled = !tag.contains("enabled") || tag.getBoolean("enabled");
+		return ActionResult.PASS;
+	}
+
+	private ActionResult saveCfg(CompoundTag compoundTag) {
+		CompoundTag tag = compoundTag.getCompound("antiStrip");
+		tag.putBoolean("enabled", enabled);
+		compoundTag.put("antiStrip", tag);
+		return ActionResult.PASS;
 	}
 
 	private void onCommand(Command cmd, String label, String[] args) {

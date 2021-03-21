@@ -1,14 +1,14 @@
 package at.haha007.edenclient.utils;
 
 import at.haha007.edenclient.EdenClient;
+import at.haha007.edenclient.callbacks.ConfigLoadCallback;
+import at.haha007.edenclient.callbacks.ConfigSaveCallback;
 import at.haha007.edenclient.callbacks.LeaveGameSessionCallback;
-import at.haha007.edenclient.callbacks.PerWorldConfigReloadCallback;
 import at.haha007.edenclient.callbacks.StartGameSessionCallback;
 import fi.dy.masa.malilib.util.StringUtils;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtIo;
-import net.minecraft.server.command.TagCommand;
 import net.minecraft.util.ActionResult;
 
 import java.io.File;
@@ -21,9 +21,10 @@ public class PerWorldConfig {
 	private String worldName = "null";
 	private final File folder;
 
-	public static PerWorldConfig getInstance(){
+	public static PerWorldConfig getInstance() {
 		return INSTANCE == null ? (INSTANCE = new PerWorldConfig()) : INSTANCE;
 	}
+
 	private PerWorldConfig() {
 		folder = new File(EdenClient.getDataFolder(), "PerWorldCfg");
 		StartGameSessionCallback.EVENT.register(this::onJoin);
@@ -52,10 +53,11 @@ public class PerWorldConfig {
 			System.err.println("Error while loading PerWorldConfig: " + worldName);
 			tag = new CompoundTag();
 		}
-		PerWorldConfigReloadCallback.EVENT.invoker().reload(tag);
+		ConfigLoadCallback.EVENT.invoker().onLoad(tag);
 	}
 
 	private void saveConfig() {
+		ConfigSaveCallback.EVENT.invoker().onSave(tag);
 		File file = new File(folder, worldName + ".mca");
 		if (!folder.exists()) folder.mkdirs();
 		try {

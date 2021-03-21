@@ -1,5 +1,7 @@
 package at.haha007.edenclient.mods;
 
+import at.haha007.edenclient.callbacks.ConfigLoadCallback;
+import at.haha007.edenclient.callbacks.ConfigSaveCallback;
 import at.haha007.edenclient.callbacks.PlayerAttackBlockCallback;
 import at.haha007.edenclient.callbacks.PlayerEditSignCallback;
 import at.haha007.edenclient.command.Command;
@@ -16,6 +18,8 @@ import net.minecraft.util.ActionResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 
+import java.util.Objects;
+
 public class SignCopy {
 	public static String[] copy = new String[4];
 	boolean enabled = false;
@@ -25,6 +29,31 @@ public class SignCopy {
 		PlayerEditSignCallback.EVENT.register(this::onEditSign);
 		PlayerAttackBlockCallback.EVENT.register(this::onAttackBlock);
 		CommandManager.registerCommand(new Command(this::onCommand), "signcopy");
+		ConfigSaveCallback.EVENT.register(this::saveCfg);
+		ConfigLoadCallback.EVENT.register(this::loadCfg);
+	}
+
+	private ActionResult loadCfg(CompoundTag compoundTag) {
+		CompoundTag tag = compoundTag.getCompound("signCopy");
+		copy[0] = tag.getString("0");
+		copy[1] = tag.getString("1");
+		copy[2] = tag.getString("2");
+		copy[3] = tag.getString("3");
+		enabled = tag.contains("enabled") && tag.getBoolean("enabled");
+		shouldCopy = tag.contains("copy") && tag.getBoolean("copy");
+		return ActionResult.PASS;
+	}
+
+	private ActionResult saveCfg(CompoundTag compoundTag) {
+		CompoundTag tag = compoundTag.getCompound("signCopy");
+		tag.putString("0", copy[0]);
+		tag.putString("1", copy[1]);
+		tag.putString("2", copy[2]);
+		tag.putString("3", copy[3]);
+		tag.putBoolean("enabled", enabled);
+		tag.putBoolean("copy", shouldCopy);
+		compoundTag.put("signCopy", tag);
+		return ActionResult.PASS;
 	}
 
 	private void onCommand(Command command, String s, String[] strings) {
@@ -32,6 +61,7 @@ public class SignCopy {
 		MinecraftClient.getInstance().inGameHud.getChatHud().addMessage(new LiteralText(enabled ? "SignCopy enabled" : "SignCopy disabled"));
 	}
 
+	@SuppressWarnings("ConstantConditions")
 	private ActionResult onAttackBlock(ClientPlayerEntity entity, BlockPos pos, Direction side) {
 		if (!enabled) return ActionResult.PASS;
 		BlockEntity b = MinecraftClient.getInstance().world.getBlockEntity(pos);
@@ -60,7 +90,7 @@ public class SignCopy {
 			copy[1].substring(0, copy[1].length() - 2),
 			copy[2].substring(0, copy[2].length() - 2),
 			copy[3].substring(0, copy[3].length() - 2));
-		MinecraftClient.getInstance().getNetworkHandler().sendPacket(packet);
+		Objects.requireNonNull(MinecraftClient.getInstance().getNetworkHandler()).sendPacket(packet);
 		return ActionResult.FAIL;
 	}
 

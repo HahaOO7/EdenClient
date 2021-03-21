@@ -6,12 +6,10 @@ import at.haha007.edenclient.command.Command;
 import at.haha007.edenclient.utils.PlayerUtils;
 import fi.dy.masa.malilib.util.StringUtils;
 import net.minecraft.block.entity.SignBlockEntity;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtIo;
-import net.minecraft.server.PlayerManager;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
@@ -166,6 +164,7 @@ public class ChestShopMod {
 	private void saveConfig(String worldName) throws IOException {
 		ListTag list = new ListTag();
 		tag.put(worldName, list);
+		tag.putBoolean("enabled", searchEnabled);
 
 		shops.
 			values().
@@ -175,6 +174,7 @@ public class ChestShopMod {
 	}
 
 	private void loadConfig(String worldName) {
+		searchEnabled = !tag.contains("enabled") || tag.getBoolean("enabled");
 		ListTag list = tag.getList(worldName, 10);
 		list.forEach(nbt -> {
 			ChestShopEntry entry = new ChestShopEntry((CompoundTag) nbt);

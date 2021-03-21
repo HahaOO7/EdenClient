@@ -1,6 +1,6 @@
 package at.haha007.edenclient.mods;
 
-import at.haha007.edenclient.callbacks.PerWorldConfigReloadCallback;
+import at.haha007.edenclient.callbacks.ConfigLoadCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.command.Command;
 import at.haha007.edenclient.command.CommandManager;
@@ -29,7 +29,7 @@ public class BarrierDisplay {
 	public BarrierDisplay() {
 		CommandManager.registerCommand(new Command(this::onCommand), "barrier");
 		PlayerTickCallback.EVENT.register(this::onTick);
-		PerWorldConfigReloadCallback.EVENT.register(this::reloadConfig);
+		ConfigLoadCallback.EVENT.register(this::onSave);
 	}
 
 
@@ -57,7 +57,7 @@ public class BarrierDisplay {
 		sendMessage(new LiteralText("Barrier display counter is " + counter).formatted(Formatting.GOLD));
 	}
 
-	private ActionResult reloadConfig(CompoundTag compoundTag) {
+	private ActionResult onSave(CompoundTag compoundTag) {
 		CompoundTag tag = compoundTag.getCompound("barrier");
 		counter = tag.contains("counter") ? tag.getInt("counter") : 20;
 		return ActionResult.PASS;

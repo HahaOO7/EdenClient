@@ -5,11 +5,11 @@ import net.fabricmc.fabric.api.event.EventFactory;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.ActionResult;
 
-public interface PerWorldConfigReloadCallback {
-	Event<PerWorldConfigReloadCallback> EVENT = EventFactory.createArrayBacked(PerWorldConfigReloadCallback.class,
+public interface ConfigSaveCallback {
+	Event<ConfigSaveCallback> EVENT = EventFactory.createArrayBacked(ConfigSaveCallback.class,
 		listeners -> (tag) -> {
-			for (PerWorldConfigReloadCallback listener : listeners) {
-				ActionResult result = listener.reload(tag);
+			for (ConfigSaveCallback listener : listeners) {
+				ActionResult result = listener.onSave(tag);
 
 				if (result != ActionResult.PASS) {
 					return result;
@@ -18,5 +18,5 @@ public interface PerWorldConfigReloadCallback {
 			return ActionResult.PASS;
 		});
 
-	ActionResult reload(CompoundTag tag);
+	ActionResult onSave(CompoundTag tag);
 }

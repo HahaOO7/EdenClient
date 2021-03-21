@@ -1,19 +1,40 @@
 package at.haha007.edenclient.mods;
 
+import at.haha007.edenclient.callbacks.ConfigLoadCallback;
+import at.haha007.edenclient.callbacks.ConfigSaveCallback;
+import at.haha007.edenclient.callbacks.PlayerInvChangeCallback;
 import at.haha007.edenclient.command.Command;
+import at.haha007.edenclient.command.CommandManager;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.Item;
+import net.minecraft.item.Items;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.StringTag;
 import net.minecraft.text.LiteralText;
+import net.minecraft.util.ActionResult;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.registry.Registry;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class AutoSell {
 	private final Set<Item> autoSellItems = new HashSet<>();
 	private long lastSell = 0;
+
+	public AutoSell() {
+		CommandManager.registerCommand(new Command(this::onCommand), "autosell", "as");
+		ConfigSaveCallback.EVENT.register(this::onSave);
+		ConfigLoadCallback.EVENT.register(this::onLoad);
+		PlayerInvChangeCallback.EVENT.register(this::onInventoryChange);
+
+	}
 
 	public void onCommand(Command command, String label, String[] args) {
 
@@ -52,15 +73,37 @@ public class AutoSell {
 	}
 
 
-	public void onInventoryChange() {
-		ClientPlayerEntity player = MinecraftClient.getInstance().player;
-		if (player == null) return;
-		PlayerInventory inventory = player.inventory;
-		if (!isFullInventory(inventory)) return;
-		executeAutoSell(player);
+	private ActionResult onLoad(CompoundTag compoundTag) {
+		CompoundTag tag = compoundTag.getCompound("autoSell");
+		String itemCsv = tag.getString("items");
+		for (String key : itemCsv.split(",")) {
+			Item item = Registry.ITEM.get(new Identifier("key"));
+			if (item == Items.AIR) continue;
+			autoSellItems.add(item);
+		}
+		return ActionResult.PASS;
 	}
 
-	private void executeAutoSell(ClientPlayerEntity player) {
+	private ActionResult onSave(CompoundTag compoundTag) {
+		CompoundTag tag = compoundTag.getCompound("autoSell");
+		List<StringTag> itemIds = autoSellItems.stream().map(item -> Registry.ITEM.getId(item).toString()).map(StringTag::of).collect(Collectors.toList());
+		ListTag itemsTag = new ListTag();
+		itemsTag.addAll(itemIds);
+		tag.put("items", itemsTag);
+		compoundTag.put("autoSell", tag);
+		return ActionResult.PASS;
+	}
+
+
+	public ActionResult onInventoryChange(PlayerInventory inventory) {
+		if (!isFullInventory(inventory)) return ActionResult.PASS;
+		executeAutoSell();
+		return ActionResult.PASS;
+	}
+
+	@SuppressWarnings("ConstantConditions")
+	private void executeAutoSell() {
+		ClientPlayerEntity player = MinecraftClient.getInstance().player;
 		long time = System.currentTimeMillis();
 		if (time - 200 < lastSell) return;
 		autoSellItems

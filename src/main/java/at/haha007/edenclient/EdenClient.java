@@ -12,7 +12,6 @@ import java.io.File;
 
 public class EdenClient implements ClientModInitializer {
 	public static EdenClient INSTANCE;
-	public AutoSell autoSell = new AutoSell();
 	public AntiSpam antiSpam = new AntiSpam();
 	public NbtInfo nbtInfo = new NbtInfo();
 	public ChestShopMod chestShopMod = new ChestShopMod();
@@ -23,7 +22,7 @@ public class EdenClient implements ClientModInitializer {
 		PerWorldConfig.getInstance();
 		new SignCopy();
 		new BarrierDisplay();
-		CommandManager.registerCommand(new Command(autoSell::onCommand), "autosell", "as");
+		new AutoSell();
 		CommandManager.registerCommand(new Command(antiSpam::onCommand), "antispam");
 		CommandManager.registerCommand(new Command(CommandManager::onCommand), "commands", "cmds");
 		CommandManager.registerCommand(new Command(nbtInfo::onCommand), "nbtinfo", "nbt");
