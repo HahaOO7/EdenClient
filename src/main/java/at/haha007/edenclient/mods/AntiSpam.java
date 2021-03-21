@@ -157,6 +157,7 @@ public class AntiSpam {
 		CompoundTag cfg = PerWorldConfig.getInstance().getTag();
 		CompoundTag tag = cfg.getCompound("antiSpam");
 		enabled = !tag.contains("enabled") || tag.getBoolean("enabled");
+		cfg.putBoolean("antiSpam", enabled);
 		return ActionResult.PASS;
 	}
 }

@@ -1,10 +1,10 @@
 package at.haha007.edenclient.mods;
 
 import at.haha007.edenclient.callbacks.ConfigLoadCallback;
+import at.haha007.edenclient.callbacks.ConfigSaveCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.command.Command;
 import at.haha007.edenclient.command.CommandManager;
-import at.haha007.edenclient.utils.PerWorldConfig;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
@@ -29,7 +29,8 @@ public class BarrierDisplay {
 	public BarrierDisplay() {
 		CommandManager.registerCommand(new Command(this::onCommand), "barrier");
 		PlayerTickCallback.EVENT.register(this::onTick);
-		ConfigLoadCallback.EVENT.register(this::onSave);
+		ConfigSaveCallback.EVENT.register(this::onSave);
+		ConfigLoadCallback.EVENT.register(this::onLoad);
 	}
 
 
@@ -47,10 +48,6 @@ public class BarrierDisplay {
 	private void onCommand(Command cmd, String label, String[] args) {
 		try {
 			counter = Integer.parseInt(args[0]);
-			CompoundTag cfg = PerWorldConfig.getInstance().getTag();
-			CompoundTag tag = cfg.getCompound("barrier");
-			tag.putInt("counter", counter);
-			cfg.put("barrier", tag);
 		} catch (NumberFormatException | ArrayIndexOutOfBoundsException ignored) {
 		}
 		enabled = !enabled;
@@ -58,6 +55,13 @@ public class BarrierDisplay {
 	}
 
 	private ActionResult onSave(CompoundTag compoundTag) {
+		CompoundTag tag = compoundTag.getCompound("barrier");
+		tag.putInt("counter", counter);
+		compoundTag.put("barrier", tag);
+		return ActionResult.PASS;
+	}
+
+	private ActionResult onLoad(CompoundTag compoundTag) {
 		CompoundTag tag = compoundTag.getCompound("barrier");
 		counter = tag.contains("counter") ? tag.getInt("counter") : 20;
 		return ActionResult.PASS;
