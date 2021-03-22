@@ -13,6 +13,7 @@ import net.minecraft.item.Items;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Identifier;
@@ -75,9 +76,10 @@ public class AutoSell {
 
 	private ActionResult onLoad(CompoundTag compoundTag) {
 		CompoundTag tag = compoundTag.getCompound("autoSell");
-		String itemCsv = tag.getString("items");
-		for (String key : itemCsv.split(",")) {
-			Item item = Registry.ITEM.get(new Identifier("key"));
+		ListTag itemIdentifierList = tag.getList("items", 8);
+		autoSellItems.clear();
+		for (Tag key : itemIdentifierList) {
+			Item item = Registry.ITEM.get(new Identifier(key.asString()));
 			if (item == Items.AIR) continue;
 			autoSellItems.add(item);
 		}
