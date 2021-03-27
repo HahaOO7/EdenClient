@@ -4,13 +4,14 @@
   "package": "at.haha007.edenclient.mixin",
   "compatibilityLevel": "JAVA_8",
   "mixins": [
-    "MinecraftClientGameMixin"
   ],
   "client": [
     "ChatHudMixin",
     "ClientPlayerMixin",
+    "MinecraftClientGameMixin",
     "PlayerControllerMixin",
-    "PlayerInventoryMixin"
+    "PlayerInventoryMixin",
+    "ItemRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1
