@@ -2,6 +2,7 @@ package at.haha007.edenclient.mods;
 
 import at.haha007.edenclient.callbacks.AddChatMessageCallback;
 import at.haha007.edenclient.callbacks.ConfigLoadCallback;
+import at.haha007.edenclient.callbacks.ConfigSaveCallback;
 import at.haha007.edenclient.command.Command;
 import at.haha007.edenclient.utils.MathUtils;
 import at.haha007.edenclient.utils.PerWorldConfig;
@@ -26,8 +27,10 @@ public class AntiSpam {
 
 	public AntiSpam() {
 		AddChatMessageCallback.EVENT.register(this::onChat);
-		ConfigLoadCallback.EVENT.register(this::onSave);
+		ConfigSaveCallback.EVENT.register(this::onSave);
+		ConfigLoadCallback.EVENT.register(this::onLoad);
 	}
+
 
 	private ActionResult onChat(ClientPlayerEntity entity, Text chatText, int chatLineId, List<ChatHudLine<OrderedText>> chatLines) {
 		if (!enabled) return ActionResult.PASS;
@@ -153,11 +156,16 @@ public class AntiSpam {
 		cfg.put("antiSpam", tag);
 	}
 
-	private ActionResult onSave(CompoundTag compoundTag) {
-		CompoundTag cfg = PerWorldConfig.getInstance().getTag();
+	private ActionResult onLoad(CompoundTag cfg) {
 		CompoundTag tag = cfg.getCompound("antiSpam");
 		enabled = !tag.contains("enabled") || tag.getBoolean("enabled");
-		cfg.putBoolean("antiSpam", enabled);
+		return ActionResult.PASS;
+	}
+
+	private ActionResult onSave(CompoundTag cfg) {
+		CompoundTag tag = cfg.getCompound("antiSpam");
+		tag.putBoolean("enabled", enabled);
+		cfg.put("antiSpam", tag);
 		return ActionResult.PASS;
 	}
 }
