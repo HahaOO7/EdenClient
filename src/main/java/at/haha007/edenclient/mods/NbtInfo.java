@@ -11,15 +11,15 @@ import static at.haha007.edenclient.utils.PlayerUtils.sendMessage;
 
 public class NbtInfo {
 
-	public void onCommand(Command command, String label, String[] args) {
-		ClientPlayerEntity player = MinecraftClient.getInstance().player;
-		assert player != null;
-		PlayerInventory inv = player.inventory;
-		ItemStack stack = inv.getMainHandStack();
-		if (stack.isEmpty()) {
-			sendMessage(new LiteralText("Item in die Hand!"));
-		} else {
-			sendMessage(stack.getOrCreateTag().toText());
-		}
-	}
+    public void onCommand(Command command, String label, String[] args) {
+        ClientPlayerEntity player = MinecraftClient.getInstance().player;
+        assert player != null;
+        PlayerInventory inv = player.inventory;
+        ItemStack stack = inv.getMainHandStack();
+        if (stack.isEmpty()) {
+            sendMessage(new LiteralText("Item in die Hand!"));
+        } else {
+            sendMessage(stack.getOrCreateTag().toText());
+        }
+    }
 }

@@ -5,9 +5,9 @@ import net.minecraft.text.Text;
 
 public class PlayerUtils {
 
-	public static void sendMessage(Text text) {
-		MinecraftClient.getInstance().inGameHud.getChatHud().addMessage(text);
-		System.out.println(text.getString());
+    public static void sendMessage(Text text) {
+        MinecraftClient.getInstance().inGameHud.getChatHud().addMessage(text);
+        System.out.println(text.getString());
 
-	}
+    }
 }

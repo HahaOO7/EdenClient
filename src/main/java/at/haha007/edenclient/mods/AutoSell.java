@@ -26,101 +26,101 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class AutoSell {
-	private final Set<Item> autoSellItems = new HashSet<>();
-	private long lastSell = 0;
+    private final Set<Item> autoSellItems = new HashSet<>();
+    private long lastSell = 0;
 
-	public AutoSell() {
-		CommandManager.registerCommand(new Command(this::onCommand), "autosell", "as");
-		ConfigSaveCallback.EVENT.register(this::onSave);
-		ConfigLoadCallback.EVENT.register(this::onLoad);
-		PlayerInvChangeCallback.EVENT.register(this::onInventoryChange);
+    public AutoSell() {
+        CommandManager.registerCommand(new Command(this::onCommand), "autosell", "as");
+        ConfigSaveCallback.EVENT.register(this::onSave);
+        ConfigLoadCallback.EVENT.register(this::onLoad);
+        PlayerInvChangeCallback.EVENT.register(this::onInventoryChange);
 
-	}
+    }
 
-	public void onCommand(Command command, String label, String[] args) {
+    public void onCommand(Command command, String label, String[] args) {
 
-		if (args.length != 1) {
-			sendChatMessage("/autosell add");
-			sendChatMessage("/autosell remove");
-			sendChatMessage("/autosell reset");
-			return;
-		}
-		ClientPlayerEntity player = MinecraftClient.getInstance().player;
-		if (player == null) return;
-		PlayerInventory inventory = player.inventory;
+        if (args.length != 1) {
+            sendChatMessage("/autosell add");
+            sendChatMessage("/autosell remove");
+            sendChatMessage("/autosell reset");
+            return;
+        }
+        ClientPlayerEntity player = MinecraftClient.getInstance().player;
+        if (player == null) return;
+        PlayerInventory inventory = player.inventory;
 
-		switch (args[0]) {
-			case "add":
-				autoSellItems.add(inventory.getMainHandStack().getItem());
-				sendChatMessage("added /sell " + inventory.getMainHandStack().getItem().getName().getString());
-				break;
-			case "remove":
-				autoSellItems.remove(inventory.getMainHandStack().getItem());
-				sendChatMessage("removed /sell " + inventory.getMainHandStack().getItem().getName().getString());
-				break;
-			case "list":
-				sendChatMessage(autoSellItems.toString());
-				break;
-			case "reset":
-				autoSellItems.clear();
-				sendChatMessage("Removed all entries");
-				break;
-			default:
-				sendChatMessage("/autosell add");
-				sendChatMessage("/autosell remove");
-				sendChatMessage("/autosell reset");
-				sendChatMessage("/autosell list");
-		}
-	}
-
-
-	private ActionResult onLoad(CompoundTag compoundTag) {
-		CompoundTag tag = compoundTag.getCompound("autoSell");
-		ListTag itemIdentifierList = tag.getList("items", 8);
-		autoSellItems.clear();
-		for (Tag key : itemIdentifierList) {
-			Item item = Registry.ITEM.get(new Identifier(key.asString()));
-			if (item == Items.AIR) continue;
-			autoSellItems.add(item);
-		}
-		return ActionResult.PASS;
-	}
-
-	private ActionResult onSave(CompoundTag compoundTag) {
-		CompoundTag tag = compoundTag.getCompound("autoSell");
-		List<StringTag> itemIds = autoSellItems.stream().map(item -> Registry.ITEM.getId(item).toString()).map(StringTag::of).collect(Collectors.toList());
-		ListTag itemsTag = new ListTag();
-		itemsTag.addAll(itemIds);
-		tag.put("items", itemsTag);
-		compoundTag.put("autoSell", tag);
-		return ActionResult.PASS;
-	}
+        switch (args[0]) {
+            case "add":
+                autoSellItems.add(inventory.getMainHandStack().getItem());
+                sendChatMessage("added /sell " + inventory.getMainHandStack().getItem().getName().getString());
+                break;
+            case "remove":
+                autoSellItems.remove(inventory.getMainHandStack().getItem());
+                sendChatMessage("removed /sell " + inventory.getMainHandStack().getItem().getName().getString());
+                break;
+            case "list":
+                sendChatMessage(autoSellItems.toString());
+                break;
+            case "reset":
+                autoSellItems.clear();
+                sendChatMessage("Removed all entries");
+                break;
+            default:
+                sendChatMessage("/autosell add");
+                sendChatMessage("/autosell remove");
+                sendChatMessage("/autosell reset");
+                sendChatMessage("/autosell list");
+        }
+    }
 
 
-	public ActionResult onInventoryChange(PlayerInventory inventory) {
-		if (!isFullInventory(inventory)) return ActionResult.PASS;
-		executeAutoSell();
-		return ActionResult.PASS;
-	}
+    private ActionResult onLoad(CompoundTag compoundTag) {
+        CompoundTag tag = compoundTag.getCompound("autoSell");
+        ListTag itemIdentifierList = tag.getList("items", 8);
+        autoSellItems.clear();
+        for (Tag key : itemIdentifierList) {
+            Item item = Registry.ITEM.get(new Identifier(key.asString()));
+            if (item == Items.AIR) continue;
+            autoSellItems.add(item);
+        }
+        return ActionResult.PASS;
+    }
 
-	@SuppressWarnings("ConstantConditions")
-	private void executeAutoSell() {
-		ClientPlayerEntity player = MinecraftClient.getInstance().player;
-		long time = System.currentTimeMillis();
-		if (time - 200 < lastSell) return;
-		autoSellItems
-			.stream()
-			.filter(item -> player.inventory.containsAny(Collections.singleton(item)))
-			.forEach(item -> player.sendChatMessage("/sell " + item.getName().getString().replace(' ', '_')));
-		lastSell = time;
-	}
-
-	private boolean isFullInventory(PlayerInventory inventory) {
-		return inventory.getEmptySlot() == -1;
-	}
+    private ActionResult onSave(CompoundTag compoundTag) {
+        CompoundTag tag = compoundTag.getCompound("autoSell");
+        List<StringTag> itemIds = autoSellItems.stream().map(item -> Registry.ITEM.getId(item).toString()).map(StringTag::of).collect(Collectors.toList());
+        ListTag itemsTag = new ListTag();
+        itemsTag.addAll(itemIds);
+        tag.put("items", itemsTag);
+        compoundTag.put("autoSell", tag);
+        return ActionResult.PASS;
+    }
 
 
-	private void sendChatMessage(String text) {
-		MinecraftClient.getInstance().inGameHud.getChatHud().addMessage(new LiteralText(text));
-	}
+    public ActionResult onInventoryChange(PlayerInventory inventory) {
+        if (!isFullInventory(inventory)) return ActionResult.PASS;
+        executeAutoSell();
+        return ActionResult.PASS;
+    }
+
+    @SuppressWarnings("ConstantConditions")
+    private void executeAutoSell() {
+        ClientPlayerEntity player = MinecraftClient.getInstance().player;
+        long time = System.currentTimeMillis();
+        if (time - 200 < lastSell) return;
+        autoSellItems
+                .stream()
+                .filter(item -> player.inventory.containsAny(Collections.singleton(item)))
+                .forEach(item -> player.sendChatMessage("/sell " + item.getName().getString().replace(' ', '_')));
+        lastSell = time;
+    }
+
+    private boolean isFullInventory(PlayerInventory inventory) {
+        return inventory.getEmptySlot() == -1;
+    }
+
+
+    private void sendChatMessage(String text) {
+        MinecraftClient.getInstance().inGameHud.getChatHud().addMessage(new LiteralText(text));
+    }
 }

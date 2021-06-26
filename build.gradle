@@ -31,9 +31,7 @@ dependencies {
     "org.jetbrains:annotations:16.0.2"
 
 //    implementation 'com.github.maruohon:malilib:arne_1.16.x-SNAPSHOT'
-    modApi("com.github.maruohon:malilib:arne_1.16.x-SNAPSHOT") {
-        exclude(group: "net.fabricmc.fabric-api")
-    }
+
     // PSA: Some older mods, compiled on Loom 0.2.1, might have outdated Maven POMs.
     // You may need to force-disable transitiveness on them.
 }

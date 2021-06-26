@@ -22,47 +22,47 @@ import java.util.Collection;
 import java.util.HashSet;
 
 public class AntiStrip {
-	private boolean enabled = true;
-	private final Collection<Item> axeItems = new HashSet<>();
+    private boolean enabled = true;
+    private final Collection<Item> axeItems = new HashSet<>();
 
-	public AntiStrip() {
-		PlayerInteractBlockEvent.EVENT.register(this::onInteractBlock);
-		ConfigLoadCallback.EVENT.register(this::loadCfg);
-		ConfigSaveCallback.EVENT.register(this::saveCfg);
-		CommandManager.registerCommand(new Command(this::onCommand), "antistrip");
-		axeItems.add(Items.WOODEN_AXE);
-		axeItems.add(Items.STONE_AXE);
-		axeItems.add(Items.IRON_AXE);
-		axeItems.add(Items.GOLDEN_AXE);
-		axeItems.add(Items.DIAMOND_AXE);
-		axeItems.add(Items.NETHERITE_AXE);
-	}
+    public AntiStrip() {
+        PlayerInteractBlockEvent.EVENT.register(this::onInteractBlock);
+        ConfigLoadCallback.EVENT.register(this::loadCfg);
+        ConfigSaveCallback.EVENT.register(this::saveCfg);
+        CommandManager.registerCommand(new Command(this::onCommand), "antistrip");
+        axeItems.add(Items.WOODEN_AXE);
+        axeItems.add(Items.STONE_AXE);
+        axeItems.add(Items.IRON_AXE);
+        axeItems.add(Items.GOLDEN_AXE);
+        axeItems.add(Items.DIAMOND_AXE);
+        axeItems.add(Items.NETHERITE_AXE);
+    }
 
-	private ActionResult loadCfg(CompoundTag compoundTag) {
-		CompoundTag tag = compoundTag.getCompound("antiStrip");
-		enabled = !tag.contains("enabled") || tag.getBoolean("enabled");
-		return ActionResult.PASS;
-	}
+    private ActionResult loadCfg(CompoundTag compoundTag) {
+        CompoundTag tag = compoundTag.getCompound("antiStrip");
+        enabled = !tag.contains("enabled") || tag.getBoolean("enabled");
+        return ActionResult.PASS;
+    }
 
-	private ActionResult saveCfg(CompoundTag compoundTag) {
-		CompoundTag tag = compoundTag.getCompound("antiStrip");
-		tag.putBoolean("enabled", enabled);
-		compoundTag.put("antiStrip", tag);
-		return ActionResult.PASS;
-	}
+    private ActionResult saveCfg(CompoundTag compoundTag) {
+        CompoundTag tag = compoundTag.getCompound("antiStrip");
+        tag.putBoolean("enabled", enabled);
+        compoundTag.put("antiStrip", tag);
+        return ActionResult.PASS;
+    }
 
-	private void onCommand(Command cmd, String label, String[] args) {
-		enabled = !enabled;
-		MinecraftClient.getInstance().inGameHud.getChatHud().addMessage(new LiteralText(enabled ? "Enabled AntiStrip." : "Disabled AntiStrip.").formatted(Formatting.AQUA));
-	}
+    private void onCommand(Command cmd, String label, String[] args) {
+        enabled = !enabled;
+        MinecraftClient.getInstance().inGameHud.getChatHud().addMessage(new LiteralText(enabled ? "Enabled AntiStrip." : "Disabled AntiStrip.").formatted(Formatting.AQUA));
+    }
 
-	private ActionResult onInteractBlock(ClientPlayerEntity player, ClientWorld world, Hand hand, BlockHitResult blockHitResult) {
-		if (!enabled) return ActionResult.PASS;
-		if (!axeItems.contains((hand == Hand.MAIN_HAND ? player.getMainHandStack() : player.getOffHandStack()).getItem()))
-			return ActionResult.PASS;
+    private ActionResult onInteractBlock(ClientPlayerEntity player, ClientWorld world, Hand hand, BlockHitResult blockHitResult) {
+        if (!enabled) return ActionResult.PASS;
+        if (!axeItems.contains((hand == Hand.MAIN_HAND ? player.getMainHandStack() : player.getOffHandStack()).getItem()))
+            return ActionResult.PASS;
 
 
-		return BlockTags.LOGS.contains(world.getBlockState(blockHitResult.getBlockPos()).getBlock()) ?
-			ActionResult.FAIL : ActionResult.PASS;
-	}
+        return BlockTags.LOGS.contains(world.getBlockState(blockHitResult.getBlockPos()).getBlock()) ?
+                ActionResult.FAIL : ActionResult.PASS;
+    }
 }
