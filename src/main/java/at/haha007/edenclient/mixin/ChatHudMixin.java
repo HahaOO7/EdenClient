@@ -2,6 +2,7 @@ package at.haha007.edenclient.mixin;
 
 import at.haha007.edenclient.callbacks.AddChatMessageCallback;
 import at.haha007.edenclient.mods.AntiSpam;
+import at.haha007.edenclient.mods.wordhighlighter.WordHighlighter;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawableHelper;
 import net.minecraft.client.gui.hud.ChatHud;
@@ -35,7 +36,7 @@ public abstract class ChatHudMixin extends DrawableHelper {
 	private void onAddMessage(Text chatText, int chatLineId, CallbackInfo ci) {
 		ActionResult result = AddChatMessageCallback.EVENT.invoker().interact(MinecraftClient.getInstance().player, chatText, chatLineId, visibleMessages);
 		if (result == ActionResult.FAIL) ci.cancel();
-		AntiSpam.messagesToAdd.forEach(message -> addMessage(message, chatLineId, MinecraftClient.getInstance().inGameHud.getTicks(), false));
+		AntiSpam.messagesToAdd.stream().map(WordHighlighter::formatMessage).forEach(message -> addMessage(message, chatLineId, MinecraftClient.getInstance().inGameHud.getTicks(), false));
 		AntiSpam.messagesToAdd.clear();
 	}
 }

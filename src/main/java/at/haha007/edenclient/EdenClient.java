@@ -1,18 +1,13 @@
 package at.haha007.edenclient;
 
-import at.haha007.edenclient.callbacks.StartGameSessionCallback;
 import at.haha007.edenclient.command.Command;
 import at.haha007.edenclient.command.CommandManager;
 import at.haha007.edenclient.mods.*;
 import at.haha007.edenclient.mods.chestshop.ChestShopMod;
+import at.haha007.edenclient.mods.wordhighlighter.WordHighlighter;
 import at.haha007.edenclient.utils.PerWorldConfig;
-import at.haha007.edenclient.utils.RenderUtils;
 import at.haha007.edenclient.utils.Utils;
 import net.fabricmc.api.ClientModInitializer;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.math.Box;
-import org.lwjgl.opengl.GL11;
 
 import java.io.File;
 
@@ -30,6 +25,7 @@ public class EdenClient implements ClientModInitializer {
         new BarrierDisplay();
         new AutoSell();
         new ItemEsp();
+        new WordHighlighter();
         CommandManager.registerCommand(new Command(antiSpam::onCommand), "antispam");
         CommandManager.registerCommand(new Command(CommandManager::onCommand), "commands", "cmds");
         CommandManager.registerCommand(new Command(nbtInfo::onCommand), "nbtinfo", "nbt");

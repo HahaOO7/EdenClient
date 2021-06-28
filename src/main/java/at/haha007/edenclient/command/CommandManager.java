@@ -19,7 +19,7 @@ public class CommandManager {
 	}
 
 	public static boolean onCommand(String command) {
-		String[] args = command.replaceFirst("/", "").split(" ");
+		String[] args = command.replaceFirst("/", "").split(" +");
 		Command cmd = commandMap.get(args[0].toLowerCase());
 		if (cmd == null)
 			return false;
