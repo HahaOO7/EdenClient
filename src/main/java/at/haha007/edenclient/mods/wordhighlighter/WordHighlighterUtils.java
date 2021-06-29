@@ -17,9 +17,25 @@ public class WordHighlighterUtils {
         return false;
     }
 
+    protected static String wordShouldBeHighlighted(String substring) {
+        for (String s : WordHighlighter.words) {
+            if (substring.toLowerCase().startsWith(s)) {
+                return s;
+            }
+        }
+        return null;
+    }
+
     protected static void sendDebugMessage() {
         PlayerUtils.sendMessage(new LiteralText("[Eden] Wrong use of command!").formatted(Formatting.GOLD));
-        PlayerUtils.sendMessage(new LiteralText("[Eden] Use one of the following arguments: [add, remove, list]!").formatted(Formatting.GOLD));
+        PlayerUtils.sendMessage(new LiteralText("[Eden] Using only \"/hl\" or \"/highlight\" will toggle the WordHighlighter!").formatted(Formatting.GOLD));
+        PlayerUtils.sendMessage(new LiteralText("[Eden] You may use one of the following arguments: [add, remove, list]!").formatted(Formatting.GOLD));
+        PlayerUtils.sendMessage(new LiteralText("[Eden] E.G: /highlights add EmielRegis").formatted(Formatting.GOLD));
+    }
+
+    protected static void sendUsageDebugMessage() {
+        PlayerUtils.sendMessage(new LiteralText("[Eden] Using only \"/hl\" or \"/highlight\" will toggle the WordHighlighter!").formatted(Formatting.GOLD));
+        PlayerUtils.sendMessage(new LiteralText("[Eden] You may use one of the following arguments: [add, remove, list]!").formatted(Formatting.GOLD));
         PlayerUtils.sendMessage(new LiteralText("[Eden] E.G: /highlights add EmielRegis").formatted(Formatting.GOLD));
     }
 
