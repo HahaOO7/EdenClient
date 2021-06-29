@@ -70,6 +70,9 @@ public class WordHighlighter {
     }
 
     public static Text formatMessage(Text message) {
+        if (!enabled)
+            return message;
+
         if (message.getString().startsWith("[EdenClient] ")) {
             return message;
         }
