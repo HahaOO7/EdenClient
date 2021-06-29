@@ -1,11 +1,18 @@
 package at.haha007.edenclient.mods.wordhighlighter;
 
 import at.haha007.edenclient.utils.PlayerUtils;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.StringTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.Style;
 import net.minecraft.text.TextColor;
+import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 
 public class WordHighlighterUtils {
@@ -26,17 +33,82 @@ public class WordHighlighterUtils {
         return null;
     }
 
+    protected static void addWords(String[] inputs) {
+        if (inputs.length < 2) {
+            WordHighlighterUtils.sendDebugMessage();
+        }
+
+        WordHighlighter.words.addAll(Arrays.asList(inputs).subList(1, inputs.length));
+    }
+
+    protected static void removeWords(String[] inputs) {
+        if (inputs.length < 2) {
+            WordHighlighterUtils.sendDebugMessage();
+        }
+
+        Arrays.asList(inputs).subList(1, inputs.length).forEach(WordHighlighter.words::remove);
+    }
+
+    protected static void clearWords() {
+        WordHighlighter.words = new HashSet<>();
+        PlayerUtils.sendMessage(new LiteralText("[EdenClient] Cleared all words!").formatted(Formatting.GOLD));
+    }
+
+    protected static void listWords() {
+        PlayerUtils.sendMessage(new LiteralText("[EdenClient] These words are currently highlighted:").formatted(Formatting.GOLD));
+        PlayerUtils.sendMessage(new LiteralText("[EdenClient] " + WordHighlighter.words.toString()).formatted(Formatting.GOLD));
+    }
+
     protected static void sendDebugMessage() {
-        PlayerUtils.sendMessage(new LiteralText("[Eden] Wrong use of command!").formatted(Formatting.GOLD));
-        PlayerUtils.sendMessage(new LiteralText("[Eden] Using only \"/hl\" or \"/highlight\" will toggle the WordHighlighter!").formatted(Formatting.GOLD));
-        PlayerUtils.sendMessage(new LiteralText("[Eden] You may use one of the following arguments: [add, remove, list]!").formatted(Formatting.GOLD));
-        PlayerUtils.sendMessage(new LiteralText("[Eden] E.G: /highlights add EmielRegis").formatted(Formatting.GOLD));
+        PlayerUtils.sendMessage(new LiteralText("[EdenClient] Wrong use of command!").formatted(Formatting.GOLD));
+        PlayerUtils.sendMessage(new LiteralText("[EdenClient] Using only \"/hl\" or \"/highlight\" will toggle the WordHighlighter!").formatted(Formatting.GOLD));
+        PlayerUtils.sendMessage(new LiteralText("[EdenClient] You may use one of the following arguments: [add, remove, clear, list]!").formatted(Formatting.GOLD));
+        PlayerUtils.sendMessage(new LiteralText("[EdenClient] E.G: /highlights add EmielRegis").formatted(Formatting.GOLD));
     }
 
     protected static void sendUsageDebugMessage() {
-        PlayerUtils.sendMessage(new LiteralText("[Eden] Using only \"/hl\" or \"/highlight\" will toggle the WordHighlighter!").formatted(Formatting.GOLD));
-        PlayerUtils.sendMessage(new LiteralText("[Eden] You may use one of the following arguments: [add, remove, list]!").formatted(Formatting.GOLD));
-        PlayerUtils.sendMessage(new LiteralText("[Eden] E.G: /highlights add EmielRegis").formatted(Formatting.GOLD));
+        PlayerUtils.sendMessage(new LiteralText("[EdenClient] Using only \"/hl\" or \"/highlight\" will toggle the WordHighlighter!").formatted(Formatting.GOLD));
+        PlayerUtils.sendMessage(new LiteralText("[EdenClient] You may use one of the following arguments: [add, remove, clear, list]!").formatted(Formatting.GOLD));
+        PlayerUtils.sendMessage(new LiteralText("[EdenClient] E.G: /highlights add EmielRegis").formatted(Formatting.GOLD));
+    }
+
+    protected static ActionResult onLoad(CompoundTag compoundTag) {
+        CompoundTag tag = compoundTag.getCompound("wordhighlighter");
+
+        if (tag == null) {
+            WordHighlighter.words = new HashSet<>();
+            return ActionResult.PASS;
+        }
+
+        if (!tag.contains("enabled")) {
+            WordHighlighter.enabled = false;
+        } else {
+            WordHighlighter.enabled = tag.getBoolean("enabled");
+        }
+
+        ListTag listTag = tag.getList("words", 8);
+
+        WordHighlighter.words = new HashSet<>();
+        if (listTag != null) {
+            for (Tag tag1 : listTag) {
+                WordHighlighter.words.add(tag1.asString());
+            }
+        }
+
+        return ActionResult.PASS;
+    }
+
+    protected static ActionResult onSave(CompoundTag compoundTag) {
+        CompoundTag tag = new CompoundTag();
+        tag.putBoolean("enabled", WordHighlighter.enabled);
+        ListTag listTag = new ListTag();
+        for (String word : WordHighlighter.words) {
+            listTag.add(StringTag.of(word));
+        }
+        tag.put("words", listTag);
+        compoundTag.put("wordhighlighter", tag);
+
+        return ActionResult.PASS;
     }
 
     protected static String getStyleString(Style style) {
@@ -181,5 +253,16 @@ public class WordHighlighterUtils {
                 break;
         }
         return style;
+    }
+
+    public static StringBuilder fixDoubles(StringBuilder copiedMessage) {
+        String s = copiedMessage.toString();
+        s = s.replace("§k§r", "§k");
+        s = s.replace("§m§r", "§m");
+        s = s.replace("§o§r", "§o");
+        s = s.replace("§l§r", "§l");
+        s = s.replace("§n§r", "§n");
+        s = s.replace("§r§r", "§r");
+        return new StringBuilder(s);
     }
 }
