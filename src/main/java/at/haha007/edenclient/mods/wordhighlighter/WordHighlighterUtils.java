@@ -17,6 +17,9 @@ import java.util.Set;
 
 public class WordHighlighterUtils {
     protected static boolean shouldHighlight(String string, Set<String> words) {
+        if (words.isEmpty())
+            return false;
+
         for (String word : words) {
             if (string.contains(word))
                 return true;
