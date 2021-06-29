@@ -11,18 +11,18 @@ import net.minecraft.util.ActionResult;
 import java.util.List;
 
 public interface AddChatMessageCallback {
-	Event<AddChatMessageCallback> EVENT = EventFactory.createArrayBacked(AddChatMessageCallback.class,
-		listeners -> (player, text, lineId, chatLines) -> {
-			for (AddChatMessageCallback listener : listeners) {
-				ActionResult result = listener.interact(player, text, lineId, chatLines);
+    Event<AddChatMessageCallback> EVENT = EventFactory.createArrayBacked(AddChatMessageCallback.class,
+            listeners -> (player, text, lineId, chatLines) -> {
+                for (AddChatMessageCallback listener : listeners) {
+                    ActionResult result = listener.interact(player, text, lineId, chatLines);
 
-				if (result != ActionResult.PASS) {
-					return result;
-				}
-			}
+                    if (result != ActionResult.PASS) {
+                        return result;
+                    }
+                }
 
-			return ActionResult.PASS;
-		});
+                return ActionResult.PASS;
+            });
 
-	ActionResult interact(ClientPlayerEntity player, Text chatText, int chatLineId, List<ChatHudLine<OrderedText>> chatLines);
+    ActionResult interact(ClientPlayerEntity player, Text chatText, int chatLineId, List<ChatHudLine<OrderedText>> chatLines);
 }

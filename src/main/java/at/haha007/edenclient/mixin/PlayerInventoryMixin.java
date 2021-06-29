@@ -1,6 +1,5 @@
 package at.haha007.edenclient.mixin;
 
-import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.callbacks.PlayerInvChangeCallback;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.player.PlayerInventory;
@@ -13,11 +12,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(PlayerInventory.class)
 public class PlayerInventoryMixin {
 
-	@Inject(
-		at = @At("TAIL"),
-		method = "setStack")
-	void addItem(int slot, ItemStack stack, CallbackInfo ci) {
-		//noinspection ConstantConditions
-		PlayerInvChangeCallback.EVENT.invoker().onInvChange(MinecraftClient.getInstance().player.inventory);
-	}
+    @Inject(
+            at = @At("TAIL"),
+            method = "setStack")
+    void addItem(int slot, ItemStack stack, CallbackInfo ci) {
+        //noinspection ConstantConditions
+        PlayerInvChangeCallback.EVENT.invoker().onInvChange(MinecraftClient.getInstance().player.getInventory());
+    }
 }

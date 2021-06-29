@@ -2,21 +2,21 @@ package at.haha007.edenclient.callbacks;
 
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.EventFactory;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.util.ActionResult;
 
 public interface ConfigSaveCallback {
-	Event<ConfigSaveCallback> EVENT = EventFactory.createArrayBacked(ConfigSaveCallback.class,
-		listeners -> (tag) -> {
-			for (ConfigSaveCallback listener : listeners) {
-				ActionResult result = listener.onSave(tag);
+    Event<ConfigSaveCallback> EVENT = EventFactory.createArrayBacked(ConfigSaveCallback.class,
+            listeners -> (tag) -> {
+                for (ConfigSaveCallback listener : listeners) {
+                    ActionResult result = listener.onSave(tag);
 
-				if (result != ActionResult.PASS) {
-					return result;
-				}
-			}
-			return ActionResult.PASS;
-		});
+                    if (result != ActionResult.PASS) {
+                        return result;
+                    }
+                }
+                return ActionResult.PASS;
+            });
 
-	ActionResult onSave(CompoundTag tag);
+    ActionResult onSave(NbtCompound tag);
 }

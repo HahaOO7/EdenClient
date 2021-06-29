@@ -6,18 +6,18 @@ import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.util.ActionResult;
 
 public interface PlayerTickCallback {
-	Event<PlayerTickCallback> EVENT = EventFactory.createArrayBacked(PlayerTickCallback.class,
-		listeners -> player -> {
-			for (PlayerTickCallback listener : listeners) {
-				ActionResult result = listener.interact(player);
+    Event<PlayerTickCallback> EVENT = EventFactory.createArrayBacked(PlayerTickCallback.class,
+            listeners -> player -> {
+                for (PlayerTickCallback listener : listeners) {
+                    ActionResult result = listener.interact(player);
 
-				if (result != ActionResult.PASS) {
-					return result;
-				}
-			}
+                    if (result != ActionResult.PASS) {
+                        return result;
+                    }
+                }
 
-			return ActionResult.PASS;
-		});
+                return ActionResult.PASS;
+            });
 
-	ActionResult interact(ClientPlayerEntity player);
+    ActionResult interact(ClientPlayerEntity player);
 }

@@ -30,8 +30,8 @@ public abstract class ChatHudMixin extends DrawableHelper {
 	protected abstract void addMessage(Text stringRenderable, int messageId, int timestamp, boolean bl);
 
 	@Inject(at = @At("HEAD"),
-		method = "addMessage(Lnet/minecraft/text/Text;I)V",
-		cancellable = true)
+			method = "addMessage(Lnet/minecraft/text/Text;I)V",
+			cancellable = true)
 	private void onAddMessage(Text chatText, int chatLineId, CallbackInfo ci) {
 		ActionResult result = AddChatMessageCallback.EVENT.invoker().interact(MinecraftClient.getInstance().player, chatText, chatLineId, visibleMessages);
 		if (result == ActionResult.FAIL) ci.cancel();

@@ -4,13 +4,13 @@
   "version": "${version}",
 
   "name": "EdenClient",
-  "description": "Small mod to copy signs!",
+  "description": "Random Client Stuff!",
   "authors": [
     "Haha007"
   ],
   "contact": {
-    "homepage": "https://fabricmc.net/",
-    "sources": "https://github.com/FabricMC/fabric-example-mod"
+    "homepage": "https://github.com/HahaOO7/",
+    "sources": "https://github.com/HahaOO7/EdenClient/"
   },
 
   "license": "CC0-1.0",
@@ -29,11 +29,10 @@
   ],
 
   "depends": {
-    "fabricloader": ">=0.7.4",
+    "fabricloader": ">=0.11.3",
     "fabric": "*",
-    "minecraft": "1.16.x"
+    "minecraft": "1.17.x"
   },
   "suggests": {
-    "flamingo": "*"
   }
 }

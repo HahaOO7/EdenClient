@@ -14,15 +14,15 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class ItemRendererMixin {
 
 
-	@Inject(at = @At("TAIL"),
-		method = "render")
-	void onItemRender(ItemEntity itemEntity,
-	                  float yaw,
-	                  float tickDelta,
-	                  MatrixStack matrixStack,
-	                  VertexConsumerProvider vertexConsumerProvider,
-	                  int light,
-	                  CallbackInfo ci) {
-		ItemRenderCallback.EVENT.invoker().renderItem(itemEntity, yaw, tickDelta, light);
-	}
+    @Inject(at = @At("TAIL"),
+            method = "render")
+    void onItemRender(ItemEntity itemEntity,
+                      float yaw,
+                      float tickDelta,
+                      MatrixStack matrixStack,
+                      VertexConsumerProvider vertexConsumerProvider,
+                      int light,
+                      CallbackInfo ci) {
+        ItemRenderCallback.EVENT.invoker().renderItem(itemEntity, yaw, tickDelta, light, matrixStack);
+    }
 }
