@@ -5,6 +5,8 @@ import at.haha007.edenclient.command.CommandManager;
 import at.haha007.edenclient.utils.PlayerUtils;
 import net.minecraft.text.*;
 import net.minecraft.util.Formatting;
+import org.apache.logging.log4j.core.pattern.FormattingInfo;
+import sun.tools.jstat.Literal;
 
 import java.util.*;
 
@@ -52,17 +54,31 @@ public class WordHighlighter {
             return message;
         }
 
-        System.out.println("Unformatiert: " + message);
-        System.out.println("Filter:" + words);
-        System.out.println("Rohnachricht: " + message.getString());
-        System.out.println("Highlights?: " + WordHighlighterUtils.shouldHighlight(message.getString().toLowerCase(), words));
-
         String formattedMsg = stringifyMessage(message);
 
-        System.out.println("Formatiert: " + formattedMsg);
+        message = createColoredMessage(formattedMsg, message);
 
         return message;
     }
+
+    private static Text createColoredMessage(String formattedMsg, Text message) {
+        MutableText returnText = new LiteralText("");
+
+        Style style = Style.EMPTY;
+
+        for (int i = 0; i < formattedMsg.length(); i++) {
+            MutableText current = new LiteralText("");
+            if (formattedMsg.charAt(i) == '§') {
+                style = WordHighlighterUtils.getCurrentStyle(style, formattedMsg.charAt(i + 1));
+                i++;
+            }
+            current.setStyle(style);
+            current.append("" + formattedMsg.charAt(i));
+            returnText.append(current);
+        }
+        return returnText;
+    }
+
 
     private static String stringifyMessage(Text text) {
         StringBuilder s = new StringBuilder();
