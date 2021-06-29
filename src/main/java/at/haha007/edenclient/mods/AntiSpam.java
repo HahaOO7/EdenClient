@@ -4,6 +4,7 @@ import at.haha007.edenclient.callbacks.AddChatMessageCallback;
 import at.haha007.edenclient.callbacks.ConfigLoadCallback;
 import at.haha007.edenclient.callbacks.ConfigSaveCallback;
 import at.haha007.edenclient.command.Command;
+import at.haha007.edenclient.command.CommandManager;
 import at.haha007.edenclient.utils.MathUtils;
 import at.haha007.edenclient.utils.PerWorldConfig;
 import net.minecraft.client.MinecraftClient;
@@ -26,6 +27,7 @@ public class AntiSpam {
     private boolean enabled = true;
 
     public AntiSpam() {
+        CommandManager.registerCommand(new Command(this::onCommand), "antispam");
         AddChatMessageCallback.EVENT.register(this::onChat);
         ConfigSaveCallback.EVENT.register(this::onSave);
         ConfigLoadCallback.EVENT.register(this::onLoad);

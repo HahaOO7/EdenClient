@@ -1,6 +1,7 @@
 package at.haha007.edenclient.mods;
 
 import at.haha007.edenclient.command.Command;
+import at.haha007.edenclient.command.CommandManager;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
@@ -12,6 +13,10 @@ import net.minecraft.text.NbtText;
 import static at.haha007.edenclient.utils.PlayerUtils.sendMessage;
 
 public class NbtInfo {
+
+	public NbtInfo() {
+		CommandManager.registerCommand(new Command(this::onCommand), "nbtinfo", "nbt");
+	}
 
 	public void onCommand(Command command, String label, String[] args) {
 		ClientPlayerEntity player = MinecraftClient.getInstance().player;

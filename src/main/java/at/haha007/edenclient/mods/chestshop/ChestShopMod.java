@@ -4,6 +4,7 @@ import at.haha007.edenclient.callbacks.ConfigLoadCallback;
 import at.haha007.edenclient.callbacks.ConfigSaveCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.command.Command;
+import at.haha007.edenclient.command.CommandManager;
 import at.haha007.edenclient.utils.PlayerUtils;
 import net.minecraft.block.entity.SignBlockEntity;
 import net.minecraft.client.network.ClientPlayerEntity;
@@ -26,6 +27,7 @@ public class ChestShopMod {
 
 
     public ChestShopMod() {
+        CommandManager.registerCommand(new Command(this::onCommand), "chestshop", "cs");
         PlayerTickCallback.EVENT.register(this::tick);
         ConfigLoadCallback.EVENT.register(this::loadConfig);
         ConfigSaveCallback.EVENT.register(this::saveConfig);
