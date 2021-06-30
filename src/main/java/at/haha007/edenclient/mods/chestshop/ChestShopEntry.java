@@ -130,7 +130,7 @@ public class ChestShopEntry {
                 replaceFirst("\"text\":\"", "").
                 replaceFirst("\"}],", "").
                 replaceFirst("\"extra\":\\[", "");
-        return string.substring(0, string.length() - 2);
+        return string;
     }
 
     public String toString() {

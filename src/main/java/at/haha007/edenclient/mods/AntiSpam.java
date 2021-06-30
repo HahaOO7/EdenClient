@@ -10,19 +10,18 @@ import at.haha007.edenclient.utils.PerWorldConfig;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.ChatHudLine;
-import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.util.ChatMessages;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.text.*;
+import net.minecraft.text.CharacterVisitor;
+import net.minecraft.text.LiteralText;
+import net.minecraft.text.OrderedText;
+import net.minecraft.text.Style;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.math.MathHelper;
 
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
 
 public class AntiSpam {
-    public static final Queue<Text> messagesToAdd = new LinkedList<>();
     private final MinecraftClient MC = MinecraftClient.getInstance();
     private boolean enabled = true;
 
@@ -34,8 +33,10 @@ public class AntiSpam {
     }
 
 
-    private ActionResult onChat(ClientPlayerEntity entity, Text chatText, int chatLineId, List<ChatHudLine<OrderedText>> chatLines) {
+    private ActionResult onChat(AddChatMessageCallback.ChatAddEvent event) {
         if (!enabled) return ActionResult.PASS;
+        List<ChatHudLine<OrderedText>> chatLines = event.getChatLines();
+        var chatText = event.getChatText();
         if (chatLines.isEmpty())
             return ActionResult.PASS;
 
@@ -140,8 +141,8 @@ public class AntiSpam {
             chatText = new LiteralText("").append(chatText).append(new LiteralText(" [x" + spamCounter + "]"));
         }
 
-        messagesToAdd.add(chatText);
-        return ActionResult.FAIL;
+        event.setChatText(chatText);
+        return ActionResult.PASS;
     }
 
 

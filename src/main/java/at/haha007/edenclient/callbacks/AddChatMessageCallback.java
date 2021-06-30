@@ -12,9 +12,9 @@ import java.util.List;
 
 public interface AddChatMessageCallback {
     Event<AddChatMessageCallback> EVENT = EventFactory.createArrayBacked(AddChatMessageCallback.class,
-            listeners -> (player, text, lineId, chatLines) -> {
+            listeners -> (event) -> {
                 for (AddChatMessageCallback listener : listeners) {
-                    ActionResult result = listener.interact(player, text, lineId, chatLines);
+                    ActionResult result = listener.interact(event);
 
                     if (result != ActionResult.PASS) {
                         return result;
@@ -24,5 +24,39 @@ public interface AddChatMessageCallback {
                 return ActionResult.PASS;
             });
 
-    ActionResult interact(ClientPlayerEntity player, Text chatText, int chatLineId, List<ChatHudLine<OrderedText>> chatLines);
+    ActionResult interact(ChatAddEvent event);
+
+    public static class ChatAddEvent {
+        private final ClientPlayerEntity player;
+        private Text chatText;
+        private final int chatLineId;
+        private final List<ChatHudLine<OrderedText>> chatLines;
+
+        public ChatAddEvent(ClientPlayerEntity player, Text chatText, int chatLineId, List<ChatHudLine<OrderedText>> chatLines) {
+            this.player = player;
+            this.chatText = chatText;
+            this.chatLineId = chatLineId;
+            this.chatLines = chatLines;
+        }
+
+        public Text getChatText() {
+            return chatText;
+        }
+
+        public List<ChatHudLine<OrderedText>> getChatLines() {
+            return chatLines;
+        }
+
+        public int getChatLineId() {
+            return chatLineId;
+        }
+
+        public ClientPlayerEntity getPlayer() {
+            return player;
+        }
+
+        public void setChatText(Text chatText) {
+            this.chatText = chatText;
+        }
+    }
 }
