@@ -73,7 +73,7 @@ public class ChestShopMod {
         int z = pos.getZ() / 16;
         int dz = Math.abs(chunk[1] - z);
         int dx = Math.abs(chunk[0] - x);
-        return dz <= 3 && dx <= 3;
+        return dz <= 3 && dx <= 2;
     }
 
     public void onCommand(Command command, String s, String[] args) {

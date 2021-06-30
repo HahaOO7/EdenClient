@@ -164,9 +164,7 @@ public class WordHighlighter {
             }
             if (!s.isEmpty())
                 subtext.add(new LiteralText(s).setStyle(baseStyle));
-            MutableText nextText = subtext.size() > 0 ? subtext.get(0) : new LiteralText("");
-            if (subtext.size() > 0)
-                subtext.remove(0);
+            MutableText nextText = new LiteralText("");
             subtext.forEach(nextText::append);
             t.getSiblings().stream().map(sibling -> highlight(sibling, string)).forEach(nextText::append);
             return nextText;
