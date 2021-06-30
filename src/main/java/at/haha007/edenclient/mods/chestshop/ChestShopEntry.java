@@ -4,6 +4,8 @@ import at.haha007.edenclient.utils.MathUtils;
 import net.minecraft.block.entity.SignBlockEntity;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.text.Text;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.Vec3i;
 
 import java.util.Objects;
@@ -50,7 +52,7 @@ public class ChestShopEntry {
         this.amount = amount;
         this.isShop = canBuy() || canSell();
         this.owner = player;
-        this.item = item;
+        this.item = item.toLowerCase();
     }
 
     public ChestShopEntry(NbtCompound tag) {
@@ -59,7 +61,7 @@ public class ChestShopEntry {
         int[] ints = tag.getIntArray("pos");
         pos = new Vec3i(ints[0], ints[1], ints[2]);
         owner = tag.getString("owner");
-        item = tag.getString("item");
+        item = tag.getString("item").toLowerCase();
         if (tag.contains("buyPrice"))
             buyPrice = tag.getInt("buyPrice");
         if (tag.contains("sellPrice"))
@@ -135,4 +137,7 @@ public class ChestShopEntry {
         return sb.toString();
     }
 
+    public ChunkPos getChunkPos() {
+        return new ChunkPos(new BlockPos(pos));
+    }
 }

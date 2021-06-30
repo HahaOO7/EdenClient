@@ -8,7 +8,6 @@ import at.haha007.edenclient.command.CommandManager;
 import at.haha007.edenclient.utils.PlayerUtils;
 import net.minecraft.block.entity.SignBlockEntity;
 import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.world.ClientWorld;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtList;
 import net.minecraft.text.LiteralText;
@@ -16,12 +15,15 @@ import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.Vec3i;
+import net.minecraft.world.chunk.ChunkManager;
+import net.minecraft.world.chunk.WorldChunk;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class ChestShopMod {
 
-    private final Map<Vec3i, ChestShopEntry> shops = new HashMap<>();
+    Map<ChunkPos, Map<Vec3i, ChestShopEntry>> shops = new HashMap<>();
     private int[] chunk = {0, 0};
     private boolean searchEnabled = true;
 
@@ -42,38 +44,21 @@ public class ChestShopMod {
         return ActionResult.PASS;
     }
 
-    private void checkForShops(ClientPlayerEntity player) {
-        ClientWorld world = player.clientWorld;
-        ChunkPos c = player.getChunkPos();
 
-        shops.keySet().
-                stream().
-                filter(this::inDistance).
-                toList().forEach(shops::remove);
+    private void checkForShops(ChunkManager cm, ChunkPos chunk) {
+        if (!cm.isChunkLoaded(chunk.x, chunk.z)) return;
+        WorldChunk c = cm.getWorldChunk(chunk.x, chunk.z, false);
+        if (c == null) return;
 
-        int dist = 3;
-        int minX = c.x - dist;
-        int maxX = c.x + dist;
-        int minZ = c.z - dist;
-        int maxZ = c.z + dist;
-        for (int x = minX; x <= maxX; x++) {
-            for (int z = minZ; z <= maxZ; z++) {
-                world.getChunk(x, z).getBlockEntities().values().stream().
-                        filter(blockEntity -> blockEntity instanceof SignBlockEntity).
-                        map(be -> (SignBlockEntity) be).
-                        map(ChestShopEntry::new).
-                        filter(ChestShopEntry::isShop).
-                        forEach(e -> shops.put(e.getPos(), e));
-            }
-        }
+        shops.remove(c.getPos());
+        Map<Vec3i, ChestShopEntry> cs = c.getBlockEntities().values().stream().filter(t -> t instanceof SignBlockEntity).map(t -> (SignBlockEntity) t).
+                map(ChestShopEntry::new).filter(ChestShopEntry::isShop).collect(Collectors.toMap(ChestShopEntry::getPos, e -> e));
+        shops.put(chunk, cs);
     }
 
-    private boolean inDistance(Vec3i pos) {
-        int x = pos.getX() / 16;
-        int z = pos.getZ() / 16;
-        int dz = Math.abs(chunk[1] - z);
-        int dx = Math.abs(chunk[0] - x);
-        return dz <= 3 && dx <= 2;
+    private void checkForShops(ClientPlayerEntity player) {
+        ChunkManager cm = player.clientWorld.getChunkManager();
+        ChunkPos.stream(player.getChunkPos(), 5).forEach(cp -> checkForShops(cm, cp));
     }
 
     public void onCommand(Command command, String s, String[] args) {
@@ -94,6 +79,13 @@ public class ChestShopMod {
                 sendMessage("Cleared ChestShop entries.");
                 return;
             }
+            case "list" -> {
+                int sum = shops.values().stream().mapToInt(Map::size).sum();
+                if (sum < 20)
+                    shops.values().forEach(sl -> sl.values().stream().map(cs -> cs.getItem() + " B" + cs.getBuyPricePerItem() + ":" + cs.getSellPricePerItem() + "S").forEach(this::sendMessage));
+                sendMessage(String.format("There are %s ChestShops stored.", sum));
+                return;
+            }
             case "toggle" -> {
                 searchEnabled = !searchEnabled;
                 sendMessage("ChestShop search " + (searchEnabled ? "enabled" : "disabled"));
@@ -104,22 +96,18 @@ public class ChestShopMod {
                 for (int i = 1; i < args.length; i++) {
                     sb.append(" ").append(args[i]);
                 }
-                item = sb.toString().replaceFirst(" ", "");
+                item = sb.toString().replaceFirst(" ", "").toLowerCase();
                 sendMessage("Sell: ");
-                shops.
-                        values().
-                        stream().
-                        filter(ChestShopEntry::canSell).
-                        filter(entry -> entry.getItem().equalsIgnoreCase(item)).
-                        sorted((b, a) -> Float.compare(a.getSellPricePerItem(), b.getSellPricePerItem())).
-                        limit(10).
-                        forEach(cs -> sendMessage(String.format(
-                                "%s[%d, %d, %d] for %.2f$/item",
-                                cs.getOwner(),
-                                cs.getPos().getX(),
-                                cs.getPos().getY(),
-                                cs.getPos().getZ(),
-                                cs.getSellPricePerItem())));
+                List<ChestShopEntry> matching = new ArrayList<>();
+                shops.values().forEach(m -> m.values().stream().filter(ChestShopEntry::canSell).
+                        filter(e -> e.getItem().equals(item)).forEach(matching::add));
+                matching.stream().sorted(Comparator.comparingDouble(ChestShopEntry::getSellPricePerItem).reversed()).limit(10).map(cs -> String.format(
+                        "%s[%d, %d, %d] for %.2f$/item",
+                        cs.getOwner(),
+                        cs.getPos().getX(),
+                        cs.getPos().getY(),
+                        cs.getPos().getZ(),
+                        cs.getSellPricePerItem())).forEach(this::sendMessage);
                 return;
             }
             case "buy" -> {
@@ -127,22 +115,18 @@ public class ChestShopMod {
                 for (int i = 1; i < args.length; i++) {
                     sb.append(" ").append(args[i]);
                 }
-                item = sb.toString().replaceFirst(" ", "");
+                item = sb.toString().replaceFirst(" ", "").toLowerCase();
                 sendMessage("Buy: ");
-                shops.
-                        values().
-                        stream().
-                        filter(ChestShopEntry::canBuy).
-                        filter(entry -> entry.getItem().equalsIgnoreCase(item)).
-                        sorted((a, b) -> Float.compare(a.getBuyPricePerItem(), b.getBuyPricePerItem())).
-                        limit(10).
-                        forEach(cs -> sendMessage(String.format(
-                                "%s[%d, %d, %d] for %.2f$/item",
-                                cs.getOwner(),
-                                cs.getPos().getX(),
-                                cs.getPos().getY(),
-                                cs.getPos().getZ(),
-                                cs.getBuyPricePerItem())));
+                List<ChestShopEntry> matching = new ArrayList<>();
+                shops.values().forEach(m -> m.values().stream().filter(ChestShopEntry::canBuy).
+                        filter(e -> e.getItem().equals(item)).forEach(matching::add));
+                matching.stream().sorted(Comparator.comparingDouble(ChestShopEntry::getBuyPricePerItem)).limit(10).map(cs -> String.format(
+                        "%s[%d, %d, %d] for %.2f$/item",
+                        cs.getOwner(),
+                        cs.getPos().getX(),
+                        cs.getPos().getY(),
+                        cs.getPos().getZ(),
+                        cs.getSellPricePerItem())).forEach(this::sendMessage);
                 return;
             }
         }
@@ -157,7 +141,7 @@ public class ChestShopMod {
         NbtList list = new NbtList();
         tag.put("entries", list);
         tag.putBoolean("enabled", searchEnabled);
-        shops.values().forEach(cs -> list.add(cs.toTag()));
+        shops.values().forEach(m -> m.values().forEach(cs -> list.add(cs.toTag())));
         overTag.put("chestshop", tag);
         return ActionResult.PASS;
     }
@@ -167,9 +151,12 @@ public class ChestShopMod {
         searchEnabled = !tag.contains("enabled") || tag.getBoolean("enabled");
         NbtList list = tag.getList("entries", 10);
         shops.clear();
-        list.stream().map(nbt -> (NbtCompound) nbt).map(ChestShopEntry::new).forEach(entry -> shops.put(entry.getPos(), entry));
+        list.stream().map(nbt -> (NbtCompound) nbt).map(ChestShopEntry::new).
+                forEach(entry -> shops.put(entry.getChunkPos(), shops.containsKey(entry.getChunkPos()) ?
+                        shops.get(entry.getChunkPos()) : new HashMap<>(Map.of(entry.getPos(), entry))));
         return ActionResult.PASS;
     }
+
 
     private void sendMessage(String message) {
         PlayerUtils.sendMessage(new LiteralText(message).formatted(Formatting.GOLD));
