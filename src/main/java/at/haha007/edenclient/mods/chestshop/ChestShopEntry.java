@@ -3,7 +3,10 @@ package at.haha007.edenclient.mods.chestshop;
 import at.haha007.edenclient.utils.MathUtils;
 import net.minecraft.block.entity.SignBlockEntity;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.text.Text;
 import net.minecraft.util.math.Vec3i;
+
+import java.util.Objects;
 
 public class ChestShopEntry {
     private Vec3i pos;
@@ -15,22 +18,16 @@ public class ChestShopEntry {
 
 
     public ChestShopEntry(SignBlockEntity sign) {
-        NbtCompound tag = new NbtCompound();
-        sign.readNbt(tag);
         String[] lines = new String[4];
         for (int i = 0; i < lines.length; i++) {
-            lines[i] = getString(tag.getString("Text" + (i + 1)));
+            lines[i] = sign.getTextOnRow(i, false).asString().trim();
         }
 
         String player = lines[0];
         if (player.isEmpty()) return;
 
-        int amount;
-        try {
-            amount = Integer.parseInt(lines[1]);
-        } catch (NumberFormatException e) {
-            return;
-        }
+        if(!MathUtils.isInteger(lines[1]))return;
+        int amount = Integer.parseInt(lines[1]);
 
         String item = lines[3];
         if (item.isEmpty()) return;
@@ -120,17 +117,6 @@ public class ChestShopEntry {
 
     public Vec3i getPos() {
         return pos;
-    }
-
-    private String getString(String string) {
-        string = string.
-                replaceFirst("\\{", "").
-                replaceFirst("\\{", "").
-                replaceFirst("\"text\":\"", "").
-                replaceFirst("\"text\":\"", "").
-                replaceFirst("\"}],", "").
-                replaceFirst("\"extra\":\\[", "");
-        return string;
     }
 
     public String toString() {

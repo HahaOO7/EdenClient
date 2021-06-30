@@ -44,16 +44,13 @@ public class ChestShopMod {
 
     private void checkForShops(ClientPlayerEntity player) {
         ClientWorld world = player.clientWorld;
-        Set<Vec3i> remove = new HashSet<>();
         ChunkPos c = player.getChunkPos();
 
-        shops.
-                keySet().
+        shops.keySet().
                 stream().
                 filter(this::inDistance).
-                forEach(remove::add);
+                toList().forEach(shops::remove);
 
-        remove.forEach(shops::remove);
         int dist = 3;
         int minX = c.x - dist;
         int maxX = c.x + dist;
@@ -72,7 +69,11 @@ public class ChestShopMod {
     }
 
     private boolean inDistance(Vec3i pos) {
-        return Math.abs(chunk[1] - (pos.getZ() << 4)) <= 2 && Math.abs(chunk[0] - (pos.getX() << 4)) <= 2;
+        int x = pos.getX() / 16;
+        int z = pos.getZ() / 16;
+        int dz = Math.abs(chunk[1] - z);
+        int dx = Math.abs(chunk[0] - x);
+        return dz <= 3 && dx <= 3;
     }
 
     public void onCommand(Command command, String s, String[] args) {
@@ -80,6 +81,7 @@ public class ChestShopMod {
             sendMessage("/chestshop sell itemtype");
             sendMessage("/chestshop buy itemtype");
             sendMessage("/chestshop toggle");
+            sendMessage("/chestshop clear");
             return;
         }
 
@@ -87,6 +89,11 @@ public class ChestShopMod {
         String item;
 
         switch (args[0].toLowerCase()) {
+            case "clear" -> {
+                shops.clear();
+                sendMessage("Cleared ChestShop entries.");
+                return;
+            }
             case "toggle" -> {
                 searchEnabled = !searchEnabled;
                 sendMessage("ChestShop search " + (searchEnabled ? "enabled" : "disabled"));
