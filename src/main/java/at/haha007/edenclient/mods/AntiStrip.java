@@ -21,6 +21,8 @@ import net.minecraft.util.hit.BlockHitResult;
 import java.util.Collection;
 import java.util.HashSet;
 
+import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
+
 public class AntiStrip {
     private boolean enabled = true;
     private final Collection<Item> axeItems = new HashSet<>();
@@ -53,7 +55,7 @@ public class AntiStrip {
 
     private void onCommand(Command cmd, String label, String[] args) {
         enabled = !enabled;
-        MinecraftClient.getInstance().inGameHud.getChatHud().addMessage(new LiteralText(enabled ? "Enabled AntiStrip." : "Disabled AntiStrip.").formatted(Formatting.AQUA));
+        sendModMessage(new LiteralText(enabled ? "Enabled AntiStrip." : "Disabled AntiStrip.").formatted(Formatting.GOLD));
     }
 
     private ActionResult onInteractBlock(ClientPlayerEntity player, ClientWorld world, Hand hand, BlockHitResult blockHitResult) {

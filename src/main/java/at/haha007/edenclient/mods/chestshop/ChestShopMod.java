@@ -158,7 +158,7 @@ public class ChestShopMod {
 
 
     private void sendMessage(String message) {
-        PlayerUtils.sendMessage(new LiteralText(message).formatted(Formatting.GOLD));
+        PlayerUtils.sendModMessage(new LiteralText(message).formatted(Formatting.GOLD));
     }
 
 

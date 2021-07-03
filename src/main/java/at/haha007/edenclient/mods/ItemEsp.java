@@ -15,7 +15,7 @@ import net.minecraft.util.Formatting;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 
-import static at.haha007.edenclient.utils.PlayerUtils.sendMessage;
+import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
 public class ItemEsp {
     boolean enabled = false;
@@ -55,30 +55,30 @@ public class ItemEsp {
 
     private void onCommand(Command cmd, String label, String[] args) {
         if (args.length == 0) {
-            sendMessage(new LiteralText("/itemesp toggle").formatted(Formatting.GOLD));
-            sendMessage(new LiteralText("/itemesp size <size>").formatted(Formatting.GOLD));
-            sendMessage(new LiteralText("/itemesp solid").formatted(Formatting.GOLD));
-            sendMessage(new LiteralText("/itemesp color <r> <g> <b> -> (0-256)").formatted(Formatting.GOLD));
-            sendMessage(new LiteralText("/itemesp line <strength>").formatted(Formatting.GOLD));
+            sendModMessage(new LiteralText("/itemesp toggle").formatted(Formatting.GOLD));
+            sendModMessage(new LiteralText("/itemesp size <size>").formatted(Formatting.GOLD));
+            sendModMessage(new LiteralText("/itemesp solid").formatted(Formatting.GOLD));
+            sendModMessage(new LiteralText("/itemesp color <r> <g> <b> -> (0-256)").formatted(Formatting.GOLD));
+            sendModMessage(new LiteralText("/itemesp line <strength>").formatted(Formatting.GOLD));
             return;
         }
         switch (args[0].toLowerCase()) {
             case "toggle" -> {
                 enabled = !enabled;
-                sendMessage(new LiteralText("Item ESP " + (enabled ? "enabled" : "disabled")));
+                sendModMessage(new LiteralText("Item ESP " + (enabled ? "enabled" : "disabled")));
             }
             case "size" -> {
                 if (args.length != 2) {
-                    sendMessage(new LiteralText("/itemesp size <size>").formatted(Formatting.GOLD));
+                    sendModMessage(new LiteralText("/itemesp size <size>").formatted(Formatting.GOLD));
                     break;
                 }
                 try {
                     size = Float.parseFloat(args[1]);
                 } catch (NumberFormatException e) {
-                    sendMessage(new LiteralText("Size has to be a number.").formatted(Formatting.GOLD));
+                    sendModMessage(new LiteralText("Size has to be a number.").formatted(Formatting.GOLD));
                     break;
                 }
-                sendMessage(new LiteralText("Size: " + size).formatted(Formatting.GOLD));
+                sendModMessage(new LiteralText("Size: " + size).formatted(Formatting.GOLD));
             }
             case "color" -> {
                 float r, g, b;
@@ -87,11 +87,11 @@ public class ItemEsp {
                     g = Float.parseFloat(args[2]) / 256;
                     b = Float.parseFloat(args[3]) / 256;
                 } catch (NumberFormatException | IndexOutOfBoundsException e) {
-                    sendMessage(new LiteralText("/itemesp color <r> <g> <b> -> (0-256)").formatted(Formatting.GOLD));
+                    sendModMessage(new LiteralText("/itemesp color <r> <g> <b> -> (0-256)").formatted(Formatting.GOLD));
                     return;
                 }
                 if (r > 1 || b > 1 || g > 1) {
-                    sendMessage(new LiteralText("/itemesp color <r> <g> <b> -> (0-256)").formatted(Formatting.GOLD));
+                    sendModMessage(new LiteralText("/itemesp color <r> <g> <b> -> (0-256)").formatted(Formatting.GOLD));
                     return;
                 }
                 this.r = r;
@@ -100,11 +100,11 @@ public class ItemEsp {
             }
             case "solid" -> {
                 solid = !solid;
-                sendMessage(new LiteralText("Item ESP " + (solid ? "solid" : "transparent")));
+                sendModMessage(new LiteralText("Item ESP " + (solid ? "solid" : "transparent")));
             }
             default -> {
-                sendMessage(new LiteralText("/itemesp toggle").formatted(Formatting.GOLD));
-                sendMessage(new LiteralText("/itemesp size <size>").formatted(Formatting.GOLD));
+                sendModMessage(new LiteralText("/itemesp toggle").formatted(Formatting.GOLD));
+                sendModMessage(new LiteralText("/itemesp size <size>").formatted(Formatting.GOLD));
             }
         }
     }

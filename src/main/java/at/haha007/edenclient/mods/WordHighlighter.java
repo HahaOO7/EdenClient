@@ -14,15 +14,18 @@ import net.minecraft.text.*;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class WordHighlighter {
 
-    protected static Set<String> words = new HashSet<>();
+    protected static List<String> words = new ArrayList<>();
     protected static boolean enabled;
-    private final Style style = Style.EMPTY.withBold(true).withUnderline(true).withColor(Formatting.AQUA);
+    private final Style style = Style.EMPTY.withBold(true).withColor(Formatting.AQUA);
 
     public WordHighlighter() {
         CommandManager.registerCommand(new Command(this::onCommand), "highlight", "hl");
@@ -40,7 +43,7 @@ public class WordHighlighter {
         NbtCompound tag = compoundTag.getCompound("wordhighlighter");
 
         if (tag == null) {
-            WordHighlighter.words = new HashSet<>();
+            WordHighlighter.words = new ArrayList<>();
             return ActionResult.PASS;
         }
 
@@ -52,7 +55,7 @@ public class WordHighlighter {
 
         NbtList nbtList = tag.getList("words", 8);
 
-        WordHighlighter.words = new HashSet<>();
+        WordHighlighter.words = new ArrayList<>();
         if (nbtList != null) {
             for (NbtElement tag1 : nbtList) {
                 WordHighlighter.words.add(tag1.asString());
@@ -80,11 +83,11 @@ public class WordHighlighter {
 
             enabled = !enabled;
             if (enabled)
-                PlayerUtils.sendMessage(new LiteralText("[EdenClient] Enabled WordHighlighter!").formatted(Formatting.GOLD));
+                PlayerUtils.sendModMessage(new LiteralText("Enabled WordHighlighter!").formatted(Formatting.GOLD));
             else
-                PlayerUtils.sendMessage(new LiteralText("[EdenClient] Disabled WordHighlighter!").formatted(Formatting.GOLD));
+                PlayerUtils.sendModMessage(new LiteralText("Disabled WordHighlighter!").formatted(Formatting.GOLD));
 
-            PlayerUtils.sendMessage(new LiteralText("[EdenClient] For further usage use one of the following commands:").formatted(Formatting.GOLD));
+            PlayerUtils.sendModMessage(new LiteralText("For further usage use one of the following commands:").formatted(Formatting.GOLD));
             sendUsageDebugMessage();
             return;
         }
@@ -103,21 +106,22 @@ public class WordHighlighter {
     }
 
     private void listWords() {
-        PlayerUtils.sendMessage(new LiteralText("[EdenClient] These words are currently highlighted:").formatted(Formatting.GOLD));
-        PlayerUtils.sendMessage(new LiteralText("[EdenClient] " + WordHighlighter.words.toString()).formatted(Formatting.GOLD));
+        PlayerUtils.sendModMessage(new LiteralText("These words are currently highlighted:").formatted(Formatting.GOLD));
+        PlayerUtils.sendModMessage(new LiteralText(WordHighlighter.words.toString()).formatted(Formatting.GOLD));
     }
 
     private void clearWords() {
         words.clear();
-        PlayerUtils.sendMessage(new LiteralText("[EdenClient] Cleared all words!").formatted(Formatting.GOLD));
+        PlayerUtils.sendModMessage(new LiteralText("Cleared all words!").formatted(Formatting.GOLD));
     }
 
     private void addWords(String[] inputs) {
         if (inputs.length < 2) {
             sendDebugMessage();
         }
-        PlayerUtils.sendMessage(new LiteralText("[EdenClient] Added words!").formatted(Formatting.GOLD));
+        PlayerUtils.sendModMessage(new LiteralText("Added words!").formatted(Formatting.GOLD));
         WordHighlighter.words.addAll(Arrays.asList(inputs).subList(1, inputs.length));
+        words.sort(Comparator.comparingInt(String::length).reversed());
     }
 
     private void removeWords(String[] inputs) {
@@ -125,21 +129,21 @@ public class WordHighlighter {
             sendDebugMessage();
         }
         Arrays.asList(inputs).subList(1, inputs.length).forEach(WordHighlighter.words::remove);
-        PlayerUtils.sendMessage(new LiteralText("[EdenClient] Removed words (if viable)!").formatted(Formatting.GOLD));
+        PlayerUtils.sendModMessage(new LiteralText("Removed words (if viable)!").formatted(Formatting.GOLD));
     }
 
 
     private void sendUsageDebugMessage() {
-        PlayerUtils.sendMessage(new LiteralText("[EdenClient] Using only \"/hl\" or \"/highlight\" will toggle the WordHighlighter!").formatted(Formatting.GOLD));
-        PlayerUtils.sendMessage(new LiteralText("[EdenClient] You may use one of the following arguments: [add, remove, clear, list]!").formatted(Formatting.GOLD));
-        PlayerUtils.sendMessage(new LiteralText("[EdenClient] E.G: /highlights add EmielRegis").formatted(Formatting.GOLD));
+        PlayerUtils.sendModMessage(new LiteralText("Using only \"/hl\" or \"/highlight\" will toggle the WordHighlighter!").formatted(Formatting.GOLD));
+        PlayerUtils.sendModMessage(new LiteralText("You may use one of the following arguments: [add, remove, clear, list]!").formatted(Formatting.GOLD));
+        PlayerUtils.sendModMessage(new LiteralText("E.G: /highlights add EmielRegis").formatted(Formatting.GOLD));
     }
 
     private void sendDebugMessage() {
-        PlayerUtils.sendMessage(new LiteralText("[EdenClient] Wrong use of command!").formatted(Formatting.GOLD));
-        PlayerUtils.sendMessage(new LiteralText("[EdenClient] Using only \"/hl\" or \"/highlight\" will toggle the WordHighlighter!").formatted(Formatting.GOLD));
-        PlayerUtils.sendMessage(new LiteralText("[EdenClient] You may use one of the following arguments: [add, remove, clear, list]!").formatted(Formatting.GOLD));
-        PlayerUtils.sendMessage(new LiteralText("[EdenClient] E.G: /highlights add EmielRegis").formatted(Formatting.GOLD));
+        PlayerUtils.sendModMessage(new LiteralText("Wrong use of command!").formatted(Formatting.GOLD));
+        PlayerUtils.sendModMessage(new LiteralText("Using only \"/hl\" or \"/highlight\" will toggle the WordHighlighter!").formatted(Formatting.GOLD));
+        PlayerUtils.sendModMessage(new LiteralText("You may use one of the following arguments: [add, remove, clear, list]!").formatted(Formatting.GOLD));
+        PlayerUtils.sendModMessage(new LiteralText("E.G: /highlights add EmielRegis").formatted(Formatting.GOLD));
     }
 
     private Text highlight(Text text, String string) {

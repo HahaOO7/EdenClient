@@ -16,6 +16,7 @@ import net.minecraft.nbt.NbtList;
 import net.minecraft.nbt.NbtString;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.ActionResult;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
 
@@ -24,6 +25,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
 public class AutoSell {
     private final Set<Item> autoSellItems = new HashSet<>();
@@ -121,6 +124,6 @@ public class AutoSell {
 
 
     private void sendChatMessage(String text) {
-        MinecraftClient.getInstance().inGameHud.getChatHud().addMessage(new LiteralText(text));
+        sendModMessage(new LiteralText(text).formatted(Formatting.GOLD));
     }
 }

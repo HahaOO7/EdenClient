@@ -17,9 +17,12 @@ import net.minecraft.text.LiteralText;
 import net.minecraft.text.OrderedText;
 import net.minecraft.text.Style;
 import net.minecraft.util.ActionResult;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.math.MathHelper;
 
 import java.util.List;
+
+import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
 public class AntiSpam {
     private final MinecraftClient MC = MinecraftClient.getInstance();
@@ -147,12 +150,7 @@ public class AntiSpam {
 
 
     public void onCommand(Command command, String s, String[] strings) {
-        if ((enabled = !enabled)) {
-            MinecraftClient.getInstance().inGameHud.getChatHud().addMessage(new LiteralText("AntiSpam enabled"));
-        } else {
-            MinecraftClient.getInstance().inGameHud.getChatHud().addMessage(new LiteralText("AntiSpam disabled"));
-        }
-
+        sendModMessage(new LiteralText((enabled = !enabled) ? "Antispam enabled" : "Antispam enabled").formatted(Formatting.GOLD));
         NbtCompound cfg = PerWorldConfig.getInstance().getTag();
         NbtCompound tag = cfg.getCompound("antiSpam");
         tag.putBoolean("enabled", enabled);

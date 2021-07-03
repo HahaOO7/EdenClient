@@ -18,7 +18,7 @@ import net.minecraft.util.math.BlockPos;
 
 import java.util.Random;
 
-import static at.haha007.edenclient.utils.PlayerUtils.sendMessage;
+import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
 public class BarrierDisplay {
     private boolean enabled = true;
@@ -51,7 +51,7 @@ public class BarrierDisplay {
         } catch (NumberFormatException | ArrayIndexOutOfBoundsException ignored) {
         }
         enabled = !enabled;
-        sendMessage(new LiteralText("Barrier display counter is " + counter).formatted(Formatting.GOLD));
+        sendModMessage(new LiteralText("Barrier display counter is " + counter).formatted(Formatting.GOLD));
     }
 
     private ActionResult onSave(NbtCompound compoundTag) {

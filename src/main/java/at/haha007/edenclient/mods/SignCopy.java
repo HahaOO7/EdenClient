@@ -20,6 +20,8 @@ import net.minecraft.util.math.Direction;
 
 import java.util.Objects;
 
+import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
+
 public class SignCopy {
     public static String[] copy = new String[4];
     boolean enabled = false;
@@ -58,7 +60,7 @@ public class SignCopy {
 
     private void onCommand(Command command, String s, String[] strings) {
         enabled = !enabled;
-        MinecraftClient.getInstance().inGameHud.getChatHud().addMessage(new LiteralText(enabled ? "SignCopy enabled" : "SignCopy disabled"));
+        sendModMessage(new LiteralText(enabled ? "SignCopy enabled" : "SignCopy disabled"));
     }
 
     @SuppressWarnings("ConstantConditions")
