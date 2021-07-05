@@ -83,9 +83,9 @@ public class WordHighlighter {
             WordHighlighter.underlined = tag.getBoolean("underlined");
 
         if (!tag.contains("r") || !tag.contains("g") || !tag.contains("b"))
-            WordHighlighter.color = new Color(tag.getInt("r"), tag.getInt("g"), tag.getInt("b"));
-        else
             WordHighlighter.color = new Color(baseColor);
+        else
+            WordHighlighter.color = new Color(tag.getInt("r"), tag.getInt("g"), tag.getInt("b"));
 
         style = Style.EMPTY.withColor(TextColor.fromRgb(color.getRGB())).withUnderline(underlined).withBold(bold).withItalic(italic);
 
@@ -105,9 +105,9 @@ public class WordHighlighter {
         tag.putBoolean("bold", bold);
         tag.putBoolean("italic", italic);
         tag.putBoolean("underlined", underlined);
-        tag.putInt("r", r);
-        tag.putInt("g", g);
-        tag.putInt("b", b);
+        tag.putInt("r", color.getRed());
+        tag.putInt("g", color.getGreen());
+        tag.putInt("b", color.getBlue());
 
         return ActionResult.PASS;
     }
