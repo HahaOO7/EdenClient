@@ -163,8 +163,11 @@ public class WordHighlighter {
         if (inputs.length == 2) {
             if (MathUtils.isInteger(inputs[1])) {
                 color = new Color(Integer.parseInt(inputs[1]));
-            } else
+                PlayerUtils.sendModMessage(new LiteralText("New color set from RGB value!"));
+            } else {
                 color = getColorFromColorcode(inputs[1].trim());
+                PlayerUtils.sendModMessage(new LiteralText("New color set from Bukkit Colorcode values!"));
+            }
             return;
         }
 
@@ -175,20 +178,22 @@ public class WordHighlighter {
                 g = Integer.parseInt(inputs[2]) % 256;
             if (MathUtils.isInteger(inputs[3]))
                 b = Integer.parseInt(inputs[3]) % 256;
+            PlayerUtils.sendModMessage(new LiteralText("New color set from RGB values!"));
             return;
         }
         sendDebugMessage();
     }
 
     private void setStyle(String[] inputs) {
-
         if (inputs[1].equals("reset")) {
             style = Style.EMPTY.withColor(TextColor.fromRgb(5636095));
+            PlayerUtils.sendModMessage(new LiteralText("Style reset!"));
         }
 
         if (inputs.length == 2) {
             if (inputs[1].contains("&"))
                 style = getStyleFromFormattingcode(inputs[1].trim());
+            PlayerUtils.sendModMessage(new LiteralText("Style set from Bukkit Formattingcodes!"));
         }
     }
 
@@ -197,7 +202,7 @@ public class WordHighlighter {
         String[] inputs = input.replace("&", " &").trim().split(" ");
 
         for (String s : inputs) {
-            switch (input) {
+            switch (s) {
                 case "&l" -> style = style.withBold(true);
                 case "&n" -> style = style.withUnderline(true);
                 case "&o" -> style = style.withItalic(true);
@@ -214,7 +219,7 @@ public class WordHighlighter {
         String[] inputs = input.replace("&", " &").trim().split(" ");
 
         for (String s : inputs) {
-            switch (input) {
+            switch (s) {
                 case "&1" -> color = new Color(170);
                 case "&2" -> color = new Color(43520);
                 case "&3" -> color = new Color(43690);
@@ -266,14 +271,14 @@ public class WordHighlighter {
 
     private void sendUsageDebugMessage() {
         PlayerUtils.sendModMessage(new LiteralText("Using only \"/hl\" or \"/highlight\" will toggle the WordHighlighter!").formatted(Formatting.GOLD));
-        PlayerUtils.sendModMessage(new LiteralText("You may use one of the following arguments: [add <words>, remove <words>, clear, list, bold, italic, underline, style <formattingcode>, color <colorcode/rgb>]!").formatted(Formatting.GOLD));
+        PlayerUtils.sendModMessage(new LiteralText("You may use one of the following arguments: [add <words>, remove <words>, clear, list, bold, italic, underline, style <formattingcode/reset>, color <colorcode/rgb>]!").formatted(Formatting.GOLD));
         PlayerUtils.sendModMessage(new LiteralText("E.G: /highlights add EmielRegis").formatted(Formatting.GOLD));
     }
 
     private void sendDebugMessage() {
         PlayerUtils.sendModMessage(new LiteralText("Wrong use of command!").formatted(Formatting.GOLD));
         PlayerUtils.sendModMessage(new LiteralText("Using only \"/hl\" or \"/highlight\" will toggle the WordHighlighter!").formatted(Formatting.GOLD));
-        PlayerUtils.sendModMessage(new LiteralText("You may use one of the following arguments: [add <words>, remove <words>, clear, list, bold, italic, underline, style <formattingcode>, color <colorcode/rgb>]!").formatted(Formatting.GOLD));
+        PlayerUtils.sendModMessage(new LiteralText("You may use one of the following arguments: [add <words>, remove <words>, clear, list, bold, italic, underline, style <formattingcode/reset>, color <colorcode/rgb>]!").formatted(Formatting.GOLD));
         PlayerUtils.sendModMessage(new LiteralText("E.G: /highlights add EmielRegis").formatted(Formatting.GOLD));
     }
 
