@@ -121,7 +121,7 @@ public class ChestShopMod {
                         cs.getPos().getX(),
                         cs.getPos().getY(),
                         cs.getPos().getZ(),
-                        cs.getSellPricePerItem())).forEach(this::sendMessage);
+                        cs.getBuyPricePerItem())).forEach(this::sendMessage);
                 return;
             }
         }
