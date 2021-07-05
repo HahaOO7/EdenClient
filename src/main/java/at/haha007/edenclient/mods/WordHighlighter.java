@@ -165,8 +165,8 @@ public class WordHighlighter {
                 color = new Color(Integer.parseInt(inputs[1]));
                 PlayerUtils.sendModMessage(new LiteralText("New color set from RGB value!"));
             } else {
-                color = getColorFromColorcode(inputs[1].trim());
-                PlayerUtils.sendModMessage(new LiteralText("New color set from Bukkit Colorcode values!"));
+                color = getColorFromColorCode(inputs[1].trim());
+                PlayerUtils.sendModMessage(new LiteralText("New color set from Bukkit ColorCode values!"));
             }
             return;
         }
@@ -192,21 +192,36 @@ public class WordHighlighter {
 
         if (inputs.length == 2) {
             if (inputs[1].contains("&"))
-                style = getStyleFromFormattingcode(inputs[1].trim());
-            PlayerUtils.sendModMessage(new LiteralText("Style set from Bukkit Formattingcodes!"));
+                style = getStyleFromFormattingCode(inputs[1].trim());
+            PlayerUtils.sendModMessage(new LiteralText("Style set from Bukkit FormattingCodes!"));
         }
     }
 
-    private static Style getStyleFromFormattingcode(String input) {
-        Style style = WordHighlighter.style;
+    private static Style getStyleFromFormattingCode(String input) {
+        Style style = Style.EMPTY;
         String[] inputs = input.replace("&", " &").trim().split(" ");
 
         for (String s : inputs) {
             switch (s) {
+                case "&r" -> style = Style.EMPTY.withColor(TextColor.fromRgb(baseColor));
                 case "&l" -> style = style.withBold(true);
                 case "&n" -> style = style.withUnderline(true);
                 case "&o" -> style = style.withItalic(true);
-                case "&r" -> style = Style.EMPTY.withColor(TextColor.fromRgb(baseColor));
+                case "&1" -> style = style.withColor(TextColor.fromRgb(170));
+                case "&2" -> style = style.withColor(TextColor.fromRgb(43520));
+                case "&3" -> style = style.withColor(TextColor.fromRgb(43690));
+                case "&4" -> style = style.withColor(TextColor.fromRgb(11141120));
+                case "&5" -> style = style.withColor(TextColor.fromRgb(11141290));
+                case "&6" -> style = style.withColor(TextColor.fromRgb(16755200));
+                case "&7" -> style = style.withColor(TextColor.fromRgb(11184810));
+                case "&8" -> style = style.withColor(TextColor.fromRgb(5592405));
+                case "&9" -> style = style.withColor(TextColor.fromRgb(5592575));
+                case "&a" -> style = style.withColor(TextColor.fromRgb(5635925));
+                case "&b" -> style = style.withColor(TextColor.fromRgb(5636095));
+                case "&c" -> style = style.withColor(TextColor.fromRgb(16733525));
+                case "&d" -> style = style.withColor(TextColor.fromRgb(16733695));
+                case "&e" -> style = style.withColor(TextColor.fromRgb(16777045));
+                case "&f" -> style = style.withColor(TextColor.fromRgb(16777215));
                 default -> {
                 }
             }
@@ -214,7 +229,7 @@ public class WordHighlighter {
         return style;
     }
 
-    private static Color getColorFromColorcode(String input) {
+    private static Color getColorFromColorCode(String input) {
         Color color = WordHighlighter.color;
         String[] inputs = input.replace("&", " &").trim().split(" ");
 
