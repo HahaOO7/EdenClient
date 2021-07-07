@@ -4,7 +4,6 @@ import at.haha007.edenclient.command.Command;
 import at.haha007.edenclient.command.CommandManager;
 import at.haha007.edenclient.mods.*;
 import at.haha007.edenclient.mods.chestshop.ChestShopMod;
-import at.haha007.edenclient.mods.WordHighlighter;
 import at.haha007.edenclient.utils.PerWorldConfig;
 import net.fabricmc.api.ClientModInitializer;
 import net.minecraft.client.MinecraftClient;
@@ -27,6 +26,7 @@ public class EdenClient implements ClientModInitializer {
         new ChestShopMod();
         new WordHighlighter();
         new AntiStrip();
+        new MessageIgnorer();
 
         CommandManager.registerCommand(new Command(CommandManager::onCommand), "commands", "cmds");
     }

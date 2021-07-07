@@ -36,7 +36,9 @@ public class WordHighlighter {
     }
 
     private ActionResult onChat(AddChatMessageCallback.ChatAddEvent event) {
-        words.forEach(string -> event.setChatText(highlight(event.getChatText(), string)));
+        Text chatText = event.getChatText();
+        if (chatText == null) return ActionResult.PASS;
+        words.forEach(string -> event.setChatText(highlight(chatText, string)));
         return ActionResult.PASS;
     }
 

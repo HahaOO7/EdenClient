@@ -34,7 +34,7 @@ public abstract class ChatHudMixin extends DrawableHelper {
         AddChatMessageCallback.EVENT.invoker().interact(event);
         chatText = event.getChatText();
         ci.cancel();
-        if (chatText != null) {
+        if (chatText != null && !chatText.getString().isBlank()) {
             addMessage(chatText, chatLineId, MinecraftClient.getInstance().inGameHud.getTicks(), false);
             System.out.println("Chat: " + chatText.getString());
         }

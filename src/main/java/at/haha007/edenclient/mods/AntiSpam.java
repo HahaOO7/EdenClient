@@ -40,6 +40,7 @@ public class AntiSpam {
         if (!enabled) return ActionResult.PASS;
         List<ChatHudLine<OrderedText>> chatLines = event.getChatLines();
         var chatText = event.getChatText();
+        if (chatText == null) return ActionResult.PASS;
         if (chatLines.isEmpty())
             return ActionResult.PASS;
 
