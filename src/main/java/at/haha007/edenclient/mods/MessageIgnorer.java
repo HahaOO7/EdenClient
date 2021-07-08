@@ -34,10 +34,10 @@ public class MessageIgnorer {
     private ActionResult onLoad(NbtCompound nbtCompound) {
         regex.clear();
         enabled = false;
-        if (!nbtCompound.contains("MessegeIgnorer")) {
+        if (!nbtCompound.contains("MessageIgnorer")) {
             return ActionResult.PASS;
         }
-        NbtCompound tag = nbtCompound.getCompound("MessegeIgnorer");
+        NbtCompound tag = nbtCompound.getCompound("MessageIgnorer");
         if (tag.contains("regex")) {
             NbtList list = tag.getList("regex", 8);
             for (NbtElement e : list) {
@@ -56,7 +56,7 @@ public class MessageIgnorer {
         NbtList list = new NbtList();
         regex.forEach(s -> list.add(NbtString.of(s)));
         tag.put("regex", list);
-        nbtCompound.put("MessegeIgnorer", tag);
+        nbtCompound.put("MessageIgnorer", tag);
         return ActionResult.PASS;
     }
 
