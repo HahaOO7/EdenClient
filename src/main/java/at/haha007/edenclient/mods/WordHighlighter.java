@@ -60,6 +60,7 @@ public class WordHighlighter {
             for (NbtElement tag1 : nbtList) {
                 words.add(tag1.asString());
             }
+            words.sort(Comparator.comparingInt(String::length).reversed());
         }
         if (tag.contains("bold"))
             style = style.withBold(tag.getBoolean("bold"));
