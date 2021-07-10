@@ -100,6 +100,7 @@ public class MessageIgnorer {
                 PlayerUtils.sendModMessage(new LiteralText("Cleared ignored messages").formatted(Formatting.GOLD));
             }
             case "test" -> PlayerUtils.sendMessage(new LiteralText(String.join(" ", Arrays.copyOfRange(args, 1, args.length))));
+            default -> sendDebugMessage();
         }
     }
 
