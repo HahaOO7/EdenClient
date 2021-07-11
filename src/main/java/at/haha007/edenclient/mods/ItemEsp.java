@@ -42,7 +42,7 @@ public class ItemEsp {
     }
 
     private ActionResult onSave(NbtCompound compoundTag) {
-        NbtCompound tag = compoundTag.getCompound("itemesp");
+        NbtCompound tag = new NbtCompound();
         tag.putBoolean("enabled", enabled);
         tag.putBoolean("solid", solid);
         tag.putFloat("size", size);
