@@ -53,26 +53,25 @@ public class AutoSell {
         PlayerInventory inventory = player.getInventory();
 
         switch (args[0]) {
-            case "add":
+            case "add" -> {
                 autoSellItems.add(inventory.getMainHandStack().getItem());
                 sendChatMessage("added /sell " + inventory.getMainHandStack().getItem().getName().getString());
-                break;
-            case "remove":
+            }
+            case "remove" -> {
                 autoSellItems.remove(inventory.getMainHandStack().getItem());
                 sendChatMessage("removed /sell " + inventory.getMainHandStack().getItem().getName().getString());
-                break;
-            case "list":
-                sendChatMessage(autoSellItems.toString());
-                break;
-            case "reset":
+            }
+            case "list" -> sendChatMessage(autoSellItems.toString());
+            case "reset" -> {
                 autoSellItems.clear();
                 sendChatMessage("Removed all entries");
-                break;
-            default:
+            }
+            default -> {
                 sendChatMessage("/autosell add");
                 sendChatMessage("/autosell remove");
                 sendChatMessage("/autosell reset");
                 sendChatMessage("/autosell list");
+            }
         }
     }
 
