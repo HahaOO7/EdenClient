@@ -5,7 +5,6 @@ import at.haha007.edenclient.callbacks.ConfigSaveCallback;
 import at.haha007.edenclient.callbacks.PlayerInteractBlockEvent;
 import at.haha007.edenclient.command.Command;
 import at.haha007.edenclient.command.CommandManager;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.item.Item;

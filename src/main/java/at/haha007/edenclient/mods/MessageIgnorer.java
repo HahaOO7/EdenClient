@@ -94,7 +94,16 @@ public class MessageIgnorer {
                     PlayerUtils.sendModMessage(new LiteralText("Could not find message: " + ignore).formatted(Formatting.GOLD));
                 }
             }
-            case "list" -> PlayerUtils.sendModMessage(new LiteralText(Arrays.toString(regex.toArray())).formatted(Formatting.GOLD));
+            case "list" -> {
+                if (regex.isEmpty()) {
+                    PlayerUtils.sendModMessage(new LiteralText("No regexes registered!").formatted(Formatting.GOLD));
+                    return;
+                }
+                PlayerUtils.sendModMessage(new LiteralText("List of ignored message-regexes:").formatted(Formatting.GOLD));
+                for (int i = 0; i < regex.size(); i++) {
+                    PlayerUtils.sendModMessage(new LiteralText("[" + (i + 1) + "] " + regex.get(i)).formatted(Formatting.GOLD));
+                }
+            }
             case "clear" -> {
                 regex.clear();
                 PlayerUtils.sendModMessage(new LiteralText("Cleared ignored messages").formatted(Formatting.GOLD));
