@@ -95,6 +95,10 @@ public class MessageIgnorer {
                 }
             }
             case "list" -> {
+                if (regex.isEmpty()) {
+                    PlayerUtils.sendModMessage(new LiteralText("No regexes registered!").formatted(Formatting.GOLD));
+                    return;
+                }
                 PlayerUtils.sendModMessage(new LiteralText("List of ignored message-regexes:").formatted(Formatting.GOLD));
                 for (int i = 0; i < regex.size(); i++) {
                     PlayerUtils.sendModMessage(new LiteralText("[" + (i + 1) + "] " + regex.get(i)).formatted(Formatting.GOLD));
