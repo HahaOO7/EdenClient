@@ -151,7 +151,7 @@ public class AntiSpam {
 
 
     public void onCommand(Command command, String s, String[] strings) {
-        sendModMessage(new LiteralText((enabled = !enabled) ? "Antispam enabled" : "Antispam enabled").formatted(Formatting.GOLD));
+        sendModMessage(new LiteralText((enabled = !enabled) ? "Antispam enabled" : "Antispam disabled").formatted(Formatting.GOLD));
         NbtCompound cfg = PerWorldConfig.getInstance().getTag();
         NbtCompound tag = cfg.getCompound("antiSpam");
         tag.putBoolean("enabled", enabled);
