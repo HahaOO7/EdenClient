@@ -59,7 +59,6 @@ public class ItemEsp {
             sendModMessage(new LiteralText("/itemesp size <size>").formatted(Formatting.GOLD));
             sendModMessage(new LiteralText("/itemesp solid").formatted(Formatting.GOLD));
             sendModMessage(new LiteralText("/itemesp color <r> <g> <b> -> (0-256)").formatted(Formatting.GOLD));
-            sendModMessage(new LiteralText("/itemesp line <strength>").formatted(Formatting.GOLD));
             return;
         }
         switch (args[0].toLowerCase()) {
@@ -109,10 +108,8 @@ public class ItemEsp {
         }
     }
 
-
     private ActionResult renderItem(ItemEntity itemEntity, float yaw, float tickDelta, int light, MatrixStack matrixStack) {
         if (!enabled) return ActionResult.PASS;
-
 
         matrixStack.push();
 
