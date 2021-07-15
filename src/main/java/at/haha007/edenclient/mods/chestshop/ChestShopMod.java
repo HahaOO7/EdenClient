@@ -107,7 +107,7 @@ public class ChestShopMod {
                 shops.values().forEach(m -> m.stream().filter(ChestShopEntry::canSell).
                         filter(e -> e.getItem().equals(item)).forEach(matching::add));
                 matching.stream().sorted(Comparator.comparingDouble(ChestShopEntry::getSellPricePerItem).reversed()).limit(10).map(cs -> String.format(
-                        "%s[%d, %d, %d] for %.2f$/item",
+                        "%s [%d, %d, %d] for %.2f$/item",
                         cs.getOwner(),
                         cs.getPos().getX(),
                         cs.getPos().getY(),
@@ -122,7 +122,7 @@ public class ChestShopMod {
                 shops.values().forEach(m -> m.stream().filter(ChestShopEntry::canBuy).
                         filter(e -> e.getItem().equals(item)).forEach(matching::add));
                 matching.stream().sorted(Comparator.comparingDouble(ChestShopEntry::getBuyPricePerItem)).limit(10).map(cs -> String.format(
-                        "%s[%d, %d, %d] for %.2f$/item",
+                        "%s [%d, %d, %d] for %.2f$/item",
                         cs.getOwner(),
                         cs.getPos().getX(),
                         cs.getPos().getY(),
