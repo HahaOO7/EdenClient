@@ -3,12 +3,9 @@ package at.haha007.edenclient.mods.chestshop;
 import at.haha007.edenclient.utils.MathUtils;
 import net.minecraft.block.entity.SignBlockEntity;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.Vec3i;
-
-import java.util.Objects;
 
 public class ChestShopEntry {
     private Vec3i pos;
@@ -18,11 +15,10 @@ public class ChestShopEntry {
     private boolean isShop = false;
     private String item;
 
-
     public ChestShopEntry(SignBlockEntity sign) {
         String[] lines = new String[4];
         for (int i = 0; i < lines.length; i++) {
-            lines[i] = sign.getTextOnRow(i, false).asString().trim();
+            lines[i] = sign.getTextOnRow(i, false).getString().trim();
         }
 
         String player = lines[0];
@@ -93,20 +89,12 @@ public class ChestShopEntry {
         return buyPrice >= 0;
     }
 
-    public int getBuyPrice() {
-        return buyPrice;
-    }
-
     public float getBuyPricePerItem() {
         return ((float) buyPrice) / amount;
     }
 
     public float getSellPricePerItem() {
         return ((float) sellPrice) / amount;
-    }
-
-    public int getSellPrice() {
-        return sellPrice;
     }
 
     public String getItem() {

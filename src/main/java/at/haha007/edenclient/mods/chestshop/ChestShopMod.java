@@ -66,6 +66,8 @@ public class ChestShopMod {
             sendMessage("/chestshop buy itemtype");
             sendMessage("/chestshop toggle");
             sendMessage("/chestshop clear");
+            sendMessage("/chestshop list");
+            sendMessage("/chestshop listshops");
             return;
         }
 
@@ -85,8 +87,12 @@ public class ChestShopMod {
             case "list" -> {
                 int sum = shops.values().stream().mapToInt(Set::size).sum();
                 if (sum < 20)
-                    shops.values().forEach(sl -> sl.stream().map(cs -> cs.getItem() + " B" + cs.getBuyPricePerItem() + ":" + cs.getSellPricePerItem() + "S").forEach(this::sendMessage));
+                    shops.values().forEach(sl -> sl.stream().sorted(Comparator.comparing(ChestShopEntry::getItem)).map(cs -> cs.getItem() + " B" + cs.getBuyPricePerItem() + ":" + cs.getSellPricePerItem() + "S").forEach(this::sendMessage));
                 sendMessage(String.format("There are %s ChestShops stored.", sum));
+                return;
+            }
+            case "listshops" -> {
+                shops.values().forEach(sl -> sl.forEach(cs -> sendMessage(cs.toString())));
                 return;
             }
             case "toggle" -> {
@@ -129,6 +135,9 @@ public class ChestShopMod {
         sendMessage("/chestshop sell itemtype");
         sendMessage("/chestshop buy itemtype");
         sendMessage("/chestshop toggle");
+        sendMessage("/chestshop clear");
+        sendMessage("/chestshop list");
+        sendMessage("/chestshop listshops");
     }
 
     private ActionResult saveConfig(NbtCompound overTag) {
@@ -156,8 +165,7 @@ public class ChestShopMod {
         return ActionResult.PASS;
     }
 
-
-    private void sendMessage(String message) {
+    protected void sendMessage(String message) {
         PlayerUtils.sendModMessage(new LiteralText(message).formatted(Formatting.GOLD));
     }
 
