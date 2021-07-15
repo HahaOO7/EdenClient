@@ -26,7 +26,7 @@ public class WordHighlighter {
     private List<String> words = new ArrayList<>();
     private boolean enabled;
 
-    private static Style style = Style.EMPTY;
+    private Style style = Style.EMPTY;
 
     public WordHighlighter() {
         CommandManager.registerCommand(new Command(this::onCommand), "highlight", "hl");
@@ -36,7 +36,7 @@ public class WordHighlighter {
     }
 
     private ActionResult onChat(AddChatMessageCallback.ChatAddEvent event) {
-        if (event.getChatText() == null) return ActionResult.PASS;
+        if (!enabled || event.getChatText() == null) return ActionResult.PASS;
         for (String word : words) {
             event.setChatText(highlight(event.getChatText(), word));
         }
@@ -121,12 +121,12 @@ public class WordHighlighter {
         PlayerUtils.sendModMessage(new LiteralText(bold ? "Words are now bold!" : "Words are no longer bold!").formatted(Formatting.GOLD));
     }
 
-    public static void setItalic(boolean italic) {
+    public void setItalic(boolean italic) {
         style = style.withItalic(italic);
         PlayerUtils.sendModMessage(new LiteralText(italic ? "Words are now italic!" : "Words are no longer italic!").formatted(Formatting.GOLD));
     }
 
-    public static void setUnderlined(boolean underlined) {
+    public void setUnderlined(boolean underlined) {
         style = style.withUnderline(underlined);
         PlayerUtils.sendModMessage(new LiteralText(underlined ? "Words are now underlined!" : "Words are no longer underlined!").formatted(Formatting.GOLD));
     }
@@ -191,7 +191,7 @@ public class WordHighlighter {
         PlayerUtils.sendModMessage(new LiteralText("Style set from FormattingCodes!").formatted(Formatting.GOLD));
     }
 
-    private static Style getStyleFromFormattingCode(String input) {
+    private Style getStyleFromFormattingCode(String input) {
         Style style = Style.EMPTY;
         style = style.withFormatting(input.chars().mapToObj(c -> (char) c).
                 map(Formatting::byCode).filter(Objects::nonNull).toList().toArray(new Formatting[0]));
@@ -236,14 +236,13 @@ public class WordHighlighter {
     }
 
     private Text highlight(Text text, String string) {
-        text.asOrderedText();
         if (text instanceof LiteralText t) {
             String s = t.getRawString();
             Pattern pattern = Pattern.compile(string, Pattern.CASE_INSENSITIVE | Pattern.LITERAL);
             Matcher matcher = pattern.matcher(s);
             List<MutableText> subtext = new ArrayList<>();
             Style baseStyle = t.getStyle();
-            Style style = WordHighlighter.style.withHoverEvent(baseStyle.getHoverEvent()).withClickEvent(baseStyle.getClickEvent());
+            Style style = this.style.withHoverEvent(baseStyle.getHoverEvent()).withClickEvent(baseStyle.getClickEvent());
             while (matcher.find()) {
                 int start = matcher.start();
                 int end = matcher.end();
@@ -254,6 +253,10 @@ public class WordHighlighter {
                 subtext.add(new LiteralText(match).setStyle(style));
                 s = s.substring(end);
                 matcher = pattern.matcher(s);
+            }
+            if (subtext.isEmpty()) {
+                text.getSiblings().replaceAll(x -> highlight(x, string));
+                return text;
             }
             if (!s.isEmpty())
                 subtext.add(new LiteralText(s).setStyle(baseStyle));
@@ -272,9 +275,7 @@ public class WordHighlighter {
             t.getSiblings().replaceAll(y -> highlight(y, string));
             return t;
         } else {
-            List<Text> next = text.getSiblings().stream().map(x -> highlight(x, string)).toList();
-            text.getSiblings().clear();
-            text.getSiblings().addAll(next);
+            text.getSiblings().replaceAll(y -> highlight(y, string));
             return text;
         }
     }
