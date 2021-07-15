@@ -118,6 +118,9 @@ public class MessageIgnorer {
     }
 
     private ActionResult onChat(AddChatMessageCallback.ChatAddEvent event) {
+        if (!enabled) {
+            return ActionResult.PASS;
+        }
         String s = event.getChatText().getString();
         for (String match : regex) {
             if (s.matches(match)) {
