@@ -11,11 +11,11 @@ public class CommandManager {
     private static final HashMap<String, String[]> aliasMap = new HashMap<>();
 
     public static void registerCommand(Command command, String name, String... aliases) {
-        commandMap.put(name, command);
+        commandMap.put(name.toLowerCase(), command);
         for (String alias : aliases) {
-            commandMap.put(alias, command);
+            commandMap.put(alias.toLowerCase(), command);
         }
-        aliasMap.put(name, aliases);
+        aliasMap.put(name.toLowerCase(), aliases);
     }
 
     public static boolean onCommand(String command) {
