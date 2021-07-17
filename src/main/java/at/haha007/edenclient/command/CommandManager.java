@@ -1,6 +1,8 @@
 package at.haha007.edenclient.command;
 
+import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.LiteralText;
 
 import java.util.Arrays;
@@ -9,6 +11,10 @@ import java.util.HashMap;
 public class CommandManager {
     private static final HashMap<String, Command> commandMap = new HashMap<>();
     private static final HashMap<String, String[]> aliasMap = new HashMap<>();
+
+    public static void register(CommandDispatcher<ServerCommandSource> dispatcher) {
+        commandMap.keySet().stream().map(net.minecraft.server.command.CommandManager::literal).forEach(dispatcher::register);
+    }
 
     public static void registerCommand(Command command, String name, String... aliases) {
         commandMap.put(name.toLowerCase(), command);
