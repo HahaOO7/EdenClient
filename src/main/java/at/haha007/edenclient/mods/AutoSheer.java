@@ -10,6 +10,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.network.ClientPlayerInteractionManager;
 import net.minecraft.entity.passive.SheepEntity;
+import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.text.LiteralText;
@@ -57,21 +58,30 @@ public class AutoSheer {
         ClientPlayerInteractionManager interactionManager = MinecraftClient.getInstance().interactionManager;
         if (interactionManager == null) return ActionResult.PASS;
         Vec3d pos = player.getPos();
-        Hand hand;
-        if (player.getInventory().getMainHandStack().getItem() == Items.SHEARS)
-            hand = Hand.MAIN_HAND;
-        else if (player.getInventory().offHand.get(0).getItem() == Items.SHEARS)
-            hand = Hand.OFF_HAND;
+        PlayerInventory inv = player.getInventory();
+        Hand shearHand;
+        if (inv.getMainHandStack().getItem() == Items.SHEARS)
+            shearHand = Hand.MAIN_HAND;
+        else if (inv.offHand.get(0).getItem() == Items.SHEARS)
+            shearHand = Hand.OFF_HAND;
         else
             return ActionResult.PASS;
-        player.clientWorld.getEntities().forEach(e -> {
-            if (!(e instanceof SheepEntity sheep))
-                return;
-            if (!sheep.isShearable()) return;
-            if (e.getPos().squaredDistanceTo(pos) < 25) {
-                interactionManager.interactEntity(player, e, hand);
-            }
-        });
+        if (shearHand == Hand.MAIN_HAND) {
+            player.clientWorld.getEntitiesByClass(SheepEntity.class, player.getBoundingBox().expand(5), SheepEntity::isShearable).forEach(sheep -> {
+                if (!sheep.isShearable()) return;
+                if (sheep.getPos().squaredDistanceTo(pos) < 25) {
+                    interactionManager.interactEntity(player, sheep, Hand.MAIN_HAND);
+                }
+            });
+        } else {
+            player.clientWorld.getEntitiesByClass(SheepEntity.class, player.getBoundingBox().expand(5), SheepEntity::isShearable).forEach(sheep -> {
+                if (!sheep.isShearable()) return;
+                if (sheep.getPos().squaredDistanceTo(pos) < 25) {
+                    interactionManager.interactEntity(player, sheep, Hand.MAIN_HAND);
+                    interactionManager.interactEntity(player, sheep, Hand.OFF_HAND);
+                }
+            });
+        }
         return ActionResult.PASS;
     }
 }
