@@ -32,12 +32,16 @@ public class ItemEsp {
 
     private ActionResult onLoad(NbtCompound compoundTag) {
         NbtCompound tag = compoundTag.getCompound("itemesp");
-        if (tag.contains("enabled")) enabled = tag.getBoolean("enabled");
-        if (tag.contains("solid")) enabled = tag.getBoolean("solid");
+        enabled = tag.getBoolean("enabled");
+        solid = tag.getBoolean("solid");
         if (tag.contains("size")) size = tag.getFloat("size");
+        else size = 0.3f;
         if (tag.contains("r")) r = tag.getFloat("r");
+        else r = 1;
         if (tag.contains("g")) g = tag.getFloat("g");
+        else g = 1;
         if (tag.contains("b")) b = tag.getFloat("b");
+        else b = 1;
         return ActionResult.PASS;
     }
 

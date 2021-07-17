@@ -35,10 +35,6 @@ public class AutoSheer {
             return ActionResult.PASS;
         }
         NbtCompound tag = nbtCompound.getCompound("AutoShear");
-        if (!tag.contains("enabled")) {
-            enabled = false;
-            return ActionResult.PASS;
-        }
         enabled = tag.getBoolean("enabled");
         return ActionResult.PASS;
     }
@@ -46,6 +42,7 @@ public class AutoSheer {
     private ActionResult onSave(NbtCompound nbtCompound) {
         var tag = new NbtCompound();
         tag.putBoolean("enabled", enabled);
+        nbtCompound.put("AutoShear", tag);
         return ActionResult.PASS;
     }
 
