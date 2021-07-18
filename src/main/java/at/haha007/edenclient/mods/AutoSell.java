@@ -3,9 +3,9 @@ package at.haha007.edenclient.mods;
 import at.haha007.edenclient.callbacks.ConfigLoadCallback;
 import at.haha007.edenclient.callbacks.ConfigSaveCallback;
 import at.haha007.edenclient.callbacks.PlayerInvChangeCallback;
-import at.haha007.edenclient.command.Command;
-import at.haha007.edenclient.command.CommandManager;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ClientCommandSource;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.Item;
@@ -26,6 +26,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static at.haha007.edenclient.command.CommandManager.literal;
+import static at.haha007.edenclient.command.CommandManager.register;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
 public class AutoSell {
@@ -33,48 +35,46 @@ public class AutoSell {
     private long lastSell = 0;
 
     public AutoSell() {
-        CommandManager.registerCommand(new Command(this::onCommand), "autosell", "as");
+//        CommandManager.register(new Command(this::onCommand), "autosell", "as");
         ConfigSaveCallback.EVENT.register(this::onSave);
         ConfigLoadCallback.EVENT.register(this::onLoad);
         PlayerInvChangeCallback.EVENT.register(this::onInventoryChange);
-
+        registerCommand();
     }
 
-    public void onCommand(Command command, String label, String[] args) {
-
-        if (args.length != 1) {
-            sendChatMessage("/autosell add");
-            sendChatMessage("/autosell remove");
-            sendChatMessage("/autosell reset");
-            return;
-        }
-        ClientPlayerEntity player = MinecraftClient.getInstance().player;
-        if (player == null) return;
-        PlayerInventory inventory = player.getInventory();
-
-        switch (args[0]) {
-            case "add" -> {
-                autoSellItems.add(inventory.getMainHandStack().getItem());
-                sendChatMessage("added /sell " + inventory.getMainHandStack().getItem().getName().getString());
-            }
-            case "remove" -> {
-                autoSellItems.remove(inventory.getMainHandStack().getItem());
+    private void registerCommand() {
+        LiteralArgumentBuilder<ClientCommandSource> node = literal("autosell");
+        node.then(literal("reset").executes(c -> {
+            autoSellItems.clear();
+            sendChatMessage("Removed all entries");
+            return 1;
+        }));
+        node.then(literal("list").executes(c -> {
+            sendChatMessage(autoSellItems.toString());
+            return 1;
+        }));
+        node.then(literal("add").executes(c -> {
+            var player = MinecraftClient.getInstance().player;
+            if (player == null) return 1;
+            PlayerInventory inventory = player.getInventory();
+            autoSellItems.add(inventory.getMainHandStack().getItem());
+            sendChatMessage("added /sell " + inventory.getMainHandStack().getItem().getName().getString());
+            return 1;
+        }));
+        node.then(literal("remove").executes(c -> {
+            var player = MinecraftClient.getInstance().player;
+            if (player == null) return 1;
+            PlayerInventory inventory = player.getInventory();
+            if (autoSellItems.remove(inventory.getMainHandStack().getItem()))
                 sendChatMessage("removed /sell " + inventory.getMainHandStack().getItem().getName().getString());
+            else {
+                sendChatMessage("Couldn't remove /sell " + inventory.getMainHandStack().getItem().getName().getString());
+                sendChatMessage("Item was not in the sell list.");
             }
-            case "list" -> sendChatMessage(autoSellItems.toString());
-            case "reset" -> {
-                autoSellItems.clear();
-                sendChatMessage("Removed all entries");
-            }
-            default -> {
-                sendChatMessage("/autosell add");
-                sendChatMessage("/autosell remove");
-                sendChatMessage("/autosell reset");
-                sendChatMessage("/autosell list");
-            }
-        }
+            return 1;
+        }));
+        register(node);
     }
-
 
     private ActionResult onLoad(NbtCompound compoundTag) {
         NbtCompound tag = compoundTag.getCompound("autoSell");

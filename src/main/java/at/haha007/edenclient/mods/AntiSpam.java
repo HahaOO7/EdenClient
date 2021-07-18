@@ -3,7 +3,6 @@ package at.haha007.edenclient.mods;
 import at.haha007.edenclient.callbacks.AddChatMessageCallback;
 import at.haha007.edenclient.callbacks.ConfigLoadCallback;
 import at.haha007.edenclient.callbacks.ConfigSaveCallback;
-import at.haha007.edenclient.command.Command;
 import at.haha007.edenclient.command.CommandManager;
 import at.haha007.edenclient.utils.MathUtils;
 import at.haha007.edenclient.utils.PerWorldConfig;
@@ -29,10 +28,17 @@ public class AntiSpam {
     private boolean enabled = true;
 
     public AntiSpam() {
-        CommandManager.registerCommand(new Command(this::onCommand), "antispam");
+        registerCommand();
         AddChatMessageCallback.EVENT.register(this::onChat);
         ConfigSaveCallback.EVENT.register(this::onSave);
         ConfigLoadCallback.EVENT.register(this::onLoad);
+    }
+
+    private void registerCommand() {
+        CommandManager.register(CommandManager.literal("antispam").executes(c -> {
+            sendModMessage(new LiteralText((enabled = !enabled) ? "Antispam enabled" : "Antispam disabled").formatted(Formatting.GOLD));
+            return 1;
+        }));
     }
 
 
@@ -147,15 +153,6 @@ public class AntiSpam {
 
         event.setChatText(chatText);
         return ActionResult.PASS;
-    }
-
-
-    public void onCommand(Command command, String s, String[] strings) {
-        sendModMessage(new LiteralText((enabled = !enabled) ? "Antispam enabled" : "Antispam disabled").formatted(Formatting.GOLD));
-        NbtCompound cfg = PerWorldConfig.getInstance().getTag();
-        NbtCompound tag = cfg.getCompound("antiSpam");
-        tag.putBoolean("enabled", enabled);
-        cfg.put("antiSpam", tag);
     }
 
     private ActionResult onLoad(NbtCompound cfg) {

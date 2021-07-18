@@ -3,9 +3,10 @@ package at.haha007.edenclient.mods;
 import at.haha007.edenclient.callbacks.AddChatMessageCallback;
 import at.haha007.edenclient.callbacks.ConfigLoadCallback;
 import at.haha007.edenclient.callbacks.ConfigSaveCallback;
-import at.haha007.edenclient.command.Command;
-import at.haha007.edenclient.command.CommandManager;
 import at.haha007.edenclient.utils.PlayerUtils;
+import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import net.minecraft.client.network.ClientCommandSource;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
@@ -15,10 +16,11 @@ import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+
+import static at.haha007.edenclient.command.CommandManager.*;
 
 public class MessageIgnorer {
     private final List<String> regex = new ArrayList<>();
@@ -26,7 +28,7 @@ public class MessageIgnorer {
 
     public MessageIgnorer() {
         AddChatMessageCallback.EVENT.register(this::onChat);
-        CommandManager.registerCommand(new Command(this::onCommand), "ignoremessage", "im");
+        registerCommand();
         ConfigSaveCallback.EVENT.register(this::onSave);
         ConfigLoadCallback.EVENT.register(this::onLoad);
     }
@@ -60,61 +62,69 @@ public class MessageIgnorer {
         return ActionResult.PASS;
     }
 
-    private void onCommand(Command cmd, String label, String[] args) {
-        if (args.length == 0) {
+    private void registerCommand() {
+        LiteralArgumentBuilder<ClientCommandSource> node = literal("ignoremessage");
+        node.then(literal("toggle").executes(c -> {
+            PlayerUtils.sendModMessage(new LiteralText((enabled = !enabled) ? "Message ignoring enabled" : "Message ignoring disabled").formatted(Formatting.GOLD));
+            return 1;
+        }));
+        node.then(literal("add").then(argument("regex", StringArgumentType.greedyString()).executes(c -> {
+            String im = c.getArgument("regex", String.class);
+            if (!isValidRegex(im)) {
+                PlayerUtils.sendModMessage(new LiteralText("Invalid pattern syntax").formatted(Formatting.GOLD));
+                return 1;
+            }
+            regex.add(im);
+            PlayerUtils.sendModMessage(new LiteralText("Ignoring messages matching " + im).formatted(Formatting.GOLD));
+            return 1;
+        })));
+        node.then(literal("remove").then(argument("regex", StringArgumentType.greedyString()).executes(c -> {
+            String im = c.getArgument("regex", String.class);
+            if (regex.remove(im)) {
+                PlayerUtils.sendModMessage(new LiteralText("Removed ignored message").formatted(Formatting.GOLD));
+            } else {
+                PlayerUtils.sendModMessage(new LiteralText("Could not find message: " + im).formatted(Formatting.GOLD));
+            }
+            return 1;
+        })));
+        node.then(literal("list").executes(c -> {
+            if (regex.isEmpty()) {
+                PlayerUtils.sendModMessage(new LiteralText("No regexes registered!").formatted(Formatting.GOLD));
+                return 1;
+            }
+            PlayerUtils.sendModMessage(new LiteralText("List of ignored message-regexes:").formatted(Formatting.GOLD));
+            for (int i = 0; i < regex.size(); i++) {
+                PlayerUtils.sendModMessage(new LiteralText("[" + (i + 1) + "] " + regex.get(i)).formatted(Formatting.GOLD));
+            }
+            return 1;
+        }));
+        node.then(literal("clear").executes(c -> {
+            regex.clear();
+            PlayerUtils.sendModMessage(new LiteralText("Cleared ignored messages").formatted(Formatting.GOLD));
+            return 1;
+        }));
+        node.then(literal("test").then(argument("text", StringArgumentType.greedyString()).executes(c -> {
+            PlayerUtils.sendModMessage(new LiteralText(c.getArgument("text", String.class)));
+            return 1;
+        })));
+        node.executes(c -> {
             sendDebugMessage();
-            return;
-        }
-        switch (args[0].toLowerCase()) {
-            case "toggle" -> PlayerUtils.sendModMessage(new LiteralText((enabled = !enabled) ? "Message ignoring enabled" : "Message ignoring disabled").formatted(Formatting.GOLD));
-            case "add" -> {
-                if (args.length < 2) {
-                    PlayerUtils.sendModMessage(new LiteralText("/ignoremessage add <message>").formatted(Formatting.GOLD));
-                    return;
-                }
-                String ignore = String.join(" ", Arrays.copyOfRange(args, 1, args.length));
-                try {
-                    Pattern.compile(ignore);
-                } catch (PatternSyntaxException e) {
-                    PlayerUtils.sendModMessage(new LiteralText("Invalid pattern syntax").formatted(Formatting.GOLD));
-                    return;
-                }
-                regex.add(ignore);
-                PlayerUtils.sendModMessage(new LiteralText("Ignoring messages matching " + ignore).formatted(Formatting.GOLD));
-            }
-            case "remove" -> {
-                if (args.length < 2) {
-                    PlayerUtils.sendModMessage(new LiteralText("/ignoremessage remove <message>").formatted(Formatting.GOLD));
-                    return;
-                }
-                String ignore = String.join(" ", Arrays.copyOfRange(args, 1, args.length));
-                if (regex.remove(ignore)) {
-                    PlayerUtils.sendModMessage(new LiteralText("Removed ignored message").formatted(Formatting.GOLD));
-                } else {
-                    PlayerUtils.sendModMessage(new LiteralText("Could not find message: " + ignore).formatted(Formatting.GOLD));
-                }
-            }
-            case "list" -> {
-                if (regex.isEmpty()) {
-                    PlayerUtils.sendModMessage(new LiteralText("No regexes registered!").formatted(Formatting.GOLD));
-                    return;
-                }
-                PlayerUtils.sendModMessage(new LiteralText("List of ignored message-regexes:").formatted(Formatting.GOLD));
-                for (int i = 0; i < regex.size(); i++) {
-                    PlayerUtils.sendModMessage(new LiteralText("[" + (i + 1) + "] " + regex.get(i)).formatted(Formatting.GOLD));
-                }
-            }
-            case "clear" -> {
-                regex.clear();
-                PlayerUtils.sendModMessage(new LiteralText("Cleared ignored messages").formatted(Formatting.GOLD));
-            }
-            case "test" -> PlayerUtils.sendMessage(new LiteralText(String.join(" ", Arrays.copyOfRange(args, 1, args.length))));
-            default -> sendDebugMessage();
-        }
+            return 1;
+        });
+        register(node);
     }
 
     private void sendDebugMessage() {
         PlayerUtils.sendModMessage(new LiteralText("/ignoremessage [add,remove,clear,list,test,toggle]"));
+    }
+
+    private boolean isValidRegex(String s) {
+        try {
+            Pattern.compile(s);
+            return true;
+        } catch (PatternSyntaxException e) {
+            return false;
+        }
     }
 
     private ActionResult onChat(AddChatMessageCallback.ChatAddEvent event) {

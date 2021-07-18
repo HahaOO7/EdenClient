@@ -4,7 +4,6 @@ import at.haha007.edenclient.callbacks.ConfigLoadCallback;
 import at.haha007.edenclient.callbacks.ConfigSaveCallback;
 import at.haha007.edenclient.callbacks.PlayerAttackBlockCallback;
 import at.haha007.edenclient.callbacks.PlayerEditSignCallback;
-import at.haha007.edenclient.command.Command;
 import at.haha007.edenclient.command.CommandManager;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.SignBlockEntity;
@@ -30,7 +29,7 @@ public class SignCopy {
     public SignCopy() {
         PlayerEditSignCallback.EVENT.register(this::onEditSign);
         PlayerAttackBlockCallback.EVENT.register(this::onAttackBlock);
-        CommandManager.registerCommand(new Command(this::onCommand), "signcopy");
+        registerCommand();
         ConfigSaveCallback.EVENT.register(this::saveCfg);
         ConfigLoadCallback.EVENT.register(this::loadCfg);
     }
@@ -58,9 +57,12 @@ public class SignCopy {
         return ActionResult.PASS;
     }
 
-    private void onCommand(Command command, String s, String[] strings) {
-        enabled = !enabled;
-        sendModMessage(new LiteralText(enabled ? "SignCopy enabled" : "SignCopy disabled"));
+
+    private void registerCommand() {
+        CommandManager.register(CommandManager.literal("signcopy").executes(c -> {
+            sendModMessage(new LiteralText((enabled = !enabled) ? "SignCopy enabled" : "SignCopy disabled"));
+            return 1;
+        }));
     }
 
     @SuppressWarnings("ConstantConditions")

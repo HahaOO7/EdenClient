@@ -3,7 +3,6 @@ package at.haha007.edenclient.mods;
 import at.haha007.edenclient.callbacks.ConfigLoadCallback;
 import at.haha007.edenclient.callbacks.ConfigSaveCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
-import at.haha007.edenclient.command.Command;
 import at.haha007.edenclient.command.CommandManager;
 import at.haha007.edenclient.utils.PlayerUtils;
 import net.minecraft.client.MinecraftClient;
@@ -26,7 +25,7 @@ public class AutoSheer {
         PlayerTickCallback.EVENT.register(this::onTick);
         ConfigSaveCallback.EVENT.register(this::onSave);
         ConfigLoadCallback.EVENT.register(this::onLoad);
-        CommandManager.registerCommand(new Command(this::onCommand), "AutoShear");
+        registerCommand();
     }
 
     private ActionResult onLoad(NbtCompound nbtCompound) {
@@ -46,8 +45,11 @@ public class AutoSheer {
         return ActionResult.PASS;
     }
 
-    private void onCommand(Command command, String s, String[] strings) {
-        PlayerUtils.sendModMessage(new LiteralText((enabled = !enabled) ? "AutoShear enabled" : "AutoShear disabled").formatted(Formatting.GOLD));
+    private void registerCommand() {
+        CommandManager.register(CommandManager.literal("autoshear").executes(c -> {
+            PlayerUtils.sendModMessage(new LiteralText((enabled = !enabled) ? "AutoShear enabled" : "AutoShear disabled").formatted(Formatting.GOLD));
+            return 1;
+        }));
     }
 
     private ActionResult onTick(ClientPlayerEntity player) {

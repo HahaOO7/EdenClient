@@ -3,9 +3,11 @@ package at.haha007.edenclient.mods;
 import at.haha007.edenclient.callbacks.ConfigLoadCallback;
 import at.haha007.edenclient.callbacks.ConfigSaveCallback;
 import at.haha007.edenclient.callbacks.ItemRenderCallback;
-import at.haha007.edenclient.command.Command;
-import at.haha007.edenclient.command.CommandManager;
 import at.haha007.edenclient.utils.RenderUtils;
+import com.mojang.brigadier.arguments.FloatArgumentType;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import net.minecraft.client.network.ClientCommandSource;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.nbt.NbtCompound;
@@ -15,6 +17,7 @@ import net.minecraft.util.Formatting;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 
+import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
 public class ItemEsp {
@@ -25,7 +28,7 @@ public class ItemEsp {
 
     public ItemEsp() {
         ItemRenderCallback.EVENT.register(this::renderItem);
-        CommandManager.registerCommand(new Command(this::onCommand), "itemesp");
+        registerCommand();
         ConfigSaveCallback.EVENT.register(this::onSave);
         ConfigLoadCallback.EVENT.register(this::onLoad);
     }
@@ -57,59 +60,38 @@ public class ItemEsp {
         return ActionResult.PASS;
     }
 
-    private void onCommand(Command cmd, String label, String[] args) {
-        if (args.length == 0) {
-            sendModMessage(new LiteralText("/itemesp toggle").formatted(Formatting.GOLD));
-            sendModMessage(new LiteralText("/itemesp size <size>").formatted(Formatting.GOLD));
-            sendModMessage(new LiteralText("/itemesp solid").formatted(Formatting.GOLD));
-            sendModMessage(new LiteralText("/itemesp color <r> <g> <b> -> (0-256)").formatted(Formatting.GOLD));
-            return;
-        }
-        switch (args[0].toLowerCase()) {
-            case "toggle" -> {
-                enabled = !enabled;
-                sendModMessage(new LiteralText("Item ESP " + (enabled ? "enabled" : "disabled")));
-            }
-            case "size" -> {
-                if (args.length != 2) {
-                    sendModMessage(new LiteralText("/itemesp size <size>").formatted(Formatting.GOLD));
-                    break;
-                }
-                try {
-                    size = Float.parseFloat(args[1]);
-                } catch (NumberFormatException e) {
-                    sendModMessage(new LiteralText("Size has to be a number.").formatted(Formatting.GOLD));
-                    break;
-                }
-                sendModMessage(new LiteralText("Size: " + size).formatted(Formatting.GOLD));
-            }
-            case "color" -> {
-                float r, g, b;
-                try {
-                    r = Float.parseFloat(args[1]) / 256;
-                    g = Float.parseFloat(args[2]) / 256;
-                    b = Float.parseFloat(args[3]) / 256;
-                } catch (NumberFormatException | IndexOutOfBoundsException e) {
-                    sendModMessage(new LiteralText("/itemesp color <r> <g> <b> -> (0-256)").formatted(Formatting.GOLD));
-                    return;
-                }
-                if (r > 1 || b > 1 || g > 1) {
-                    sendModMessage(new LiteralText("/itemesp color <r> <g> <b> -> (0-256)").formatted(Formatting.GOLD));
-                    return;
-                }
-                this.r = r;
-                this.g = g;
-                this.b = b;
-            }
-            case "solid" -> {
-                solid = !solid;
-                sendModMessage(new LiteralText("Item ESP " + (solid ? "solid" : "transparent")));
-            }
-            default -> {
-                sendModMessage(new LiteralText("/itemesp toggle").formatted(Formatting.GOLD));
-                sendModMessage(new LiteralText("/itemesp size <size>").formatted(Formatting.GOLD));
-            }
-        }
+    private void registerCommand() {
+        LiteralArgumentBuilder<ClientCommandSource> node = literal("itemesp");
+        node.then(literal("toggle").executes(c -> {
+            sendModMessage(new LiteralText("Item ESP " + ((enabled = !enabled) ? "enabled" : "disabled")));
+            return 1;
+        }));
+        node.then(literal("solid").executes(c -> {
+            sendModMessage(new LiteralText("Item ESP " + ((solid = !solid) ? "solid" : "transparent")));
+            return 1;
+        }));
+        node.then(literal("size").then(argument("size", FloatArgumentType.floatArg(0.1f)).executes(c -> {
+            size = c.getArgument("size", Float.class);
+            sendModMessage(new LiteralText("Size: " + size).formatted(Formatting.GOLD));
+            return 1;
+        })));
+        node.then(literal("color").then(
+                argument("r", IntegerArgumentType.integer(0, 255)).then(
+                        argument("g", IntegerArgumentType.integer(0, 255)).then(
+                                argument("b", IntegerArgumentType.integer(0, 255)).executes(c -> {
+                                    setColor(c.getArgument("r", Integer.class),
+                                            c.getArgument("g", Integer.class),
+                                            c.getArgument("b", Integer.class));
+                                    return 0;
+                                })))));
+        register(node);
+    }
+
+    private void setColor(int r, int g, int b) {
+        this.r = r;
+        this.g = g;
+        this.b = b;
+        sendModMessage(new LiteralText("Color updated.").formatted(Formatting.GOLD));
     }
 
     private ActionResult renderItem(ItemEntity itemEntity, float yaw, float tickDelta, int light, MatrixStack matrixStack) {

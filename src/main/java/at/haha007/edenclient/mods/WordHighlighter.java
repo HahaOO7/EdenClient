@@ -3,10 +3,10 @@ package at.haha007.edenclient.mods;
 import at.haha007.edenclient.callbacks.AddChatMessageCallback;
 import at.haha007.edenclient.callbacks.ConfigLoadCallback;
 import at.haha007.edenclient.callbacks.ConfigSaveCallback;
-import at.haha007.edenclient.command.Command;
-import at.haha007.edenclient.command.CommandManager;
-import at.haha007.edenclient.utils.MathUtils;
-import at.haha007.edenclient.utils.PlayerUtils;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import net.minecraft.client.network.ClientCommandSource;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
@@ -16,10 +16,15 @@ import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
 
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
-import java.util.*;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static at.haha007.edenclient.command.CommandManager.*;
+import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
 public class WordHighlighter {
 
@@ -29,7 +34,8 @@ public class WordHighlighter {
     private Style style = Style.EMPTY;
 
     public WordHighlighter() {
-        CommandManager.registerCommand(new Command(this::onCommand), "highlight", "hl");
+//        CommandManager.register(new Command(this::onCommand), "highlight", "hl");
+        registerCommand();
         AddChatMessageCallback.EVENT.register(this::onChat);
         ConfigSaveCallback.EVENT.register(this::onSave);
         ConfigLoadCallback.EVENT.register(this::onLoad);
@@ -91,104 +97,89 @@ public class WordHighlighter {
         return ActionResult.PASS;
     }
 
-    private void onCommand(Command command, String label, String[] inputs) {
-        if (inputs.length < 1) {
-            sendUsageDebugMessage();
-            return;
-        }
-
-        for (int i = 0; i < inputs.length; i++) {
-            inputs[i] = inputs[i].toLowerCase();
-        }
-
-        switch (inputs[0]) {
-            case "toggle" -> PlayerUtils.sendModMessage(new LiteralText((enabled = !enabled) ? "Enabled WordHighlighter!" : "Disabled WordHighlighter!").formatted(Formatting.GOLD));
-            case "add" -> addWords(inputs);
-            case "remove" -> removeWords(inputs);
-            case "list" -> listWords();
-            case "clear" -> clearWords();
-            case "bold" -> setBold(!style.isBold());
-            case "italic" -> setItalic(!style.isItalic());
-            case "underline", "underlined" -> setUnderlined(!style.isUnderlined());
-            case "style" -> setStyle(inputs);
-            case "color", "rgb" -> setColor(inputs);
-            default -> sendDebugMessage();
-        }
+    private void registerCommand() {
+        LiteralArgumentBuilder<ClientCommandSource> node = literal("highlight");
+        node.then(literal("toggle").executes(c -> {
+            sendModMessage(new LiteralText((enabled = !enabled) ? "Enabled WordHighlighter!" : "Disabled WordHighlighter!").formatted(Formatting.GOLD));
+            return 0;
+        }));
+        node.then(literal("add").then(argument("word", StringArgumentType.word()).executes(c -> {
+            addWord(c.getArgument("word", String.class));
+            return 0;
+        })));
+        node.then(literal("remove").then(argument("word", StringArgumentType.word()).executes(c -> {
+            removeWord(c.getArgument("word", String.class));
+            return 0;
+        })));
+        node.then(literal("style").then(argument("style", StringArgumentType.word()).executes(c -> {
+            setStyle(c.getArgument("style", String.class));
+            return 0;
+        })));
+        node.then(literal("color").then(
+                argument("r", IntegerArgumentType.integer(0, 255)).then(
+                        argument("g", IntegerArgumentType.integer(0, 255)).then(
+                                argument("b", IntegerArgumentType.integer(0, 255)).executes(c -> {
+                                    setColor(c.getArgument("r", Integer.class),
+                                            c.getArgument("g", Integer.class),
+                                            c.getArgument("b", Integer.class));
+                                    return 0;
+                                })))));
+        node.then(literal("list").executes(c -> {
+            listWords();
+            return 0;
+        }));
+        node.then(literal("clear").executes(c -> {
+            clearWords();
+            return 0;
+        }));
+        node.then(literal("bold").executes(c -> {
+            setBold(!style.isBold());
+            return 0;
+        }));
+        node.then(literal("italic").executes(c -> {
+            setItalic(!style.isItalic());
+            return 0;
+        }));
+        node.then(literal("underline").executes(c -> {
+            setUnderlined(!style.isUnderlined());
+            return 0;
+        }));
+        node.executes(c -> {
+            sendDebugMessage();
+            return 0;
+        });
+        register(node);
     }
 
     private void setBold(boolean bold) {
         style = style.withBold(bold);
-        PlayerUtils.sendModMessage(new LiteralText(bold ? "Words are now bold!" : "Words are no longer bold!").formatted(Formatting.GOLD));
+        sendModMessage(new LiteralText(bold ? "Words are now bold!" : "Words are no longer bold!").formatted(Formatting.GOLD));
     }
 
     public void setItalic(boolean italic) {
         style = style.withItalic(italic);
-        PlayerUtils.sendModMessage(new LiteralText(italic ? "Words are now italic!" : "Words are no longer italic!").formatted(Formatting.GOLD));
+        sendModMessage(new LiteralText(italic ? "Words are now italic!" : "Words are no longer italic!").formatted(Formatting.GOLD));
     }
 
     public void setUnderlined(boolean underlined) {
         style = style.withUnderline(underlined);
-        PlayerUtils.sendModMessage(new LiteralText(underlined ? "Words are now underlined!" : "Words are no longer underlined!").formatted(Formatting.GOLD));
+        sendModMessage(new LiteralText(underlined ? "Words are now underlined!" : "Words are no longer underlined!").formatted(Formatting.GOLD));
     }
 
-    private void setColor(String[] inputs) {
-        if (inputs.length == 2) {
-            if (MathUtils.isInteger(inputs[1])) {
-                style = style.withColor(Integer.parseInt(inputs[1]));
-                PlayerUtils.sendModMessage(new LiteralText("New color set from RGB value!").formatted(Formatting.GOLD));
-            } else if (inputs[1].length() == 1) {
-                Formatting f = Formatting.byCode(inputs[1].charAt(0));
-                if (f == null || !f.isColor()) {
-                    PlayerUtils.sendModMessage(new LiteralText("Could not parse color!").formatted(Formatting.GOLD));
-                    return;
-                }
-                style = style.withFormatting(f);
-                PlayerUtils.sendModMessage(new LiteralText("New color set from Bukkit ColorCode values!").formatted(Formatting.GOLD));
-            } else {
-                PlayerUtils.sendModMessage(new LiteralText("Could not parse color!").formatted(Formatting.GOLD));
-            }
-            return;
-        }
-
-        if (inputs.length == 4) {
-            int r, g, b;
-            if (MathUtils.isInteger(inputs[1]))
-                r = MathUtils.clamp(Integer.parseInt(inputs[1]), 0, 255);
-            else {
-                PlayerUtils.sendModMessage(new LiteralText("Could not parse color!").formatted(Formatting.GOLD));
-                return;
-            }
-            if (MathUtils.isInteger(inputs[2]))
-                g = MathUtils.clamp(Integer.parseInt(inputs[2]), 0, 255);
-            else {
-                PlayerUtils.sendModMessage(new LiteralText("Could not parse color!").formatted(Formatting.GOLD));
-                return;
-            }
-            if (MathUtils.isInteger(inputs[3]))
-                b = MathUtils.clamp(Integer.parseInt(inputs[3]), 0, 255);
-            else {
-                PlayerUtils.sendModMessage(new LiteralText("Could not parse color!").formatted(Formatting.GOLD));
-                return;
-            }
-            style = style.withColor(new Color(r, g, b).getRGB());
-            PlayerUtils.sendModMessage(new LiteralText("New color set from RGB values!").formatted(Formatting.GOLD));
-            return;
-        }
-        PlayerUtils.sendModMessage(new LiteralText("/hl color [ColorCode,<r g b>]").formatted(Formatting.GOLD));
+    private void setColor(int r, int g, int b) {
+        style = style.withColor(new Color(r, g, b).getRGB());
+        sendModMessage(new LiteralText("New color set from RGB values!").formatted(Formatting.GOLD));
     }
 
-    private void setStyle(String[] inputs) {
-        if (inputs.length != 2) {
-            PlayerUtils.sendModMessage(new LiteralText("/hl style <style>").formatted(Formatting.GOLD));
-            return;
-        }
-        if (inputs[1].equals("reset")) {
+    private void setStyle(String s) {
+        s = s.toLowerCase();
+        if (s.equals("reset")) {
             style = Style.EMPTY.withFormatting(Formatting.AQUA, Formatting.BOLD);
-            PlayerUtils.sendModMessage(new LiteralText("Style reset!").formatted(Formatting.GOLD));
+            sendModMessage(new LiteralText("Style reset!").formatted(Formatting.GOLD));
             return;
         }
-        style = getStyleFromFormattingCode(inputs[1].trim());
-        PlayerUtils.sendModMessage(new LiteralText("Style set from FormattingCodes!").formatted(Formatting.GOLD));
+        style = getStyleFromFormattingCode(s);
+        sendModMessage(new LiteralText("Style set from FormattingCodes!").formatted(Formatting.GOLD));
     }
 
     private Style getStyleFromFormattingCode(String input) {
@@ -199,39 +190,40 @@ public class WordHighlighter {
     }
 
     private void listWords() {
-        PlayerUtils.sendModMessage(new LiteralText("These words are currently highlighted:").formatted(Formatting.GOLD));
-        PlayerUtils.sendModMessage(new LiteralText(words.toString()).formatted(Formatting.GOLD));
+        sendModMessage(new LiteralText("These words are currently highlighted:").formatted(Formatting.GOLD));
+        sendModMessage(new LiteralText(words.toString()).formatted(Formatting.GOLD));
     }
 
     private void clearWords() {
         words.clear();
-        PlayerUtils.sendModMessage(new LiteralText("Cleared all words!").formatted(Formatting.GOLD));
+        sendModMessage(new LiteralText("Cleared all words!").formatted(Formatting.GOLD));
     }
 
-    private void addWords(String[] inputs) {
-        if (inputs.length < 2) {
-            PlayerUtils.sendModMessage(new LiteralText("/hl add <words>"));
+    private void addWord(String word) {
+        word = word.toLowerCase();
+        if (words.contains(word)) {
+            sendModMessage(new LiteralText("Word is already highlighted!").formatted(Formatting.GOLD));
+            return;
         }
-        PlayerUtils.sendModMessage(new LiteralText("Added words!").formatted(Formatting.GOLD));
-        words.addAll(Arrays.asList(inputs).subList(1, inputs.length));
+        sendModMessage(new LiteralText("Added words!").formatted(Formatting.GOLD));
+        words.add(word);
         words.sort(Comparator.comparingInt(String::length).reversed());
     }
 
-    private void removeWords(String[] inputs) {
-        if (inputs.length < 2) {
-            PlayerUtils.sendModMessage(new LiteralText("/hl remove <words>").formatted(Formatting.GOLD));
-        }
-        Arrays.asList(inputs).subList(1, inputs.length).forEach(words::remove);
-        PlayerUtils.sendModMessage(new LiteralText("Removed words (if viable)!").formatted(Formatting.GOLD));
+    private void removeWord(String input) {
+        if (words.remove(input))
+            sendModMessage(new LiteralText("Removed words").formatted(Formatting.GOLD));
+        else
+            sendModMessage(new LiteralText("Word was not highlighted").formatted(Formatting.GOLD));
     }
 
     private void sendUsageDebugMessage() {
-        PlayerUtils.sendModMessage(new LiteralText("Command usage:").formatted(Formatting.GOLD));
-        PlayerUtils.sendModMessage(new LiteralText("/hl [add,remove,toggle,clear,list,bold,italic,underline,style,color]").formatted(Formatting.GOLD));
+        sendModMessage(new LiteralText("Command usage:").formatted(Formatting.GOLD));
+        sendModMessage(new LiteralText("/hl [add,remove,toggle,clear,list,bold,italic,underline,style,color]").formatted(Formatting.GOLD));
     }
 
     private void sendDebugMessage() {
-        PlayerUtils.sendModMessage(new LiteralText("Wrong use of command!").formatted(Formatting.GOLD));
+        sendModMessage(new LiteralText("Wrong use of command!").formatted(Formatting.GOLD));
         sendUsageDebugMessage();
     }
 

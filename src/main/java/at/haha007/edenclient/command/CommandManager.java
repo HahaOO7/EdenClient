@@ -1,40 +1,64 @@
 package at.haha007.edenclient.command;
 
+import at.haha007.edenclient.utils.PlayerUtils;
 import com.mojang.brigadier.CommandDispatcher;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.server.command.ServerCommandSource;
+import com.mojang.brigadier.arguments.ArgumentType;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.builder.RequiredArgumentBuilder;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import net.minecraft.client.network.ClientCommandSource;
 import net.minecraft.text.LiteralText;
+import net.minecraft.util.Formatting;
 
-import java.util.Arrays;
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class CommandManager {
-    private static final HashMap<String, Command> commandMap = new HashMap<>();
-    private static final HashMap<String, String[]> aliasMap = new HashMap<>();
+    private static final List<LiteralArgumentBuilder<ClientCommandSource>> cmds = new ArrayList<>();
+    private static final CommandDispatcher<ClientCommandSource> dispatcher = new CommandDispatcher<>();
 
-    public static void register(CommandDispatcher<ServerCommandSource> dispatcher) {
-        commandMap.keySet().stream().map(net.minecraft.server.command.CommandManager::literal).forEach(dispatcher::register);
+    static {
+        register(literal("cmds").executes(a -> {
+            PlayerUtils.sendModMessage(
+                    new LiteralText(cmds.
+                            stream().
+                            map(LiteralArgumentBuilder::getLiteral).
+                            collect(Collectors.joining(", "))).
+                            formatted(Formatting.GOLD));
+            return 1;
+        }));
     }
 
-    public static void registerCommand(Command command, String name, String... aliases) {
-        commandMap.put(name.toLowerCase(), command);
-        for (String alias : aliases) {
-            commandMap.put(alias.toLowerCase(), command);
+    public static void register(CommandDispatcher<ClientCommandSource> dispatcher) {
+        cmds.forEach(dispatcher::register);
+    }
+
+    public static void register(LiteralArgumentBuilder<ClientCommandSource> command) {
+        cmds.add(command);
+        cmds.sort(Comparator.comparing(LiteralArgumentBuilder::getLiteral));
+        dispatcher.register(command);
+    }
+
+    public static LiteralArgumentBuilder<ClientCommandSource> literal(String s) {
+        return LiteralArgumentBuilder.literal(s);
+    }
+
+    public static <T> RequiredArgumentBuilder<ClientCommandSource, T> argument(String name, ArgumentType<T> type) {
+        return RequiredArgumentBuilder.argument(name, type);
+    }
+
+    public static boolean isClientSideCommand(String command) {
+        return cmds.stream().anyMatch(c -> c.getLiteral().equalsIgnoreCase(command));
+    }
+
+
+    public static void execute(String command, ClientCommandSource clientCommandSource) {
+        try {
+            dispatcher.execute(command, clientCommandSource);
+        } catch (CommandSyntaxException e) {
+            e.printStackTrace();
         }
-        aliasMap.put(name.toLowerCase(), aliases);
-    }
-
-    public static boolean onCommand(String command) {
-        String[] args = command.replaceFirst("/", "").split(" ");
-        Command cmd = commandMap.get(args[0].toLowerCase());
-        if (cmd == null)
-            return false;
-        cmd.getExecutor().executeCommand(cmd, args[0], args.length > 1 ? Arrays.copyOfRange(args, 1, args.length) : new String[0]);
-        return true;
-    }
-
-    //display all commands
-    public static void onCommand(Command command, String label, String[] args) {
-        aliasMap.forEach((s, a) -> MinecraftClient.getInstance().inGameHud.getChatHud().addMessage(new LiteralText("Command: " + s + "  Aliases: " + Arrays.toString(a))));
     }
 }

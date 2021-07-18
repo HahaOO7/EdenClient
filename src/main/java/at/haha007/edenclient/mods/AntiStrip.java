@@ -3,7 +3,6 @@ package at.haha007.edenclient.mods;
 import at.haha007.edenclient.callbacks.ConfigLoadCallback;
 import at.haha007.edenclient.callbacks.ConfigSaveCallback;
 import at.haha007.edenclient.callbacks.PlayerInteractBlockEvent;
-import at.haha007.edenclient.command.Command;
 import at.haha007.edenclient.command.CommandManager;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.world.ClientWorld;
@@ -30,7 +29,7 @@ public class AntiStrip {
         PlayerInteractBlockEvent.EVENT.register(this::onInteractBlock);
         ConfigLoadCallback.EVENT.register(this::loadCfg);
         ConfigSaveCallback.EVENT.register(this::saveCfg);
-        CommandManager.registerCommand(new Command(this::onCommand), "antistrip");
+        registerCommand();
         axeItems.add(Items.WOODEN_AXE);
         axeItems.add(Items.STONE_AXE);
         axeItems.add(Items.IRON_AXE);
@@ -52,9 +51,11 @@ public class AntiStrip {
         return ActionResult.PASS;
     }
 
-    private void onCommand(Command cmd, String label, String[] args) {
-        enabled = !enabled;
-        sendModMessage(new LiteralText(enabled ? "Enabled AntiStrip." : "Disabled AntiStrip.").formatted(Formatting.GOLD));
+    private void registerCommand() {
+        CommandManager.register(CommandManager.literal("antistrip").executes(c -> {
+            sendModMessage(new LiteralText((enabled = !enabled) ? "Enabled AntiStrip." : "Disabled AntiStrip.").formatted(Formatting.GOLD));
+            return 1;
+        }));
     }
 
     private ActionResult onInteractBlock(ClientPlayerEntity player, ClientWorld world, Hand hand, BlockHitResult blockHitResult) {

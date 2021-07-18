@@ -12,7 +12,7 @@
     "MinecraftClientGameMixin",
     "PlayerControllerMixin",
     "PlayerInventoryMixin",
-    "CommandManagerMixin"
+    "ClientPlayNetworkHandlerMixin"
   ],
   "injectors": {
     "defaultRequire": 1

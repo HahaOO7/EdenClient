@@ -3,8 +3,7 @@ package at.haha007.edenclient.mods;
 import at.haha007.edenclient.callbacks.ConfigLoadCallback;
 import at.haha007.edenclient.callbacks.ConfigSaveCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
-import at.haha007.edenclient.command.Command;
-import at.haha007.edenclient.command.CommandManager;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
@@ -18,21 +17,20 @@ import net.minecraft.util.math.BlockPos;
 
 import java.util.Random;
 
+import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
 public class BarrierDisplay {
-    private boolean enabled = true;
     private static final int dist = 5;
     private final Random rand = new Random();
     private int counter = 20;
 
     public BarrierDisplay() {
-        CommandManager.registerCommand(new Command(this::onCommand), "barrier");
+        registerCommand();
         PlayerTickCallback.EVENT.register(this::onTick);
         ConfigSaveCallback.EVENT.register(this::onSave);
         ConfigLoadCallback.EVENT.register(this::onLoad);
     }
-
 
     private ActionResult onTick(ClientPlayerEntity player) {
         if (player.getInventory().getMainHandStack().getItem() == Items.BARRIER) return ActionResult.PASS;
@@ -45,13 +43,12 @@ public class BarrierDisplay {
         return ActionResult.PASS;
     }
 
-    private void onCommand(Command cmd, String label, String[] args) {
-        try {
-            counter = Integer.parseInt(args[0]);
-        } catch (NumberFormatException | ArrayIndexOutOfBoundsException ignored) {
-        }
-        enabled = !enabled;
-        sendModMessage(new LiteralText("Barrier display counter is " + counter).formatted(Formatting.GOLD));
+    private void registerCommand() {
+        register(literal("barrier").then(argument("count", IntegerArgumentType.integer(0, 10000)).executes(c -> {
+            counter = c.getArgument("count", Integer.class);
+            sendModMessage(new LiteralText("Barrier display counter is " + counter).formatted(Formatting.GOLD));
+            return 1;
+        })));
     }
 
     private ActionResult onSave(NbtCompound compoundTag) {

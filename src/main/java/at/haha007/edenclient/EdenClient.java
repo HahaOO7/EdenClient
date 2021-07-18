@@ -1,6 +1,5 @@
 package at.haha007.edenclient;
 
-import at.haha007.edenclient.command.Command;
 import at.haha007.edenclient.command.CommandManager;
 import at.haha007.edenclient.mods.*;
 import at.haha007.edenclient.mods.chestshop.ChestShopMod;
@@ -29,7 +28,7 @@ public class EdenClient implements ClientModInitializer {
         new MessageIgnorer();
         new AutoSheer();
 
-        CommandManager.registerCommand(new Command(CommandManager::onCommand), "commands", "cmds", "eden");
+//        CommandManager.register(new Command(CommandManager::onCommand), "commands", "cmds", "eden");
     }
 
 
