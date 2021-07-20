@@ -54,7 +54,7 @@ public class MessageIgnorer {
 
     private ActionResult onSave(NbtCompound nbtCompound) {
         NbtCompound tag = new NbtCompound();
-        tag.putBoolean("enabled", true);
+        tag.putBoolean("enabled", enabled);
         NbtList list = new NbtList();
         regex.forEach(s -> list.add(NbtString.of(s)));
         tag.put("regex", list);

@@ -140,10 +140,10 @@ public class ChestShopMod {
 
     private ActionResult saveConfig(NbtCompound overTag) {
         NbtCompound tag = overTag.getCompound("chestshop");
-        NbtList list = new NbtList();
-        tag.put("entries", list);
         tag.putBoolean("enabled", searchEnabled);
+        NbtList list = new NbtList();
         shops.values().forEach(m -> m.forEach(cs -> list.add(cs.toTag())));
+        tag.put("entries", list);
         overTag.put("chestshop", tag);
         return ActionResult.PASS;
     }
