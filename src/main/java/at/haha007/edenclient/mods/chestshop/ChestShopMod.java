@@ -6,6 +6,9 @@ import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.utils.PlayerUtils;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.suggestion.Suggestions;
+import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.block.entity.SignBlockEntity;
 import net.minecraft.client.network.ClientCommandSource;
 import net.minecraft.client.network.ClientPlayerEntity;
@@ -19,6 +22,7 @@ import net.minecraft.world.chunk.ChunkManager;
 import net.minecraft.world.chunk.WorldChunk;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import static at.haha007.edenclient.command.CommandManager.*;
@@ -82,7 +86,7 @@ public class ChestShopMod {
             sendMessage("ChestShop search " + ((searchEnabled = !searchEnabled) ? "enabled" : "disabled"));
             return 1;
         }));
-        node.then(literal("sell").then(argument("item", StringArgumentType.greedyString()).executes(c -> {
+        node.then(literal("sell").then(argument("item", StringArgumentType.greedyString()).suggests(this::suggest).executes(c -> {
             sendMessage("Sell: ");
             String item = c.getArgument("item", String.class);
             List<ChestShopEntry> matching = new ArrayList<>();
@@ -97,7 +101,7 @@ public class ChestShopMod {
                     cs.getSellPricePerItem())).forEach(this::sendMessage);
             return 1;
         })));
-        node.then(literal("buy").then(argument("item", StringArgumentType.greedyString()).executes(c -> {
+        node.then(literal("buy").then(argument("item", StringArgumentType.greedyString()).suggests(this::suggest).executes(c -> {
             String item = c.getArgument("item", String.class);
             sendMessage("Buy: ");
             List<ChestShopEntry> matching = new ArrayList<>();
@@ -121,6 +125,11 @@ public class ChestShopMod {
             return 1;
         });
         register(node);
+    }
+
+    private CompletableFuture<Suggestions> suggest(CommandContext<ClientCommandSource> context, SuggestionsBuilder suggestionsBuilder) {
+        shops.values().forEach(s -> s.stream().map(ChestShopEntry::getItem).forEach(suggestionsBuilder::suggest));
+        return  suggestionsBuilder.buildFuture();
     }
 
     private ActionResult saveConfig(NbtCompound overTag) {
