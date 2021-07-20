@@ -24,6 +24,8 @@ import net.minecraft.world.chunk.WorldChunk;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import static at.haha007.edenclient.command.CommandManager.*;
 
@@ -86,7 +88,7 @@ public class ChestShopMod {
             sendMessage("ChestShop search " + ((searchEnabled = !searchEnabled) ? "enabled" : "disabled"));
             return 1;
         }));
-        node.then(literal("sell").then(argument("item", StringArgumentType.greedyString()).suggests(this::suggest).executes(c -> {
+        node.then(literal("sell").then(argument("item", StringArgumentType.greedyString()).suggests(this::suggestSell).executes(c -> {
             sendMessage("Sell: ");
             String item = c.getArgument("item", String.class);
             List<ChestShopEntry> matching = new ArrayList<>();
@@ -101,7 +103,7 @@ public class ChestShopMod {
                     cs.getSellPricePerItem())).forEach(this::sendMessage);
             return 1;
         })));
-        node.then(literal("buy").then(argument("item", StringArgumentType.greedyString()).suggests(this::suggest).executes(c -> {
+        node.then(literal("buy").then(argument("item", StringArgumentType.greedyString()).suggests(this::suggestBuy).executes(c -> {
             String item = c.getArgument("item", String.class);
             sendMessage("Buy: ");
             List<ChestShopEntry> matching = new ArrayList<>();
@@ -127,8 +129,12 @@ public class ChestShopMod {
         register(node);
     }
 
-    private CompletableFuture<Suggestions> suggest(CommandContext<ClientCommandSource> context, SuggestionsBuilder suggestionsBuilder) {
-        shops.values().forEach(s -> s.stream().map(ChestShopEntry::getItem).forEach(suggestionsBuilder::suggest));
+    private CompletableFuture<Suggestions> suggestSell(CommandContext<ClientCommandSource> context, SuggestionsBuilder suggestionsBuilder) {
+        shops.values().forEach(s -> s.stream().filter(ChestShopEntry::canSell).map(ChestShopEntry::getItem).forEach(suggestionsBuilder::suggest));
+        return  suggestionsBuilder.buildFuture();
+    }
+    private CompletableFuture<Suggestions> suggestBuy(CommandContext<ClientCommandSource> context, SuggestionsBuilder suggestionsBuilder) {
+        shops.values().forEach(s -> s.stream().filter(ChestShopEntry::canBuy).map(ChestShopEntry::getItem).forEach(suggestionsBuilder::suggest));
         return  suggestionsBuilder.buildFuture();
     }
 
