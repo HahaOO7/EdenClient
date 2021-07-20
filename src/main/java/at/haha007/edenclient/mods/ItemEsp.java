@@ -7,6 +7,8 @@ import at.haha007.edenclient.utils.RenderUtils;
 import com.mojang.brigadier.arguments.FloatArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.builder.RequiredArgumentBuilder;
+import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.client.network.ClientCommandSource;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.ItemEntity;
@@ -75,22 +77,28 @@ public class ItemEsp {
             sendModMessage(new LiteralText("Size: " + size).formatted(Formatting.GOLD));
             return 1;
         })));
-        node.then(literal("color").then(
-                argument("r", IntegerArgumentType.integer(0, 255)).then(
-                        argument("g", IntegerArgumentType.integer(0, 255)).then(
-                                argument("b", IntegerArgumentType.integer(0, 255)).executes(c -> {
-                                    setColor(c.getArgument("r", Integer.class),
-                                            c.getArgument("g", Integer.class),
-                                            c.getArgument("b", Integer.class));
-                                    return 0;
-                                })))));
+        node.then(literal("color").then(arg("r").then(arg("g")).then(arg("b")).executes(c -> {
+            setColor(c);
+            return 0;
+        })));
+        node.executes(c -> {
+            sendModMessage(new LiteralText("/itemesp toggle"));
+            sendModMessage(new LiteralText("/itemesp solid"));
+            sendModMessage(new LiteralText("/itemesp size <size>"));
+            sendModMessage(new LiteralText("/itemesp color <r> <g> <b>"));
+            return 1;
+        });
         register(node);
     }
 
-    private void setColor(int r, int g, int b) {
-        this.r = r;
-        this.g = g;
-        this.b = b;
+    RequiredArgumentBuilder<ClientCommandSource, Integer> arg(String key) {
+        return argument(key, IntegerArgumentType.integer(0, 255));
+    }
+
+    private void setColor(CommandContext<ClientCommandSource> c) {
+        this.r =  c.getArgument("r", Integer.class);
+        this.g =  c.getArgument("g", Integer.class);
+        this.b =  c.getArgument("b", Integer.class);
         sendModMessage(new LiteralText("Color updated.").formatted(Formatting.GOLD));
     }
 

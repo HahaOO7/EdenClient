@@ -44,7 +44,7 @@ public class AutoSell {
 
     private void registerCommand() {
         LiteralArgumentBuilder<ClientCommandSource> node = literal("autosell");
-        node.then(literal("reset").executes(c -> {
+        node.then(literal("clear").executes(c -> {
             autoSellItems.clear();
             sendChatMessage("Removed all entries");
             return 1;
@@ -73,6 +73,13 @@ public class AutoSell {
             }
             return 1;
         }));
+        node.executes(c -> {
+            sendChatMessage("/autosell clear");
+            sendChatMessage("/autosell list");
+            sendChatMessage("/autosell add");
+            sendChatMessage("/autosell remove");
+            return 1;
+        });
         register(node);
     }
 

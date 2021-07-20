@@ -48,7 +48,10 @@ public class BarrierDisplay {
             counter = c.getArgument("count", Integer.class);
             sendModMessage(new LiteralText("Barrier display counter is " + counter).formatted(Formatting.GOLD));
             return 1;
-        })));
+        })).executes(c -> {
+            sendModMessage(new LiteralText("/barrier <count>"));
+            return 1;
+        }));
     }
 
     private ActionResult onSave(NbtCompound compoundTag) {
