@@ -34,8 +34,8 @@ public class WordHighlighter {
     private Style style = Style.EMPTY;
 
     public WordHighlighter() {
-//        CommandManager.register(new Command(this::onCommand), "highlight", "hl");
-        registerCommand();
+        registerCommand("highlight");
+        registerCommand("hl");
         AddChatMessageCallback.EVENT.register(this::onChat);
         ConfigSaveCallback.EVENT.register(this::onSave);
         ConfigLoadCallback.EVENT.register(this::onLoad);
@@ -97,8 +97,8 @@ public class WordHighlighter {
         return ActionResult.PASS;
     }
 
-    private void registerCommand() {
-        LiteralArgumentBuilder<ClientCommandSource> node = literal("highlight");
+    private void registerCommand(String cmd) {
+        LiteralArgumentBuilder<ClientCommandSource> node = literal(cmd);
         node.then(literal("toggle").executes(c -> {
             sendModMessage(new LiteralText((enabled = !enabled) ? "Enabled WordHighlighter!" : "Disabled WordHighlighter!").formatted(Formatting.GOLD));
             return 0;

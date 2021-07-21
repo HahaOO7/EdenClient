@@ -37,8 +37,8 @@ public class ChestShopMod {
 
 
     public ChestShopMod() {
-//        CommandManager.register(new Command(this::onCommand), "chestshop", "cs");
-        registerCommand();
+        registerCommand("chestshop");
+        registerCommand("cs");
         PlayerTickCallback.EVENT.register(this::tick);
         ConfigLoadCallback.EVENT.register(this::loadConfig);
         ConfigSaveCallback.EVENT.register(this::saveConfig);
@@ -70,8 +70,8 @@ public class ChestShopMod {
         ChunkPos.stream(player.getChunkPos(), 5).forEach(cp -> checkForShops(cm, cp));
     }
 
-    private void registerCommand() {
-        LiteralArgumentBuilder<ClientCommandSource> node = literal("chestshop");
+    private void registerCommand(String name) {
+        LiteralArgumentBuilder<ClientCommandSource> node = literal(name);
         node.then(literal("clear").executes(c -> {
             shops.clear();
             sendMessage("Cleared ChestShop entries.");

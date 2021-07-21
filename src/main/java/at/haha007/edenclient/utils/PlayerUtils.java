@@ -8,7 +8,7 @@ import net.minecraft.util.Formatting;
 
 public class PlayerUtils {
 
-    private static final Text prefix = new LiteralText("[EC] ").setStyle(Style.EMPTY.withBold(true).withFormatting(Formatting.LIGHT_PURPLE));
+    private static final Text prefix = new LiteralText("[EC] ").setStyle(Style.EMPTY.withFormatting(Formatting.LIGHT_PURPLE, Formatting.BOLD));
 
     public static void sendMessage(Text text) {
         MinecraftClient.getInstance().inGameHud.getChatHud().addMessage(text);
@@ -17,5 +17,9 @@ public class PlayerUtils {
 
     public static void sendModMessage(Text text) {
         sendMessage(prefix.copy().append(text));
+    }
+
+    public static void sendModMessage(String text) {
+        sendModMessage(new LiteralText(text));
     }
 }

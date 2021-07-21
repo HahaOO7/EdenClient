@@ -39,11 +39,12 @@ public class AutoSell {
         ConfigSaveCallback.EVENT.register(this::onSave);
         ConfigLoadCallback.EVENT.register(this::onLoad);
         PlayerInvChangeCallback.EVENT.register(this::onInventoryChange);
-        registerCommand();
+        registerCommand("autosell");
+        registerCommand("as");
     }
 
-    private void registerCommand() {
-        LiteralArgumentBuilder<ClientCommandSource> node = literal("autosell");
+    private void registerCommand(String cmd) {
+        LiteralArgumentBuilder<ClientCommandSource> node = literal(cmd);
         node.then(literal("clear").executes(c -> {
             autoSellItems.clear();
             sendChatMessage("Removed all entries");

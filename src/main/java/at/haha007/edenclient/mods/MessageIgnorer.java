@@ -28,7 +28,8 @@ public class MessageIgnorer {
 
     public MessageIgnorer() {
         AddChatMessageCallback.EVENT.register(this::onChat);
-        registerCommand();
+        registerCommand("ignoremessage");
+        registerCommand("im");
         ConfigSaveCallback.EVENT.register(this::onSave);
         ConfigLoadCallback.EVENT.register(this::onLoad);
     }
@@ -62,8 +63,8 @@ public class MessageIgnorer {
         return ActionResult.PASS;
     }
 
-    private void registerCommand() {
-        LiteralArgumentBuilder<ClientCommandSource> node = literal("ignoremessage");
+    private void registerCommand(String cmd) {
+        LiteralArgumentBuilder<ClientCommandSource> node = literal(cmd);
         node.then(literal("toggle").executes(c -> {
             PlayerUtils.sendModMessage(new LiteralText((enabled = !enabled) ? "Message ignoring enabled" : "Message ignoring disabled").formatted(Formatting.GOLD));
             return 1;
