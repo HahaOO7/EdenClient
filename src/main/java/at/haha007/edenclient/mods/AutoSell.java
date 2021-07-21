@@ -33,6 +33,7 @@ import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 public class AutoSell {
     private final Set<Item> autoSellItems = new HashSet<>();
     private long lastSell = 0;
+    private boolean enabled;
 
     public AutoSell() {
 //        CommandManager.register(new Command(this::onCommand), "autosell", "as");
@@ -45,6 +46,10 @@ public class AutoSell {
 
     private void registerCommand(String cmd) {
         LiteralArgumentBuilder<ClientCommandSource> node = literal(cmd);
+        node.then(literal("toggle").executes(c -> {
+            sendChatMessage((enabled = !enabled) ? "AutoSell enabled" : "AutoSell disabled");
+            return 1;
+        }));
         node.then(literal("clear").executes(c -> {
             autoSellItems.clear();
             sendChatMessage("Removed all entries");
@@ -77,6 +82,7 @@ public class AutoSell {
         node.executes(c -> {
             sendChatMessage("/autosell clear");
             sendChatMessage("/autosell list");
+            sendChatMessage("/autosell toggle");
             sendChatMessage("/autosell add");
             sendChatMessage("/autosell remove");
             return 1;
@@ -86,6 +92,7 @@ public class AutoSell {
 
     private ActionResult onLoad(NbtCompound compoundTag) {
         NbtCompound tag = compoundTag.getCompound("autoSell");
+        enabled = tag.getBoolean("enabled");
         NbtList itemIdentifierList = tag.getList("items", 8);
         autoSellItems.clear();
         for (NbtElement key : itemIdentifierList) {
@@ -102,20 +109,21 @@ public class AutoSell {
         NbtList itemsTag = new NbtList();
         itemsTag.addAll(itemIds);
         tag.put("items", itemsTag);
+        tag.putBoolean("enabled", enabled);
         compoundTag.put("autoSell", tag);
         return ActionResult.PASS;
     }
 
 
     public ActionResult onInventoryChange(PlayerInventory inventory) {
-        if (!isFullInventory(inventory)) return ActionResult.PASS;
+        if (!enabled || !isFullInventory(inventory)) return ActionResult.PASS;
         executeAutoSell();
         return ActionResult.PASS;
     }
 
-    @SuppressWarnings("ConstantConditions")
     private void executeAutoSell() {
         ClientPlayerEntity player = MinecraftClient.getInstance().player;
+        if (player == null) return;
         long time = System.currentTimeMillis();
         if (time - 200 < lastSell) return;
         autoSellItems

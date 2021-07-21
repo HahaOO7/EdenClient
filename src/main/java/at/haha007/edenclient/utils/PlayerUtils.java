@@ -20,6 +20,6 @@ public class PlayerUtils {
     }
 
     public static void sendModMessage(String text) {
-        sendModMessage(new LiteralText(text));
+        sendModMessage(new LiteralText(text).formatted(Formatting.GOLD));
     }
 }
