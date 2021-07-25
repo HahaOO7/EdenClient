@@ -3,6 +3,7 @@ package at.haha007.edenclient.mods;
 import at.haha007.edenclient.callbacks.AddChatMessageCallback;
 import at.haha007.edenclient.callbacks.ConfigLoadCallback;
 import at.haha007.edenclient.callbacks.ConfigSaveCallback;
+import at.haha007.edenclient.utils.MathUtils;
 import at.haha007.edenclient.utils.PlayerUtils;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -81,10 +82,19 @@ public class MessageIgnorer {
         })));
         node.then(literal("remove").then(argument("regex", StringArgumentType.greedyString()).executes(c -> {
             String im = c.getArgument("regex", String.class);
+            if (MathUtils.isInteger(im) && !regex.contains(im)) {
+                int index = Integer.parseInt(im);
+                if (removeIndex(index)) {
+                    PlayerUtils.sendModMessage(new LiteralText("Removed ignored message at index: ").formatted(Formatting.GOLD).append(new LiteralText(Integer.toString(index))).formatted(Formatting.AQUA));
+                } else {
+                    PlayerUtils.sendModMessage(new LiteralText("Index out of bounds: " + index + " ->").formatted(Formatting.GOLD).append(new LiteralText(" allowed indices: " + 1 + " to " + regex.size()).formatted(Formatting.AQUA)));
+                }
+                return 1;
+            }
             if (regex.remove(im)) {
-                PlayerUtils.sendModMessage(new LiteralText("Removed ignored message").formatted(Formatting.GOLD));
+                PlayerUtils.sendModMessage(new LiteralText("Removed ignored message ").formatted(Formatting.GOLD).append(new LiteralText(im).formatted(Formatting.AQUA)));
             } else {
-                PlayerUtils.sendModMessage(new LiteralText("Could not find message: " + im).formatted(Formatting.GOLD));
+                PlayerUtils.sendModMessage(new LiteralText("Could not find message or message at index: ").formatted(Formatting.GOLD).append(new LiteralText(im).formatted(Formatting.AQUA)));
             }
             return 1;
         })));
@@ -113,6 +123,14 @@ public class MessageIgnorer {
             return 1;
         });
         register(node);
+    }
+
+    private boolean removeIndex(int index) {
+        if (index < 1 || index > regex.size()) {
+            return false;
+        }
+        regex.remove(index - 1);
+        return true;
     }
 
     private void sendDebugMessage() {
