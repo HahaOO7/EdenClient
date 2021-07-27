@@ -211,6 +211,6 @@ public class Rainbowifier {
     }
 
     private void sendDebugMessage() {
-        sendModMessage(new LiteralText("/rainbowify [simple, fancy, freq]").formatted(Formatting.GOLD));
+        sendModMessage(new LiteralText("/rainbowify [simple, fancy, freq, auto, msg <recipient message>]").formatted(Formatting.GOLD));
     }
 }
