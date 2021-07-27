@@ -14,7 +14,6 @@ import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
 
 import java.util.List;
-import java.util.regex.Pattern;
 
 import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
@@ -22,7 +21,7 @@ import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
 public class Rainbowifier {
     private final List<Character> simpleRainbowColors = List.of('4', 'c', 'e', '2', '9', '5', 'd', '5', '9', '2', 'e', 'c');
-    private final List<Character> simpleRainbowColorsExtended = List.of('4', 'c', '6', 'e', 'a', '2', '3', '1', 'd', '5', 'd', '1', '3', '2', 'a', 'e', '6', 'c', '4');
+    private final List<Character> simpleRainbowColorsExtended = List.of('c', '6', 'e', 'a', 'b', '3', 'd', '5', 'd', '3', 'b', 'a', 'e', '6');
     private double freq;
 
     public Rainbowifier() {
