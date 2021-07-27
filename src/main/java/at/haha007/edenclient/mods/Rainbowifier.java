@@ -57,8 +57,10 @@ public class Rainbowifier {
         node.then(literal("fancy").then(argument("input", StringArgumentType.greedyString()).executes(c -> {
             String input = c.getArgument("input", String.class);
 
-            if (input.length() > 28) {
-                sendModMessage(new LiteralText("Nachrichten die mit dem Rainbowifier-Fancy geschickt werden können maximal 28 Zeichen haben.").formatted(Formatting.GOLD));
+            String message = rainbowifyMessageFancy(input);
+
+            if (message.length() >= 256) {
+                sendModMessage(new LiteralText("Deine Nachricht ist zu lang. Es werden nur bis zu 25 Zeichen (mit einigen Leerzeichen) im Rainbowifier-Fancy unterstützt.").formatted(Formatting.GOLD));
                 return 0;
             }
 
@@ -74,10 +76,13 @@ public class Rainbowifier {
         node.then(literal("simple").then(argument("input", StringArgumentType.greedyString()).executes(c -> {
             String input = c.getArgument("input", String.class);
 
-            if (input.length() > 89) {
-                sendModMessage(new LiteralText("Nachrichten die mit dem Rainbowifier-Simple geschickt werden können maximal 89 Zeichen haben.").formatted(Formatting.GOLD));
+            String message = rainbowifyMessageSimple(input);
+
+            if (message.length() >= 256) {
+                sendModMessage(new LiteralText("Deine Nachricht ist zu lang. Es werden nur bis zu 80 Zeichen (mit einigen Leerzeichen) im Rainbowifier-Simple unterstützt.").formatted(Formatting.GOLD));
                 return 0;
             }
+
             ClientPlayerEntity player = MinecraftClient.getInstance().player;
 
             if (player != null) {
