@@ -20,8 +20,7 @@ import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
 
 public class Rainbowifier {
-    private final List<Character> simpleRainbowColors = List.of('4', 'c', 'e', '2', '9', '5', 'd', '5', '9', '2', 'e', 'c');
-    private final List<Character> simpleRainbowColorsExtended = List.of('c', '6', 'e', 'a', 'b', '3', 'd', '5', 'd', '3', 'b', 'a', 'e', '6');
+    private final List<Character> simpleRainbowColors = List.of('c', '6', 'e', 'a', 'b', '3', 'd', '5', 'd', '3', 'b', 'a', 'e', '6');
     private double freq;
 
     public Rainbowifier() {
@@ -180,7 +179,7 @@ public class Rainbowifier {
 
         for (int i = 0; i < length; i++) {
             char character = input.charAt(i);
-            String color = length < 10 ? getSimpleRainbowColorAtIndex(i, false) : getSimpleRainbowColorAtIndex(i, true);
+            String color = getSimpleRainbowColorAtIndex(i);
 
             if (character == ' ') {
                 rainbow.append(' ');
@@ -203,11 +202,8 @@ public class Rainbowifier {
         return color;
     }
 
-    private String getSimpleRainbowColorAtIndex(int input, boolean extended) {
-        if (extended)
-            return "&" + this.simpleRainbowColorsExtended.get(input % this.simpleRainbowColorsExtended.size());
-        else
-            return "&" + this.simpleRainbowColors.get(input % this.simpleRainbowColors.size());
+    private String getSimpleRainbowColorAtIndex(int input) {
+        return "&" + this.simpleRainbowColors.get(input % this.simpleRainbowColors.size());
     }
 
     private void sendDebugMessage() {
