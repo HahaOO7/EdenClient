@@ -82,7 +82,7 @@ public class MessageIgnorer {
         })));
         node.then(literal("remove").then(argument("regex", StringArgumentType.greedyString()).executes(c -> {
             String im = c.getArgument("regex", String.class);
-            if (MathUtils.isInteger(im) && !regex.contains(im)) {
+            if (MathUtils.isInteger(im)) {
                 int index = Integer.parseInt(im);
                 if (removeIndex(index)) {
                     PlayerUtils.sendModMessage(new LiteralText("Removed ignored message at index: ").formatted(Formatting.GOLD).append(new LiteralText(Integer.toString(index))).formatted(Formatting.AQUA));
@@ -91,11 +91,7 @@ public class MessageIgnorer {
                 }
                 return 1;
             }
-            if (regex.remove(im)) {
-                PlayerUtils.sendModMessage(new LiteralText("Removed ignored message ").formatted(Formatting.GOLD).append(new LiteralText(im).formatted(Formatting.AQUA)));
-            } else {
-                PlayerUtils.sendModMessage(new LiteralText("Could not find message or message at index: ").formatted(Formatting.GOLD).append(new LiteralText(im).formatted(Formatting.AQUA)));
-            }
+            PlayerUtils.sendModMessage(new LiteralText("Wrong input! Input must be an Integer with a value between 1 and the amount of ignored regexes (use /ignoremessage list to find correct index)").formatted(Formatting.GOLD));
             return 1;
         })));
         node.then(literal("list").executes(c -> {
