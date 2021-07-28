@@ -3,8 +3,8 @@ package at.haha007.edenclient.mods;
 import at.haha007.edenclient.callbacks.AddChatMessageCallback;
 import at.haha007.edenclient.callbacks.ConfigLoadCallback;
 import at.haha007.edenclient.callbacks.ConfigSaveCallback;
-import at.haha007.edenclient.utils.MathUtils;
 import at.haha007.edenclient.utils.PlayerUtils;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.client.network.ClientCommandSource;
@@ -12,7 +12,7 @@ import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
 import net.minecraft.nbt.NbtString;
-import net.minecraft.text.LiteralText;
+import net.minecraft.text.*;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
 
@@ -67,31 +67,38 @@ public class MessageIgnorer {
     private void registerCommand(String cmd) {
         LiteralArgumentBuilder<ClientCommandSource> node = literal(cmd);
         node.then(literal("toggle").executes(c -> {
-            PlayerUtils.sendModMessage(new LiteralText((enabled = !enabled) ? "Message ignoring enabled" : "Message ignoring disabled").formatted(Formatting.GOLD));
+            String msg = (enabled = !enabled) ? "Message ignoring enabled" : "Message ignoring disabled";
+            PlayerUtils.sendModMessage(new LiteralText(msg).formatted(Formatting.GOLD));
             return 1;
         }));
         node.then(literal("add").then(argument("regex", StringArgumentType.greedyString()).executes(c -> {
             String im = c.getArgument("regex", String.class);
             if (!isValidRegex(im)) {
                 PlayerUtils.sendModMessage(new LiteralText("Invalid pattern syntax").formatted(Formatting.GOLD));
-                return 1;
+                return -1;
+            }
+            if (regex.contains(im)) {
+                PlayerUtils.sendModMessage(new LiteralText("Already ignoring this pattern").formatted(Formatting.GOLD));
+                return -1;
             }
             regex.add(im);
             PlayerUtils.sendModMessage(new LiteralText("Ignoring messages matching " + im).formatted(Formatting.GOLD));
             return 1;
         })));
-        node.then(literal("remove").then(argument("regex", StringArgumentType.greedyString()).executes(c -> {
-            String im = c.getArgument("regex", String.class);
-            if (MathUtils.isInteger(im)) {
-                int index = Integer.parseInt(im);
-                if (removeIndex(index)) {
-                    PlayerUtils.sendModMessage(new LiteralText("Removed ignored message at index: ").formatted(Formatting.GOLD).append(new LiteralText(Integer.toString(index))).formatted(Formatting.AQUA));
-                } else {
-                    PlayerUtils.sendModMessage(new LiteralText("Index out of bounds: " + index + " ->").formatted(Formatting.GOLD).append(new LiteralText(" allowed indices: " + 1 + " to " + regex.size()).formatted(Formatting.AQUA)));
-                }
-                return 1;
+        node.then(literal("remove").then(argument("index", IntegerArgumentType.integer(1)).executes(c -> {
+            int index = c.getArgument("index", Integer.class) - 1;
+            if (index >= regex.size()) {
+                MutableText prefix = new LiteralText("Index out of bounds. Use ").formatted(Formatting.GOLD);
+                MutableText suggestion = new LiteralText("/" + cmd + " list").setStyle(Style.EMPTY.
+                        withColor(Formatting.AQUA).
+                        withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new LiteralText("click to execute"))).
+                        withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/" + cmd + " list")));
+                MutableText suffix = new LiteralText(" to see available indices.").formatted(Formatting.GOLD);
+                PlayerUtils.sendModMessage(prefix.append(suggestion).append(suffix));
+                return -1;
             }
-            PlayerUtils.sendModMessage(new LiteralText("Wrong input! Input must be an Integer with a value between 1 and the amount of ignored regexes (use /ignoremessage list to find correct index)").formatted(Formatting.GOLD));
+            PlayerUtils.sendModMessage(new LiteralText("Removed: ").formatted(Formatting.GOLD).
+                    append(new LiteralText(regex.remove(index)).formatted(Formatting.AQUA)));
             return 1;
         })));
         node.then(literal("list").executes(c -> {
@@ -101,7 +108,9 @@ public class MessageIgnorer {
             }
             PlayerUtils.sendModMessage(new LiteralText("List of ignored message-regexes:").formatted(Formatting.GOLD));
             for (int i = 0; i < regex.size(); i++) {
-                PlayerUtils.sendModMessage(new LiteralText("[" + (i + 1) + "] " + regex.get(i)).formatted(Formatting.GOLD));
+                MutableText txt = new LiteralText(regex.get(i)).formatted(Formatting.AQUA);
+                MutableText prefix = new LiteralText("[" + (i + 1) + "] ").formatted(Formatting.GOLD);
+                PlayerUtils.sendModMessage(prefix.append(txt));
             }
             return 1;
         }));
@@ -119,14 +128,6 @@ public class MessageIgnorer {
             return 1;
         });
         register(node);
-    }
-
-    private boolean removeIndex(int index) {
-        if (index < 1 || index > regex.size()) {
-            return false;
-        }
-        regex.remove(index - 1);
-        return true;
     }
 
     private void sendDebugMessage() {
