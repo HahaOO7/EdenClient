@@ -27,6 +27,7 @@ public class EdenClient implements ClientModInitializer {
         new AntiStrip();
         new MessageIgnorer();
         new AutoSheer();
+        new Rainbowifier();
 
 //        CommandManager.register(new Command(CommandManager::onCommand), "commands", "cmds", "eden");
     }

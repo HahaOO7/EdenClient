@@ -7,6 +7,7 @@ import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.visitor.NbtTextFormatter;
 import net.minecraft.text.LiteralText;
+import net.minecraft.util.Formatting;
 
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
@@ -19,7 +20,7 @@ public class NbtInfo {
             PlayerInventory inv = player.getInventory();
             ItemStack stack = inv.getMainHandStack();
             if (stack.isEmpty()) {
-                sendModMessage(new LiteralText("Item in die Hand!"));
+                sendModMessage(new LiteralText("Item in die Hand!").formatted(Formatting.GOLD));
             } else {
                 sendModMessage(new NbtTextFormatter("", 1).apply(stack.getOrCreateTag()));
             }
