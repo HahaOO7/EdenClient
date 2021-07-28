@@ -24,11 +24,10 @@ import net.minecraft.world.chunk.WorldChunk;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 import static at.haha007.edenclient.command.CommandManager.*;
 
+@SuppressWarnings("AssignmentUsedAsCondition")
 public class ChestShopMod {
 
     Map<ChunkPos, Set<ChestShopEntry>> shops = new HashMap<>();
@@ -131,11 +130,12 @@ public class ChestShopMod {
 
     private CompletableFuture<Suggestions> suggestSell(CommandContext<ClientCommandSource> context, SuggestionsBuilder suggestionsBuilder) {
         shops.values().forEach(s -> s.stream().filter(ChestShopEntry::canSell).map(ChestShopEntry::getItem).forEach(suggestionsBuilder::suggest));
-        return  suggestionsBuilder.buildFuture();
+        return suggestionsBuilder.buildFuture();
     }
+
     private CompletableFuture<Suggestions> suggestBuy(CommandContext<ClientCommandSource> context, SuggestionsBuilder suggestionsBuilder) {
         shops.values().forEach(s -> s.stream().filter(ChestShopEntry::canBuy).map(ChestShopEntry::getItem).forEach(suggestionsBuilder::suggest));
-        return  suggestionsBuilder.buildFuture();
+        return suggestionsBuilder.buildFuture();
     }
 
     private ActionResult saveConfig(NbtCompound overTag) {

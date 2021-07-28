@@ -5,7 +5,6 @@ import at.haha007.edenclient.callbacks.ConfigLoadCallback;
 import at.haha007.edenclient.callbacks.ConfigSaveCallback;
 import at.haha007.edenclient.command.CommandManager;
 import at.haha007.edenclient.utils.MathUtils;
-import at.haha007.edenclient.utils.PerWorldConfig;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.ChatHudLine;
@@ -23,6 +22,7 @@ import java.util.List;
 
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
+@SuppressWarnings("AssignmentUsedAsCondition")
 public class AntiSpam {
     private final MinecraftClient MC = MinecraftClient.getInstance();
     private boolean enabled = true;

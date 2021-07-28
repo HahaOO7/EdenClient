@@ -26,6 +26,7 @@ import java.util.regex.Pattern;
 import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
+@SuppressWarnings("AssignmentUsedAsCondition")
 public class WordHighlighter {
 
     private List<String> words = new ArrayList<>();

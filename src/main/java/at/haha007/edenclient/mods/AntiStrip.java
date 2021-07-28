@@ -21,6 +21,7 @@ import java.util.HashSet;
 
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
+@SuppressWarnings("AssignmentUsedAsCondition")
 public class AntiStrip {
     private boolean enabled = true;
     private final Collection<Item> axeItems = new HashSet<>();
