@@ -21,6 +21,7 @@ import java.util.Objects;
 
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
+@SuppressWarnings("AssignmentUsedAsCondition")
 public class SignCopy {
     public static String[] copy = new String[4];
     boolean enabled = false;
@@ -76,7 +77,7 @@ public class SignCopy {
             return ActionResult.PASS;
         }
         shouldCopy = true;
-		NbtCompound tag = new NbtCompound();
+        NbtCompound tag = new NbtCompound();
         sign.readNbt(tag);
         copy[0] = getString(tag.getString("Text1"));
         copy[1] = getString(tag.getString("Text2"));

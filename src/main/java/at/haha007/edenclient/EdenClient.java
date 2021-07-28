@@ -1,6 +1,5 @@
 package at.haha007.edenclient;
 
-import at.haha007.edenclient.command.CommandManager;
 import at.haha007.edenclient.mods.*;
 import at.haha007.edenclient.mods.chestshop.ChestShopMod;
 import at.haha007.edenclient.utils.PerWorldConfig;
@@ -16,22 +15,26 @@ public class EdenClient implements ClientModInitializer {
     public void onInitializeClient() {
         INSTANCE = this;
         PerWorldConfig.getInstance();
-        new SignCopy();
-        new BarrierDisplay();
-        new AutoSell();
-        new ItemEsp();
-        new AntiSpam();
-        new NbtInfo();
-        new ChestShopMod();
-        new WordHighlighter();
-        new AntiStrip();
+
+        // Chat | These Mods interact with each message being sent to the client (in descending order)
+        new SellStatsTracker();
         new MessageIgnorer();
+        new WordHighlighter();
+        new AntiSpam();
+
+        // Gameplay | These Mods interact with your gameplay passively
+        new AutoSell();
+        new BarrierDisplay();
+        new ItemEsp();
+        new AntiStrip();
         new AutoSheer();
+        new SignCopy();
+
+        // Commands only | These Mods only actively interact with your gameplay when directly using its commands
         new Rainbowifier();
-
-//        CommandManager.register(new Command(CommandManager::onCommand), "commands", "cmds", "eden");
+        new ChestShopMod();
+        new NbtInfo();
     }
-
 
     public static File getDataFolder() {
         File file = getConfigDirectory();
@@ -42,6 +45,4 @@ public class EdenClient implements ClientModInitializer {
     public static File getConfigDirectory() {
         return new File(MinecraftClient.getInstance().runDirectory, "config");
     }
-
-
 }
