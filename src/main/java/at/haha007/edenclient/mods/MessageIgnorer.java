@@ -26,7 +26,7 @@ import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 @SuppressWarnings("AssignmentUsedAsCondition")
 public class MessageIgnorer {
     private final static List<String> regex = new ArrayList<>();
-    private boolean enabled, displaySellMessages, displayVoteMessages, displayGlobalChat, displayDiscordChat;
+    private static boolean enabled, displaySellMessages, displayVoteMessages, displayGlobalChat, displayDiscordChat;
 
     public MessageIgnorer() {
         AddChatMessageCallback.EVENT.register(this::onChat);
@@ -34,6 +34,10 @@ public class MessageIgnorer {
         registerCommand("im");
         ConfigSaveCallback.EVENT.register(this::onSave);
         ConfigLoadCallback.EVENT.register(this::onLoad);
+    }
+
+    public static boolean isEnabled() {
+        return enabled;
     }
 
     private void registerCommand(String cmd) {

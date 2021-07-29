@@ -1,6 +1,15 @@
 package at.haha007.edenclient.utils;
 
+import at.haha007.edenclient.mods.chestshop.ChestShopMod;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.SocketAddress;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class StringUtils {
 
@@ -39,5 +48,18 @@ public class StringUtils {
         }
 
         return str.replace(':', '_');
+    }
+
+    public static List<String> getViableIDs(String path) {
+        List<String> minecraftIDs;
+
+        try (InputStream in = ChestShopMod.class.getResourceAsStream(path);
+             BufferedReader reader = new BufferedReader(new InputStreamReader(Objects.requireNonNull(in)))) {
+            minecraftIDs = reader.lines().map(String::trim).filter(s -> !s.equals("// contains all viable ID's as of version 1.17.1")).collect(Collectors.toList());
+        } catch (IOException | NullPointerException e) {
+            return null;
+        }
+
+        return minecraftIDs;
     }
 }
