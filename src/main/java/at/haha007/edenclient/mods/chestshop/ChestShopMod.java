@@ -6,6 +6,8 @@ import at.haha007.edenclient.callbacks.ConfigSaveCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.mods.MessageIgnorer;
 import at.haha007.edenclient.utils.StringUtils;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
@@ -37,7 +39,7 @@ import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 public class ChestShopMod {
 
     Map<ChunkPos, Set<ChestShopEntry>> shops = new HashMap<>();
-    Map<String, String> originalItemNames = new HashMap<>();
+    BiMap<String, String> originalItemNames = HashBiMap.create();
     private int[] chunk = {0, 0};
     private boolean searchEnabled = true;
 
@@ -76,7 +78,7 @@ public class ChestShopMod {
         }
 
         if (matcher2.matches() && lastFullName != null) {
-            originalItemNames.put(matcher2.group("shortenedname"), lastFullName);
+            originalItemNames.put(matcher2.group("shortenedname").toLowerCase(), lastFullName.toLowerCase());
             lastFullName = null;
         }
 
@@ -124,8 +126,9 @@ public class ChestShopMod {
 
         node.then(literal("sell").then(argument("item", StringArgumentType.greedyString()).suggests(this::suggestSell).executes(c -> {
             sendMessage("Sell: ");
-            String item = c.getArgument("item", String.class);
+            String item = originalItemNames.inverse().get(c.getArgument("item", String.class));
             List<ChestShopEntry> matching = new ArrayList<>();
+
             shops.values().forEach(m -> m.stream().filter(ChestShopEntry::canSell).
                     filter(e -> e.getItem().equals(item)).forEach(matching::add));
             matching.stream().sorted(Comparator.comparingDouble(ChestShopEntry::getSellPricePerItem).reversed()).limit(10).map(cs -> String.format(
@@ -139,7 +142,7 @@ public class ChestShopMod {
         })));
 
         node.then(literal("buy").then(argument("item", StringArgumentType.greedyString()).suggests(this::suggestBuy).executes(c -> {
-            String item = c.getArgument("item", String.class);
+            String item = originalItemNames.inverse().get(c.getArgument("item", String.class));
             sendMessage("Buy: ");
             List<ChestShopEntry> matching = new ArrayList<>();
             shops.values().forEach(m -> m.stream().filter(ChestShopEntry::canBuy).
@@ -234,12 +237,12 @@ public class ChestShopMod {
     }
 
     private CompletableFuture<Suggestions> suggestSell(CommandContext<ClientCommandSource> context, SuggestionsBuilder suggestionsBuilder) {
-        shops.values().forEach(s -> s.stream().filter(ChestShopEntry::canSell).map(entry -> originalItemNames.get(entry.getItem()) != null ? originalItemNames.get(entry.getItem()) : "").forEach(suggestionsBuilder::suggest));
+        shops.values().forEach(s -> s.stream().filter(ChestShopEntry::canSell).map(entry -> originalItemNames.get(entry.getItem())).filter(Objects::nonNull).forEach(suggestionsBuilder::suggest));
         return suggestionsBuilder.buildFuture();
     }
 
     private CompletableFuture<Suggestions> suggestBuy(CommandContext<ClientCommandSource> context, SuggestionsBuilder suggestionsBuilder) {
-        shops.values().forEach(s -> s.stream().filter(ChestShopEntry::canBuy).map(entry -> originalItemNames.get(entry.getItem()) != null ? originalItemNames.get(entry.getItem()) : "").forEach(suggestionsBuilder::suggest));
+        shops.values().forEach(s -> s.stream().filter(ChestShopEntry::canBuy).map(entry -> originalItemNames.get(entry.getItem())).filter(Objects::nonNull).forEach(suggestionsBuilder::suggest));
         return suggestionsBuilder.buildFuture();
     }
 
