@@ -1322,3 +1322,4 @@ weathered_cut_copper_slab
 weathered_cut_copper_stairs
 white_candle
 yellow_candle
+pointed_dripstone

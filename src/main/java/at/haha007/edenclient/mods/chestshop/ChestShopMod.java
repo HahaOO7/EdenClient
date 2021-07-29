@@ -62,29 +62,27 @@ public class ChestShopMod {
         return ActionResult.PASS;
     }
 
-    private String lastFullName = null;
+    private String lastFullNameCached = null;
 
     private ActionResult onChat(AddChatMessageCallback.ChatAddEvent event) {
         String message = event.getChatText().getString();
-        String iteminfoSyntax2 = "Voller Name: (?<originalname>[A-Za-z0-9_ ]{1,40})";
-        String iteminfoSyntax3 = "Shop Schild: (?<shortenedname>[A-Za-z0-9_ ]{1,40})";
+        String fullNameMessageSyntax = "Voller Name: (?<originalname>[A-Za-z0-9_ ]{1,40})";
+        String shortenedNameMessageSyntax = "Shop Schild: (?<shortenedname>[A-Za-z0-9_ ]{1,40})";
 
-        Matcher matcher = Pattern.compile(iteminfoSyntax2).matcher(message);
-        Matcher matcher2 = Pattern.compile(iteminfoSyntax3).matcher(message);
+        Matcher fullNameMatcher = Pattern.compile(fullNameMessageSyntax).matcher(message);
+        Matcher shortenedNameMatcher = Pattern.compile(shortenedNameMessageSyntax).matcher(message);
 
-
-        if (matcher.matches()) {
-            lastFullName = matcher.group("originalname");
+        if (fullNameMatcher.matches()) {
+            lastFullNameCached = fullNameMatcher.group("originalname");
         }
 
-        if (matcher2.matches() && lastFullName != null) {
-            originalItemNames.put(matcher2.group("shortenedname").toLowerCase(), lastFullName.toLowerCase());
-            lastFullName = null;
+        if (shortenedNameMatcher.matches() && lastFullNameCached != null) {
+            originalItemNames.put(shortenedNameMatcher.group("shortenedname").toLowerCase(), lastFullNameCached.toLowerCase());
+            lastFullNameCached = null;
         }
 
         return ActionResult.PASS;
     }
-
 
     private void checkForShops(ChunkManager cm, ChunkPos chunk) {
         if (!cm.isChunkLoaded(chunk.x, chunk.z)) return;
@@ -215,13 +213,8 @@ public class ChestShopMod {
                     }
                 }).start();
             } else {
-                sendMessage("Fatal error occurred: entityPlayer is null.");
+                sendMessage("Fatal error occurred: entityPlayer is null. If this happens contact a developer.");
             }
-            return 1;
-        }));
-
-        node.then(literal("printmap").executes(c -> {
-            sendMessage(originalItemNames.toString());
             return 1;
         }));
 
@@ -246,18 +239,6 @@ public class ChestShopMod {
         return suggestionsBuilder.buildFuture();
     }
 
-    private ActionResult saveConfig(NbtCompound overTag) {
-        NbtCompound tag = overTag.getCompound("chestshop");
-        tag.putBoolean("enabled", searchEnabled);
-        NbtList list = new NbtList();
-        shops.values().forEach(m -> m.forEach(cs -> list.add(cs.toTag())));
-        String mappedNames = originalItemNames.entrySet().stream().map(entry -> entry.getKey() + ";" + entry.getValue()).collect(Collectors.joining("~"));
-        tag.putString("mapofnames", mappedNames);
-        tag.put("entries", list);
-        overTag.put("chestshop", tag);
-        return ActionResult.PASS;
-    }
-
     private ActionResult loadConfig(NbtCompound overTag) {
         NbtCompound tag = overTag.getCompound("chestshop");
         searchEnabled = !tag.contains("enabled") || tag.getBoolean("enabled");
@@ -275,9 +256,19 @@ public class ChestShopMod {
         return ActionResult.PASS;
     }
 
+    private ActionResult saveConfig(NbtCompound overTag) {
+        NbtCompound tag = overTag.getCompound("chestshop");
+        tag.putBoolean("enabled", searchEnabled);
+        NbtList list = new NbtList();
+        shops.values().forEach(m -> m.forEach(cs -> list.add(cs.toTag())));
+        String mappedNames = originalItemNames.entrySet().stream().map(entry -> entry.getKey() + ";" + entry.getValue()).collect(Collectors.joining("~"));
+        tag.putString("mapofnames", mappedNames);
+        tag.put("entries", list);
+        overTag.put("chestshop", tag);
+        return ActionResult.PASS;
+    }
+
     private void sendMessage(String message) {
         sendModMessage(new LiteralText(message).formatted(Formatting.GOLD));
     }
-
-
 }
