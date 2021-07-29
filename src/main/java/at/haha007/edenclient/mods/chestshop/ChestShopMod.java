@@ -173,6 +173,7 @@ public class ChestShopMod {
             if (entityPlayer != null) {
                 if (!MessageIgnorer.isEnabled()) {
                     entityPlayer.sendChatMessage("/ignoremessage toggle");
+                    entityPlayer.sendChatMessage("Mapping will take up to 25 minutes.");
                 }
                 new Thread(() -> {
                     {

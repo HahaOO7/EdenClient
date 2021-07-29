@@ -33,6 +33,7 @@ public class SignCopy {
         registerCommand();
         ConfigSaveCallback.EVENT.register(this::saveCfg);
         ConfigLoadCallback.EVENT.register(this::loadCfg);
+        copy = new String[]{"", "", "", ""};
     }
 
     private ActionResult loadCfg(NbtCompound compoundTag) {
@@ -47,7 +48,7 @@ public class SignCopy {
     }
 
     private ActionResult saveCfg(NbtCompound compoundTag) {
-        NbtCompound tag = compoundTag.getCompound("signCopy");
+        NbtCompound tag = new NbtCompound();
         tag.putString("0", copy[0]);
         tag.putString("1", copy[1]);
         tag.putString("2", copy[2]);
