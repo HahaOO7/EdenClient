@@ -3,7 +3,11 @@ package at.haha007.edenclient.mods;
 import at.haha007.edenclient.callbacks.AddChatMessageCallback;
 import at.haha007.edenclient.callbacks.ConfigLoadCallback;
 import at.haha007.edenclient.callbacks.ConfigSaveCallback;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.suggestion.Suggestions;
+import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.client.network.ClientCommandSource;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.text.LiteralText;
@@ -11,12 +15,12 @@ import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static at.haha007.edenclient.command.CommandManager.literal;
-import static at.haha007.edenclient.command.CommandManager.register;
+import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
 public class SellStatsTracker {
@@ -63,18 +67,40 @@ public class SellStatsTracker {
     private void registerCommand(String literal) {
         LiteralArgumentBuilder<ClientCommandSource> node = literal(literal);
 
-        node.then(literal("stats").executes(c -> {
+        node.then(literal("global").executes(c -> {
             sendModMessage(new LiteralText("Stats: ").formatted(Formatting.GOLD));
-            data.entrySet().stream().sorted(Comparator.comparingInt(e -> ((Map.Entry<String, SellStatsForItem>) e).getValue().amountSold).reversed()).collect(Collectors.toList()).forEach(entry -> {
-                LiteralText prefix = (LiteralText) new LiteralText(entry.getKey().substring(0, 1).toUpperCase() + entry.getKey().substring(1)).formatted(Formatting.AQUA);
-                sendModMessage(prefix.append(new LiteralText(" sold ").formatted(Formatting.GOLD).append(new LiteralText("" + entry.getValue().amountSold).formatted(Formatting.AQUA)).append(new LiteralText(" times for a total amount of ").formatted(Formatting.GOLD).append(new LiteralText("$" + String.format("%1$,.2f", entry.getValue().money + 0.002)).formatted(Formatting.AQUA)))));
-            });
+            data.entrySet().stream().sorted(Comparator.comparingInt(e -> ((Map.Entry<String, SellStatsForItem>) e).getValue().amountSold).reversed()).collect(Collectors.toList()).forEach(entry -> sendModMessage(
+                    new LiteralText(entry.getKey().substring(0, 1).toUpperCase() + entry.getKey().substring(1)).formatted(Formatting.AQUA)
+                            .append(new LiteralText(" sold ").formatted(Formatting.GOLD))
+                            .append(new LiteralText("" + entry.getValue().amountSold).formatted(Formatting.AQUA))
+                            .append(new LiteralText(" times for a total amount of ").formatted(Formatting.GOLD))
+                            .append(new LiteralText("$" + String.format("%1$,.2f", entry.getValue().money + 0.002)).formatted(Formatting.AQUA))));
             sendModMessage(new LiteralText("Total amount of money gained: ").formatted(Formatting.GOLD).append(new LiteralText("$" + String.format("%1$,.2f", data.values().stream().mapToDouble(v -> v.money).sum())).formatted(Formatting.AQUA)))
             ;
             return 1;
         }));
 
+        node.then(literal("item").then(argument("itemname", StringArgumentType.word()).suggests(this::suggestItems).executes(c -> {
+            data.entrySet().stream().filter(e -> e.getKey().equals(c.getArgument("itemname", String.class)))
+                    .forEach(entry -> sendModMessage(
+                            new LiteralText(entry.getKey().substring(0, 1).toUpperCase() + entry.getKey().substring(1)).formatted(Formatting.AQUA)
+                                    .append(new LiteralText(" sold ").formatted(Formatting.GOLD))
+                                    .append(new LiteralText("" + entry.getValue().amountSold).formatted(Formatting.AQUA))
+                                    .append(new LiteralText(" times for a total amount of ").formatted(Formatting.GOLD))
+                                    .append(new LiteralText("$" + String.format("%1$,.2f", entry.getValue().money + 0.002)).formatted(Formatting.AQUA))));
+
+            if (data.entrySet().stream().noneMatch(e -> e.getKey().equals(c.getArgument("itemname", String.class))))
+                sendModMessage(new LiteralText("No data found for this item. All allowed inputs will be tab-completed for you.").formatted(Formatting.GOLD));
+
+            return 1;
+        })));
+
         register(node);
+    }
+
+    private CompletableFuture<Suggestions> suggestItems(CommandContext<ClientCommandSource> clientCommandSourceCommandContext, SuggestionsBuilder suggestionsBuilder) {
+        data.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach(e -> suggestionsBuilder.suggest(e.getKey()));
+        return suggestionsBuilder.buildFuture();
     }
 
     private ActionResult onLoad(NbtCompound nbtCompound) {
