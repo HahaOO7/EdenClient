@@ -22,6 +22,7 @@ import net.minecraft.util.math.Box;
 import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
+@SuppressWarnings("AssignmentUsedAsCondition")
 public class ItemEsp {
     boolean enabled = false;
     float size = .1f;
@@ -96,9 +97,9 @@ public class ItemEsp {
     }
 
     private void setColor(CommandContext<ClientCommandSource> c) {
-        this.r =  c.getArgument("r", Integer.class);
-        this.g =  c.getArgument("g", Integer.class);
-        this.b =  c.getArgument("b", Integer.class);
+        this.r = c.getArgument("r", Integer.class);
+        this.g = c.getArgument("g", Integer.class);
+        this.b = c.getArgument("b", Integer.class);
         sendModMessage(new LiteralText("Color updated.").formatted(Formatting.GOLD));
     }
 

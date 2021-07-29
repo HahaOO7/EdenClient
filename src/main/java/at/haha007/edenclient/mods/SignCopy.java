@@ -21,6 +21,7 @@ import java.util.Objects;
 
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
+@SuppressWarnings("AssignmentUsedAsCondition")
 public class SignCopy {
     public static String[] copy = new String[4];
     boolean enabled = false;
@@ -32,6 +33,7 @@ public class SignCopy {
         registerCommand();
         ConfigSaveCallback.EVENT.register(this::saveCfg);
         ConfigLoadCallback.EVENT.register(this::loadCfg);
+        copy = new String[]{"", "", "", ""};
     }
 
     private ActionResult loadCfg(NbtCompound compoundTag) {
@@ -46,7 +48,7 @@ public class SignCopy {
     }
 
     private ActionResult saveCfg(NbtCompound compoundTag) {
-        NbtCompound tag = compoundTag.getCompound("signCopy");
+        NbtCompound tag = new NbtCompound();
         tag.putString("0", copy[0]);
         tag.putString("1", copy[1]);
         tag.putString("2", copy[2]);
@@ -76,7 +78,7 @@ public class SignCopy {
             return ActionResult.PASS;
         }
         shouldCopy = true;
-		NbtCompound tag = new NbtCompound();
+        NbtCompound tag = new NbtCompound();
         sign.readNbt(tag);
         copy[0] = getString(tag.getString("Text1"));
         copy[1] = getString(tag.getString("Text2"));

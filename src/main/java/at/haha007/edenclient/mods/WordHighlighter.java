@@ -26,6 +26,7 @@ import java.util.regex.Pattern;
 import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
+@SuppressWarnings("AssignmentUsedAsCondition")
 public class WordHighlighter {
 
     private List<String> words = new ArrayList<>();
@@ -91,7 +92,11 @@ public class WordHighlighter {
         tag.putBoolean("bold", style.isBold());
         tag.putBoolean("italic", style.isItalic());
         tag.putBoolean("underlined", style.isUnderlined());
-        tag.putInt("color", Objects.requireNonNull(style.getColor()).getRgb());
+
+        if (style.getColor() != null)
+            tag.putInt("color", style.getColor().getRgb());
+        else
+            tag.putInt("color", 16755200);
 
         compoundTag.put("wordhighlighter", tag);
         return ActionResult.PASS;
