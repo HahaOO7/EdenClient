@@ -18,6 +18,7 @@ public class EdenClient implements ClientModInitializer {
 
         // Chat | These Mods interact with each message being sent to the client (in descending order)
         new SellStatsTracker();
+        new ChestShopMod();
         new MessageIgnorer();
         new WordHighlighter();
         new AntiSpam();
@@ -32,7 +33,6 @@ public class EdenClient implements ClientModInitializer {
 
         // Commands only | These Mods only actively interact with your gameplay when directly using its commands
         new Rainbowifier();
-        new ChestShopMod();
         new NbtInfo();
     }
 
