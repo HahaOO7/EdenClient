@@ -203,6 +203,13 @@ public class ChestShopMod {
                             }
                         }
 
+                        // Needed for server to respond to last query in the loop without the regexes being removed already
+                        try {
+                            Thread.sleep(2500);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+
                         sendMessage("Finished mapping of all items! Disconnect from the world now to save all items into the config properly! They will be loaded the next time you join the world.");
 
                         ignoredRegexes.remove(iteminfoSyntax);
