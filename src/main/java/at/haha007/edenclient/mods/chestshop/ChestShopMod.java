@@ -268,8 +268,17 @@ public class ChestShopMod {
                     else
                         shops.put(entry.getChunkPos(), new HashSet<>(Set.of(entry)));
                 });
-        String mappedNames = tag.getString("mapofnames");
-        Arrays.stream(mappedNames.split("~")).map(entry -> entry.split(";")).forEach(entry -> originalItemNames.put(entry[0], entry[1]));
+        if (tag.contains("mapofnames")) {
+            String mappedNames = tag.getString("mapofnames");
+            try {
+                Arrays.stream(mappedNames.split("~")).map(entry -> entry.split(";")).forEach(entry -> originalItemNames.put(entry[0], entry[1]));
+            } catch (ArrayIndexOutOfBoundsException | NullPointerException e) {
+                System.out.println("EDENCLIENT");
+                System.out.println(mappedNames);
+                System.out.println("EDENCLIENT");
+                e.printStackTrace();
+            }
+        }
         return ActionResult.PASS;
     }
 
