@@ -174,8 +174,10 @@ public class ChestShopMod {
             if (entityPlayer != null) {
                 if (!MessageIgnorer.isEnabled()) {
                     entityPlayer.sendChatMessage("/ignoremessage toggle");
-                    entityPlayer.sendChatMessage("Mapping will take up to 25 minutes.");
                 }
+
+                sendMessage("Startet Mapping. Mapping will take up to 25 minutes.");
+
                 new Thread(() -> {
                     {
                         int size = 0;
@@ -190,7 +192,9 @@ public class ChestShopMod {
                         for (int i = 0; i < size; i++) {
                             try {
                                 Thread.sleep(1000);
-                                entityPlayer.sendChatMessage("/iteminfo " + minecraftIDs.get(i));
+                                if (originalItemNames.inverse().get(minecraftIDs.get(i)) == null)
+                                    entityPlayer.sendChatMessage("/iteminfo " + minecraftIDs.get(i));
+                                else continue;
                             } catch (InterruptedException e) {
                                 sendMessage("Error: Thread sleep interrupted.");
                             }
