@@ -100,7 +100,7 @@ public class MessageIgnorer {
             String msg = (displaySellMessages = !displaySellMessages) ? "Message ignoring for Sell Messages disabled" : "Message ignoring for Sell Messages enabled";
             sendModMessage(new LiteralText(msg).formatted(Formatting.GOLD));
 
-            String autosellSyntax = "Verkauft für \\$(?<money>[0-9]{1,5}\\.?[0-9]{0,2}) \\((?<amount>[0-9]{1,4}) (?<item>[a-zA-Z0-9_]{1,30}) Einheiten je \\$[0-9]{1,5}\\.?[0-9]{0,2}\\)";
+            String autosellSyntax = "Verkauft für \\$(?<money>[0-9]{1,5}\\.?[0-9]{0,2}) \\((?<amount>[0-9,]{1,4}) (?<item>[a-zA-Z0-9_]{1,30}) Einheiten je \\$[0-9]{1,5}\\.?[0-9]{0,2}\\)";
             String autosellSyntax2 = "\\$[0-9]{1,5}\\.?[0-9]{0,2} wurden deinem Konto hinzugefügt\\.";
             String autosellSyntax3 = "Fehler: Du hast keine Berechtigung, diese benannten Gegenstände zu verkaufen: .*";
 
