@@ -155,7 +155,7 @@ public class ChestShopMod {
             return 1;
         })));
 
-        node.then(literal("mapitemnames").executes(c -> {
+        node.then(literal("mapitemnames").then(literal("start").executes(c -> {
             List<String> minecraftIDs = StringUtils.getViableIDs("/minecraft_ids_1.17/minecraft_ids.txt");
             ClientPlayerEntity entityPlayer = MinecraftClient.getInstance().player;
             List<String> ignoredRegexes = MessageIgnorer.getRegexes();
@@ -227,7 +227,13 @@ public class ChestShopMod {
                 sendMessage("Fatal error occurred: entityPlayer is null. If this happens contact a developer.");
             }
             return 1;
-        }));
+        })));
+
+        node.then(literal("mapitemnames").then(literal("check").executes(c -> {
+            sendModMessage(new LiteralText("Amount of items mapped: ").formatted(Formatting.GOLD)
+                    .append(new LiteralText("" + originalItemNames.size()).formatted(Formatting.AQUA)));
+            return 1;
+        })));
 
         node.executes(c -> {
             sendMessage("/chestshop sell itemtype");
