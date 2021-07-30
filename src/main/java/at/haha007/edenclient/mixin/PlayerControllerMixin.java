@@ -28,7 +28,6 @@ public class PlayerControllerMixin {
             ci.setReturnValue(ActionResult.FAIL);
             ci.cancel();
         }
-
     }
 
     @Inject(method = "attackBlock", at = @At("HEAD"), cancellable = true)
