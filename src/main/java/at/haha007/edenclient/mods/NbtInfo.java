@@ -20,7 +20,7 @@ public class NbtInfo {
             PlayerInventory inv = player.getInventory();
             ItemStack stack = inv.getMainHandStack();
             if (stack.isEmpty()) {
-                sendModMessage(new LiteralText("Item in die Hand!").formatted(Formatting.GOLD));
+                sendModMessage(new LiteralText("Take an item in your hand!").formatted(Formatting.GOLD));
             } else {
                 sendModMessage(new NbtTextFormatter("", 1).apply(stack.getOrCreateTag()));
             }

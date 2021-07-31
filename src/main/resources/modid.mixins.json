@@ -8,11 +8,11 @@
   "client": [
     "ChatHudMixin",
     "ClientPlayerMixin",
+    "ClientPlayNetworkHandlerMixin",
     "ItemRendererMixin",
-    "MinecraftClientGameMixin",
     "PlayerControllerMixin",
     "PlayerInventoryMixin",
-    "ClientPlayNetworkHandlerMixin"
+    "WorldMixin"
   ],
   "injectors": {
     "defaultRequire": 1

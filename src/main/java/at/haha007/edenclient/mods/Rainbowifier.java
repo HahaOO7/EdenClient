@@ -31,14 +31,11 @@ public class Rainbowifier {
 
     private ActionResult onLoad(NbtCompound nbtCompound) {
         NbtCompound rainbowTag = nbtCompound.getCompound("rainbowify");
-
-        if (rainbowTag != null) {
-            if (rainbowTag.contains("freq"))
-                this.freq = rainbowTag.getDouble("freq");
-            else
-                this.freq = 0.3;
-        }
-
+        if (rainbowTag == null) return ActionResult.PASS;
+        if (rainbowTag.contains("freq"))
+            this.freq = rainbowTag.getDouble("freq");
+        else
+            this.freq = 0.3;
         return ActionResult.PASS;
     }
 
@@ -46,7 +43,6 @@ public class Rainbowifier {
         NbtCompound rainbowTag = new NbtCompound();
         rainbowTag.putDouble("freq", this.freq);
         nbtCompound.put("rainbowify", rainbowTag);
-
         return ActionResult.PASS;
     }
 
@@ -55,97 +51,70 @@ public class Rainbowifier {
 
         node.then(literal("fancy").then(argument("input", StringArgumentType.greedyString()).executes(c -> {
             String input = c.getArgument("input", String.class);
-
             String message = rainbowifyMessageFancy(input);
-
             if (message.length() >= 256) {
-                sendModMessage(new LiteralText("Deine Nachricht ist zu lang. Es werden nur bis zu 25 Zeichen (mit einigen Leerzeichen) im Rainbowifier-Fancy unterstützt.").formatted(Formatting.GOLD));
+                sendModMessage(new LiteralText("Your message is too long.").formatted(Formatting.GOLD));
                 return 0;
             }
             ClientPlayerEntity entityPlayer = MinecraftClient.getInstance().player;
-
             if (entityPlayer != null) {
                 entityPlayer.sendChatMessage(rainbowifyMessageFancy(input));
             }
-
             return 1;
         })));
 
         node.then(literal("simple").then(argument("input", StringArgumentType.greedyString()).executes(c -> {
             String input = c.getArgument("input", String.class);
-
             String message = rainbowifyMessageSimple(input);
-
             if (message.length() >= 256) {
-                sendModMessage(new LiteralText("Deine Nachricht ist zu lang. Es werden nur bis zu 80 Zeichen (mit einigen Leerzeichen) im Rainbowifier-Simple unterstützt.").formatted(Formatting.GOLD));
+                sendModMessage(new LiteralText("Your message is too long.").formatted(Formatting.GOLD));
                 return 0;
             }
             ClientPlayerEntity entityPlayer = MinecraftClient.getInstance().player;
-
             if (entityPlayer != null) {
                 entityPlayer.sendChatMessage(rainbowifyMessageSimple(input));
             }
-
             return 1;
         })));
 
         node.then(literal("msg").then(argument("player", StringArgumentType.word()).then(argument("message", StringArgumentType.greedyString()).executes(c -> {
             String player = c.getArgument("player", String.class);
-            if (!player.matches("[a-zA-Z0-9_]{1,16}")) {
-                sendModMessage(new LiteralText("Der Spielername, den du eingegeben hast, ist ungültig.").formatted(Formatting.GOLD));
-                return 0;
-            }
-
             String originalMessage = c.getArgument("message", String.class);
-
             String message = "/msg " + player + " " + rainbowifyMessageFancy(originalMessage);
-
             if (message.length() >= 256) {
                 message = "/msg " + player + " " + rainbowifyMessageSimple(originalMessage);
                 if (message.length() >= 256) {
-                    sendModMessage(new LiteralText("Deine Nachricht ist zu lang. Es werden nur bis zu 25 Zeichen im Rainbowifier-Fancy und 80 Zeichen im Rainbowifier-Simple unterstützt.").formatted(Formatting.GOLD));
+                    sendModMessage(new LiteralText("Your message is too long.").formatted(Formatting.GOLD));
                     return 0;
                 }
             }
-
             ClientPlayerEntity entityPlayer = MinecraftClient.getInstance().player;
-
             if (entityPlayer != null) {
                 entityPlayer.sendChatMessage(message);
             }
-
             return 1;
         }))));
 
         node.then(literal("auto").then(argument("input", StringArgumentType.greedyString()).executes(c -> {
             String input = c.getArgument("input", String.class);
-            boolean simple = false;
-
             String message = rainbowifyMessageFancy(input);
-
             if (message.length() >= 256) {
-                simple = true;
                 message = rainbowifyMessageSimple(input);
                 if (message.length() >= 256) {
-                    sendModMessage(new LiteralText("Deine Nachricht ist zu lang. Es werden nur bis zu 80 Zeichen (mit einigen Leerzeichen) im Rainbowifier-Simple unterstützt.").formatted(Formatting.GOLD));
+                    sendModMessage(new LiteralText("Your message is too long.").formatted(Formatting.GOLD));
                     return 0;
                 }
             }
-
             ClientPlayerEntity entityPlayer = MinecraftClient.getInstance().player;
-
             if (entityPlayer != null) {
                 entityPlayer.sendChatMessage(message);
-                sendModMessage("Für deine Nachricht wurde der " + (simple ? "simple" : "fancy") + " Modus ausgewählt");
             }
-
             return 1;
         })));
 
         node.then(literal("freq").then(argument("frequency", DoubleArgumentType.doubleArg(0.1, 1.0)).executes(c -> {
             this.freq = c.getArgument("frequency", Double.class);
-            sendModMessage(new LiteralText("Frequency für Rainbowify-Fancy wurde auf " + freq + " gesetzt.").formatted(Formatting.GOLD));
-
+            sendModMessage(new LiteralText("Frequency updated to ").formatted(Formatting.GOLD).append(new LiteralText("" + freq).formatted(Formatting.AQUA)));
             return 1;
         })));
 
