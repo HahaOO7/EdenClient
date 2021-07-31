@@ -49,17 +49,4 @@ public class StringUtils {
 
         return str.replace(':', '_');
     }
-
-    public static List<String> getViableIDs(String path) {
-        List<String> minecraftIDs;
-
-        try (InputStream in = ChestShopMod.class.getResourceAsStream(path);
-             BufferedReader reader = new BufferedReader(new InputStreamReader(Objects.requireNonNull(in)))) {
-            minecraftIDs = reader.lines().map(String::trim).filter(s -> !s.equals("// contains all viable ID's as of version 1.17.1")).collect(Collectors.toList());
-        } catch (IOException | NullPointerException e) {
-            return null;
-        }
-
-        return minecraftIDs;
-    }
 }
