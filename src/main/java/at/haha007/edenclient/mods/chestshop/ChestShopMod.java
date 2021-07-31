@@ -206,13 +206,13 @@ public class ChestShopMod {
                 foundDisparities.add(nameOfItem + ":");
 
                 while (currentSellEntry.getSellPricePerItem() > currentBuyEntry.getBuyPricePerItem()) {
-                    if (i < currentSellEntries.size())
-                        currentSellEntry = currentSellEntries.get(i);
-                    else break;
                     foundDisparities.add(String.format("Buy %s at %s [%d, %d, %d] for %.2f$/item and sell at %s [%d, %d, %d] for %.2f$/item",
                             nameOfItem, currentBuyEntry.getOwner(), currentBuyEntry.getPos().getX(), currentBuyEntry.getPos().getY(), currentBuyEntry.getPos().getZ(), currentBuyEntry.getBuyPricePerItem(),
                             currentSellEntry.getOwner(), currentSellEntry.getPos().getX(), currentSellEntry.getPos().getY(), currentSellEntry.getPos().getZ(), currentSellEntry.getSellPricePerItem()));
                     i++;
+                    if (i < currentSellEntries.size())
+                        currentSellEntry = currentSellEntries.get(i);
+                    else break;
                 }
 
                 foundDisparities.add("");
