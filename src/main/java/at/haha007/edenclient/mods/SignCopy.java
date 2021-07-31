@@ -21,11 +21,10 @@ import java.util.Objects;
 
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
-@SuppressWarnings("AssignmentUsedAsCondition")
 public class SignCopy {
     public static String[] copy = new String[4];
-    boolean enabled = false;
     public static boolean shouldCopy = false;
+    boolean enabled = false;
 
     public SignCopy() {
         PlayerEditSignCallback.EVENT.register(this::onEditSign);

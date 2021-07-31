@@ -1,15 +1,6 @@
 package at.haha007.edenclient.utils;
 
-import at.haha007.edenclient.mods.chestshop.ChestShopMod;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.SocketAddress;
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 public class StringUtils {
 

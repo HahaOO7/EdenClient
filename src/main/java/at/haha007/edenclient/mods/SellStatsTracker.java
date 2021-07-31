@@ -24,13 +24,10 @@ import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
 public class SellStatsTracker {
-    private static record SellStatsForItem(int amountSold, double money) {
-    }
-
-    HashMap<String, SellStatsForItem> data = new HashMap<>();
     private static final Pattern messagePattern = Pattern.compile("Verkauft für \\$(?<money>[0-9]{1,5}\\.?[0-9]{0,2}) \\((?<amount>[0-9,]{1,5}) (?<item>[a-zA-z0-9_]{1,30}) Einheiten je \\$[0-9]{1,5}\\.?[0-9]{0,2}\\)");
     private static double amountOfMoneyGainedInSession = 0.0;
     private static int index = 0;
+    HashMap<String, SellStatsForItem> data = new HashMap<>();
 
     public SellStatsTracker() {
         registerCommand("sellstatstracker");
@@ -128,5 +125,8 @@ public class SellStatsTracker {
         }
         nbtCompound.put("sellstatstracker", compound);
         return ActionResult.PASS;
+    }
+
+    private static record SellStatsForItem(int amountSold, double money) {
     }
 }

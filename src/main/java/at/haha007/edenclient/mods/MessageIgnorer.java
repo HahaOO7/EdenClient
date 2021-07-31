@@ -23,7 +23,6 @@ import java.util.regex.PatternSyntaxException;
 import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
-@SuppressWarnings("AssignmentUsedAsCondition")
 public class MessageIgnorer {
     private final static List<String> regex = new ArrayList<>();
     private static boolean enabled, displaySellMessages, displayVoteMessages, displayGlobalChat, displayDiscordChat;
@@ -38,6 +37,10 @@ public class MessageIgnorer {
 
     public static boolean isEnabled() {
         return enabled;
+    }
+
+    public static List<String> getRegexes() {
+        return regex;
     }
 
     private void registerCommand(String cmd) {
@@ -211,10 +214,6 @@ public class MessageIgnorer {
         } catch (PatternSyntaxException e) {
             return false;
         }
-    }
-
-    public static List<String> getRegexes() {
-        return regex;
     }
 
     private ActionResult onChat(AddChatMessageCallback.ChatAddEvent event) {

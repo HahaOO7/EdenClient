@@ -22,7 +22,6 @@ import java.util.List;
 
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
-@SuppressWarnings("AssignmentUsedAsCondition")
 public class AntiSpam {
     private final MinecraftClient MC = MinecraftClient.getInstance();
     private boolean enabled = true;

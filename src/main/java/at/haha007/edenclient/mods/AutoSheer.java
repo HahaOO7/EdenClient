@@ -18,7 +18,6 @@ import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.Vec3d;
 
-@SuppressWarnings("AssignmentUsedAsCondition")
 public class AutoSheer {
     boolean enabled = false;
 

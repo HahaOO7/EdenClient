@@ -24,7 +24,7 @@ public class ChestShopEntry {
         String player = lines[0];
         if (player.isEmpty()) return;
 
-        if(!MathUtils.isInteger(lines[1]))return;
+        if (!MathUtils.isInteger(lines[1])) return;
         int amount = Integer.parseInt(lines[1]);
 
         String item = lines[3];

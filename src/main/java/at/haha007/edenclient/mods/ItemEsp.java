@@ -22,7 +22,6 @@ import net.minecraft.util.math.Box;
 import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
-@SuppressWarnings("AssignmentUsedAsCondition")
 public class ItemEsp {
     boolean enabled = false;
     float size = .1f;

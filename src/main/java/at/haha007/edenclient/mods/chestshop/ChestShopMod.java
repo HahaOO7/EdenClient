@@ -41,14 +41,13 @@ import java.util.stream.Collectors;
 import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
-@SuppressWarnings("AssignmentUsedAsCondition")
 public class ChestShopMod {
 
     Map<ChunkPos, Set<ChestShopEntry>> shops = new HashMap<>();
     BiMap<String, String> originalItemNames = HashBiMap.create();
     private int[] chunk = {0, 0};
     private boolean searchEnabled = true;
-
+    private String lastFullNameCached = null;
 
     public ChestShopMod() {
         registerCommand("chestshop");
@@ -67,8 +66,6 @@ public class ChestShopMod {
         checkForShops(player);
         return ActionResult.PASS;
     }
-
-    private String lastFullNameCached = null;
 
     private ActionResult onChat(AddChatMessageCallback.ChatAddEvent event) {
         String message = event.getChatText().getString();

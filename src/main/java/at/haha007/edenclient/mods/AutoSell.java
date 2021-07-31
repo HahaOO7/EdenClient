@@ -31,16 +31,15 @@ import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.mods.MessageIgnorer.getRegexes;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
-@SuppressWarnings("AssignmentUsedAsCondition")
 public class AutoSell {
-    private final Set<Item> autoSellItems = new HashSet<>();
-    private long lastSell = 0;
-    private boolean enabled;
     private static boolean simplifyMessages = false;
     private static int delayInSimplifiedMessages = 5;
+    private final Set<Item> autoSellItems = new HashSet<>();
     private final String autosellSyntax = "Verkauft für \\$(?<money>[0-9]{1,5}\\.?[0-9]{0,2}) \\((?<amount>[0-9,]{1,5}) (?<item>[a-zA-Z0-9_]{1,30}) Einheiten je \\$[0-9]{1,5}\\.?[0-9]{0,2}\\)";
     private final String autosellSyntax2 = "\\$[0-9]{1,5}\\.?[0-9]{0,2} wurden deinem Konto hinzugefügt\\.";
     private final String autosellSyntax3 = "Fehler: Du hast keine Berechtigung, diese benannten Gegenstände zu verkaufen: .*";
+    private long lastSell = 0;
+    private boolean enabled;
 
     public AutoSell() {
         ConfigSaveCallback.EVENT.register(this::onSave);
