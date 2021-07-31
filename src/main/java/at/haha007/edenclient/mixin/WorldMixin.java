@@ -19,18 +19,12 @@ public class WorldMixin {
     @Inject(at = @At("RETURN"), method = "<init>")
     private void onConnect(CallbackInfo ci) {
         if (connected) return;
-        for (int i = 0; i < 10; i++) {
-            System.out.println("LOAD");
-        }
         StartGameSessionCallback.EVENT.invoker().join(MinecraftClient.getInstance().player);
         connected = true;
     }
 
     @Inject(at = @At("HEAD"), method = "disconnect")
     private void onDisconnect(CallbackInfo ci) {
-        for (int i = 0; i < 10; i++) {
-            System.out.println("SAVE");
-        }
         LeaveGameSessionCallback.EVENT.invoker().leave(MinecraftClient.getInstance().player);
         connected = false;
     }
