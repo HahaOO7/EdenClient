@@ -186,7 +186,7 @@ public class ChestShopMod {
 
             List<String> foundDisparities = new ArrayList<>();
 
-            for (Map.Entry<String, List<ChestShopEntry>> entry : buyEntries.entrySet()) {
+            for (Map.Entry<String, List<ChestShopEntry>> entry : buyEntries.entrySet().stream().sorted(Map.Entry.comparingByKey()).collect(Collectors.toList())) {
                 if (!sellEntries.containsKey(entry.getKey())) continue;
                 List<ChestShopEntry> currentSellEntries = sellEntries.get(entry.getKey()).stream().sorted(Comparator.comparingDouble(ChestShopEntry::getSellPricePerItem).reversed()).collect(Collectors.toList());
                 List<ChestShopEntry> currentBuyEntries = entry.getValue().stream().sorted(Comparator.comparingDouble(ChestShopEntry::getBuyPricePerItem)).collect(Collectors.toList());
@@ -215,7 +215,7 @@ public class ChestShopMod {
                 foundDisparities.add("");
             }
 
-            File folder = new File(EdenClient.getDataFolder(), "ChestShopMod");
+            File folder = new File(EdenClient.getDataFolder(), "ChestShopModErrors");
             if (!folder.exists()) folder.mkdirs();
             SimpleDateFormat formatter = new SimpleDateFormat("yyyy_MM_dd_hh_mm_ss");
             Date date = new Date();
@@ -233,7 +233,100 @@ public class ChestShopMod {
                     bw.write(foundDisparity);
                     bw.newLine();
                 }
-                sendModMessage("Wrote file without errors. Saved at /appdata/roaming/.minecraft/config/ChestShopMod/[date].txt");
+                sendModMessage("Wrote file without errors. Saved at /appdata/roaming/.minecraft/config/ChestShopModErrors/[date].txt");
+            } catch (IOException e) {
+                sendModMessage("Error while writing file. See console for more info.");
+                e.printStackTrace();
+            }
+            return 1;
+        }));
+
+        node.then(literal("writeshopstofile").executes(c -> {
+            HashMap<String, List<ChestShopEntry>> buyEntries = new HashMap<>();
+            HashMap<String, List<ChestShopEntry>> sellEntries = new HashMap<>();
+
+            shops.values().forEach(m -> m.stream().filter(ChestShopEntry::canBuy).forEach(entry -> {
+                List<ChestShopEntry> list;
+                if (buyEntries.containsKey(entry.getItem())) {
+                    list = buyEntries.get(entry.getItem());
+                } else {
+                    list = new ArrayList<>();
+                }
+                list.add(entry);
+                buyEntries.put(entry.getItem(), list);
+            }));
+
+            shops.values().forEach(m -> m.stream().filter(ChestShopEntry::canSell).forEach(entry -> {
+                List<ChestShopEntry> list;
+                if (sellEntries.containsKey(entry.getItem())) {
+                    list = sellEntries.get(entry.getItem());
+                } else {
+                    list = new ArrayList<>();
+                }
+                list.add(entry);
+                sellEntries.put(entry.getItem(), list);
+            }));
+
+            List<String> lines = new ArrayList<>();
+            List<String> usedKeys = new ArrayList<>();
+
+            for (Map.Entry<String, List<ChestShopEntry>> entry : buyEntries.entrySet().stream().sorted(Map.Entry.comparingByKey()).collect(Collectors.toList())) {
+                List<ChestShopEntry> currentSellEntries = new ArrayList<>();
+                if (sellEntries.get(entry.getKey()) != null)
+                    currentSellEntries = sellEntries.get(entry.getKey()).stream().sorted(Comparator.comparingDouble(ChestShopEntry::getSellPricePerItem).reversed()).collect(Collectors.toList());
+                List<ChestShopEntry> currentBuyEntries = entry.getValue().stream().sorted(Comparator.comparingDouble(ChestShopEntry::getBuyPricePerItem)).collect(Collectors.toList());
+
+                usedKeys.add(entry.getKey());
+
+                String originalName = originalItemNames.get(entry.getKey());
+                if (originalName == null) originalName = entry.getKey();
+
+                lines.add(originalName + ":");
+                lines.add("Buy:");
+                currentBuyEntries.forEach(e -> lines.add(String.format("%-15s [%6d, %3d, %6d] for %.2f$/item", e.getOwner(), e.getPos().getX(), e.getPos().getY(), e.getPos().getZ(), e.getBuyPricePerItem())));
+                if (currentSellEntries.size() > 0) {
+                    lines.add("Sell:");
+                    currentSellEntries.forEach(e -> lines.add(String.format("%-15s [%6d, %3d, %6d] for %.2f$/item", e.getOwner(), e.getPos().getX(), e.getPos().getY(), e.getPos().getZ(), e.getSellPricePerItem())));
+                }
+                lines.add("");
+            }
+
+            for (Map.Entry<String, List<ChestShopEntry>> entry : sellEntries.entrySet().stream().sorted(Map.Entry.comparingByKey()).collect(Collectors.toList())) {
+                if (usedKeys.contains(entry.getKey())) continue;
+                List<ChestShopEntry> currentSellEntries = entry.getValue().stream().sorted(Comparator.comparingDouble(ChestShopEntry::getBuyPricePerItem).reversed()).collect(Collectors.toList());
+
+                String originalName = originalItemNames.get(entry.getKey());
+                if (originalName == null) originalName = entry.getKey();
+
+                lines.add(originalName + ":");
+                lines.add("Sell:");
+                currentSellEntries.forEach(e -> lines.add(String.format("%-15s [%6d, %3d, %6d] for %7.2f$/item", e.getOwner(), e.getPos().getX(), e.getPos().getY(), e.getPos().getZ(), e.getSellPricePerItem())));
+                lines.add("");
+            }
+
+            File folder = new File(EdenClient.getDataFolder(), "ChestShopModEntries");
+            if (!folder.exists()) folder.mkdirs();
+            SimpleDateFormat formatter = new SimpleDateFormat("yyyy_MM_dd_hh_mm_ss");
+            Date date = new Date();
+            File file = new File(folder, formatter.format(date) + ".txt");
+
+            try {
+                if (!file.exists())
+                    if (!file.createNewFile()) return -1;
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            try (FileWriter writer = new FileWriter(file); BufferedWriter bw = new BufferedWriter(writer)) {
+                for (String line : lines) {
+                    if (line == null) {
+                        bw.write("null:");
+                        continue;
+                    }
+                    bw.write(line);
+                    bw.newLine();
+                }
+                sendModMessage("Wrote file without errors. Saved at /appdata/roaming/.minecraft/config/ChestShopModEntries/[date].txt");
             } catch (IOException e) {
                 sendModMessage("Error while writing file. See console for more info.");
                 e.printStackTrace();
@@ -336,12 +429,14 @@ public class ChestShopMod {
         register(node);
     }
 
-    private CompletableFuture<Suggestions> suggestSell(CommandContext<ClientCommandSource> context, SuggestionsBuilder suggestionsBuilder) {
+    private CompletableFuture<Suggestions> suggestSell
+            (CommandContext<ClientCommandSource> context, SuggestionsBuilder suggestionsBuilder) {
         shops.values().forEach(s -> s.stream().filter(ChestShopEntry::canSell).map(entry -> originalItemNames.get(entry.getItem())).filter(Objects::nonNull).forEach(suggestionsBuilder::suggest));
         return suggestionsBuilder.buildFuture();
     }
 
-    private CompletableFuture<Suggestions> suggestBuy(CommandContext<ClientCommandSource> context, SuggestionsBuilder suggestionsBuilder) {
+    private CompletableFuture<Suggestions> suggestBuy
+            (CommandContext<ClientCommandSource> context, SuggestionsBuilder suggestionsBuilder) {
         shops.values().forEach(s -> s.stream().filter(ChestShopEntry::canBuy).map(entry -> originalItemNames.get(entry.getItem())).filter(Objects::nonNull).forEach(suggestionsBuilder::suggest));
         return suggestionsBuilder.buildFuture();
     }
