@@ -1,6 +1,7 @@
 package at.haha007.edenclient.utils;
 
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.network.packet.s2c.play.TitleS2CPacket;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
@@ -12,6 +13,17 @@ public class PlayerUtils {
 
     public static void sendMessage(Text text) {
         MinecraftClient.getInstance().inGameHud.getChatHud().addMessage(text);
+        System.out.println(text.getString());
+    }
+
+    public static void sendTitle(Text title, Text subtitle, int in, int keep, int out) {
+        MinecraftClient.getInstance().inGameHud.setSubtitle(subtitle);
+        MinecraftClient.getInstance().inGameHud.setTitle(title);
+        MinecraftClient.getInstance().inGameHud.setTitleTicks(in, keep, out);
+    }
+
+    public static void sendActionBar(Text text) {
+        MinecraftClient.getInstance().inGameHud.setOverlayMessage(text, false);
         System.out.println(text.getString());
     }
 
