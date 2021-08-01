@@ -25,7 +25,7 @@ import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
 public class MessageIgnorer {
     private final static List<String> regex = new ArrayList<>();
-    private static boolean enabled, displaySellMessages, displayVoteMessages, displayGlobalChat, displayDiscordChat;
+    private static boolean enabled;
 
     public MessageIgnorer() {
         AddChatMessageCallback.EVENT.register(this::onChat);
@@ -45,11 +45,13 @@ public class MessageIgnorer {
 
     private void registerCommand(String cmd) {
         LiteralArgumentBuilder<ClientCommandSource> node = literal(cmd);
+
         node.then(literal("toggle").executes(c -> {
             String msg = (enabled = !enabled) ? "Message ignoring enabled" : "Message ignoring disabled";
             sendModMessage(new LiteralText(msg).formatted(Formatting.GOLD));
             return 1;
         }));
+
         node.then(literal("add").then(argument("regex", StringArgumentType.greedyString()).executes(c -> {
             String im = c.getArgument("regex", String.class);
             if (!isValidRegex(im)) {
@@ -64,6 +66,7 @@ public class MessageIgnorer {
             sendModMessage(new LiteralText("Ignoring messages matching " + im).formatted(Formatting.GOLD));
             return 1;
         })));
+
         node.then(literal("remove").then(argument("index", IntegerArgumentType.integer(1)).executes(c -> {
             int index = c.getArgument("index", Integer.class) - 1;
             if (index >= regex.size()) {
@@ -80,6 +83,7 @@ public class MessageIgnorer {
                     append(new LiteralText(regex.remove(index)).formatted(Formatting.AQUA)));
             return 1;
         })));
+
         node.then(literal("list").executes(c -> {
             if (regex.isEmpty()) {
                 sendModMessage(new LiteralText("No regexes registered!").formatted(Formatting.GOLD));
@@ -93,6 +97,7 @@ public class MessageIgnorer {
             }
             return 1;
         }));
+
         node.then(literal("clear").executes(c -> {
             regex.clear();
             sendModMessage(new LiteralText("Cleared ignored messages").formatted(Formatting.GOLD));
@@ -100,45 +105,73 @@ public class MessageIgnorer {
         }));
 
         node.then(literal("predefined").then(literal("sellmessages").executes(c -> {
-            String msg = (displaySellMessages = !displaySellMessages) ? "Message ignoring for Sell Messages disabled" : "Message ignoring for Sell Messages enabled";
-            sendModMessage(new LiteralText(msg).formatted(Formatting.GOLD));
-
             String autosellSyntax = "Verkauft für \\$(?<money>[0-9]{1,5}\\.?[0-9]{0,2}) \\((?<amount>[0-9,]{1,5}) (?<item>[a-zA-Z0-9_]{1,30}) Einheiten je \\$[0-9]{1,5}\\.?[0-9]{0,2}\\)";
             String autosellSyntax2 = "\\$[0-9]{1,5}\\.?[0-9]{0,2} wurden deinem Konto hinzugefügt\\.";
             String autosellSyntax3 = "Fehler: Du hast keine Berechtigung, diese benannten Gegenstände zu verkaufen: .*";
 
-            removeOrAddRegexes(new String[]{autosellSyntax, autosellSyntax2, autosellSyntax3}, displaySellMessages);
+            boolean display = containsAny(getRegexes(), new String[]{autosellSyntax, autosellSyntax2, autosellSyntax3});
+
+            String msg = display ? "Message ignoring for Sell Messages disabled" : "Message ignoring for Sell Messages enabled";
+            sendModMessage(new LiteralText(msg).formatted(Formatting.GOLD));
+
+            removeOrAddRegexes(new String[]{autosellSyntax, autosellSyntax2, autosellSyntax3}, display);
             return 1;
         })));
 
         node.then(literal("predefined").then(literal("votemessages").executes(c -> {
-            String msg = (displayVoteMessages = !displayVoteMessages) ? "Message ignoring for Vote Messages disabled" : "Message ignoring for Vote Messages enabled";
-            sendModMessage(new LiteralText(msg).formatted(Formatting.GOLD));
 
             String votemessageSyntax = ". \\/vote . [A-Za-z0-9_]{1,16} hat [0-9]{2}min Flugzeit erhalten\\.";
             String votemessageSyntax2 = ". \\/vote . [A-Za-z0-9_]{1,16} hat [1-4]{1} VoteC.ins? erhalten\\.";
 
-            removeOrAddRegexes(new String[]{votemessageSyntax, votemessageSyntax2}, displayVoteMessages);
+            boolean display = containsAny(getRegexes(), new String[]{votemessageSyntax, votemessageSyntax2});
+
+            String msg = display ? "Message ignoring for Vote Messages disabled" : "Message ignoring for Vote Messages enabled";
+            sendModMessage(new LiteralText(msg).formatted(Formatting.GOLD));
+
+            removeOrAddRegexes(new String[]{votemessageSyntax, votemessageSyntax2}, display);
             return 1;
         })));
 
         node.then(literal("predefined").then(literal("globalchat").executes(c -> {
-            String msg = (displayGlobalChat = !displayGlobalChat) ? "Message ignoring for Global Chat Messages disabled" : "Message ignoring for Global Chat Messages enabled";
-            sendModMessage(new LiteralText(msg).formatted(Formatting.GOLD));
 
             String globalChatSyntax = "\\w+ \\| ~?\\w+ > .*";
 
-            removeOrAddRegexes(new String[]{globalChatSyntax}, displayGlobalChat);
+            boolean display = containsAny(getRegexes(), new String[]{globalChatSyntax});
+
+            String msg = display ? "Message ignoring for Global Chat Messages disabled" : "Message ignoring for Global Chat Messages enabled";
+            sendModMessage(new LiteralText(msg).formatted(Formatting.GOLD));
+
+            removeOrAddRegexes(new String[]{globalChatSyntax}, display);
             return 1;
         })));
 
         node.then(literal("predefined").then(literal("discordchat").executes(c -> {
-            String msg = (displayDiscordChat = !displayDiscordChat) ? "Message ignoring for Discord Chat Messages disabled" : "Message ignoring for Discord Chat Messages enabled";
-            sendModMessage(new LiteralText(msg).formatted(Formatting.GOLD));
 
             String discordChatSyntax = "[DC] [A-Za-z0-9]{1,16} > .*";
 
-            removeOrAddRegexes(new String[]{discordChatSyntax}, displayDiscordChat);
+            boolean display = containsAny(getRegexes(), new String[]{discordChatSyntax});
+
+            String msg = display ? "Message ignoring for Discord Chat Messages disabled" : "Message ignoring for Discord Chat Messages enabled";
+            sendModMessage(new LiteralText(msg).formatted(Formatting.GOLD));
+
+            removeOrAddRegexes(new String[]{discordChatSyntax}, display);
+            return 1;
+        })));
+
+        node.then(literal("predefined").then(literal("iteminfo").executes(c -> {
+
+            String iteminfoSyntax = "Item Information: ?";
+            String iteminfoSyntax2 = "Voller Name: (?<originalname>[A-Za-z0-9_ ]{1,40})";
+            String iteminfoSyntax3 = "Shop Schild: (?<shortenedname>[A-Za-z0-9_ ]{1,40})";
+            String iteminfoSyntax4 = "\\/iteminfo \\(what's the item in hand\\?\\) ?";
+            String iteminfoSyntax5 = "\\/iteminfo log \\(what's the item ID of LOG\\?\\) ?";
+
+            boolean display = containsAny(getRegexes(), new String[]{iteminfoSyntax, iteminfoSyntax2, iteminfoSyntax3, iteminfoSyntax4, iteminfoSyntax5});
+
+            String msg = display ? "Message ignoring for ItemInfo messages disabled" : "Message ignoring for ItemInfo messages enabled";
+            sendModMessage(new LiteralText(msg).formatted(Formatting.GOLD));
+
+            removeOrAddRegexes(new String[]{iteminfoSyntax, iteminfoSyntax2, iteminfoSyntax3, iteminfoSyntax4, iteminfoSyntax5}, display);
             return 1;
         })));
 
@@ -152,10 +185,7 @@ public class MessageIgnorer {
     private ActionResult onLoad(NbtCompound nbtCompound) {
         regex.clear();
         enabled = false;
-        displaySellMessages = true;
-        displayVoteMessages = true;
-        displayGlobalChat = true;
-        displayDiscordChat = true;
+
         if (!nbtCompound.contains("MessageIgnorer")) {
             return ActionResult.PASS;
         }
@@ -168,10 +198,6 @@ public class MessageIgnorer {
         }
 
         if (tag.contains("enabled")) enabled = tag.getBoolean("enabled");
-        if (tag.contains("displaysellmessages")) displaySellMessages = tag.getBoolean("displaysellmessages");
-        if (tag.contains("displayvotemessages")) displayVoteMessages = tag.getBoolean("displayvotemessages");
-        if (tag.contains("displayglobalchat")) displayGlobalChat = tag.getBoolean("displayglobalchat");
-        if (tag.contains("displaydiscordchat")) displayDiscordChat = tag.getBoolean("displaydiscordchat");
 
         return ActionResult.PASS;
     }
@@ -182,12 +208,15 @@ public class MessageIgnorer {
         NbtList list = new NbtList();
         regex.forEach(s -> list.add(NbtString.of(s)));
         tag.put("regex", list);
-        tag.putBoolean("displaysellmessages", displaySellMessages);
-        tag.putBoolean("displayvotemessages", displayVoteMessages);
-        tag.putBoolean("displayglobalchat", displayGlobalChat);
-        tag.putBoolean("displaydiscordchat", displayDiscordChat);
         nbtCompound.put("MessageIgnorer", tag);
         return ActionResult.PASS;
+    }
+
+    private boolean containsAny(List<String> regexes, String[] strings) {
+        for (String string : strings) {
+            if (regexes.contains(string)) return true;
+        }
+        return false;
     }
 
     private void removeOrAddRegexes(String[] regexes, boolean display) {

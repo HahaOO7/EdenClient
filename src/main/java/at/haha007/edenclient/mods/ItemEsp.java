@@ -77,10 +77,10 @@ public class ItemEsp {
             sendModMessage(new LiteralText("Size: " + size).formatted(Formatting.GOLD));
             return 1;
         })));
-        node.then(literal("color").then(arg("r").then(arg("g").then(arg("b")).executes(c -> {
+        node.then(literal("color").then(arg("r").then(arg("g").then(arg("b").executes(c -> {
             setColor(c);
             return 0;
-        }))));
+        })))));
         node.executes(c -> {
             sendModMessage(new LiteralText("/itemesp toggle"));
             sendModMessage(new LiteralText("/itemesp solid"));
