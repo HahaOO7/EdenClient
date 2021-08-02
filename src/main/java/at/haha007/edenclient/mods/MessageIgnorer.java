@@ -47,7 +47,8 @@ public class MessageIgnorer {
         LiteralArgumentBuilder<ClientCommandSource> node = literal(cmd);
 
         node.then(literal("toggle").executes(c -> {
-            String msg = (enabled = !enabled) ? "Message ignoring enabled" : "Message ignoring disabled";
+            enabled = !enabled;
+            String msg = enabled ? "Message ignoring enabled" : "Message ignoring disabled";
             sendModMessage(new LiteralText(msg).formatted(Formatting.GOLD));
             return 1;
         }));
