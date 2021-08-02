@@ -357,58 +357,60 @@ public class ChestShopMod {
             if (!ignoredRegexes.contains(iteminfoSyntax4)) ignoredRegexes.add(iteminfoSyntax4);
             if (!ignoredRegexes.contains(iteminfoSyntax5)) ignoredRegexes.add(iteminfoSyntax5);
 
-            if (entityPlayer != null) {
-                if (!MessageIgnorer.isEnabled()) {
-                    entityPlayer.sendChatMessage("/ignoremessage toggle");
-                }
-
-                sendMessage("Startet Mapping. Mapping will take up to 25 minutes.");
-
-                new Thread(() -> {
-                    {
-                        int size = minecraftIDs.size();
-
-                        if (size == 0) {
-                            sendMessage("Error: Size is zero, contact a developer when you encounter this error.");
-                        }
-
-                        for (int i = 0; i < size; i++) {
-                            try {
-                                Thread.sleep(1000);
-                                if (originalItemNames.inverse().get(minecraftIDs.get(i)) == null)
-                                    entityPlayer.sendChatMessage("/iteminfo " + minecraftIDs.get(i));
-                                else continue;
-                            } catch (InterruptedException e) {
-                                sendMessage("Error: Thread sleep interrupted.");
-                            }
-                            if (i % 60 == 0) {
-                                sendModMessage(new LiteralText("Mapped ").formatted(Formatting.GOLD)
-                                        .append(new LiteralText("" + i).formatted(Formatting.AQUA))
-                                        .append(new LiteralText(" items of ").formatted(Formatting.GOLD))
-                                        .append(new LiteralText("" + size).formatted(Formatting.AQUA))
-                                        .append(new LiteralText(" this far.").formatted(Formatting.GOLD)));
-                            }
-                        }
-
-                        // Needed for server to respond to last query in the loop without the regexes being removed already
-                        try {
-                            Thread.sleep(2500);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-
-                        sendMessage("Finished mapping of all items! Disconnect from the world now to save all items into the config properly! They will be loaded the next time you join the world.");
-
-                        ignoredRegexes.remove(iteminfoSyntax);
-                        ignoredRegexes.remove(iteminfoSyntax2);
-                        ignoredRegexes.remove(iteminfoSyntax3);
-                        ignoredRegexes.remove(iteminfoSyntax4);
-                        ignoredRegexes.remove(iteminfoSyntax5);
-                    }
-                }).start();
-            } else {
+            if (entityPlayer == null) {
                 sendMessage("Fatal error occurred: entityPlayer is null. If this happens contact a developer.");
+                return 0;
             }
+
+            if (!MessageIgnorer.isEnabled()) {
+                entityPlayer.sendChatMessage("/ignoremessage toggle");
+            }
+
+            sendMessage("Startet Mapping. Mapping will take up to 25 minutes.");
+
+            new Thread(() -> {
+                {
+                    int size = minecraftIDs.size();
+
+                    if (size == 0) {
+                        sendMessage("Error: Size is zero, contact a developer when you encounter this error.");
+                    }
+
+                    for (int i = 0; i < size; i++) {
+                        try {
+                            Thread.sleep(1000);
+                            if (originalItemNames.inverse().get(minecraftIDs.get(i)) == null)
+                                entityPlayer.sendChatMessage("/iteminfo " + minecraftIDs.get(i));
+                            else continue;
+                        } catch (InterruptedException e) {
+                            sendMessage("Error: Thread sleep interrupted.");
+                        }
+                        if (i % 60 == 0) {
+                            sendModMessage(new LiteralText("Mapped ").formatted(Formatting.GOLD)
+                                    .append(new LiteralText("" + i).formatted(Formatting.AQUA))
+                                    .append(new LiteralText(" items of ").formatted(Formatting.GOLD))
+                                    .append(new LiteralText("" + size).formatted(Formatting.AQUA))
+                                    .append(new LiteralText(" this far.").formatted(Formatting.GOLD)));
+                        }
+                    }
+
+                    // Needed for server to respond to last query in the loop without the regexes being removed already
+                    try {
+                        Thread.sleep(2500);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+
+                    sendMessage("Finished mapping of all items! Disconnect from the world now to save all items into the config properly! They will be loaded the next time you join the world.");
+
+                    ignoredRegexes.remove(iteminfoSyntax);
+                    ignoredRegexes.remove(iteminfoSyntax2);
+                    ignoredRegexes.remove(iteminfoSyntax3);
+                    ignoredRegexes.remove(iteminfoSyntax4);
+                    ignoredRegexes.remove(iteminfoSyntax5);
+                }
+            }).start();
+
             return 1;
         })));
 
