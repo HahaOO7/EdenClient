@@ -24,7 +24,7 @@ import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
 public class ItemEsp {
     boolean enabled = false;
-    float size = .1f;
+    float size = 1.0f;
     float r, g, b;
     boolean solid;
 
@@ -37,10 +37,16 @@ public class ItemEsp {
 
     private ActionResult onLoad(NbtCompound compoundTag) {
         NbtCompound tag = compoundTag.getCompound("itemesp");
-        enabled = tag.getBoolean("enabled");
-        solid = tag.getBoolean("solid");
+        if (tag.contains("enabled"))
+            enabled = tag.getBoolean("enabled");
+        else
+            enabled = false;
+        if (tag.contains("solid"))
+            solid = tag.getBoolean("solid");
+        else
+            solid = false;
         if (tag.contains("size")) size = tag.getFloat("size");
-        else size = 0.3f;
+        else size = 1.0f;
         if (tag.contains("r")) r = tag.getFloat("r");
         else r = 1;
         if (tag.contains("g")) g = tag.getFloat("g");
@@ -64,23 +70,30 @@ public class ItemEsp {
 
     private void registerCommand() {
         LiteralArgumentBuilder<ClientCommandSource> node = literal("itemesp");
+
         node.then(literal("toggle").executes(c -> {
-            sendModMessage(new LiteralText("Item ESP " + ((enabled = !enabled) ? "enabled" : "disabled")));
+            enabled = !enabled;
+            sendModMessage(new LiteralText("Item ESP " + (enabled ? "enabled" : "disabled")).formatted(Formatting.GOLD));
             return 1;
         }));
+
         node.then(literal("solid").executes(c -> {
-            sendModMessage(new LiteralText("Item ESP " + ((solid = !solid) ? "solid" : "transparent")));
+            solid = !solid;
+            sendModMessage(new LiteralText("Item ESP " + (solid ? "solid" : "transparent")).formatted(Formatting.GOLD));
             return 1;
         }));
+
         node.then(literal("size").then(argument("size", FloatArgumentType.floatArg(0.1f)).executes(c -> {
             size = c.getArgument("size", Float.class);
             sendModMessage(new LiteralText("Size: " + size).formatted(Formatting.GOLD));
             return 1;
         })));
-        node.then(literal("color").then(arg("r").then(arg("g")).then(arg("b")).executes(c -> {
+
+        node.then(literal("color").then(arg("r").then(arg("g").then(arg("b").executes(c -> {
             setColor(c);
             return 0;
-        })));
+        })))));
+
         node.executes(c -> {
             sendModMessage(new LiteralText("/itemesp toggle"));
             sendModMessage(new LiteralText("/itemesp solid"));
@@ -96,9 +109,9 @@ public class ItemEsp {
     }
 
     private void setColor(CommandContext<ClientCommandSource> c) {
-        this.r =  c.getArgument("r", Integer.class);
-        this.g =  c.getArgument("g", Integer.class);
-        this.b =  c.getArgument("b", Integer.class);
+        this.r = c.getArgument("r", Integer.class);
+        this.g = c.getArgument("g", Integer.class);
+        this.b = c.getArgument("b", Integer.class);
         sendModMessage(new LiteralText("Color updated.").formatted(Formatting.GOLD));
     }
 
