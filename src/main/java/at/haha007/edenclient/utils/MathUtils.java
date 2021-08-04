@@ -21,7 +21,7 @@ public class MathUtils {
         }
     }
 
-    public static int clamp(int n, int min, int max){
+    public static int clamp(int n, int min, int max) {
         return Math.max(min, Math.min(n, max));
     }
 }

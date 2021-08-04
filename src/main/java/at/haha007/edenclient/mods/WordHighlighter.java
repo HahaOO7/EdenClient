@@ -91,7 +91,11 @@ public class WordHighlighter {
         tag.putBoolean("bold", style.isBold());
         tag.putBoolean("italic", style.isItalic());
         tag.putBoolean("underlined", style.isUnderlined());
-        tag.putInt("color", Objects.requireNonNull(style.getColor()).getRgb());
+
+        if (style.getColor() != null)
+            tag.putInt("color", style.getColor().getRgb());
+        else
+            tag.putInt("color", 16755200);
 
         compoundTag.put("wordhighlighter", tag);
         return ActionResult.PASS;

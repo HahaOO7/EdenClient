@@ -21,7 +21,7 @@ import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
 public class Rainbowifier {
     private final List<Character> simpleRainbowColors = List.of('c', '6', 'e', 'a', 'b', '3', 'd', '5', 'd', '3', 'b', 'a', 'e', '6');
-    private double freq;
+    private double freq = 0.3;
 
     public Rainbowifier() {
         registerCommand();
