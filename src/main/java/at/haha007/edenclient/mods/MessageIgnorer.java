@@ -104,8 +104,8 @@ public class MessageIgnorer {
             sendModMessage(new LiteralText("Cleared ignored messages").formatted(Formatting.GOLD));
             return 1;
         }));
-
-        node.then(literal("predefined").then(literal("sellmessages").executes(c -> {
+        var predefined = node.then(literal("predefined"));
+        predefined.then(literal("sellmessages").executes(c -> {
             String autosellSyntax = "Verkauft für \\$(?<money>[0-9]{1,5}\\.?[0-9]{0,2}) \\((?<amount>[0-9,]{1,5}) (?<item>[a-zA-Z0-9_]{1,30}) Einheiten je \\$[0-9]{1,5}\\.?[0-9]{0,2}\\)";
             String autosellSyntax2 = "\\$[0-9]{1,5}\\.?[0-9]{0,2} wurden deinem Konto hinzugefügt\\.";
             String autosellSyntax3 = "Fehler: Du hast keine Berechtigung, diese benannten Gegenstände zu verkaufen: .*";
@@ -117,9 +117,9 @@ public class MessageIgnorer {
 
             removeOrAddRegexes(new String[]{autosellSyntax, autosellSyntax2, autosellSyntax3}, display);
             return 1;
-        })));
+        }));
 
-        node.then(literal("predefined").then(literal("votemessages").executes(c -> {
+        predefined.then(literal("votemessages").executes(c -> {
 
             String votemessageSyntax = ". \\/vote . [A-Za-z0-9_]{1,16} hat [0-9]{2}min Flugzeit erhalten\\.";
             String votemessageSyntax2 = ". \\/vote . [A-Za-z0-9_]{1,16} hat [1-4]{1} VoteC.ins? erhalten\\.";
@@ -131,9 +131,9 @@ public class MessageIgnorer {
 
             removeOrAddRegexes(new String[]{votemessageSyntax, votemessageSyntax2}, display);
             return 1;
-        })));
+        }));
 
-        node.then(literal("predefined").then(literal("globalchat").executes(c -> {
+        predefined.then(literal("globalchat").executes(c -> {
 
             String globalChatSyntax = "\\w+ \\| ~?\\w+ > .*";
 
@@ -144,9 +144,9 @@ public class MessageIgnorer {
 
             removeOrAddRegexes(new String[]{globalChatSyntax}, display);
             return 1;
-        })));
+        }));
 
-        node.then(literal("predefined").then(literal("discordchat").executes(c -> {
+        predefined.then(literal("discordchat").executes(c -> {
 
             String discordChatSyntax = "[DC] [A-Za-z0-9]{1,16} > .*";
 
@@ -157,9 +157,9 @@ public class MessageIgnorer {
 
             removeOrAddRegexes(new String[]{discordChatSyntax}, display);
             return 1;
-        })));
+        }));
 
-        node.then(literal("predefined").then(literal("iteminfo").executes(c -> {
+        predefined.then(literal("iteminfo").executes(c -> {
 
             String iteminfoSyntax = "Item Information: ?";
             String iteminfoSyntax2 = "Voller Name: (?<originalname>[A-Za-z0-9_ ]{1,40})";
@@ -174,7 +174,7 @@ public class MessageIgnorer {
 
             removeOrAddRegexes(new String[]{iteminfoSyntax, iteminfoSyntax2, iteminfoSyntax3, iteminfoSyntax4, iteminfoSyntax5}, display);
             return 1;
-        })));
+        }));
 
         node.executes(c -> {
             sendDebugMessage();

@@ -31,7 +31,7 @@ public class EdenClient implements ClientModInitializer {
         new AutoSheer();
         new SignCopy();
         new Nuker();
-        
+
         // Commands only | These Mods only actively interact with your gameplay when directly using its commands
         new Rainbowifier();
         new NbtInfo();
