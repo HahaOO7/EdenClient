@@ -121,7 +121,8 @@ public class ChestShopMod {
         }));
 
         node.then(literal("toggle").executes(c -> {
-            sendMessage("ChestShop search " + ((searchEnabled = !searchEnabled) ? "enabled" : "disabled"));
+            searchEnabled = !searchEnabled;
+            sendMessage("ChestShop search " + (searchEnabled ? "enabled" : "disabled"));
             return 1;
         }));
 
@@ -344,27 +345,15 @@ public class ChestShopMod {
             Registry.ITEM.forEach(item -> minecraftIDs.add(item.getName().getString()));
 
             ClientPlayerEntity entityPlayer = MinecraftClient.getInstance().player;
-            List<String> ignoredRegexes = MessageIgnorer.getRegexes();
-            String iteminfoSyntax = "Item Information: ?";
-            String iteminfoSyntax2 = "Voller Name: (?<originalname>[A-Za-z0-9_ ]{1,40})";
-            String iteminfoSyntax3 = "Shop Schild: (?<shortenedname>[A-Za-z0-9_ ]{1,40})";
-            String iteminfoSyntax4 = "\\/iteminfo \\(what's the item in hand\\?\\) ?";
-            String iteminfoSyntax5 = "\\/iteminfo log \\(what's the item ID of LOG\\?\\) ?";
-
-            if (!ignoredRegexes.contains(iteminfoSyntax)) ignoredRegexes.add(iteminfoSyntax);
-            if (!ignoredRegexes.contains(iteminfoSyntax2)) ignoredRegexes.add(iteminfoSyntax2);
-            if (!ignoredRegexes.contains(iteminfoSyntax3)) ignoredRegexes.add(iteminfoSyntax3);
-            if (!ignoredRegexes.contains(iteminfoSyntax4)) ignoredRegexes.add(iteminfoSyntax4);
-            if (!ignoredRegexes.contains(iteminfoSyntax5)) ignoredRegexes.add(iteminfoSyntax5);
+            MessageIgnorer mi = EdenClient.INSTANCE.getMessageIgnorer();
+            mi.enable(MessageIgnorer.Predefined.ITEM_INFO);
 
             if (entityPlayer == null) {
                 sendMessage("Fatal error occurred: entityPlayer is null. If this happens contact a developer.");
                 return 0;
             }
-
-            if (!MessageIgnorer.isEnabled()) {
-                entityPlayer.sendChatMessage("/ignoremessage toggle");
-            }
+            boolean wasEnabled = mi.isEnabled();
+            mi.setEnabled(true);
 
             sendMessage("Startet Mapping. Mapping will take up to 25 minutes.");
 
@@ -402,12 +391,8 @@ public class ChestShopMod {
                     }
 
                     sendMessage("Finished mapping of all items! Disconnect from the world now to save all items into the config properly! They will be loaded the next time you join the world.");
-
-                    ignoredRegexes.remove(iteminfoSyntax);
-                    ignoredRegexes.remove(iteminfoSyntax2);
-                    ignoredRegexes.remove(iteminfoSyntax3);
-                    ignoredRegexes.remove(iteminfoSyntax4);
-                    ignoredRegexes.remove(iteminfoSyntax5);
+                    mi.disable(MessageIgnorer.Predefined.ITEM_INFO);
+                    mi.setEnabled(wasEnabled);
                 }
             }).start();
 

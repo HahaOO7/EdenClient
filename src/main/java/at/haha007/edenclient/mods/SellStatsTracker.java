@@ -1,8 +1,10 @@
 package at.haha007.edenclient.mods;
 
+import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.callbacks.AddChatMessageCallback;
 import at.haha007.edenclient.callbacks.ConfigLoadCallback;
 import at.haha007.edenclient.callbacks.ConfigSaveCallback;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
@@ -14,7 +16,10 @@ import net.minecraft.text.LiteralText;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -24,10 +29,12 @@ import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
 public class SellStatsTracker {
-    private static final Pattern messagePattern = Pattern.compile("Verkauft für \\$(?<money>[0-9]{1,5}\\.?[0-9]{0,2}) \\((?<amount>[0-9,]{1,5}) (?<item>[a-zA-z0-9_]{1,30}) Einheiten je \\$[0-9]{1,5}\\.?[0-9]{0,2}\\)");
-    private static double amountOfMoneyGainedInSession = 0.0;
-    private static int index = 0;
-    HashMap<String, SellStatsForItem> data = new HashMap<>();
+    private final Pattern messagePattern = Pattern.compile("Verkauft für \\$(?<money>[0-9]{1,5}\\.?[0-9]{0,2}) \\((?<amount>[0-9,]{1,5}) (?<item>[a-zA-z0-9_]{1,30}) Einheiten je \\$[0-9]{1,5}\\.?[0-9]{0,2}\\)");
+    private double amountOfMoneyGainedInSession = 0.0;
+    private int index = 0;
+    private final HashMap<String, SellStatsForItem> data = new HashMap<>();
+    private boolean simplifyMessages = false;
+    private int delayInSimplifiedMessages = 5;
 
     public SellStatsTracker() {
         registerCommand("sellstatstracker");
@@ -48,7 +55,7 @@ public class SellStatsTracker {
 
             amountOfMoneyGainedInSession += money;
             index++;
-            AutoSell.sendMessage(amountOfMoneyGainedInSession, index);
+            sendMessage(amountOfMoneyGainedInSession, index);
 
             if (data.containsKey(item)) {
                 SellStatsForItem stats = data.get(item);
@@ -61,12 +68,19 @@ public class SellStatsTracker {
         return ActionResult.PASS;
     }
 
+
+    public void sendMessage(double amountOfMoneyGainedInSession, int index) {
+        if (simplifyMessages && (index % delayInSimplifiedMessages == 0)) {
+            sendModMessage(new LiteralText("Items sold for a total amount of ").formatted(Formatting.GOLD).append(new LiteralText("$" + String.format("%1$,.2f", amountOfMoneyGainedInSession)).formatted(Formatting.AQUA)).append(new LiteralText(" in this session.").formatted(Formatting.GOLD)));
+        }
+    }
+
     private void registerCommand(String literal) {
         LiteralArgumentBuilder<ClientCommandSource> node = literal(literal);
 
         node.then(literal("global").executes(c -> {
             sendModMessage(new LiteralText("Stats: ").formatted(Formatting.GOLD));
-            data.entrySet().stream().sorted(Comparator.comparingInt(e -> ((Map.Entry<String, SellStatsForItem>) e).getValue().amountSold).reversed()).collect(Collectors.toList()).forEach(entry -> sendModMessage(
+            data.entrySet().stream().sorted((e1, e2) -> Integer.compare(e2.getValue().amountSold, e1.getValue().amountSold)).collect(Collectors.toList()).forEach(entry -> sendModMessage(
                     new LiteralText(entry.getKey().substring(0, 1).toUpperCase() + entry.getKey().substring(1)).formatted(Formatting.AQUA)
                             .append(new LiteralText(" sold ").formatted(Formatting.GOLD))
                             .append(new LiteralText("" + entry.getValue().amountSold).formatted(Formatting.AQUA))
@@ -92,6 +106,24 @@ public class SellStatsTracker {
             return 1;
         })));
 
+        LiteralArgumentBuilder<ClientCommandSource> simplify = literal("simplifymessages");
+        simplify.then(literal("toggle").executes(c -> {
+            simplifyMessages = !simplifyMessages;
+            MessageIgnorer mi = EdenClient.INSTANCE.getMessageIgnorer();
+            if (simplifyMessages)
+                mi.enable(MessageIgnorer.Predefined.SELL);
+            else
+                mi.disable(MessageIgnorer.Predefined.SELL);
+            sendModMessage(new LiteralText(simplifyMessages ? "Sell messages will be simplified" : "Sell messages will not be simplified").formatted(Formatting.GOLD));
+            return 1;
+        }));
+        simplify.then(literal("delay").then(argument("messagedelay", IntegerArgumentType.integer(1, Integer.MAX_VALUE)).executes(c -> {
+            delayInSimplifiedMessages = c.getArgument("messagedelay", Integer.class);
+            sendModMessage(new LiteralText("Set delay between automatic simplified messages to ").formatted(Formatting.GOLD).append("" + delayInSimplifiedMessages).formatted(Formatting.AQUA));
+            return 1;
+        })));
+        node.then(simplify);
+
         register(node);
     }
 
@@ -109,21 +141,24 @@ public class SellStatsTracker {
                     this.data.put(entry[0], new SellStatsForItem(Integer.parseInt(entry[1]), Double.parseDouble(entry[2])));
                 }
             }
+            if (tag.contains("simplifiedmessages")) simplifyMessages = tag.getBoolean("simplifiedmessages");
+            if (tag.contains("delay")) delayInSimplifiedMessages = tag.getInt("delay");
             return ActionResult.PASS;
         }
         return ActionResult.PASS;
     }
 
     private ActionResult onSave(NbtCompound nbtCompound) {
-        NbtCompound compound = new NbtCompound();
-
+        NbtCompound tag = new NbtCompound();
         String dataString;
         if (!data.values().isEmpty()) {
-            dataString = data.entrySet().stream().sorted(Comparator.comparingInt(e -> ((Map.Entry<String, SellStatsForItem>) e).getValue().amountSold).reversed())
+            dataString = data.entrySet().stream().sorted((e1, e2) -> Integer.compare(e2.getValue().amountSold, e1.getValue().amountSold))
                     .map(entry -> entry.getKey() + ";" + entry.getValue().amountSold + ";" + entry.getValue().money).collect(Collectors.joining("~"));
-            compound.putString("data", dataString);
+            tag.putString("data", dataString);
         }
-        nbtCompound.put("sellstatstracker", compound);
+        tag.putInt("delay", delayInSimplifiedMessages);
+        tag.putBoolean("simplifiedmessages", simplifyMessages);
+        nbtCompound.put("sellstatstracker", tag);
         return ActionResult.PASS;
     }
 

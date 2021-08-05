@@ -24,8 +24,55 @@ import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
 public class MessageIgnorer {
-    private final static List<String> regex = new ArrayList<>();
-    private static boolean enabled;
+    private final List<String> regex = new ArrayList<>();
+    private boolean enabled;
+
+    public enum Predefined {
+        SELL("sellmessages",
+                "Message ignoring for Sell Messages",
+                "Verkauft für \\$(?<money>[0-9]{1,5}\\.?[0-9]{0,2}) \\((?<amount>[0-9,]{1,5}) (?<item>[a-zA-Z0-9_]{1,30}) Einheiten je \\$[0-9]{1,5}\\.?[0-9]{0,2}\\)",
+                "\\$[0-9]{1,5}\\.?[0-9]{0,2} wurden deinem Konto hinzugefügt\\.",
+                "Fehler: Du hast keine Berechtigung, diese benannten Gegenstände zu verkaufen: .*"),
+        VOTE("votemessages",
+                "Message ignoring for Vote Messages",
+                ". \\/vote . [A-Za-z0-9_]{1,16} hat [0-9]{2}min Flugzeit erhalten\\.",
+                ". \\/vote . [A-Za-z0-9_]{1,16} hat [1-4]{1} VoteC.ins? erhalten\\."),
+        CHAT("globalchat",
+                "Message ignoring for Global Chat Messages",
+                "\\w+ \\| ~?\\w+ > .*"),
+        DISCORD("discordchat",
+                "Message ignoring for Discord Chat Messages",
+                "[DC] [A-Za-z0-9]{1,16} > .*"),
+        ITEM_INFO("iteminfo",
+                "Message ignoring for ItemInfo messages",
+                "Item Information: ?",
+                "Voller Name: (?<originalname>[A-Za-z0-9_ ]{1,40})",
+                "Shop Schild: (?<shortenedname>[A-Za-z0-9_ ]{1,40})",
+                "\\/iteminfo \\(what's the item in hand\\?\\) ?",
+                "\\/iteminfo log \\(what's the item ID of LOG\\?\\) ?");
+
+        private final String[] regexes;
+        private final String key;
+        private final String message;
+
+        Predefined(String key, String message, String... regexes) {
+            this.key = key;
+            this.regexes = regexes;
+            this.message = message;
+        }
+
+        public String getKey() {
+            return key;
+        }
+
+        public String getMessage() {
+            return message;
+        }
+
+        public String[] getRegexes() {
+            return regexes;
+        }
+    }
 
     public MessageIgnorer() {
         AddChatMessageCallback.EVENT.register(this::onChat);
@@ -35,12 +82,12 @@ public class MessageIgnorer {
         ConfigLoadCallback.EVENT.register(this::onLoad);
     }
 
-    public static boolean isEnabled() {
+    public boolean isEnabled() {
         return enabled;
     }
 
-    public static List<String> getRegexes() {
-        return regex;
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
     }
 
     private void registerCommand(String cmd) {
@@ -104,83 +151,48 @@ public class MessageIgnorer {
             sendModMessage(new LiteralText("Cleared ignored messages").formatted(Formatting.GOLD));
             return 1;
         }));
-        var predefined = node.then(literal("predefined"));
-        predefined.then(literal("sellmessages").executes(c -> {
-            String autosellSyntax = "Verkauft für \\$(?<money>[0-9]{1,5}\\.?[0-9]{0,2}) \\((?<amount>[0-9,]{1,5}) (?<item>[a-zA-Z0-9_]{1,30}) Einheiten je \\$[0-9]{1,5}\\.?[0-9]{0,2}\\)";
-            String autosellSyntax2 = "\\$[0-9]{1,5}\\.?[0-9]{0,2} wurden deinem Konto hinzugefügt\\.";
-            String autosellSyntax3 = "Fehler: Du hast keine Berechtigung, diese benannten Gegenstände zu verkaufen: .*";
 
-            boolean display = containsAny(getRegexes(), new String[]{autosellSyntax, autosellSyntax2, autosellSyntax3});
-
-            String msg = display ? "Message ignoring for Sell Messages disabled" : "Message ignoring for Sell Messages enabled";
-            sendModMessage(new LiteralText(msg).formatted(Formatting.GOLD));
-
-            removeOrAddRegexes(new String[]{autosellSyntax, autosellSyntax2, autosellSyntax3}, display);
-            return 1;
-        }));
-
-        predefined.then(literal("votemessages").executes(c -> {
-
-            String votemessageSyntax = ". \\/vote . [A-Za-z0-9_]{1,16} hat [0-9]{2}min Flugzeit erhalten\\.";
-            String votemessageSyntax2 = ". \\/vote . [A-Za-z0-9_]{1,16} hat [1-4]{1} VoteC.ins? erhalten\\.";
-
-            boolean display = containsAny(getRegexes(), new String[]{votemessageSyntax, votemessageSyntax2});
-
-            String msg = display ? "Message ignoring for Vote Messages disabled" : "Message ignoring for Vote Messages enabled";
-            sendModMessage(new LiteralText(msg).formatted(Formatting.GOLD));
-
-            removeOrAddRegexes(new String[]{votemessageSyntax, votemessageSyntax2}, display);
-            return 1;
-        }));
-
-        predefined.then(literal("globalchat").executes(c -> {
-
-            String globalChatSyntax = "\\w+ \\| ~?\\w+ > .*";
-
-            boolean display = containsAny(getRegexes(), new String[]{globalChatSyntax});
-
-            String msg = display ? "Message ignoring for Global Chat Messages disabled" : "Message ignoring for Global Chat Messages enabled";
-            sendModMessage(new LiteralText(msg).formatted(Formatting.GOLD));
-
-            removeOrAddRegexes(new String[]{globalChatSyntax}, display);
-            return 1;
-        }));
-
-        predefined.then(literal("discordchat").executes(c -> {
-
-            String discordChatSyntax = "[DC] [A-Za-z0-9]{1,16} > .*";
-
-            boolean display = containsAny(getRegexes(), new String[]{discordChatSyntax});
-
-            String msg = display ? "Message ignoring for Discord Chat Messages disabled" : "Message ignoring for Discord Chat Messages enabled";
-            sendModMessage(new LiteralText(msg).formatted(Formatting.GOLD));
-
-            removeOrAddRegexes(new String[]{discordChatSyntax}, display);
-            return 1;
-        }));
-
-        predefined.then(literal("iteminfo").executes(c -> {
-
-            String iteminfoSyntax = "Item Information: ?";
-            String iteminfoSyntax2 = "Voller Name: (?<originalname>[A-Za-z0-9_ ]{1,40})";
-            String iteminfoSyntax3 = "Shop Schild: (?<shortenedname>[A-Za-z0-9_ ]{1,40})";
-            String iteminfoSyntax4 = "\\/iteminfo \\(what's the item in hand\\?\\) ?";
-            String iteminfoSyntax5 = "\\/iteminfo log \\(what's the item ID of LOG\\?\\) ?";
-
-            boolean display = containsAny(getRegexes(), new String[]{iteminfoSyntax, iteminfoSyntax2, iteminfoSyntax3, iteminfoSyntax4, iteminfoSyntax5});
-
-            String msg = display ? "Message ignoring for ItemInfo messages disabled" : "Message ignoring for ItemInfo messages enabled";
-            sendModMessage(new LiteralText(msg).formatted(Formatting.GOLD));
-
-            removeOrAddRegexes(new String[]{iteminfoSyntax, iteminfoSyntax2, iteminfoSyntax3, iteminfoSyntax4, iteminfoSyntax5}, display);
-            return 1;
-        }));
+        LiteralArgumentBuilder<ClientCommandSource> predefined = literal("predefined");
+        for (Predefined pre : Predefined.values()) {
+            predefined.then(literal(pre.getKey()).executes(c -> {
+                boolean disable = isEnabled(pre);
+                if (disable) {
+                    disable(pre);
+                    sendModMessage(pre.getMessage() + " disabled");
+                } else {
+                    enable(pre);
+                    sendModMessage(pre.getMessage() + " enabled");
+                }
+                return 1;
+            }));
+        }
+        node.then(predefined);
 
         node.executes(c -> {
             sendDebugMessage();
             return 1;
         });
         register(node);
+    }
+
+    private boolean isEnabled(Predefined pre) {
+        for (String string : pre.getRegexes()) {
+            if (regex.contains(string)) return true;
+        }
+        return false;
+    }
+
+    public void disable(Predefined pre) {
+        for (String s : pre.getRegexes()) {
+            regex.remove(s);
+        }
+    }
+
+    public void enable(Predefined pre) {
+        for (String s : pre.getRegexes()) {
+            if (!regex.contains(s))
+                regex.add(s);
+        }
     }
 
     private ActionResult onLoad(NbtCompound nbtCompound) {
@@ -211,26 +223,6 @@ public class MessageIgnorer {
         tag.put("regex", list);
         nbtCompound.put("MessageIgnorer", tag);
         return ActionResult.PASS;
-    }
-
-    private boolean containsAny(List<String> regexes, String[] strings) {
-        for (String string : strings) {
-            if (regexes.contains(string)) return true;
-        }
-        return false;
-    }
-
-    private void removeOrAddRegexes(String[] regexes, boolean display) {
-        if (display) {
-            for (String s : regexes) {
-                regex.remove(s);
-            }
-        } else {
-            for (String s : regexes) {
-                if (!regex.contains(s))
-                    regex.add(s);
-            }
-        }
     }
 
     private void sendDebugMessage() {

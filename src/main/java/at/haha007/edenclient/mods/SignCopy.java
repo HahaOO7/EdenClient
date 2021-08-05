@@ -22,9 +22,9 @@ import java.util.Objects;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
 public class SignCopy {
-    public static String[] copy = new String[4];
-    public static boolean shouldCopy = false;
-    boolean enabled = false;
+    private String[] copy = new String[4];
+    private boolean shouldCopy = false;
+    private boolean enabled = false;
 
     public SignCopy() {
         PlayerEditSignCallback.EVENT.register(this::onEditSign);
@@ -61,7 +61,8 @@ public class SignCopy {
 
     private void registerCommand() {
         CommandManager.register(CommandManager.literal("signcopy").executes(c -> {
-            sendModMessage(new LiteralText((enabled = !enabled) ? "SignCopy enabled" : "SignCopy disabled"));
+            enabled = !enabled;
+            sendModMessage(new LiteralText(enabled ? "SignCopy enabled" : "SignCopy disabled"));
             return 1;
         }));
     }

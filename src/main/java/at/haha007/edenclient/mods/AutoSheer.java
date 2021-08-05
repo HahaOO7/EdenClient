@@ -47,7 +47,8 @@ public class AutoSheer {
 
     private void registerCommand() {
         CommandManager.register(CommandManager.literal("autoshear").executes(c -> {
-            PlayerUtils.sendModMessage(new LiteralText((enabled = !enabled) ? "AutoShear enabled" : "AutoShear disabled").formatted(Formatting.GOLD));
+            enabled = !enabled;
+            PlayerUtils.sendModMessage(new LiteralText(enabled ? "AutoShear enabled" : "AutoShear disabled").formatted(Formatting.GOLD));
             return 1;
         }));
     }

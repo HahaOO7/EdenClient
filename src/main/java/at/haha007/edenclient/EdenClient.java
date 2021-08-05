@@ -10,6 +10,7 @@ import java.io.File;
 
 public class EdenClient implements ClientModInitializer {
     public static EdenClient INSTANCE;
+    private MessageIgnorer messageIgnorer;
 
     @Override
     public void onInitializeClient() {
@@ -19,7 +20,7 @@ public class EdenClient implements ClientModInitializer {
         // Chat | These Mods interact with each message being sent to the client (in descending order)
         new SellStatsTracker();
         new ChestShopMod();
-        new MessageIgnorer();
+        messageIgnorer = new MessageIgnorer();
         new WordHighlighter();
         new AntiSpam();
 
@@ -35,6 +36,10 @@ public class EdenClient implements ClientModInitializer {
         // Commands only | These Mods only actively interact with your gameplay when directly using its commands
         new Rainbowifier();
         new NbtInfo();
+    }
+
+    public MessageIgnorer getMessageIgnorer() {
+        return messageIgnorer;
     }
 
     public static File getDataFolder() {

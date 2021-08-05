@@ -53,7 +53,8 @@ public class AntiStrip {
 
     private void registerCommand() {
         CommandManager.register(CommandManager.literal("antistrip").executes(c -> {
-            sendModMessage(new LiteralText((enabled = !enabled) ? "Enabled AntiStrip." : "Disabled AntiStrip.").formatted(Formatting.GOLD));
+            enabled = !enabled;
+            sendModMessage(new LiteralText(enabled ? "Enabled AntiStrip." : "Disabled AntiStrip.").formatted(Formatting.GOLD));
             return 1;
         }));
     }

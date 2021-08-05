@@ -104,7 +104,8 @@ public class WordHighlighter {
     private void registerCommand(String cmd) {
         LiteralArgumentBuilder<ClientCommandSource> node = literal(cmd);
         node.then(literal("toggle").executes(c -> {
-            sendModMessage(new LiteralText((enabled = !enabled) ? "Enabled WordHighlighter!" : "Disabled WordHighlighter!").formatted(Formatting.GOLD));
+            enabled = !enabled;
+            sendModMessage(new LiteralText(enabled ? "Enabled WordHighlighter!" : "Disabled WordHighlighter!").formatted(Formatting.GOLD));
             return 0;
         }));
         node.then(literal("add").then(argument("word", StringArgumentType.word()).executes(c -> {
