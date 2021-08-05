@@ -6,6 +6,7 @@ import at.haha007.edenclient.callbacks.ConfigLoadCallback;
 import at.haha007.edenclient.callbacks.ConfigSaveCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.mods.MessageIgnorer;
+import at.haha007.edenclient.utils.Scheduler;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -17,9 +18,10 @@ import net.minecraft.block.entity.SignBlockEntity;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientCommandSource;
 import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.item.Item;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtList;
-import net.minecraft.text.LiteralText;
+import net.minecraft.text.*;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.ChunkPos;
@@ -34,6 +36,7 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -43,8 +46,8 @@ import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
 public class ChestShopMod {
 
-    Map<ChunkPos, Set<ChestShopEntry>> shops = new HashMap<>();
-    BiMap<String, String> originalItemNames = HashBiMap.create();
+    private final Map<ChunkPos, Set<ChestShopEntry>> shops = new HashMap<>();
+    private final BiMap<String, String> originalItemNames = HashBiMap.create();
     private int[] chunk = {0, 0};
     private boolean searchEnabled = true;
     private String lastFullNameCached = null;
@@ -159,68 +162,13 @@ public class ChestShopMod {
             return 1;
         })));
 
-        node.then(literal("finderrors").executes(c -> {
-            HashMap<String, List<ChestShopEntry>> buyEntries = new HashMap<>();
-            HashMap<String, List<ChestShopEntry>> sellEntries = new HashMap<>();
+        node.then(literal("exploitable").executes(c -> {
+            List<String> exploitableItems = getExploitableShopsText();
 
-            shops.values().forEach(m -> m.stream().filter(ChestShopEntry::canBuy).forEach(entry -> {
-                List<ChestShopEntry> list;
-                if (buyEntries.containsKey(entry.getItem())) {
-                    list = buyEntries.get(entry.getItem());
-                } else {
-                    list = new ArrayList<>();
-                }
-                list.add(entry);
-                buyEntries.put(entry.getItem(), list);
-            }));
-
-            shops.values().forEach(m -> m.stream().filter(ChestShopEntry::canSell).forEach(entry -> {
-                List<ChestShopEntry> list;
-                if (sellEntries.containsKey(entry.getItem())) {
-                    list = sellEntries.get(entry.getItem());
-                } else {
-                    list = new ArrayList<>();
-                }
-                list.add(entry);
-                sellEntries.put(entry.getItem(), list);
-            }));
-
-            List<String> foundDisparities = new ArrayList<>();
-
-            for (Map.Entry<String, List<ChestShopEntry>> entry : buyEntries.entrySet().stream().sorted(Map.Entry.comparingByKey()).collect(Collectors.toList())) {
-                if (!sellEntries.containsKey(entry.getKey())) continue;
-                List<ChestShopEntry> currentSellEntries = sellEntries.get(entry.getKey()).stream().sorted(Comparator.comparingDouble(ChestShopEntry::getSellPricePerItem).reversed()).collect(Collectors.toList());
-                List<ChestShopEntry> currentBuyEntries = entry.getValue().stream().sorted(Comparator.comparingDouble(ChestShopEntry::getBuyPricePerItem)).collect(Collectors.toList());
-
-
-                ChestShopEntry currentSellEntry = currentSellEntries.get(0);
-                ChestShopEntry currentBuyEntry = currentBuyEntries.get(0);
-                int i = 0;
-
-                if (currentSellEntry.getSellPricePerItem() <= currentBuyEntry.getBuyPricePerItem())
-                    continue;
-
-                String nameOfItem = originalItemNames.get(entry.getKey());
-                foundDisparities.add(nameOfItem + ":");
-
-                while (currentSellEntry.getSellPricePerItem() > currentBuyEntry.getBuyPricePerItem()) {
-                    foundDisparities.add(String.format("Buy %s at %s [%d, %d, %d] for %.2f$/item and sell at %s [%d, %d, %d] for %.2f$/item",
-                            nameOfItem, currentBuyEntry.getOwner(), currentBuyEntry.getPos().getX(), currentBuyEntry.getPos().getY(), currentBuyEntry.getPos().getZ(), currentBuyEntry.getBuyPricePerItem(),
-                            currentSellEntry.getOwner(), currentSellEntry.getPos().getX(), currentSellEntry.getPos().getY(), currentSellEntry.getPos().getZ(), currentSellEntry.getSellPricePerItem()));
-                    i++;
-                    if (i < currentSellEntries.size())
-                        currentSellEntry = currentSellEntries.get(i);
-                    else break;
-                }
-
-                foundDisparities.add("");
-            }
-
-            File folder = new File(EdenClient.getDataFolder(), "ChestShopModErrors");
+            File folder = new File(EdenClient.getDataFolder(), "ChestShop_Exploitable");
             if (!folder.exists()) folder.mkdirs();
             SimpleDateFormat formatter = new SimpleDateFormat("yyyy_MM_dd_hh_mm_ss");
-            Date date = new Date();
-            File file = new File(folder, formatter.format(date) + ".txt");
+            File file = new File(folder, formatter.format(new Date()) + ".txt");
 
             try {
                 if (!file.exists())
@@ -230,11 +178,14 @@ public class ChestShopMod {
             }
 
             try (FileWriter writer = new FileWriter(file); BufferedWriter bw = new BufferedWriter(writer)) {
-                for (String foundDisparity : foundDisparities) {
+                for (String foundDisparity : exploitableItems) {
                     bw.write(foundDisparity);
                     bw.newLine();
                 }
-                sendModMessage("Wrote file without errors. Saved at /appdata/roaming/.minecraft/config/ChestShopModErrors/[date].txt");
+                sendModMessage(new LiteralText("Wrote file without errors. Saved at ").formatted(Formatting.GOLD).
+                        append(new LiteralText(file.getAbsolutePath()).setStyle(Style.EMPTY.withColor(Formatting.GOLD)
+                                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new LiteralText("Click to copy")))
+                                .withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, file.getAbsolutePath())))));
             } catch (IOException e) {
                 sendModMessage("Error while writing file. See console for more info.");
                 e.printStackTrace();
@@ -243,30 +194,8 @@ public class ChestShopMod {
         }));
 
         node.then(literal("writeshopstofile").executes(c -> {
-            HashMap<String, List<ChestShopEntry>> buyEntries = new HashMap<>();
-            HashMap<String, List<ChestShopEntry>> sellEntries = new HashMap<>();
-
-            shops.values().forEach(m -> m.stream().filter(ChestShopEntry::canBuy).forEach(entry -> {
-                List<ChestShopEntry> list;
-                if (buyEntries.containsKey(entry.getItem())) {
-                    list = buyEntries.get(entry.getItem());
-                } else {
-                    list = new ArrayList<>();
-                }
-                list.add(entry);
-                buyEntries.put(entry.getItem(), list);
-            }));
-
-            shops.values().forEach(m -> m.stream().filter(ChestShopEntry::canSell).forEach(entry -> {
-                List<ChestShopEntry> list;
-                if (sellEntries.containsKey(entry.getItem())) {
-                    list = sellEntries.get(entry.getItem());
-                } else {
-                    list = new ArrayList<>();
-                }
-                list.add(entry);
-                sellEntries.put(entry.getItem(), list);
-            }));
+            Map<String, List<ChestShopEntry>> buyEntries = getBuyShops();
+            Map<String, List<ChestShopEntry>> sellEntries = getSellShops();
 
             List<String> lines = new ArrayList<>();
             List<String> usedKeys = new ArrayList<>();
@@ -335,15 +264,13 @@ public class ChestShopMod {
             return 1;
         }));
 
-        node.then(literal("mapitemnames").executes(c -> {
+        LiteralArgumentBuilder<ClientCommandSource> mapItemNames = literal("mapitemnames");
+        mapItemNames.executes(c -> {
             sendModMessage("/chestshop mapitemnames <start/check>");
             return 1;
-        }));
+        });
 
-        node.then(literal("mapitemnames").then(literal("start").executes(c -> {
-            List<String> minecraftIDs = new ArrayList<>();
-            Registry.ITEM.forEach(item -> minecraftIDs.add(item.getName().getString()));
-
+        mapItemNames.then(literal("start").executes(c -> {
             ClientPlayerEntity entityPlayer = MinecraftClient.getInstance().player;
             MessageIgnorer mi = EdenClient.INSTANCE.getMessageIgnorer();
             mi.enable(MessageIgnorer.Predefined.ITEM_INFO);
@@ -357,53 +284,39 @@ public class ChestShopMod {
 
             sendMessage("Startet Mapping. Mapping will take up to 25 minutes.");
 
-            new Thread(() -> {
-                {
-                    int size = minecraftIDs.size();
-
-                    if (size == 0) {
-                        sendMessage("Error: Size is zero, contact a developer when you encounter this error.");
-                    }
-
-                    for (int i = 0; i < size; i++) {
-                        try {
-                            Thread.sleep(1000);
-                            if (originalItemNames.inverse().get(minecraftIDs.get(i)) == null)
-                                entityPlayer.sendChatMessage("/iteminfo " + minecraftIDs.get(i));
-                            else continue;
-                        } catch (InterruptedException e) {
-                            sendMessage("Error: Thread sleep interrupted.");
-                        }
-                        if (i % 60 == 0) {
-                            sendModMessage(new LiteralText("Mapped ").formatted(Formatting.GOLD)
-                                    .append(new LiteralText("" + i).formatted(Formatting.AQUA))
-                                    .append(new LiteralText(" items of ").formatted(Formatting.GOLD))
-                                    .append(new LiteralText("" + size).formatted(Formatting.AQUA))
-                                    .append(new LiteralText(" this far.").formatted(Formatting.GOLD)));
-                        }
-                    }
-
-                    // Needed for server to respond to last query in the loop without the regexes being removed already
-                    try {
-                        Thread.sleep(2500);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-
+            String[] minecraftIDs = Registry.ITEM.stream().map(Item::getName).map(Text::getString).toList().toArray(new String[0]);
+            AtomicInteger index = new AtomicInteger();
+            Scheduler.get().scheduleSyncRepeating(() -> {
+                int i = index.getAndIncrement();
+                if (i >= minecraftIDs.length) {
                     sendMessage("Finished mapping of all items! Disconnect from the world now to save all items into the config properly! They will be loaded the next time you join the world.");
-                    mi.disable(MessageIgnorer.Predefined.ITEM_INFO);
-                    mi.setEnabled(wasEnabled);
+                    Scheduler.get().scheduleSyncDelayed(() -> {
+                        mi.disable(MessageIgnorer.Predefined.ITEM_INFO);
+                        mi.setEnabled(wasEnabled);
+                    }, 50);
+                    return false;
                 }
-            }).start();
-
+                String item = minecraftIDs[i];
+                System.out.println("Mapping item:" + item);
+                entityPlayer.sendChatMessage("/iteminfo " + item);
+                if (i % 60 == 0) {
+                    sendModMessage(new LiteralText("Mapped ").formatted(Formatting.GOLD)
+                            .append(new LiteralText("" + i).formatted(Formatting.AQUA))
+                            .append(new LiteralText(" items of ").formatted(Formatting.GOLD))
+                            .append(new LiteralText("" + minecraftIDs.length).formatted(Formatting.AQUA))
+                            .append(new LiteralText(" this far.").formatted(Formatting.GOLD)));
+                }
+                return true;
+            }, 1, 0);
             return 1;
-        })));
+        }));
 
-        node.then(literal("mapitemnames").then(literal("check").executes(c -> {
+        mapItemNames.then(literal("check").executes(c -> {
             sendModMessage(new LiteralText("Amount of items mapped: ").formatted(Formatting.GOLD)
                     .append(new LiteralText("" + originalItemNames.size()).formatted(Formatting.AQUA)));
             return 1;
-        })));
+        }));
+        node.then(mapItemNames);
 
         node.executes(c -> {
             sendMessage("/chestshop sell itemtype");
@@ -414,6 +327,69 @@ public class ChestShopMod {
             return 1;
         });
         register(node);
+    }
+
+    private List<String> getExploitableShopsText() {
+        Map<String, List<ChestShopEntry>> buyEntries = getBuyShops();
+        Map<String, List<ChestShopEntry>> sellEntries = getSellShops();
+        List<String> exploitableShopsText = new ArrayList<>();
+
+        for (Map.Entry<String, List<ChestShopEntry>> entry : buyEntries.entrySet().stream().sorted(Map.Entry.comparingByKey()).collect(Collectors.toList())) {
+            if (!sellEntries.containsKey(entry.getKey())) continue;
+            List<ChestShopEntry> currentSellEntries = sellEntries.get(entry.getKey()).stream().sorted(Comparator.comparingDouble(ChestShopEntry::getSellPricePerItem).reversed()).collect(Collectors.toList());
+            List<ChestShopEntry> currentBuyEntries = entry.getValue().stream().sorted(Comparator.comparingDouble(ChestShopEntry::getBuyPricePerItem)).collect(Collectors.toList());
+
+            ChestShopEntry currentSellEntry = currentSellEntries.get(0);
+            ChestShopEntry currentBuyEntry = currentBuyEntries.get(0);
+            int i = 0;
+
+            if (currentSellEntry.getSellPricePerItem() <= currentBuyEntry.getBuyPricePerItem())
+                continue;
+
+            String nameOfItem = originalItemNames.get(entry.getKey());
+            exploitableShopsText.add(nameOfItem + ":");
+
+            while (currentSellEntry.getSellPricePerItem() > currentBuyEntry.getBuyPricePerItem()) {
+                exploitableShopsText.add(String.format("Buy %s at %s [%d, %d, %d] for %.2f$/item and sell at %s [%d, %d, %d] for %.2f$/item",
+                        nameOfItem, currentBuyEntry.getOwner(), currentBuyEntry.getPos().getX(), currentBuyEntry.getPos().getY(), currentBuyEntry.getPos().getZ(), currentBuyEntry.getBuyPricePerItem(),
+                        currentSellEntry.getOwner(), currentSellEntry.getPos().getX(), currentSellEntry.getPos().getY(), currentSellEntry.getPos().getZ(), currentSellEntry.getSellPricePerItem()));
+                i++;
+                if (i < currentSellEntries.size())
+                    currentSellEntry = currentSellEntries.get(i);
+                else break;
+            }
+        }
+        return exploitableShopsText;
+    }
+
+    private Map<String, List<ChestShopEntry>> getSellShops() {
+        Map<String, List<ChestShopEntry>> sellEntries = new HashMap<>();
+        shops.values().forEach(m -> m.stream().filter(ChestShopEntry::canSell).forEach(entry -> {
+            List<ChestShopEntry> list;
+            if (sellEntries.containsKey(entry.getItem())) {
+                list = sellEntries.get(entry.getItem());
+            } else {
+                list = new ArrayList<>();
+            }
+            list.add(entry);
+            sellEntries.put(entry.getItem(), list);
+        }));
+        return sellEntries;
+    }
+
+    private Map<String, List<ChestShopEntry>> getBuyShops() {
+        Map<String, List<ChestShopEntry>> buyEntries = new HashMap<>();
+        shops.values().forEach(m -> m.stream().filter(ChestShopEntry::canBuy).forEach(entry -> {
+            List<ChestShopEntry> list;
+            if (buyEntries.containsKey(entry.getItem())) {
+                list = buyEntries.get(entry.getItem());
+            } else {
+                list = new ArrayList<>();
+            }
+            list.add(entry);
+            buyEntries.put(entry.getItem(), list);
+        }));
+        return buyEntries;
     }
 
     private CompletableFuture<Suggestions> suggestSell

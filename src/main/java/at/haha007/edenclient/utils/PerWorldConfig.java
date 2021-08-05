@@ -5,7 +5,6 @@ import at.haha007.edenclient.callbacks.ConfigLoadCallback;
 import at.haha007.edenclient.callbacks.ConfigSaveCallback;
 import at.haha007.edenclient.callbacks.LeaveGameSessionCallback;
 import at.haha007.edenclient.callbacks.StartGameSessionCallback;
-import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.util.ActionResult;
@@ -30,13 +29,13 @@ public class PerWorldConfig {
         LeaveGameSessionCallback.EVENT.register(this::onLeave);
     }
 
-    private ActionResult onLeave(ClientPlayerEntity player) {
+    private ActionResult onLeave() {
         System.out.println("leave world: " + worldName);
         saveConfig();
         return ActionResult.PASS;
     }
 
-    private ActionResult onJoin(ClientPlayerEntity player) {
+    private ActionResult onJoin() {
         worldName = StringUtils.getWorldOrServerName();
         System.out.println("join world: " + worldName);
         loadConfig();

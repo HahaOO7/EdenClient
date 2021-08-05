@@ -2,14 +2,13 @@ package at.haha007.edenclient.callbacks;
 
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.EventFactory;
-import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.util.ActionResult;
 
 public interface LeaveGameSessionCallback {
     Event<LeaveGameSessionCallback> EVENT = EventFactory.createArrayBacked(LeaveGameSessionCallback.class,
-            listeners -> (player) -> {
+            listeners -> () -> {
                 for (LeaveGameSessionCallback listener : listeners) {
-                    ActionResult result = listener.leave(player);
+                    ActionResult result = listener.leave();
 
                     if (result != ActionResult.PASS) {
                         return result;
@@ -18,5 +17,5 @@ public interface LeaveGameSessionCallback {
                 return ActionResult.PASS;
             });
 
-    ActionResult leave(ClientPlayerEntity player);
+    ActionResult leave();
 }

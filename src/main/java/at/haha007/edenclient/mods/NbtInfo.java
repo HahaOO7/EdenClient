@@ -25,7 +25,7 @@ public class NbtInfo {
             if (stack.isEmpty()) {
                 sendModMessage(new LiteralText("Take an item in your hand!").formatted(Formatting.GOLD));
             } else {
-                sendModMessage(new NbtTextFormatter("", 1).apply(stack.getOrCreateTag()));
+                sendModMessage(new NbtTextFormatter("", 1).apply(stack.getNbt()));
             }
             return 1;
         }));

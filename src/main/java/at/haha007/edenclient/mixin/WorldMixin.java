@@ -2,7 +2,6 @@ package at.haha007.edenclient.mixin;
 
 import at.haha007.edenclient.callbacks.LeaveGameSessionCallback;
 import at.haha007.edenclient.callbacks.StartGameSessionCallback;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.world.ClientWorld;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -19,13 +18,14 @@ public class WorldMixin {
     @Inject(at = @At("RETURN"), method = "<init>")
     private void onConnect(CallbackInfo ci) {
         if (connected) return;
-        StartGameSessionCallback.EVENT.invoker().join(MinecraftClient.getInstance().player);
+        StartGameSessionCallback.EVENT.invoker().join();
         connected = true;
     }
 
+    //TODO: doesn't get triggered when getting kicked!
     @Inject(at = @At("HEAD"), method = "disconnect")
     private void onDisconnect(CallbackInfo ci) {
-        LeaveGameSessionCallback.EVENT.invoker().leave(MinecraftClient.getInstance().player);
+        LeaveGameSessionCallback.EVENT.invoker().leave();
         connected = false;
     }
 }

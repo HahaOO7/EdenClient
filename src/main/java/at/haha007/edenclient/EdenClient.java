@@ -3,6 +3,7 @@ package at.haha007.edenclient;
 import at.haha007.edenclient.mods.*;
 import at.haha007.edenclient.mods.chestshop.ChestShopMod;
 import at.haha007.edenclient.utils.PerWorldConfig;
+import at.haha007.edenclient.utils.Scheduler;
 import net.fabricmc.api.ClientModInitializer;
 import net.minecraft.client.MinecraftClient;
 
@@ -16,6 +17,7 @@ public class EdenClient implements ClientModInitializer {
     public void onInitializeClient() {
         INSTANCE = this;
         PerWorldConfig.getInstance();
+        Scheduler.get();
 
         // Chat | These Mods interact with each message being sent to the client (in descending order)
         new SellStatsTracker();
