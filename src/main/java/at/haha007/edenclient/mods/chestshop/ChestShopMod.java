@@ -22,10 +22,15 @@ import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtList;
-import net.minecraft.text.*;
+import net.minecraft.text.ClickEvent;
+import net.minecraft.text.HoverEvent;
+import net.minecraft.text.LiteralText;
+import net.minecraft.text.Style;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.ChunkPos;
+import net.minecraft.util.registry.DefaultedRegistry;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.chunk.ChunkManager;
 import net.minecraft.world.chunk.WorldChunk;
@@ -290,13 +295,21 @@ public class ChestShopMod {
 
             sendModMessage("Startet Mapping. Mapping will take up to 25 minutes.");
 
-            String[] minecraftIDs = Registry.ITEM.stream().map(Item::getName).map(Text::getString).toList().toArray(new String[0]);
+            DefaultedRegistry<Item> itemRegistry = Registry.ITEM;
+            String[] minecraftIDs = itemRegistry.stream()
+                    .map(itemRegistry::getId)
+                    .map(Identifier::toString)
+                    .map(itemName -> itemName.split(":")[1])
+                    .map(itemName -> itemName.replace('_', ' '))
+                    .map(String::toLowerCase)
+                    .toList().toArray(new String[0]);
             AtomicInteger index = new AtomicInteger();
             nameLookupRunning = true;
             Scheduler.get().scheduleSyncRepeating(() -> {
-                int i = index.getAndIncrement();
                 String item;
+                int i;
                 do {
+                    i = index.getAndIncrement();
                     if (i >= minecraftIDs.length) {
                         sendModMessage("Finished mapping of all items! Disconnect from the world now to save all items into the config properly! They will be loaded the next time you join the world.");
                         Scheduler.get().scheduleSyncDelayed(() -> {
@@ -307,7 +320,7 @@ public class ChestShopMod {
                         return false;
                     }
                     item = minecraftIDs[i];
-                } while (itemNameMap.containsKey(item));
+                } while (itemNameMap.containsValue(item));
                 System.out.println("Mapping item:" + item);
                 entityPlayer.sendChatMessage("/iteminfo " + item);
                 if (i % 60 == 0) {
@@ -421,7 +434,7 @@ public class ChestShopMod {
     }
 
     private ActionResult loadConfig(NbtCompound overTag) {
-        NbtCompound tag = overTag.getCompound("chestshop");
+        NbtCompound tag = overTag.getCompound("chestShop");
         searchEnabled = !tag.contains("enabled") || tag.getBoolean("enabled");
         NbtList list = tag.getList("entries", 10);
         shops.clear();
