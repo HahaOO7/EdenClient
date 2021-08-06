@@ -305,7 +305,7 @@ public class ChestShopMod {
                     .filter(Predicate.not(itemNameMap::containsValue))
                     .toList().toArray(new String[0]);
             sendModMessage(new LiteralText("Startet Mapping. Mapping will take about ").formatted(Formatting.GOLD)
-                    .append(new LiteralText(Integer.toString(minecraftIDs.length / 20 + 1)).formatted(Formatting.AQUA))
+                    .append(new LiteralText(Integer.toString(minecraftIDs.length / 60 + 1)).formatted(Formatting.AQUA))
                     .append(new LiteralText(" minutes.").formatted(Formatting.GOLD)));
 
             AtomicInteger index = new AtomicInteger();
