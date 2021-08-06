@@ -3,7 +3,11 @@ package at.haha007.edenclient.mods;
 import at.haha007.edenclient.callbacks.ConfigLoadCallback;
 import at.haha007.edenclient.callbacks.ConfigSaveCallback;
 import at.haha007.edenclient.callbacks.PlayerInvChangeCallback;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.suggestion.Suggestions;
+import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientCommandSource;
 import net.minecraft.client.network.ClientPlayerEntity;
@@ -17,16 +21,14 @@ import net.minecraft.nbt.NbtString;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.registry.DefaultedRegistry;
 import net.minecraft.util.registry.Registry;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import static at.haha007.edenclient.command.CommandManager.literal;
-import static at.haha007.edenclient.command.CommandManager.register;
+import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
 public class AutoSell {
@@ -62,27 +64,35 @@ public class AutoSell {
             return 1;
         }));
 
-        node.then(literal("add").executes(c -> {
+        node.then(literal("add").then(argument("item", StringArgumentType.greedyString()).suggests(this::suggestAddItems).executes(c -> {
             var player = MinecraftClient.getInstance().player;
             if (player == null) return 1;
-            PlayerInventory inventory = player.getInventory();
-            autoSellItems.add(inventory.getMainHandStack().getItem());
-            sendChatMessage("added /sell " + inventory.getMainHandStack().getItem().getName().getString());
+            Optional<Item> opt = Registry.ITEM.getOrEmpty(new Identifier(c.getArgument("item", String.class).replace(" ", "_")));
+            if (opt.isEmpty()) {
+                sendModMessage("No item with this name exists.");
+                return 1;
+            }
+            autoSellItems.add(opt.get());
+            sendChatMessage("Added /sell " + opt.get().getName().getString());
             return 1;
-        }));
+        })));
 
-        node.then(literal("remove").executes(c -> {
+        node.then(literal("remove").then(argument("item", StringArgumentType.greedyString()).suggests(this::suggestRemoveItems).executes(c -> {
             var player = MinecraftClient.getInstance().player;
             if (player == null) return 1;
-            PlayerInventory inventory = player.getInventory();
-            if (autoSellItems.remove(inventory.getMainHandStack().getItem()))
-                sendChatMessage("removed /sell " + inventory.getMainHandStack().getItem().getName().getString());
+
+            Optional<Item> opt = Registry.ITEM.getOrEmpty(new Identifier(c.getArgument("item", String.class).replace(" ", "_")));
+            if (opt.isEmpty()) {
+                sendModMessage("No item with this name exists.");
+                return 1;
+            }
+            if (autoSellItems.remove(opt.get()))
+                sendChatMessage("Removed /sell " + opt.get().getName().getString());
             else {
-                sendChatMessage("Couldn't remove /sell " + inventory.getMainHandStack().getItem().getName().getString());
-                sendChatMessage("Item was not in the sell list.");
+                sendChatMessage("Couldn't remove /sell " + opt.get().getName().getString() + " because it wasn't in your sell list.");
             }
             return 1;
-        }));
+        })));
 
 
         node.then(literal("stats").executes(c -> {
@@ -102,6 +112,29 @@ public class AutoSell {
             return 1;
         });
         register(node);
+    }
+
+
+    private CompletableFuture<Suggestions> suggestAddItems(CommandContext<ClientCommandSource> clientCommandSourceCommandContext, SuggestionsBuilder suggestionsBuilder) {
+        DefaultedRegistry<Item> itemRegistry = Registry.ITEM;
+        itemRegistry.stream()
+                .map(itemRegistry::getId)
+                .map(Identifier::toString)
+                .map(itemName -> itemName.split(":")[1])
+                .map(itemName -> itemName.replace('_', ' '))
+                .map(String::toLowerCase).toList().forEach(suggestionsBuilder::suggest);
+        return suggestionsBuilder.buildFuture();
+    }
+
+    private CompletableFuture<Suggestions> suggestRemoveItems(CommandContext<ClientCommandSource> clientCommandSourceCommandContext, SuggestionsBuilder suggestionsBuilder) {
+        DefaultedRegistry<Item> itemRegistry = Registry.ITEM;
+        autoSellItems.stream().sorted(Comparator.comparing(s -> s.getName().getString()))
+                .map(itemRegistry::getId)
+                .map(Identifier::toString)
+                .map(itemName -> itemName.split(":")[1])
+                .map(itemName -> itemName.replace('_', ' '))
+                .map(String::toLowerCase).toList().forEach(suggestionsBuilder::suggest);
+        return suggestionsBuilder.buildFuture();
     }
 
     private void onLoad(NbtCompound compoundTag) {
