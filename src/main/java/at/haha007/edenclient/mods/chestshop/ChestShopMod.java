@@ -207,39 +207,36 @@ public class ChestShopMod {
             Map<String, List<ChestShopEntry>> sellEntries = getSellShops();
 
             List<String> lines = new ArrayList<>();
-            List<String> usedKeys = new ArrayList<>();
+            List<String> keys = new ArrayList<>();
+            keys.addAll(buyEntries.keySet());
+            keys.addAll(sellEntries.keySet());
+            keys = keys.stream().sorted(Comparator.comparing(s -> s)).collect(Collectors.toList());
 
-            for (Map.Entry<String, List<ChestShopEntry>> entry : buyEntries.entrySet().stream().sorted(Map.Entry.comparingByKey()).collect(Collectors.toList())) {
-                List<ChestShopEntry> currentSellEntries = new ArrayList<>();
-                if (sellEntries.get(entry.getKey()) != null)
-                    currentSellEntries = sellEntries.get(entry.getKey()).stream().sorted(Comparator.comparingDouble(ChestShopEntry::getSellPricePerItem).reversed()).collect(Collectors.toList());
-                List<ChestShopEntry> currentBuyEntries = entry.getValue().stream().sorted(Comparator.comparingDouble(ChestShopEntry::getBuyPricePerItem)).collect(Collectors.toList());
+            for (String key : keys) {
+                List<ChestShopEntry> currentBuyEntries = buyEntries.get(key);
+                if (currentBuyEntries != null)
+                    currentBuyEntries = currentBuyEntries.stream().sorted(Comparator.comparingDouble(ChestShopEntry::getBuyPricePerItem)).collect(Collectors.toList());
+                else
+                    currentBuyEntries = new ArrayList<>();
 
-                usedKeys.add(entry.getKey());
+                List<ChestShopEntry> currentSellEntries = sellEntries.get(key);
+                if (currentSellEntries != null)
+                    currentSellEntries = currentSellEntries.stream().sorted(Comparator.comparingDouble(ChestShopEntry::getSellPricePerItem).reversed()).collect(Collectors.toList());
+                else
+                    currentSellEntries = new ArrayList<>();
 
-                String originalName = itemNameMap.get(entry.getKey());
-                if (originalName == null) originalName = entry.getKey();
+                String originalName = itemNameMap.get(key);
+                if (originalName == null) originalName = key;
 
                 lines.add(originalName + ":");
-                lines.add("Buy:");
-                currentBuyEntries.forEach(e -> lines.add(String.format("%-15s [%6d, %3d, %6d] for %.2f$/item", e.getOwner(), e.getPos().getX(), e.getPos().getY(), e.getPos().getZ(), e.getBuyPricePerItem())));
+                if (currentBuyEntries.size() > 0) {
+                    lines.add("Buy:");
+                    currentBuyEntries.forEach(e -> lines.add(String.format("%-15s [%6d, %3d, %6d] for %.2f$/item", e.getOwner(), e.getPos().getX(), e.getPos().getY(), e.getPos().getZ(), e.getBuyPricePerItem())));
+                }
                 if (currentSellEntries.size() > 0) {
                     lines.add("Sell:");
                     currentSellEntries.forEach(e -> lines.add(String.format("%-15s [%6d, %3d, %6d] for %.2f$/item", e.getOwner(), e.getPos().getX(), e.getPos().getY(), e.getPos().getZ(), e.getSellPricePerItem())));
                 }
-                lines.add("");
-            }
-
-            for (Map.Entry<String, List<ChestShopEntry>> entry : sellEntries.entrySet().stream().sorted(Map.Entry.comparingByKey()).collect(Collectors.toList())) {
-                if (usedKeys.contains(entry.getKey())) continue;
-                List<ChestShopEntry> currentSellEntries = entry.getValue().stream().sorted(Comparator.comparingDouble(ChestShopEntry::getBuyPricePerItem).reversed()).collect(Collectors.toList());
-
-                String originalName = itemNameMap.get(entry.getKey());
-                if (originalName == null) originalName = entry.getKey();
-
-                lines.add(originalName + ":");
-                lines.add("Sell:");
-                currentSellEntries.forEach(e -> lines.add(String.format("%-15s [%6d, %3d, %6d] for %7.2f$/item", e.getOwner(), e.getPos().getX(), e.getPos().getY(), e.getPos().getZ(), e.getSellPricePerItem())));
                 lines.add("");
             }
 
@@ -265,7 +262,10 @@ public class ChestShopMod {
                     bw.write(line);
                     bw.newLine();
                 }
-                sendModMessage("Wrote file without errors. Saved at /appdata/roaming/.minecraft/config/ChestShopModEntries/[date].txt");
+                sendModMessage(new LiteralText("Wrote file without errors. Saved at ").formatted(Formatting.GOLD).
+                        append(new LiteralText(file.getAbsolutePath()).setStyle(Style.EMPTY.withColor(Formatting.GOLD)
+                                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new LiteralText("Click to copy path")))
+                                .withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, file.getAbsolutePath())))));
             } catch (IOException e) {
                 sendModMessage("Error while writing file. See console for more info.");
                 e.printStackTrace();

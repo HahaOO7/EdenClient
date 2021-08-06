@@ -15,7 +15,12 @@ import java.util.TreeMap;
 import java.util.function.BooleanSupplier;
 
 public class Scheduler {
+
     private static final Scheduler instance = new Scheduler();
+    private final Set<Runnable> sync = Collections.synchronizedSet(new HashSet<>());
+    private final TreeMap<Long, Runnable> delayedSync = new TreeMap<>();
+    private final TreeMap<Long, RepeatingRunnable> repeatingSync = new TreeMap<>();
+    private long tick;
 
     public static Scheduler get() {
         return instance;
@@ -24,7 +29,6 @@ public class Scheduler {
 
     private static record RepeatingRunnable(int delta, BooleanSupplier runnable) {
     }
-
 
     private Scheduler() {
         if (EdenClient.INSTANCE == null)
@@ -61,11 +65,6 @@ public class Scheduler {
         }
         return ActionResult.PASS;
     }
-
-    private final Set<Runnable> sync = Collections.synchronizedSet(new HashSet<>());
-    private final TreeMap<Long, Runnable> delayedSync = new TreeMap<>();
-    private final TreeMap<Long, RepeatingRunnable> repeatingSync = new TreeMap<>();
-    private long tick;
 
     //*************************
     //PUBLIC METHODS START HERE
