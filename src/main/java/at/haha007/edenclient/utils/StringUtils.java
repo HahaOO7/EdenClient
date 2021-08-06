@@ -11,7 +11,7 @@ public class StringUtils {
             net.minecraft.server.integrated.IntegratedServer server = mc.getServer();
 
             if (server != null) {
-                return server.getName();
+                return server.getSaveProperties().getLevelName();
             }
         } else {
             net.minecraft.client.network.ServerInfo server = mc.getCurrentServerEntry();

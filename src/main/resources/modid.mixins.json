@@ -10,9 +10,9 @@
     "ClientPlayerMixin",
     "ClientPlayNetworkHandlerMixin",
     "ItemRendererMixin",
+    "MinecraftClientMixin",
     "PlayerControllerMixin",
-    "PlayerInventoryMixin",
-    "WorldMixin"
+    "PlayerInventoryMixin"
   ],
   "injectors": {
     "defaultRequire": 1

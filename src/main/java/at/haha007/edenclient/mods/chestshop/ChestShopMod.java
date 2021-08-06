@@ -6,6 +6,7 @@ import at.haha007.edenclient.callbacks.ConfigLoadCallback;
 import at.haha007.edenclient.callbacks.ConfigSaveCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.mods.MessageIgnorer;
+import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.Scheduler;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
@@ -51,6 +52,7 @@ public class ChestShopMod {
     private int[] chunk = {0, 0};
     private boolean searchEnabled = true;
     private String lastFullNameCached = null;
+    private boolean nameLookupRunning = false;
 
     public ChestShopMod() {
         registerCommand("chestshop");
@@ -82,8 +84,9 @@ public class ChestShopMod {
             lastFullNameCached = fullNameMatcher.group("originalname");
         }
 
-        if (shortenedNameMatcher.matches() && lastFullNameCached != null) {
+        if (lastFullNameCached != null && shortenedNameMatcher.matches()) {
             originalItemNames.put(shortenedNameMatcher.group("shortenedname").toLowerCase(), lastFullNameCached.toLowerCase());
+            System.out.println("Item mapped: " + lastFullNameCached);
             lastFullNameCached = null;
         }
 
@@ -111,26 +114,26 @@ public class ChestShopMod {
 
         node.then(literal("clear").executes(c -> {
             shops.clear();
-            sendMessage("Cleared ChestShop entries.");
+            sendModMessage("Cleared ChestShop entries.");
             return 1;
         }));
 
         node.then(literal("list").executes(c -> {
             int sum = shops.values().stream().mapToInt(Set::size).sum();
             if (sum < 20)
-                shops.values().forEach(sl -> sl.stream().map(cs -> cs.getItem() + " B" + cs.getBuyPricePerItem() + ":" + cs.getSellPricePerItem() + "S").forEach(this::sendMessage));
-            sendMessage(String.format("There are %s ChestShops stored.", sum));
+                shops.values().forEach(sl -> sl.stream().map(cs -> cs.getItem() + " B" + cs.getBuyPricePerItem() + ":" + cs.getSellPricePerItem() + "S").forEach(PlayerUtils::sendModMessage));
+            sendModMessage(String.format("There are %s ChestShops stored.", sum));
             return 1;
         }));
 
         node.then(literal("toggle").executes(c -> {
             searchEnabled = !searchEnabled;
-            sendMessage("ChestShop search " + (searchEnabled ? "enabled" : "disabled"));
+            sendModMessage("ChestShop search " + (searchEnabled ? "enabled" : "disabled"));
             return 1;
         }));
 
         node.then(literal("sell").then(argument("item", StringArgumentType.greedyString()).suggests(this::suggestSell).executes(c -> {
-            sendMessage("Sell: ");
+            sendModMessage("Sell: ");
             String item = originalItemNames.inverse().get(c.getArgument("item", String.class));
             List<ChestShopEntry> matching = new ArrayList<>();
 
@@ -142,13 +145,13 @@ public class ChestShopMod {
                     cs.getPos().getX(),
                     cs.getPos().getY(),
                     cs.getPos().getZ(),
-                    cs.getSellPricePerItem())).forEach(this::sendMessage);
+                    cs.getSellPricePerItem())).forEach(PlayerUtils::sendModMessage);
             return 1;
         })));
 
         node.then(literal("buy").then(argument("item", StringArgumentType.greedyString()).suggests(this::suggestBuy).executes(c -> {
             String item = originalItemNames.inverse().get(c.getArgument("item", String.class));
-            sendMessage("Buy: ");
+            sendModMessage("Buy: ");
             List<ChestShopEntry> matching = new ArrayList<>();
             shops.values().forEach(m -> m.stream().filter(ChestShopEntry::canBuy).
                     filter(e -> e.getItem().equals(item)).forEach(matching::add));
@@ -158,7 +161,7 @@ public class ChestShopMod {
                     cs.getPos().getX(),
                     cs.getPos().getY(),
                     cs.getPos().getZ(),
-                    cs.getBuyPricePerItem())).forEach(this::sendMessage);
+                    cs.getBuyPricePerItem())).forEach(PlayerUtils::sendModMessage);
             return 1;
         })));
 
@@ -272,31 +275,39 @@ public class ChestShopMod {
 
         mapItemNames.then(literal("start").executes(c -> {
             ClientPlayerEntity entityPlayer = MinecraftClient.getInstance().player;
+            if (entityPlayer == null) return -1;
+
+            if(nameLookupRunning){
+                sendModMessage("Mapping of item names already running!");
+                return -1;
+            }
+
             MessageIgnorer mi = EdenClient.INSTANCE.getMessageIgnorer();
             mi.enable(MessageIgnorer.Predefined.ITEM_INFO);
 
-            if (entityPlayer == null) {
-                sendMessage("Fatal error occurred: entityPlayer is null. If this happens contact a developer.");
-                return 0;
-            }
-            boolean wasEnabled = mi.isEnabled();
+            boolean wasMessageIgnoringEnabled = mi.isEnabled();
             mi.setEnabled(true);
 
-            sendMessage("Startet Mapping. Mapping will take up to 25 minutes.");
+            sendModMessage("Startet Mapping. Mapping will take up to 25 minutes.");
 
             String[] minecraftIDs = Registry.ITEM.stream().map(Item::getName).map(Text::getString).toList().toArray(new String[0]);
             AtomicInteger index = new AtomicInteger();
+            nameLookupRunning = true;
             Scheduler.get().scheduleSyncRepeating(() -> {
                 int i = index.getAndIncrement();
-                if (i >= minecraftIDs.length) {
-                    sendMessage("Finished mapping of all items! Disconnect from the world now to save all items into the config properly! They will be loaded the next time you join the world.");
-                    Scheduler.get().scheduleSyncDelayed(() -> {
-                        mi.disable(MessageIgnorer.Predefined.ITEM_INFO);
-                        mi.setEnabled(wasEnabled);
-                    }, 50);
-                    return false;
-                }
-                String item = minecraftIDs[i];
+                String item;
+                do {
+                    if (i >= minecraftIDs.length) {
+                        sendModMessage("Finished mapping of all items! Disconnect from the world now to save all items into the config properly! They will be loaded the next time you join the world.");
+                        Scheduler.get().scheduleSyncDelayed(() -> {
+                            nameLookupRunning = false;
+                            mi.disable(MessageIgnorer.Predefined.ITEM_INFO);
+                            mi.setEnabled(wasMessageIgnoringEnabled);
+                        }, 50);
+                        return false;
+                    }
+                    item = minecraftIDs[i];
+                } while (originalItemNames.containsKey(item));
                 System.out.println("Mapping item:" + item);
                 entityPlayer.sendChatMessage("/iteminfo " + item);
                 if (i % 60 == 0) {
@@ -307,7 +318,12 @@ public class ChestShopMod {
                             .append(new LiteralText(" this far.").formatted(Formatting.GOLD)));
                 }
                 return true;
-            }, 1, 0);
+            }, 20, 0);
+            return 1;
+        }));
+        mapItemNames.then(literal("reset").executes(c -> {
+            sendModMessage("Mapped item names cleared.");
+            originalItemNames.clear();
             return 1;
         }));
 
@@ -319,11 +335,11 @@ public class ChestShopMod {
         node.then(mapItemNames);
 
         node.executes(c -> {
-            sendMessage("/chestshop sell itemtype");
-            sendMessage("/chestshop buy itemtype");
-            sendMessage("/chestshop toggle");
-            sendMessage("/chestshop clear");
-            sendMessage("/chestshop list");
+            sendModMessage("/chestshop sell itemtype");
+            sendModMessage("/chestshop buy itemtype");
+            sendModMessage("/chestshop toggle");
+            sendModMessage("/chestshop clear");
+            sendModMessage("/chestshop list");
             return 1;
         });
         register(node);
@@ -427,6 +443,7 @@ public class ChestShopMod {
                 e.printStackTrace();
             }
         }
+        nameLookupRunning = false;
         return ActionResult.PASS;
     }
 
@@ -442,7 +459,4 @@ public class ChestShopMod {
         return ActionResult.PASS;
     }
 
-    private void sendMessage(String message) {
-        sendModMessage(new LiteralText(message).formatted(Formatting.GOLD));
-    }
 }

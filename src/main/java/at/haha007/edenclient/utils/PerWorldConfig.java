@@ -3,8 +3,9 @@ package at.haha007.edenclient.utils;
 import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.callbacks.ConfigLoadCallback;
 import at.haha007.edenclient.callbacks.ConfigSaveCallback;
-import at.haha007.edenclient.callbacks.LeaveGameSessionCallback;
-import at.haha007.edenclient.callbacks.StartGameSessionCallback;
+import at.haha007.edenclient.callbacks.JoinWorldCallback;
+import at.haha007.edenclient.callbacks.LeaveWorldCallback;
+import net.minecraft.client.world.ClientWorld;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.util.ActionResult;
@@ -25,17 +26,17 @@ public class PerWorldConfig {
 
     private PerWorldConfig() {
         folder = new File(EdenClient.getDataFolder(), "PerWorldCfg");
-        StartGameSessionCallback.EVENT.register(this::onJoin);
-        LeaveGameSessionCallback.EVENT.register(this::onLeave);
+        JoinWorldCallback.EVENT.register(this::onJoin);
+        LeaveWorldCallback.EVENT.register(this::onLeave);
     }
 
-    private ActionResult onLeave() {
+    private ActionResult onLeave(ClientWorld world) {
         System.out.println("leave world: " + worldName);
         saveConfig();
         return ActionResult.PASS;
     }
 
-    private ActionResult onJoin() {
+    private ActionResult onJoin(ClientWorld world) {
         worldName = StringUtils.getWorldOrServerName();
         System.out.println("join world: " + worldName);
         loadConfig();
