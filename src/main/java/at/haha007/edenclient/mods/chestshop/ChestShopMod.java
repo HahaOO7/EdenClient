@@ -48,7 +48,7 @@ import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 public class ChestShopMod {
 
     private final Map<ChunkPos, Set<ChestShopEntry>> shops = new HashMap<>();
-    private final BiMap<String, String> originalItemNames = HashBiMap.create();
+    private final BiMap<String, String> itemNameMap = HashBiMap.create();
     private int[] chunk = {0, 0};
     private boolean searchEnabled = true;
     private String lastFullNameCached = null;
@@ -85,7 +85,7 @@ public class ChestShopMod {
         }
 
         if (lastFullNameCached != null && shortenedNameMatcher.matches()) {
-            originalItemNames.put(shortenedNameMatcher.group("shortenedname").toLowerCase(), lastFullNameCached.toLowerCase());
+            itemNameMap.put(shortenedNameMatcher.group("shortenedname").toLowerCase(), lastFullNameCached.toLowerCase());
             System.out.println("Item mapped: " + lastFullNameCached);
             lastFullNameCached = null;
         }
@@ -134,7 +134,7 @@ public class ChestShopMod {
 
         node.then(literal("sell").then(argument("item", StringArgumentType.greedyString()).suggests(this::suggestSell).executes(c -> {
             sendModMessage("Sell: ");
-            String item = originalItemNames.inverse().get(c.getArgument("item", String.class));
+            String item = itemNameMap.inverse().get(c.getArgument("item", String.class));
             List<ChestShopEntry> matching = new ArrayList<>();
 
             shops.values().forEach(m -> m.stream().filter(ChestShopEntry::canSell).
@@ -150,7 +150,7 @@ public class ChestShopMod {
         })));
 
         node.then(literal("buy").then(argument("item", StringArgumentType.greedyString()).suggests(this::suggestBuy).executes(c -> {
-            String item = originalItemNames.inverse().get(c.getArgument("item", String.class));
+            String item = itemNameMap.inverse().get(c.getArgument("item", String.class));
             sendModMessage("Buy: ");
             List<ChestShopEntry> matching = new ArrayList<>();
             shops.values().forEach(m -> m.stream().filter(ChestShopEntry::canBuy).
@@ -211,7 +211,7 @@ public class ChestShopMod {
 
                 usedKeys.add(entry.getKey());
 
-                String originalName = originalItemNames.get(entry.getKey());
+                String originalName = itemNameMap.get(entry.getKey());
                 if (originalName == null) originalName = entry.getKey();
 
                 lines.add(originalName + ":");
@@ -228,7 +228,7 @@ public class ChestShopMod {
                 if (usedKeys.contains(entry.getKey())) continue;
                 List<ChestShopEntry> currentSellEntries = entry.getValue().stream().sorted(Comparator.comparingDouble(ChestShopEntry::getBuyPricePerItem).reversed()).collect(Collectors.toList());
 
-                String originalName = originalItemNames.get(entry.getKey());
+                String originalName = itemNameMap.get(entry.getKey());
                 if (originalName == null) originalName = entry.getKey();
 
                 lines.add(originalName + ":");
@@ -277,7 +277,7 @@ public class ChestShopMod {
             ClientPlayerEntity entityPlayer = MinecraftClient.getInstance().player;
             if (entityPlayer == null) return -1;
 
-            if(nameLookupRunning){
+            if (nameLookupRunning) {
                 sendModMessage("Mapping of item names already running!");
                 return -1;
             }
@@ -307,7 +307,7 @@ public class ChestShopMod {
                         return false;
                     }
                     item = minecraftIDs[i];
-                } while (originalItemNames.containsKey(item));
+                } while (itemNameMap.containsKey(item));
                 System.out.println("Mapping item:" + item);
                 entityPlayer.sendChatMessage("/iteminfo " + item);
                 if (i % 60 == 0) {
@@ -323,13 +323,13 @@ public class ChestShopMod {
         }));
         mapItemNames.then(literal("reset").executes(c -> {
             sendModMessage("Mapped item names cleared.");
-            originalItemNames.clear();
+            itemNameMap.clear();
             return 1;
         }));
 
         mapItemNames.then(literal("check").executes(c -> {
             sendModMessage(new LiteralText("Amount of items mapped: ").formatted(Formatting.GOLD)
-                    .append(new LiteralText("" + originalItemNames.size()).formatted(Formatting.AQUA)));
+                    .append(new LiteralText("" + itemNameMap.size()).formatted(Formatting.AQUA)));
             return 1;
         }));
         node.then(mapItemNames);
@@ -362,7 +362,7 @@ public class ChestShopMod {
             if (currentSellEntry.getSellPricePerItem() <= currentBuyEntry.getBuyPricePerItem())
                 continue;
 
-            String nameOfItem = originalItemNames.get(entry.getKey());
+            String nameOfItem = itemNameMap.get(entry.getKey());
             exploitableShopsText.add(nameOfItem + ":");
 
             while (currentSellEntry.getSellPricePerItem() > currentBuyEntry.getBuyPricePerItem()) {
@@ -410,13 +410,13 @@ public class ChestShopMod {
 
     private CompletableFuture<Suggestions> suggestSell
             (CommandContext<ClientCommandSource> context, SuggestionsBuilder suggestionsBuilder) {
-        shops.values().forEach(s -> s.stream().filter(ChestShopEntry::canSell).map(entry -> originalItemNames.get(entry.getItem())).filter(Objects::nonNull).forEach(suggestionsBuilder::suggest));
+        shops.values().forEach(s -> s.stream().filter(ChestShopEntry::canSell).map(entry -> itemNameMap.get(entry.getItem())).filter(Objects::nonNull).forEach(suggestionsBuilder::suggest));
         return suggestionsBuilder.buildFuture();
     }
 
     private CompletableFuture<Suggestions> suggestBuy
             (CommandContext<ClientCommandSource> context, SuggestionsBuilder suggestionsBuilder) {
-        shops.values().forEach(s -> s.stream().filter(ChestShopEntry::canBuy).map(entry -> originalItemNames.get(entry.getItem())).filter(Objects::nonNull).forEach(suggestionsBuilder::suggest));
+        shops.values().forEach(s -> s.stream().filter(ChestShopEntry::canBuy).map(entry -> itemNameMap.get(entry.getItem())).filter(Objects::nonNull).forEach(suggestionsBuilder::suggest));
         return suggestionsBuilder.buildFuture();
     }
 
@@ -432,30 +432,23 @@ public class ChestShopMod {
                     else
                         shops.put(entry.getChunkPos(), new HashSet<>(Set.of(entry)));
                 });
-        if (tag.contains("mapofnames")) {
-            String mappedNames = tag.getString("mapofnames");
-            try {
-                Arrays.stream(mappedNames.split("~")).map(entry -> entry.split(";")).forEach(entry -> originalItemNames.put(entry[0], entry[1]));
-            } catch (ArrayIndexOutOfBoundsException | NullPointerException e) {
-                System.out.println("EDENCLIENT");
-                System.out.println(mappedNames);
-                System.out.println("EDENCLIENT");
-                e.printStackTrace();
-            }
-        }
+        itemNameMap.clear();
+        NbtCompound mappedNamesCompound = tag.getCompound("itemNames");
+        mappedNamesCompound.getKeys().forEach(k -> itemNameMap.put(k, mappedNamesCompound.getString(k)));
         nameLookupRunning = false;
         return ActionResult.PASS;
     }
 
     private ActionResult saveConfig(NbtCompound overTag) {
-        NbtCompound tag = overTag.getCompound("chestshop");
+        NbtCompound tag = overTag.getCompound("chestShop");
         tag.putBoolean("enabled", searchEnabled);
         NbtList list = new NbtList();
         shops.values().forEach(m -> m.forEach(cs -> list.add(cs.toTag())));
-        String mappedNames = originalItemNames.entrySet().stream().map(entry -> entry.getKey() + ";" + entry.getValue()).collect(Collectors.joining("~"));
-        tag.putString("mapofnames", mappedNames);
+        NbtCompound mappedNamesCompound = new NbtCompound();
+        itemNameMap.forEach(mappedNamesCompound::putString);
+        tag.put("itemNames", mappedNamesCompound);
         tag.put("entries", list);
-        overTag.put("chestshop", tag);
+        overTag.put("chestShop", tag);
         return ActionResult.PASS;
     }
 
