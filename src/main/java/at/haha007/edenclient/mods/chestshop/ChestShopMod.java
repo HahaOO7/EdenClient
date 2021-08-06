@@ -43,6 +43,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -293,7 +294,6 @@ public class ChestShopMod {
             boolean wasMessageIgnoringEnabled = mi.isEnabled();
             mi.setEnabled(true);
 
-            sendModMessage("Startet Mapping. Mapping will take up to 25 minutes.");
 
             DefaultedRegistry<Item> itemRegistry = Registry.ITEM;
             String[] minecraftIDs = itemRegistry.stream()
@@ -302,25 +302,26 @@ public class ChestShopMod {
                     .map(itemName -> itemName.split(":")[1])
                     .map(itemName -> itemName.replace('_', ' '))
                     .map(String::toLowerCase)
+                    .filter(Predicate.not(itemNameMap::containsValue))
                     .toList().toArray(new String[0]);
+            sendModMessage(new LiteralText("Startet Mapping. Mapping will take about ").formatted(Formatting.GOLD)
+                    .append(new LiteralText(Integer.toString(minecraftIDs.length / 20 + 1)).formatted(Formatting.AQUA))
+                    .append(new LiteralText(" minutes.").formatted(Formatting.GOLD)));
+
             AtomicInteger index = new AtomicInteger();
             nameLookupRunning = true;
             Scheduler.get().scheduleSyncRepeating(() -> {
-                String item;
-                int i;
-                do {
-                    i = index.getAndIncrement();
-                    if (i >= minecraftIDs.length) {
-                        sendModMessage("Finished mapping of all items! Disconnect from the world now to save all items into the config properly! They will be loaded the next time you join the world.");
-                        Scheduler.get().scheduleSyncDelayed(() -> {
-                            nameLookupRunning = false;
-                            mi.disable(MessageIgnorer.Predefined.ITEM_INFO);
-                            mi.setEnabled(wasMessageIgnoringEnabled);
-                        }, 50);
-                        return false;
-                    }
-                    item = minecraftIDs[i];
-                } while (itemNameMap.containsValue(item));
+                int i = index.getAndIncrement();
+                if (i >= minecraftIDs.length) {
+                    sendModMessage("Finished mapping of all items! Disconnect from the world now to save all items into the config properly! They will be loaded the next time you join the world.");
+                    Scheduler.get().scheduleSyncDelayed(() -> {
+                        nameLookupRunning = false;
+                        mi.disable(MessageIgnorer.Predefined.ITEM_INFO);
+                        mi.setEnabled(wasMessageIgnoringEnabled);
+                    }, 50);
+                    return false;
+                }
+                String item = minecraftIDs[i];
                 System.out.println("Mapping item:" + item);
                 entityPlayer.sendChatMessage("/iteminfo " + item);
                 if (i % 60 == 0) {
