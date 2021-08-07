@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -247,7 +248,7 @@ public class WordHighlighter {
                 String match = s.substring(start, end);
                 if (!pre.isEmpty())
                     subtext.add(new LiteralText(pre).setStyle(baseStyle));
-                subtext.add(new LiteralText(match).setStyle(style));
+                subtext.add(getStyled(match, style));//replace with rainbow
                 s = s.substring(end);
                 matcher = pattern.matcher(s);
             }
@@ -275,5 +276,30 @@ public class WordHighlighter {
             text.getSiblings().replaceAll(y -> highlight(y, string));
             return text;
         }
+    }
+
+    private MutableText getStyled(String string, Style style) {
+        if (style.isObfuscated()) {
+            final Style finalStyle = style.obfuscated(false);
+            MutableText text = new LiteralText("");
+            AtomicInteger i = new AtomicInteger();
+            string.chars()
+                    .mapToObj(c -> new String(new int[]{c}, 0, 1))
+                    .map(LiteralText::new)
+                    .map(t -> t.setStyle(finalStyle.withColor(getFancyRainbowColorAtIndex(i.getAndIncrement()))))
+                    .forEach(text::append);
+            return text;
+        }
+        return new LiteralText(string).setStyle(style);
+    }
+
+
+    private int getFancyRainbowColorAtIndex(int index) {
+        final double freq = 0.3;
+
+        int r = (int) (Math.sin(freq * index) * 127 + 128);
+        int g = (int) (Math.sin(freq * index + 2) * 127 + 128);
+        int b = (int) (Math.sin(freq * index + 4) * 127 + 128);
+        return new Color(r, g, b).getRGB();
     }
 }
