@@ -17,6 +17,7 @@ import java.util.function.BooleanSupplier;
 public class Scheduler {
 
     private static final Scheduler instance = new Scheduler();
+    
     private final Set<Runnable> sync = Collections.synchronizedSet(new HashSet<>());
     private final TreeMap<Long, Runnable> delayedSync = new TreeMap<>();
     private final TreeMap<Long, RepeatingRunnable> repeatingSync = new TreeMap<>();
