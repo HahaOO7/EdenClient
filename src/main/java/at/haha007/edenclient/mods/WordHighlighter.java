@@ -12,7 +12,6 @@ import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
 import net.minecraft.nbt.NbtString;
 import net.minecraft.text.*;
-import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
 
 import java.awt.*;
@@ -42,20 +41,19 @@ public class WordHighlighter {
         ConfigLoadCallback.EVENT.register(this::onLoad);
     }
 
-    private ActionResult onChat(AddChatMessageCallback.ChatAddEvent event) {
-        if (!enabled || event.getChatText() == null) return ActionResult.PASS;
+    private void onChat(AddChatMessageCallback.ChatAddEvent event) {
+        if (!enabled || event.getChatText() == null) return;
         for (String word : words) {
             event.setChatText(highlight(event.getChatText(), word));
         }
-        return ActionResult.PASS;
     }
 
-    private ActionResult onLoad(NbtCompound compoundTag) {
+    private void onLoad(NbtCompound compoundTag) {
         NbtCompound tag = compoundTag.getCompound("wordhighlighter");
         style = Style.EMPTY.withFormatting(Formatting.AQUA, Formatting.BOLD);
         if (tag == null) {
             words = new ArrayList<>();
-            return ActionResult.PASS;
+            return;
         }
         if (!tag.contains("enabled")) {
             enabled = false;
@@ -78,10 +76,9 @@ public class WordHighlighter {
             style = style.withUnderline(tag.getBoolean("underlined"));
         if (tag.contains("color"))
             style = style.withColor(tag.getInt("color"));
-        return ActionResult.PASS;
     }
 
-    private ActionResult onSave(NbtCompound compoundTag) {
+    private void onSave(NbtCompound compoundTag) {
         NbtCompound tag = new NbtCompound();
         tag.putBoolean("enabled", enabled);
         NbtList nbtList = new NbtList();
@@ -99,7 +96,6 @@ public class WordHighlighter {
             tag.putInt("color", 16755200);
 
         compoundTag.put("wordhighlighter", tag);
-        return ActionResult.PASS;
     }
 
     private void registerCommand(String cmd) {

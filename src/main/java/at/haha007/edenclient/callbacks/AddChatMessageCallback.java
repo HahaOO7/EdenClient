@@ -6,27 +6,20 @@ import net.minecraft.client.gui.hud.ChatHudLine;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.text.OrderedText;
 import net.minecraft.text.Text;
-import net.minecraft.util.ActionResult;
 
 import java.util.List;
 
 public interface AddChatMessageCallback {
     Event<AddChatMessageCallback> EVENT = EventFactory.createArrayBacked(AddChatMessageCallback.class,
-            listeners -> (event) -> {
+            listeners -> event -> {
                 for (AddChatMessageCallback listener : listeners) {
-                    ActionResult result = listener.interact(event);
-
-                    if (result != ActionResult.PASS) {
-                        return result;
-                    }
+                    listener.interact(event);
                 }
-
-                return ActionResult.PASS;
             });
 
-    ActionResult interact(ChatAddEvent event);
+    void interact(ChatAddEvent event);
 
-    public static class ChatAddEvent {
+    class ChatAddEvent {
         private final ClientPlayerEntity player;
         private Text chatText;
         private final int chatLineId;

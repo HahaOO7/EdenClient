@@ -5,7 +5,6 @@ import at.haha007.edenclient.callbacks.ConfigLoadCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.util.ActionResult;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -38,16 +37,15 @@ public class Scheduler {
         PlayerTickCallback.EVENT.register(this::tick);
     }
 
-    private synchronized ActionResult onConfigLoad(NbtCompound nbtCompound) {
+    private synchronized void onConfigLoad(NbtCompound nbtCompound) {
         sync.clear();
         delayedSync.clear();
         repeatingSync.clear();
         tick = 0;
         System.out.println("Scheduler tasks cleared");
-        return ActionResult.PASS;
     }
 
-    private synchronized ActionResult tick(ClientPlayerEntity clientPlayerEntity) {
+    private synchronized void tick(ClientPlayerEntity clientPlayerEntity) {
         tick++;
         for (Runnable runnable : sync) {
             runnable.run();
@@ -64,7 +62,6 @@ public class Scheduler {
                 repeatingSync.put(tick + run.delta(), run);
             }
         }
-        return ActionResult.PASS;
     }
 
     //*************************

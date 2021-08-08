@@ -10,15 +10,14 @@ import net.minecraft.util.math.Direction;
 public interface PlayerAttackBlockCallback {
     Event<PlayerAttackBlockCallback> EVENT = EventFactory.createArrayBacked(PlayerAttackBlockCallback.class,
             listeners -> (player, pos, side) -> {
+                ActionResult result = ActionResult.PASS;
                 for (PlayerAttackBlockCallback listener : listeners) {
-                    ActionResult result = listener.interact(player, pos, side);
-
-                    if (result != ActionResult.PASS) {
-                        return result;
+                    ActionResult r = listener.interact(player, pos, side);
+                    if (r != ActionResult.PASS) {
+                        result = r;
                     }
                 }
-
-                return ActionResult.PASS;
+                return result;
             });
 
     ActionResult interact(ClientPlayerEntity player, BlockPos pos, Direction side);

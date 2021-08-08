@@ -1,10 +1,8 @@
 package at.haha007.edenclient.mods;
 
-import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.callbacks.ConfigLoadCallback;
 import at.haha007.edenclient.callbacks.ConfigSaveCallback;
 import at.haha007.edenclient.callbacks.PlayerInvChangeCallback;
-import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientCommandSource;
@@ -17,7 +15,6 @@ import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
 import net.minecraft.nbt.NbtString;
 import net.minecraft.text.LiteralText;
-import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
@@ -28,7 +25,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static at.haha007.edenclient.command.CommandManager.*;
+import static at.haha007.edenclient.command.CommandManager.literal;
+import static at.haha007.edenclient.command.CommandManager.register;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
 public class AutoSell {
@@ -106,7 +104,7 @@ public class AutoSell {
         register(node);
     }
 
-    private ActionResult onLoad(NbtCompound compoundTag) {
+    private void onLoad(NbtCompound compoundTag) {
         NbtCompound tag = compoundTag.getCompound("autoSell");
         enabled = tag.getBoolean("enabled");
         NbtList itemIdentifierList = tag.getList("items", 8);
@@ -116,10 +114,9 @@ public class AutoSell {
             if (item == Items.AIR) continue;
             autoSellItems.add(item);
         }
-        return ActionResult.PASS;
     }
 
-    private ActionResult onSave(NbtCompound compoundTag) {
+    private void onSave(NbtCompound compoundTag) {
         NbtCompound tag = compoundTag.getCompound("autoSell");
         List<NbtString> itemIds = autoSellItems.stream().map(item -> Registry.ITEM.getId(item).toString()).map(NbtString::of).collect(Collectors.toList());
         NbtList itemsTag = new NbtList();
@@ -127,14 +124,12 @@ public class AutoSell {
         tag.put("items", itemsTag);
         tag.putBoolean("enabled", enabled);
         compoundTag.put("autoSell", tag);
-        return ActionResult.PASS;
     }
 
 
-    public ActionResult onInventoryChange(PlayerInventory inventory) {
-        if (!enabled || !isFullInventory(inventory)) return ActionResult.PASS;
+    public void onInventoryChange(PlayerInventory inventory) {
+        if (!enabled || !isFullInventory(inventory)) return;
         executeAutoSell();
-        return ActionResult.PASS;
     }
 
     private void executeAutoSell() {

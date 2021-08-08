@@ -13,7 +13,6 @@ import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.client.network.ClientCommandSource;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.text.LiteralText;
-import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
 
 import java.util.Arrays;
@@ -44,7 +43,7 @@ public class SellStatsTracker {
         ConfigLoadCallback.EVENT.register(this::onLoad);
     }
 
-    private ActionResult onChat(AddChatMessageCallback.ChatAddEvent event) {
+    private void onChat(AddChatMessageCallback.ChatAddEvent event) {
         String message = event.getChatText().getString();
         Matcher matcher = messagePattern.matcher(message);
 
@@ -65,7 +64,6 @@ public class SellStatsTracker {
             }
         }
 
-        return ActionResult.PASS;
     }
 
 
@@ -132,7 +130,7 @@ public class SellStatsTracker {
         return suggestionsBuilder.buildFuture();
     }
 
-    private ActionResult onLoad(NbtCompound nbtCompound) {
+    private void onLoad(NbtCompound nbtCompound) {
         if (nbtCompound.contains("sellstatstracker")) {
             NbtCompound tag = nbtCompound.getCompound("sellstatstracker");
             if (tag.contains("data")) {
@@ -143,12 +141,10 @@ public class SellStatsTracker {
             }
             if (tag.contains("simplifiedmessages")) simplifyMessages = tag.getBoolean("simplifiedmessages");
             if (tag.contains("delay")) delayInSimplifiedMessages = tag.getInt("delay");
-            return ActionResult.PASS;
         }
-        return ActionResult.PASS;
     }
 
-    private ActionResult onSave(NbtCompound nbtCompound) {
+    private void onSave(NbtCompound nbtCompound) {
         NbtCompound tag = new NbtCompound();
         String dataString;
         if (!data.values().isEmpty()) {
@@ -159,7 +155,6 @@ public class SellStatsTracker {
         tag.putInt("delay", delayInSimplifiedMessages);
         tag.putBoolean("simplifiedmessages", simplifyMessages);
         nbtCompound.put("sellstatstracker", tag);
-        return ActionResult.PASS;
     }
 
     private static record SellStatsForItem(int amountSold, double money) {

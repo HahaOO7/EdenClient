@@ -8,7 +8,6 @@ import at.haha007.edenclient.callbacks.LeaveWorldCallback;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtIo;
-import net.minecraft.util.ActionResult;
 
 import java.io.File;
 import java.io.IOException;
@@ -20,8 +19,10 @@ public class PerWorldConfig {
     private String worldName = "null";
     private final File folder;
 
-    public static PerWorldConfig getInstance() {
-        return INSTANCE == null ? (INSTANCE = new PerWorldConfig()) : INSTANCE;
+    public static void getInstance() {
+        if (INSTANCE == null) {
+            INSTANCE = new PerWorldConfig();
+        }
     }
 
     private PerWorldConfig() {
@@ -30,17 +31,15 @@ public class PerWorldConfig {
         LeaveWorldCallback.EVENT.register(this::onLeave);
     }
 
-    private ActionResult onLeave(ClientWorld world) {
+    private void onLeave(ClientWorld world) {
         System.out.println("leave world: " + worldName);
         saveConfig();
-        return ActionResult.PASS;
     }
 
-    private ActionResult onJoin(ClientWorld world) {
+    private void onJoin(ClientWorld world) {
         worldName = StringUtils.getWorldOrServerName();
         System.out.println("join world: " + worldName);
         loadConfig();
-        return ActionResult.PASS;
     }
 
     private void loadConfig() {
@@ -64,9 +63,5 @@ public class PerWorldConfig {
         } catch (IOException e) {
             System.err.println("Error while saving PerWorldConfig: " + worldName);
         }
-    }
-
-    public NbtCompound getTag() {
-        return tag;
     }
 }

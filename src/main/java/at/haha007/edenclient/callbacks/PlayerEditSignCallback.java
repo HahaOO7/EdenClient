@@ -9,15 +9,14 @@ import net.minecraft.util.ActionResult;
 public interface PlayerEditSignCallback {
     Event<PlayerEditSignCallback> EVENT = EventFactory.createArrayBacked(PlayerEditSignCallback.class,
             listeners -> (player, sign) -> {
+                ActionResult result = ActionResult.PASS;
                 for (PlayerEditSignCallback listener : listeners) {
-                    ActionResult result = listener.interact(player, sign);
-
-                    if (result != ActionResult.PASS) {
-                        return result;
+                    ActionResult r = listener.interact(player, sign);
+                    if (r != ActionResult.PASS) {
+                        result = r;
                     }
                 }
-
-                return ActionResult.PASS;
+                return result;
             });
 
     ActionResult interact(ClientPlayerEntity player, SignBlockEntity sign);

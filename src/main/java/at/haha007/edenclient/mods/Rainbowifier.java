@@ -10,7 +10,6 @@ import net.minecraft.client.network.ClientCommandSource;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.text.LiteralText;
-import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
 
 import java.util.List;
@@ -29,21 +28,19 @@ public class Rainbowifier {
         ConfigLoadCallback.EVENT.register(this::onLoad);
     }
 
-    private ActionResult onLoad(NbtCompound nbtCompound) {
+    private void onLoad(NbtCompound nbtCompound) {
         NbtCompound rainbowTag = nbtCompound.getCompound("rainbowify");
-        if (rainbowTag == null) return ActionResult.PASS;
+        if (rainbowTag == null) return;
         if (rainbowTag.contains("freq"))
             this.freq = rainbowTag.getDouble("freq");
         else
             this.freq = 0.3;
-        return ActionResult.PASS;
     }
 
-    private ActionResult onSave(NbtCompound nbtCompound) {
+    private void onSave(NbtCompound nbtCompound) {
         NbtCompound rainbowTag = new NbtCompound();
         rainbowTag.putDouble("freq", this.freq);
         nbtCompound.put("rainbowify", rainbowTag);
-        return ActionResult.PASS;
     }
 
     private void registerCommand() {

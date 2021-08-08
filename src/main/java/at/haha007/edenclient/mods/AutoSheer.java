@@ -13,7 +13,6 @@ import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.text.LiteralText;
-import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.Vec3d;
@@ -28,21 +27,19 @@ public class AutoSheer {
         registerCommand();
     }
 
-    private ActionResult onLoad(NbtCompound nbtCompound) {
+    private void onLoad(NbtCompound nbtCompound) {
         if (!nbtCompound.contains("AutoShear")) {
             enabled = false;
-            return ActionResult.PASS;
+            return;
         }
         NbtCompound tag = nbtCompound.getCompound("AutoShear");
         enabled = tag.getBoolean("enabled");
-        return ActionResult.PASS;
     }
 
-    private ActionResult onSave(NbtCompound nbtCompound) {
+    private void onSave(NbtCompound nbtCompound) {
         var tag = new NbtCompound();
         tag.putBoolean("enabled", enabled);
         nbtCompound.put("AutoShear", tag);
-        return ActionResult.PASS;
     }
 
     private void registerCommand() {
@@ -53,10 +50,10 @@ public class AutoSheer {
         }));
     }
 
-    private ActionResult onTick(ClientPlayerEntity player) {
-        if (!enabled) return ActionResult.PASS;
+    private void onTick(ClientPlayerEntity player) {
+        if (!enabled) return;
         ClientPlayerInteractionManager interactionManager = MinecraftClient.getInstance().interactionManager;
-        if (interactionManager == null) return ActionResult.PASS;
+        if (interactionManager == null) return;
         Vec3d pos = player.getPos();
         PlayerInventory inv = player.getInventory();
         Hand shearHand;
@@ -65,7 +62,7 @@ public class AutoSheer {
         else if (inv.offHand.get(0).getItem() == Items.SHEARS)
             shearHand = Hand.OFF_HAND;
         else
-            return ActionResult.PASS;
+            return;
         if (shearHand == Hand.MAIN_HAND) {
             player.clientWorld.getEntitiesByClass(SheepEntity.class, player.getBoundingBox().expand(5), SheepEntity::isShearable).forEach(sheep -> {
                 if (!sheep.isShearable()) return;
@@ -82,6 +79,5 @@ public class AutoSheer {
                 }
             });
         }
-        return ActionResult.PASS;
     }
 }

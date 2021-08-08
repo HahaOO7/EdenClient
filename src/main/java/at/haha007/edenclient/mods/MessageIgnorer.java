@@ -12,7 +12,6 @@ import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
 import net.minecraft.nbt.NbtString;
 import net.minecraft.text.*;
-import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
 
 import java.util.ArrayList;
@@ -195,12 +194,12 @@ public class MessageIgnorer {
         }
     }
 
-    private ActionResult onLoad(NbtCompound nbtCompound) {
+    private void onLoad(NbtCompound nbtCompound) {
         regex.clear();
         enabled = false;
 
         if (!nbtCompound.contains("MessageIgnorer")) {
-            return ActionResult.PASS;
+            return;
         }
         NbtCompound tag = nbtCompound.getCompound("MessageIgnorer");
         if (tag.contains("regex")) {
@@ -212,17 +211,15 @@ public class MessageIgnorer {
 
         if (tag.contains("enabled")) enabled = tag.getBoolean("enabled");
 
-        return ActionResult.PASS;
     }
 
-    private ActionResult onSave(NbtCompound nbtCompound) {
+    private void onSave(NbtCompound nbtCompound) {
         NbtCompound tag = new NbtCompound();
         tag.putBoolean("enabled", enabled);
         NbtList list = new NbtList();
         regex.forEach(s -> list.add(NbtString.of(s)));
         tag.put("regex", list);
         nbtCompound.put("MessageIgnorer", tag);
-        return ActionResult.PASS;
     }
 
     private void sendDebugMessage() {
@@ -238,17 +235,16 @@ public class MessageIgnorer {
         }
     }
 
-    private ActionResult onChat(AddChatMessageCallback.ChatAddEvent event) {
+    private void onChat(AddChatMessageCallback.ChatAddEvent event) {
         if (!enabled) {
-            return ActionResult.PASS;
+            return;
         }
         String s = event.getChatText().getString();
         for (String match : regex) {
             if (s.matches(match)) {
                 event.setChatText(null);
-                return ActionResult.PASS;
+                return;
             }
         }
-        return ActionResult.PASS;
     }
 }

@@ -26,7 +26,6 @@ import net.minecraft.text.ClickEvent;
 import net.minecraft.text.HoverEvent;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.Style;
-import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.ChunkPos;
@@ -69,16 +68,15 @@ public class ChestShopMod {
         AddChatMessageCallback.EVENT.register(this::onChat);
     }
 
-    private ActionResult tick(ClientPlayerEntity player) {
+    private void tick(ClientPlayerEntity player) {
         int[] chunk = {player.getChunkPos().x, player.getChunkPos().z};
-        if (Arrays.equals(this.chunk, chunk)) return ActionResult.PASS;
-        if (!searchEnabled) return ActionResult.PASS;
+        if (Arrays.equals(this.chunk, chunk)) return;
+        if (!searchEnabled) return;
         this.chunk = chunk;
         checkForShops(player);
-        return ActionResult.PASS;
     }
 
-    private ActionResult onChat(AddChatMessageCallback.ChatAddEvent event) {
+    private void onChat(AddChatMessageCallback.ChatAddEvent event) {
         String message = event.getChatText().getString();
         String fullNameMessageSyntax = "Voller Name: (?<originalname>[A-Za-z0-9_ ]{1,40})";
         String shortenedNameMessageSyntax = "Shop Schild: (?<shortenedname>[A-Za-z0-9_ ]{1,40})";
@@ -96,7 +94,6 @@ public class ChestShopMod {
             lastFullNameCached = null;
         }
 
-        return ActionResult.PASS;
     }
 
     private void checkForShops(ChunkManager cm, ChunkPos chunk) {
@@ -434,7 +431,7 @@ public class ChestShopMod {
         return suggestionsBuilder.buildFuture();
     }
 
-    private ActionResult loadConfig(NbtCompound overTag) {
+    private void loadConfig(NbtCompound overTag) {
         NbtCompound tag = overTag.getCompound("chestShop");
         searchEnabled = !tag.contains("enabled") || tag.getBoolean("enabled");
         NbtList list = tag.getList("entries", 10);
@@ -450,10 +447,9 @@ public class ChestShopMod {
         NbtCompound mappedNamesCompound = tag.getCompound("itemNames");
         mappedNamesCompound.getKeys().forEach(k -> itemNameMap.put(k, mappedNamesCompound.getString(k)));
         nameLookupRunning = false;
-        return ActionResult.PASS;
     }
 
-    private ActionResult saveConfig(NbtCompound overTag) {
+    private void saveConfig(NbtCompound overTag) {
         NbtCompound tag = overTag.getCompound("chestShop");
         tag.putBoolean("enabled", searchEnabled);
         NbtList list = new NbtList();
@@ -463,7 +459,6 @@ public class ChestShopMod {
         tag.put("itemNames", mappedNamesCompound);
         tag.put("entries", list);
         overTag.put("chestShop", tag);
-        return ActionResult.PASS;
     }
 
 }

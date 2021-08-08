@@ -22,7 +22,7 @@ import java.util.Objects;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
 public class SignCopy {
-    private String[] copy = new String[4];
+    private final String[] copy;
     private boolean shouldCopy = false;
     private boolean enabled = false;
 
@@ -35,7 +35,7 @@ public class SignCopy {
         copy = new String[]{"", "", "", ""};
     }
 
-    private ActionResult loadCfg(NbtCompound compoundTag) {
+    private void loadCfg(NbtCompound compoundTag) {
         NbtCompound tag = compoundTag.getCompound("signCopy");
         copy[0] = tag.getString("0");
         copy[1] = tag.getString("1");
@@ -43,10 +43,9 @@ public class SignCopy {
         copy[3] = tag.getString("3");
         enabled = tag.contains("enabled") && tag.getBoolean("enabled");
         shouldCopy = tag.contains("copy") && tag.getBoolean("copy");
-        return ActionResult.PASS;
     }
 
-    private ActionResult saveCfg(NbtCompound compoundTag) {
+    private void saveCfg(NbtCompound compoundTag) {
         NbtCompound tag = new NbtCompound();
         tag.putString("0", copy[0]);
         tag.putString("1", copy[1]);
@@ -55,7 +54,6 @@ public class SignCopy {
         tag.putBoolean("enabled", enabled);
         tag.putBoolean("copy", shouldCopy);
         compoundTag.put("signCopy", tag);
-        return ActionResult.PASS;
     }
 
 
@@ -84,7 +82,7 @@ public class SignCopy {
         copy[1] = getString(tag.getString("Text2"));
         copy[2] = getString(tag.getString("Text3"));
         copy[3] = getString(tag.getString("Text4"));
-        return ActionResult.CONSUME;
+        return ActionResult.FAIL;
     }
 
     private ActionResult onEditSign(ClientPlayerEntity player, SignBlockEntity sign) {

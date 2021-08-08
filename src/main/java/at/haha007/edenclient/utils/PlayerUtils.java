@@ -1,7 +1,6 @@
 package at.haha007.edenclient.utils;
 
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.network.packet.s2c.play.TitleS2CPacket;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;

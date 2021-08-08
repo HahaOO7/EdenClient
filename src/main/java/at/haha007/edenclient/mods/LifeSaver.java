@@ -11,7 +11,6 @@ import net.minecraft.client.network.ClientCommandSource;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.text.LiteralText;
-import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
 
 import static at.haha007.edenclient.command.CommandManager.*;
@@ -31,9 +30,9 @@ public class LifeSaver {
         ConfigSaveCallback.EVENT.register(this::saveConfig);
     }
 
-    private ActionResult loadConfig(NbtCompound nbtCompound) {
+    private void loadConfig(NbtCompound nbtCompound) {
         if (!nbtCompound.contains("lifesaver"))
-            return ActionResult.PASS;
+            return;
 
         NbtCompound tag = nbtCompound.getCompound("lifesaver");
         if (tag.contains("health"))
@@ -49,16 +48,14 @@ public class LifeSaver {
         else
             this.enabled = false;
 
-        return ActionResult.PASS;
     }
 
-    private ActionResult saveConfig(NbtCompound nbtCompound) {
+    private void saveConfig(NbtCompound nbtCompound) {
         NbtCompound tag = new NbtCompound();
         tag.putInt("health", health);
         tag.putInt("height", height);
         tag.putBoolean("enabled", enabled);
         nbtCompound.put("lifesaver", tag);
-        return ActionResult.PASS;
     }
 
     private void registerCommand() {
@@ -87,13 +84,13 @@ public class LifeSaver {
         register(node);
     }
 
-    private ActionResult tick(ClientPlayerEntity clientPlayerEntity) {
-        if (!enabled || schedulerRunning) return ActionResult.PASS;
+    private void tick(ClientPlayerEntity clientPlayerEntity) {
+        if (!enabled || schedulerRunning) return;
 
         if (clientPlayerEntity.getY() < height || clientPlayerEntity.getHealth() < health) {
             ClientPlayerEntity entityPlayer = MinecraftClient.getInstance().player;
             if (entityPlayer == null) {
-                return ActionResult.PASS;
+                return;
             }
 
             sendModMessage("Trying to save your life!");
@@ -110,6 +107,5 @@ public class LifeSaver {
                 return true;
             }, 20, 0);
         }
-        return ActionResult.PASS;
     }
 }

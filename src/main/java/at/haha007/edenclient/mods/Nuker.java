@@ -27,7 +27,6 @@ import net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.MutableText;
-import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockBox;
@@ -60,7 +59,7 @@ public class Nuker {
         ConfigSaveCallback.EVENT.register(this::save);
     }
 
-    private ActionResult save(NbtCompound nbtCompound) {
+    private void save(NbtCompound nbtCompound) {
         NbtCompound tag = new NbtCompound();
         NbtList filter = new NbtList();
         for (Block block : this.filter) {
@@ -71,10 +70,9 @@ public class Nuker {
         tag.putInt("limit", limit);
         tag.putDouble("distance", distance);
         tag.putIntArray("area", new int[]{area.getMinX(), area.getMaxX(), area.getMinY(), area.getMaxY(), area.getMinZ(), area.getMaxZ()});
-        return ActionResult.PASS;
     }
 
-    private ActionResult load(NbtCompound nbtCompound) {
+    private void load(NbtCompound nbtCompound) {
         filter = new HashSet<>();
         enabled = false;
         if (!nbtCompound.contains("nuker")) {
@@ -82,7 +80,7 @@ public class Nuker {
             filterEnabled = false;
             limit = 20;
             area = BlockBox.create(new Vec3i(min, min, min), new Vec3i(max, max, max));
-            return ActionResult.PASS;
+            return;
         }
 
         NbtCompound tag = nbtCompound.getCompound("nuker");
@@ -92,7 +90,6 @@ public class Nuker {
         distance = tag.getDouble("distance");
         int[] a = tag.getIntArray("area");
         area = new BlockBox(a[0], a[3], a[1], a[4], a[2], a[5]);
-        return ActionResult.PASS;
     }
 
     private void registerCommand() {
@@ -181,12 +178,12 @@ public class Nuker {
         return Block.getBlockFromItem(item);
     }
 
-    private ActionResult onTick(ClientPlayerEntity player) {
-        if (!enabled) return ActionResult.PASS;
+    private void onTick(ClientPlayerEntity player) {
+        if (!enabled) return;
         ClientPlayNetworkHandler nh = MinecraftClient.getInstance().getNetworkHandler();
         BlockState air = Blocks.AIR.getDefaultState();
         World world = player.clientWorld;
-        if (nh == null) return ActionResult.PASS;
+        if (nh == null) return;
         Stream<BlockPos> stream = getNearby(player);
         stream = stream.filter(p -> p.isWithinDistance(player.getEyePos(), distance));
         stream = stream.filter(p -> player.getBlockY() <= p.getY());
@@ -201,7 +198,6 @@ public class Nuker {
             nh.sendPacket(new PlayerActionC2SPacket(PlayerActionC2SPacket.Action.START_DESTROY_BLOCK, p, Direction.UP));
             player.clientWorld.setBlockState(p, air);
         });
-        return ActionResult.PASS;
     }
 
     private boolean applyFilter(Block block) {

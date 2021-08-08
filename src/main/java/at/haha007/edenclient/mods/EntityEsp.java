@@ -18,7 +18,6 @@ import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
 import net.minecraft.nbt.NbtString;
 import net.minecraft.text.LiteralText;
-import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
@@ -48,14 +47,14 @@ public class EntityEsp {
         registerCommand();
     }
 
-    private ActionResult load(NbtCompound nbtCompound) {
+    private void load(NbtCompound nbtCompound) {
         var tag = nbtCompound.getCompound("entityEsp");
         if (tag.isEmpty()) {
             enabled = false;
             solid = false;
             r = g = b = 255;
             entityTypes = new EntityType[0];
-            return ActionResult.PASS;
+            return;
         }
         enabled = tag.getBoolean("enabled");
         enabled = tag.getBoolean("solid");
@@ -75,10 +74,9 @@ public class EntityEsp {
 
         Arrays.sort(entityTypes, Comparator.comparing(Object::hashCode));
 
-        return ActionResult.PASS;
     }
 
-    private ActionResult save(NbtCompound nbtCompound) {
+    private void save(NbtCompound nbtCompound) {
         NbtCompound tag = new NbtCompound();
         tag.putBoolean("enabled", enabled);
         tag.putBoolean("solid", solid);
@@ -94,7 +92,6 @@ public class EntityEsp {
         tag.put("entityTypes", entities);
 
         nbtCompound.put("entityEsp", tag);
-        return ActionResult.PASS;
     }
 
     private void registerCommand() {

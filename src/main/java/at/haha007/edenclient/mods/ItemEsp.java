@@ -14,7 +14,6 @@ import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.text.LiteralText;
-import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
@@ -35,7 +34,7 @@ public class ItemEsp {
         ConfigLoadCallback.EVENT.register(this::onLoad);
     }
 
-    private ActionResult onLoad(NbtCompound compoundTag) {
+    private void onLoad(NbtCompound compoundTag) {
         NbtCompound tag = compoundTag.getCompound("itemesp");
         if (tag.contains("enabled"))
             enabled = tag.getBoolean("enabled");
@@ -53,10 +52,9 @@ public class ItemEsp {
         else g = 1;
         if (tag.contains("b")) b = tag.getFloat("b");
         else b = 1;
-        return ActionResult.PASS;
     }
 
-    private ActionResult onSave(NbtCompound compoundTag) {
+    private void onSave(NbtCompound compoundTag) {
         NbtCompound tag = new NbtCompound();
         tag.putBoolean("enabled", enabled);
         tag.putBoolean("solid", solid);
@@ -65,7 +63,6 @@ public class ItemEsp {
         tag.putFloat("g", g);
         tag.putFloat("b", b);
         compoundTag.put("itemesp", tag);
-        return ActionResult.PASS;
     }
 
     private void registerCommand() {
@@ -115,8 +112,8 @@ public class ItemEsp {
         sendModMessage(new LiteralText("Color updated.").formatted(Formatting.GOLD));
     }
 
-    private ActionResult renderItem(ItemEntity itemEntity, float yaw, float tickDelta, int light, MatrixStack matrixStack) {
-        if (!enabled) return ActionResult.PASS;
+    private void renderItem(ItemEntity itemEntity, float yaw, float tickDelta, int light, MatrixStack matrixStack) {
+        if (!enabled) return;
 
         matrixStack.push();
 
@@ -143,6 +140,5 @@ public class ItemEsp {
         matrixStack.pop();
         matrixStack.pop();
         matrixStack.pop();
-        return ActionResult.PASS;
     }
 }

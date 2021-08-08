@@ -38,17 +38,15 @@ public class AntiStrip {
         axeItems.add(Items.NETHERITE_AXE);
     }
 
-    private ActionResult loadCfg(NbtCompound compoundTag) {
+    private void loadCfg(NbtCompound compoundTag) {
         NbtCompound tag = compoundTag.getCompound("antiStrip");
         enabled = !tag.contains("enabled") || tag.getBoolean("enabled");
-        return ActionResult.PASS;
     }
 
-    private ActionResult saveCfg(NbtCompound compoundTag) {
+    private void saveCfg(NbtCompound compoundTag) {
         NbtCompound tag = compoundTag.getCompound("antiStrip");
         tag.putBoolean("enabled", enabled);
         compoundTag.put("antiStrip", tag);
-        return ActionResult.PASS;
     }
 
     private void registerCommand() {

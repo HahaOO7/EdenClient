@@ -14,7 +14,6 @@ import net.minecraft.text.CharacterVisitor;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.OrderedText;
 import net.minecraft.text.Style;
-import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.MathHelper;
 
@@ -42,13 +41,13 @@ public class AntiSpam {
     }
 
 
-    private ActionResult onChat(AddChatMessageCallback.ChatAddEvent event) {
-        if (!enabled) return ActionResult.PASS;
+    private void onChat(AddChatMessageCallback.ChatAddEvent event) {
+        if (!enabled) return;
         List<ChatHudLine<OrderedText>> chatLines = event.getChatLines();
         var chatText = event.getChatText();
-        if (chatText == null) return ActionResult.PASS;
+        if (chatText == null) return;
         if (chatLines.isEmpty())
-            return ActionResult.PASS;
+            return;
 
         class JustGiveMeTheStringVisitor implements CharacterVisitor {
             final StringBuilder sb = new StringBuilder();
@@ -152,19 +151,16 @@ public class AntiSpam {
         }
 
         event.setChatText(chatText);
-        return ActionResult.PASS;
     }
 
-    private ActionResult onLoad(NbtCompound cfg) {
+    private void onLoad(NbtCompound cfg) {
         NbtCompound tag = cfg.getCompound("antiSpam");
         enabled = !tag.contains("enabled") || tag.getBoolean("enabled");
-        return ActionResult.PASS;
     }
 
-    private ActionResult onSave(NbtCompound cfg) {
+    private void onSave(NbtCompound cfg) {
         NbtCompound tag = cfg.getCompound("antiSpam");
         tag.putBoolean("enabled", enabled);
         cfg.put("antiSpam", tag);
-        return ActionResult.PASS;
     }
 }

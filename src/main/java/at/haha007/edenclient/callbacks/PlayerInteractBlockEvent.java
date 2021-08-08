@@ -11,15 +11,14 @@ import net.minecraft.util.hit.BlockHitResult;
 public interface PlayerInteractBlockEvent {
     Event<PlayerInteractBlockEvent> EVENT = EventFactory.createArrayBacked(PlayerInteractBlockEvent.class,
             listeners -> (player, world, hand, hitResult) -> {
+                ActionResult result = ActionResult.PASS;
                 for (PlayerInteractBlockEvent listener : listeners) {
-                    ActionResult result = listener.interact(player, world, hand, hitResult);
-
-                    if (result != ActionResult.PASS) {
-                        return result;
+                    ActionResult r = listener.interact(player, world, hand, hitResult);
+                    if (r != ActionResult.PASS) {
+                        result = r;
                     }
                 }
-
-                return ActionResult.PASS;
+                return result;
             });
 
     ActionResult interact(ClientPlayerEntity player, ClientWorld world, Hand hand, BlockHitResult hitResult);
