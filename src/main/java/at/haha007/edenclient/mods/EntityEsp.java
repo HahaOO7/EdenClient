@@ -118,6 +118,12 @@ public class EntityEsp {
             }));
         }
 
+        cmd.then(literal("clear").executes(c -> {
+            entityTypes = new EntityType[0];
+            sendModMessage("EntityEsp cleared!");
+            return 1;
+        }));
+
         cmd.then(literal("solid").executes(c -> {
             solid = !solid;
             sendModMessage(solid ? "EntityEsp solid" : "EntityEsp transparent");
