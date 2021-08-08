@@ -30,6 +30,7 @@ public class EdenClient implements ClientModInitializer {
         new AutoSell();
         new BarrierDisplay();
         new ItemEsp();
+        new EntityEsp();
         new AntiStrip();
         new AutoSheer();
         new SignCopy();
