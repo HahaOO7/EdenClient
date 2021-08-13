@@ -291,7 +291,7 @@ public class WordHighlighter {
 
 
     private int getFancyRainbowColorAtIndex(int index) {
-        final double freq = 0.3;
+        final double freq = 0.6;
 
         int r = (int) (Math.sin(freq * index) * 127 + 128);
         int g = (int) (Math.sin(freq * index + 2) * 127 + 128);
