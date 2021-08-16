@@ -2,6 +2,7 @@ package at.haha007.edenclient;
 
 import at.haha007.edenclient.mods.*;
 import at.haha007.edenclient.mods.chestshop.ChestShopMod;
+import at.haha007.edenclient.mods.worldedithelper.WorldEditHelperCommand;
 import at.haha007.edenclient.utils.PerWorldConfig;
 import at.haha007.edenclient.utils.Scheduler;
 import net.fabricmc.api.ClientModInitializer;
@@ -40,6 +41,7 @@ public class EdenClient implements ClientModInitializer {
         // Commands only | These Mods only actively interact with your gameplay when directly using its commands
         new Rainbowifier();
         new NbtInfo();
+        new WorldEditHelperCommand();
     }
 
     public MessageIgnorer getMessageIgnorer() {
