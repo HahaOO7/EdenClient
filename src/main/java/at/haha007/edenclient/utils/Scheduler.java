@@ -18,7 +18,7 @@ public class Scheduler {
     private static final Scheduler instance = new Scheduler();
 
     private final Set<Runnable> sync = Collections.synchronizedSet(new HashSet<>());
-    private final TreeMap<Long, Runnable> delayedSync = new TreeMap<>();
+    private final TreeMap<Long, Set<Runnable>> delayedSync = new TreeMap<>();
     private final TreeMap<Long, RepeatingRunnable> repeatingSync = new TreeMap<>();
     private long tick;
 
@@ -53,7 +53,7 @@ public class Scheduler {
         sync.clear();
 
         while (delayedSync.size() > 0 && delayedSync.firstKey() < tick) {
-            delayedSync.pollFirstEntry().getValue().run();
+            delayedSync.pollFirstEntry().getValue().forEach(Runnable::run);
         }
 
         while (repeatingSync.size() > 0 && repeatingSync.firstKey() < tick) {
@@ -75,7 +75,10 @@ public class Scheduler {
     }
 
     public synchronized void scheduleSyncDelayed(@NotNull Runnable runnable, int delay) {
-        delayedSync.put(delay + tick, runnable);
+        Set<Runnable> set = delayedSync.get(delay + tick);
+        if (set == null) set = new HashSet<>();
+        set.add(runnable);
+        delayedSync.put(delay + tick, set);
     }
 
     public void runAsync(@NotNull Runnable runnable) {

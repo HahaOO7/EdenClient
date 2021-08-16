@@ -48,7 +48,10 @@ public class MessageIgnorer {
                 "Voller Name: (?<originalname>[A-Za-z0-9_ ]{1,40})",
                 "Shop Schild: (?<shortenedname>[A-Za-z0-9_ ]{1,40})",
                 "\\/iteminfo \\(what's the item in hand\\?\\) ?",
-                "\\/iteminfo log \\(what's the item ID of LOG\\?\\) ?");
+                "\\/iteminfo log \\(what's the item ID of LOG\\?\\) ?"),
+        WORLDEDIT("worldedit",
+                "Message ignoring for WorldEdit EdenClient messages",
+                "[0-9]{1,10} blocks have been replaced\\.");
 
         private final String[] regexes;
         private final String key;
