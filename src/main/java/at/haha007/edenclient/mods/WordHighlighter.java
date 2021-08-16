@@ -76,6 +76,8 @@ public class WordHighlighter {
             style = style.withUnderline(tag.getBoolean("underlined"));
         if (tag.contains("color"))
             style = style.withColor(tag.getInt("color"));
+        if (tag.contains("obfuscated"))
+            style = style.obfuscated(true);
     }
 
     private void onSave(NbtCompound compoundTag) {
@@ -89,6 +91,7 @@ public class WordHighlighter {
         tag.putBoolean("bold", style.isBold());
         tag.putBoolean("italic", style.isItalic());
         tag.putBoolean("underlined", style.isUnderlined());
+        tag.putBoolean("obfuscated", style.isObfuscated());
 
         if (style.getColor() != null)
             tag.putInt("color", style.getColor().getRgb());
