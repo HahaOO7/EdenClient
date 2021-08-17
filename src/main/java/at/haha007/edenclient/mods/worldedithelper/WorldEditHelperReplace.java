@@ -34,6 +34,7 @@ public class WorldEditHelperReplace {
             sendReplaceHorizontalFacingBlockCommand((HorizontalFacingBlock) fromBlock, (HorizontalFacingBlock) toBlock, delay);
         } else {
             sendModMessage("Can't replace these blocks with Eden-WE.");
+            return 0;
         }
         if (sendMessage)
             sendModMessage(new LiteralText("Replacing ").formatted(Formatting.GOLD).
