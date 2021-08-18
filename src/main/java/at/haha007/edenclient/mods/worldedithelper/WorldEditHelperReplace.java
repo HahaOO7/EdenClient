@@ -39,6 +39,8 @@ public class WorldEditHelperReplace {
             sendReplaceWallBlockCommand((WallBlock) fromBlock, (WallBlock) toBlock, delay);
         } else if (fromBlock instanceof PillarBlock && toBlock instanceof PillarBlock) {
             sendReplacePillarBlockCommand((PillarBlock) fromBlock, (PillarBlock) toBlock, delay);
+        } else if (fromBlock instanceof LanternBlock && toBlock instanceof LanternBlock) {
+            sendReplaceLanternBlockCommand((LanternBlock) fromBlock, (LanternBlock) toBlock, delay);
         } else if (fromBlock instanceof HorizontalFacingBlock && toBlock instanceof HorizontalFacingBlock) {
             sendReplaceHorizontalFacingBlockCommand((HorizontalFacingBlock) fromBlock, (HorizontalFacingBlock) toBlock, delay);
         } else {
@@ -177,6 +179,17 @@ public class WorldEditHelperReplace {
 
         List<List<String>> inputs = List.of(axes);
         List<String> names = new ArrayList<>(List.of("axis"));
+
+        sendAllReplacementCommandsForParameters(fromBlock, toBlock, inputs, names, delay);
+    }
+
+
+    private static void sendReplaceLanternBlockCommand(LanternBlock fromBlock, LanternBlock toBlock, int delay) {
+        List<String> hanging = LanternBlock.HANGING.getValues().stream().map(Object::toString).collect(Collectors.toList());
+        List<String> waterlogged = LanternBlock.WATERLOGGED.getValues().stream().map(Object::toString).collect(Collectors.toList());
+
+        List<List<String>> inputs = List.of(hanging, waterlogged);
+        List<String> names = new ArrayList<>(List.of("hanging", "waterlogged"));
 
         sendAllReplacementCommandsForParameters(fromBlock, toBlock, inputs, names, delay);
     }
