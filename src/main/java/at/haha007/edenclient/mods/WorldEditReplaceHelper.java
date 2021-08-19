@@ -1,24 +1,171 @@
-package at.haha007.edenclient.mods.worldedithelper;
+package at.haha007.edenclient.mods;
 
+import at.haha007.edenclient.callbacks.ConfigLoadCallback;
+import at.haha007.edenclient.callbacks.ConfigSaveCallback;
 import at.haha007.edenclient.utils.Scheduler;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.suggestion.Suggestions;
+import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.block.*;
 import net.minecraft.block.enums.*;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ClientCommandSource;
 import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Direction;
+import net.minecraft.util.registry.DefaultedRegistry;
+import net.minecraft.util.registry.Registry;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
-public class WorldEditHelperReplace {
 
-    public static int replaceCommandRequest(Block fromBlock, Block toBlock, int delay, boolean sendMessage) {
+public class WorldEditReplaceHelper {
+
+    /*
+    WorldEditHelper Command Manager starts here
+    */
+
+    private int delay = 0;
+    private final LinkedList<String[]> undoCommandStack = new LinkedList<>();
+    private final LinkedList<String[]> redoCommandStack = new LinkedList<>();
+
+    public WorldEditReplaceHelper() {
+        registerCommand("ewe");
+        registerCommand("edenwe");
+        ConfigLoadCallback.EVENT.register(this::loadConfig);
+        ConfigSaveCallback.EVENT.register(this::saveConfig);
+    }
+
+    private void registerCommand(String command) {
+        LiteralArgumentBuilder<ClientCommandSource> node = literal(command);
+
+        node.then(literal("replace").then(argument("from", StringArgumentType.word()).suggests(this::suggestValidBlocks).then(argument("to", StringArgumentType.word()).suggests(this::suggestValidBlocks)
+                .executes(c -> {
+                    Optional<Block> fromBlockOpt = Registry.BLOCK.getOrEmpty(new Identifier(c.getArgument("from", String.class)));
+                    Optional<Block> toBlockOpt = Registry.BLOCK.getOrEmpty(new Identifier(c.getArgument("to", String.class)));
+
+                    if (fromBlockOpt.isEmpty() || toBlockOpt.isEmpty()) {
+                        sendModMessage("One of your block-inputs doesn't exist.");
+                        return 0;
+                    }
+
+                    Block fromBlock = fromBlockOpt.get();
+                    Block toBlock = toBlockOpt.get();
+
+                    if (fromBlock.equals(toBlock)) {
+                        sendModMessage("Both input-blocks can't be the same!");
+                        return 0;
+                    }
+
+                    String[] currentOperation = new String[]{getBlockIDFromBlock(toBlock), getBlockIDFromBlock(fromBlock)};
+                    undoCommandStack.addFirst(currentOperation);
+
+                    return replaceCommandRequest(fromBlock, toBlock, delay, true);
+                }))));
+
+        node.then(literal("undo").executes(c -> {
+            if (undoCommandStack.size() == 0) {
+                sendModMessage("Nothing left to undo.");
+                return 0;
+            }
+
+            ClientPlayerEntity entityPlayer = MinecraftClient.getInstance().player;
+            if (entityPlayer == null) {
+                sendModMessage("Error");
+                return 1;
+            }
+
+            replaceUndoRequest(Registry.BLOCK.get(new Identifier(undoCommandStack.getFirst()[0])), Registry.BLOCK.get(new Identifier(undoCommandStack.getFirst()[1])), delay);
+            redoCommandStack.addFirst(new String[]{undoCommandStack.getFirst()[1], undoCommandStack.getFirst()[0]});
+            undoCommandStack.removeFirst();
+            return 1;
+        }));
+
+        node.then(literal("redo").executes(c -> {
+            if (redoCommandStack.size() == 0) {
+                sendModMessage("Nothing left to redo.");
+                return 0;
+            }
+
+            ClientPlayerEntity entityPlayer = MinecraftClient.getInstance().player;
+            if (entityPlayer == null) {
+                sendModMessage("Error");
+                return 1;
+            }
+
+            replaceRedoRequest(Registry.BLOCK.get(new Identifier(redoCommandStack.getFirst()[0])), Registry.BLOCK.get(new Identifier(redoCommandStack.getFirst()[1])), delay);
+            undoCommandStack.addFirst(new String[]{redoCommandStack.getFirst()[1], redoCommandStack.getFirst()[0]});
+            redoCommandStack.removeFirst();
+            return 1;
+        }));
+
+        node.then(literal("delay").then(argument("delay", IntegerArgumentType.integer(0, 40)).executes(c -> {
+            this.delay = c.getArgument("delay", Integer.class);
+            sendModMessage(new LiteralText("Set delay to ").formatted(Formatting.GOLD)
+                    .append(new LiteralText(Integer.toString(delay)).formatted(Formatting.AQUA))
+                    .append(new LiteralText(" ticks.").formatted(Formatting.GOLD)));
+            return 1;
+        })));
+
+        node.then(literal("togglemessages").executes(c -> {
+
+            ClientPlayerEntity entityPlayer = MinecraftClient.getInstance().player;
+            if (entityPlayer == null) {
+                sendModMessage("Error");
+                return 1;
+            }
+
+            entityPlayer.sendChatMessage("/im predefined worldedit");
+
+            return 1;
+        }));
+
+        register(node);
+    }
+
+    private CompletableFuture<Suggestions> suggestValidBlocks(CommandContext<ClientCommandSource> clientCommandSourceCommandContext, SuggestionsBuilder suggestionsBuilder) {
+        DefaultedRegistry<Block> blockRegistry = Registry.BLOCK;
+        blockRegistry.stream()
+                .map(blockRegistry::getId)
+                .map(Identifier::toString)
+                .map(itemName -> itemName.split(":")[1])
+                .map(String::toLowerCase).toList().forEach(suggestionsBuilder::suggest);
+        return suggestionsBuilder.buildFuture();
+    }
+
+    private void loadConfig(NbtCompound nbtCompound) {
+        if (nbtCompound.contains("worldEditHelper")) {
+            NbtCompound compound = nbtCompound.getCompound("worldEditHelper");
+            delay = compound.getInt("delay");
+        }
+    }
+
+    private void saveConfig(NbtCompound nbtCompound) {
+        NbtCompound comp = new NbtCompound();
+        comp.putInt("delay", delay);
+        nbtCompound.put("worldEditHelper", comp);
+    }
+
+    /*
+    WorldEditHelper Replace Methods start here
+     */
+
+    private int replaceCommandRequest(Block fromBlock, Block toBlock, int delay, boolean sendMessage) {
         if (fromBlock instanceof StairsBlock && toBlock instanceof StairsBlock) {
             sendReplaceStairCommand((StairsBlock) fromBlock, (StairsBlock) toBlock, delay);
         } else if (fromBlock instanceof SlabBlock && toBlock instanceof SlabBlock) {
@@ -55,19 +202,19 @@ public class WorldEditHelperReplace {
         return 1;
     }
 
-    public static void replaceUndoRequest(Block fromBlock, Block toBlock, int delay) {
+    private void replaceUndoRequest(Block fromBlock, Block toBlock, int delay) {
         sendModMessage(new LiteralText("Undoing").formatted(Formatting.AQUA)
                 .append(new LiteralText(" last request.").formatted(Formatting.GOLD)));
         replaceCommandRequest(fromBlock, toBlock, delay, false);
     }
 
-    public static void replaceRedoRequest(Block fromBlock, Block toBlock, int delay) {
+    private void replaceRedoRequest(Block fromBlock, Block toBlock, int delay) {
         sendModMessage(new LiteralText("Redoing").formatted(Formatting.AQUA)
                 .append(new LiteralText(" last request.").formatted(Formatting.GOLD)));
         replaceCommandRequest(fromBlock, toBlock, delay, false);
     }
 
-    public static void sendReplaceStairCommand(StairsBlock fromBlock, StairsBlock toBlock, int delay) {
+    private void sendReplaceStairCommand(StairsBlock fromBlock, StairsBlock toBlock, int delay) {
         List<String> half = StairsBlock.HALF.getValues().stream().map(BlockHalf::toString).collect(Collectors.toList());
         List<String> shape = StairsBlock.SHAPE.getValues().stream().map(StairShape::toString).collect(Collectors.toList());
         List<String> facing = StairsBlock.FACING.getValues().stream().map(Direction::getName).collect(Collectors.toList());
@@ -79,7 +226,7 @@ public class WorldEditHelperReplace {
         sendAllReplacementCommandsForParameters(fromBlock, toBlock, inputs, names, delay);
     }
 
-    public static void sendReplaceSlabCommand(SlabBlock fromBlock, SlabBlock toBlock, int delay) {
+    private void sendReplaceSlabCommand(SlabBlock fromBlock, SlabBlock toBlock, int delay) {
         List<String> type = SlabBlock.TYPE.getValues().stream().map(SlabType::toString).collect(Collectors.toList());
         List<String> waterlogged = SlabBlock.WATERLOGGED.getValues().stream().map(Object::toString).collect(Collectors.toList());
 
@@ -89,7 +236,7 @@ public class WorldEditHelperReplace {
         sendAllReplacementCommandsForParameters(fromBlock, toBlock, inputs, names, delay);
     }
 
-    private static void sendReplaceTrapdoorBlockCommand(TrapdoorBlock fromBlock, TrapdoorBlock toBlock, int delay) {
+    private void sendReplaceTrapdoorBlockCommand(TrapdoorBlock fromBlock, TrapdoorBlock toBlock, int delay) {
         List<String> open = TrapdoorBlock.OPEN.getValues().stream().map(Object::toString).collect(Collectors.toList());
         List<String> powered = TrapdoorBlock.POWERED.getValues().stream().map(Object::toString).collect(Collectors.toList());
         List<String> half = TrapdoorBlock.HALF.getValues().stream().map(BlockHalf::toString).collect(Collectors.toList());
@@ -102,7 +249,7 @@ public class WorldEditHelperReplace {
         sendAllReplacementCommandsForParameters(fromBlock, toBlock, inputs, names, delay);
     }
 
-    private static void sendReplaceDoorBlockCommand(DoorBlock fromBlock, DoorBlock toBlock, int delay) {
+    private void sendReplaceDoorBlockCommand(DoorBlock fromBlock, DoorBlock toBlock, int delay) {
         List<String> open = DoorBlock.OPEN.getValues().stream().map(Object::toString).collect(Collectors.toList());
         List<String> powered = DoorBlock.POWERED.getValues().stream().map(Object::toString).collect(Collectors.toList());
         List<String> half = DoorBlock.HALF.getValues().stream().map(DoubleBlockHalf::toString).collect(Collectors.toList());
@@ -115,7 +262,7 @@ public class WorldEditHelperReplace {
         sendAllReplacementCommandsForParameters(fromBlock, toBlock, inputs, names, delay);
     }
 
-    public static void sendReplaceSignBlockCommand(SignBlock fromBlock, SignBlock toBlock, int delay) {
+    public void sendReplaceSignBlockCommand(SignBlock fromBlock, SignBlock toBlock, int delay) {
         List<String> rotation = SignBlock.ROTATION.getValues().stream().map(v -> Integer.toString(v)).collect(Collectors.toList());
         List<String> waterlogged = SignBlock.WATERLOGGED.getValues().stream().map(Object::toString).collect(Collectors.toList());
 
@@ -125,7 +272,7 @@ public class WorldEditHelperReplace {
         sendAllReplacementCommandsForParameters(fromBlock, toBlock, inputs, names, delay);
     }
 
-    public static void sendReplaceWallSignBlockCommand(WallSignBlock fromBlock, WallSignBlock toBlock, int delay) {
+    public void sendReplaceWallSignBlockCommand(WallSignBlock fromBlock, WallSignBlock toBlock, int delay) {
         List<String> facing = WallSignBlock.FACING.getValues().stream().map(Direction::getName).collect(Collectors.toList());
         List<String> waterlogged = WallSignBlock.WATERLOGGED.getValues().stream().map(Object::toString).collect(Collectors.toList());
 
@@ -135,7 +282,7 @@ public class WorldEditHelperReplace {
         sendAllReplacementCommandsForParameters(fromBlock, toBlock, inputs, names, delay);
     }
 
-    private static void sendReplaceFenceBlockCommand(FenceBlock fromBlock, FenceBlock toBlock, int delay) {
+    private void sendReplaceFenceBlockCommand(FenceBlock fromBlock, FenceBlock toBlock, int delay) {
         List<String> north = FenceBlock.NORTH.getValues().stream().map(Object::toString).collect(Collectors.toList());
         List<String> east = FenceBlock.EAST.getValues().stream().map(Object::toString).collect(Collectors.toList());
         List<String> south = FenceBlock.SOUTH.getValues().stream().map(Object::toString).collect(Collectors.toList());
@@ -148,7 +295,7 @@ public class WorldEditHelperReplace {
         sendAllReplacementCommandsForParameters(fromBlock, toBlock, inputs, names, delay);
     }
 
-    private static void sendReplaceFenceGateBlockCommand(FenceGateBlock fromBlock, FenceGateBlock toBlock, int delay) {
+    private void sendReplaceFenceGateBlockCommand(FenceGateBlock fromBlock, FenceGateBlock toBlock, int delay) {
         List<String> facing = FenceGateBlock.FACING.getValues().stream().map(Direction::getName).collect(Collectors.toList());
         List<String> in_wall = FenceGateBlock.IN_WALL.getValues().stream().map(Object::toString).collect(Collectors.toList());
         List<String> open = FenceGateBlock.OPEN.getValues().stream().map(Object::toString).collect(Collectors.toList());
@@ -160,7 +307,7 @@ public class WorldEditHelperReplace {
         sendAllReplacementCommandsForParameters(fromBlock, toBlock, inputs, names, delay);
     }
 
-    private static void sendReplaceWallBlockCommand(WallBlock fromBlock, WallBlock toBlock, int delay) {
+    private void sendReplaceWallBlockCommand(WallBlock fromBlock, WallBlock toBlock, int delay) {
         List<String> north = WallBlock.NORTH_SHAPE.getValues().stream().map(WallShape::asString).collect(Collectors.toList());
         List<String> east = WallBlock.EAST_SHAPE.getValues().stream().map(WallShape::asString).collect(Collectors.toList());
         List<String> south = WallBlock.SOUTH_SHAPE.getValues().stream().map(WallShape::asString).collect(Collectors.toList());
@@ -174,7 +321,7 @@ public class WorldEditHelperReplace {
         sendAllReplacementCommandsForParameters(fromBlock, toBlock, inputs, names, delay);
     }
 
-    private static void sendReplacePillarBlockCommand(PillarBlock fromBlock, PillarBlock toBlock, int delay) {
+    private void sendReplacePillarBlockCommand(PillarBlock fromBlock, PillarBlock toBlock, int delay) {
         List<String> axes = PillarBlock.AXIS.getValues().stream().map(Direction.Axis::toString).collect(Collectors.toList());
 
         List<List<String>> inputs = List.of(axes);
@@ -184,7 +331,7 @@ public class WorldEditHelperReplace {
     }
 
 
-    private static void sendReplaceLanternBlockCommand(LanternBlock fromBlock, LanternBlock toBlock, int delay) {
+    private void sendReplaceLanternBlockCommand(LanternBlock fromBlock, LanternBlock toBlock, int delay) {
         List<String> hanging = LanternBlock.HANGING.getValues().stream().map(Object::toString).collect(Collectors.toList());
         List<String> waterlogged = LanternBlock.WATERLOGGED.getValues().stream().map(Object::toString).collect(Collectors.toList());
 
@@ -194,7 +341,7 @@ public class WorldEditHelperReplace {
         sendAllReplacementCommandsForParameters(fromBlock, toBlock, inputs, names, delay);
     }
 
-    public static void sendReplaceHorizontalFacingBlockCommand(HorizontalFacingBlock fromBlock, HorizontalFacingBlock toBlock, int delay) {
+    private void sendReplaceHorizontalFacingBlockCommand(HorizontalFacingBlock fromBlock, HorizontalFacingBlock toBlock, int delay) {
         List<String> facing = HorizontalFacingBlock.FACING.getValues().stream().map(Direction::getName).collect(Collectors.toList());
 
         List<List<String>> inputs = List.of(facing);
@@ -203,7 +350,7 @@ public class WorldEditHelperReplace {
         sendAllReplacementCommandsForParameters(fromBlock, toBlock, inputs, names, delay);
     }
 
-    private static void sendAllReplacementCommandsForParameters(Block fromBlock, Block toBlock, List<List<String>> lists, List<String> namesOfProperties, int delay) {
+    private void sendAllReplacementCommandsForParameters(Block fromBlock, Block toBlock, List<List<String>> lists, List<String> namesOfProperties, int delay) {
         List<String> result = new ArrayList<>();
         generatePermutations(lists, result, 0, "");
 
@@ -226,8 +373,9 @@ public class WorldEditHelperReplace {
         Scheduler.get().scheduleSyncDelayed(() -> sendModMessage("All commands have been sent. Replacing might take longer depending on the size of the selection."), delayFactor.intValue() * delay + 1);
     }
 
-    private static void generatePermutations(List<List<String>> lists, List<String> result, int depth, String current) {
+    private void generatePermutations(List<List<String>> lists, List<String> result, int depth, String current) {
         if (depth == lists.size()) {
+            System.out.println("[EC] Permutation created: " + current);
             result.add(current);
             return;
         }
@@ -237,7 +385,7 @@ public class WorldEditHelperReplace {
         }
     }
 
-    private static void sendStandardReplaceCommand(Block fromBlock, Block toBlock, String appendix) {
+    private void sendStandardReplaceCommand(Block fromBlock, Block toBlock, String appendix) {
         ClientPlayerEntity entityPlayer = MinecraftClient.getInstance().player;
         if (entityPlayer == null) {
             sendModMessage("Error");
@@ -247,10 +395,10 @@ public class WorldEditHelperReplace {
         if (message.length() > 256)
             sendModMessage("Cannot execute: " + message + " because this command too long.");
         entityPlayer.sendChatMessage(message);
-        System.out.println("[EC]" + message);
+        System.out.println("[EC] Sent command: " + message);
     }
 
-    private static String getBlockIDFromBlock(Block block) {
+    private String getBlockIDFromBlock(Block block) {
         return block.toString().replace("Block{minecraft:", "").replace("}", "");
     }
 }

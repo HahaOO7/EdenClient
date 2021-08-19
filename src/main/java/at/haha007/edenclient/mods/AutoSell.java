@@ -64,18 +64,14 @@ public class AutoSell {
             return 1;
         }));
 
-        node.then(literal("add").then(argument("item", StringArgumentType.greedyString()).suggests(this::suggestAddItems).executes(c -> {
-            var player = MinecraftClient.getInstance().player;
-            if (player == null) return 1;
-            Optional<Item> opt = Registry.ITEM.getOrEmpty(new Identifier(c.getArgument("item", String.class).replace(" ", "_")));
-            if (opt.isEmpty()) {
-                sendModMessage("No item with this name exists.");
+        DefaultedRegistry<Item> registry = Registry.ITEM;
+        for (Item item : registry) {
+            node.then(literal("add").then(literal(registry.getId(item).toString().replace("minecraft:", "")).executes(c -> {
+                autoSellItems.add(item);
+                sendModMessage("Added /sell " + item.getName().getString());
                 return 1;
-            }
-            autoSellItems.add(opt.get());
-            sendChatMessage("Added /sell " + opt.get().getName().getString());
-            return 1;
-        })));
+            })));
+        }
 
         node.then(literal("remove").then(argument("item", StringArgumentType.greedyString()).suggests(this::suggestRemoveItems).executes(c -> {
             var player = MinecraftClient.getInstance().player;
@@ -114,25 +110,12 @@ public class AutoSell {
         register(node);
     }
 
-
-    private CompletableFuture<Suggestions> suggestAddItems(CommandContext<ClientCommandSource> clientCommandSourceCommandContext, SuggestionsBuilder suggestionsBuilder) {
-        DefaultedRegistry<Item> itemRegistry = Registry.ITEM;
-        itemRegistry.stream()
-                .map(itemRegistry::getId)
-                .map(Identifier::toString)
-                .map(itemName -> itemName.split(":")[1])
-                .map(itemName -> itemName.replace('_', ' '))
-                .map(String::toLowerCase).toList().forEach(suggestionsBuilder::suggest);
-        return suggestionsBuilder.buildFuture();
-    }
-
     private CompletableFuture<Suggestions> suggestRemoveItems(CommandContext<ClientCommandSource> clientCommandSourceCommandContext, SuggestionsBuilder suggestionsBuilder) {
         DefaultedRegistry<Item> itemRegistry = Registry.ITEM;
         autoSellItems.stream().sorted(Comparator.comparing(s -> s.getName().getString()))
                 .map(itemRegistry::getId)
                 .map(Identifier::toString)
                 .map(itemName -> itemName.split(":")[1])
-                .map(itemName -> itemName.replace('_', ' '))
                 .map(String::toLowerCase).toList().forEach(suggestionsBuilder::suggest);
         return suggestionsBuilder.buildFuture();
     }
