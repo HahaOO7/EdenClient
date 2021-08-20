@@ -1,7 +1,7 @@
 package at.haha007.edenclient.mixin;
 
-import at.haha007.edenclient.callbacks.LeaveWorldCallback;
 import at.haha007.edenclient.callbacks.JoinWorldCallback;
+import at.haha007.edenclient.callbacks.LeaveWorldCallback;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.world.ClientWorld;
 import org.spongepowered.asm.mixin.Mixin;
@@ -14,16 +14,17 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class MinecraftClientMixin {
 
     @Unique
-    ClientWorld connectedWorld;
+    boolean connected;
 
     @Inject(at = @At("TAIL"), method = "setWorld")
     void onDisconnect(ClientWorld world, CallbackInfo ci) {
-        if (world == connectedWorld) return;
-        if (world != null) {
-            JoinWorldCallback.EVENT.invoker().join(world);
+        boolean connected = world != null;
+        if (connected == this.connected) return;
+        if (connected) {
+            JoinWorldCallback.EVENT.invoker().join();
         } else {
-            LeaveWorldCallback.EVENT.invoker().leave(connectedWorld);
+            LeaveWorldCallback.EVENT.invoker().leave();
         }
-        connectedWorld = world;
+        this.connected = connected;
     }
 }
