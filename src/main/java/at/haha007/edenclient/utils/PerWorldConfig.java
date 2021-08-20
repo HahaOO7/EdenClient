@@ -5,7 +5,6 @@ import at.haha007.edenclient.callbacks.ConfigLoadCallback;
 import at.haha007.edenclient.callbacks.ConfigSaveCallback;
 import at.haha007.edenclient.callbacks.JoinWorldCallback;
 import at.haha007.edenclient.callbacks.LeaveWorldCallback;
-import net.minecraft.client.world.ClientWorld;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtIo;
 
@@ -31,12 +30,12 @@ public class PerWorldConfig {
         LeaveWorldCallback.EVENT.register(this::onLeave);
     }
 
-    private void onLeave(ClientWorld world) {
+    private void onLeave() {
         System.out.println("leave world: " + worldName);
         saveConfig();
     }
 
-    private void onJoin(ClientWorld world) {
+    private void onJoin() {
         worldName = StringUtils.getWorldOrServerName();
         System.out.println("join world: " + worldName);
         loadConfig();
