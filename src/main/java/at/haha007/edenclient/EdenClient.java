@@ -21,6 +21,8 @@ public class EdenClient implements ClientModInitializer {
         PerWorldConfig.getInstance();
         Scheduler.get();
 
+        dataFetcher = new DataFetcher();
+
         // Chat | These Mods interact with each message being sent to the client (in descending order)
         new SellStatsTracker();
         new ChestShopMod();
@@ -43,7 +45,6 @@ public class EdenClient implements ClientModInitializer {
         new Rainbowifier();
         new NbtInfo();
         new WorldEditReplaceHelper();
-        dataFetcher = new DataFetcher();
     }
 
     public MessageIgnorer getMessageIgnorer() {
