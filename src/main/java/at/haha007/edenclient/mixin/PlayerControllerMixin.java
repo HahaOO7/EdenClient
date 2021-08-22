@@ -2,6 +2,7 @@ package at.haha007.edenclient.mixin;
 
 import at.haha007.edenclient.callbacks.PlayerAttackBlockCallback;
 import at.haha007.edenclient.callbacks.PlayerInteractBlockEvent;
+import at.haha007.edenclient.utils.PlayerUtils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.network.ClientPlayerInteractionManager;
@@ -32,7 +33,7 @@ public class PlayerControllerMixin {
 
     @Inject(method = "attackBlock", at = @At("HEAD"), cancellable = true)
     private void onAttackBlock(BlockPos pos, Direction side, CallbackInfoReturnable<Boolean> cir) {
-        ActionResult result = PlayerAttackBlockCallback.EVENT.invoker().interact(MinecraftClient.getInstance().player, pos, side);
+        ActionResult result = PlayerAttackBlockCallback.EVENT.invoker().interact(PlayerUtils.getPlayer(), pos, side);
         if (result == ActionResult.FAIL) cir.cancel();
     }
 

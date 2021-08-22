@@ -111,7 +111,7 @@ public class Nuker {
             return 1;
         })));
         cmd.then(literal("area").then(argument("min", BlockPosArgumentType.blockPos()).then(argument("max", BlockPosArgumentType.blockPos()).executes(c -> {
-            ClientPlayerEntity player = MinecraftClient.getInstance().player;
+            ClientPlayerEntity player = PlayerUtils.getPlayer();
             if (player == null) return -1;
             ServerCommandSource cs = player.getCommandSource();
             BlockPos min = c.getArgument("min", PosArgument.class).toAbsoluteBlockPos(cs);
@@ -170,7 +170,7 @@ public class Nuker {
     }
 
     private Block getMainHandStack() {
-        ClientPlayerEntity player = MinecraftClient.getInstance().player;
+        ClientPlayerEntity player = PlayerUtils.getPlayer();
         if (player == null) return Blocks.AIR;
         ItemStack stack = player.getInventory().getMainHandStack();
         if (stack == null) return Blocks.AIR;

@@ -5,6 +5,7 @@ import at.haha007.edenclient.callbacks.AddChatMessageCallback;
 import at.haha007.edenclient.mods.MessageIgnorer;
 import at.haha007.edenclient.utils.NbtLoadable;
 import at.haha007.edenclient.utils.NbtSavable;
+import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.Scheduler;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
@@ -86,7 +87,7 @@ public class ChestShopItemNames implements NbtLoadable, NbtSavable {
         });
 
         mapItemNames.then(literal("start").executes(c -> {
-            ClientPlayerEntity entityPlayer = MinecraftClient.getInstance().player;
+            ClientPlayerEntity entityPlayer = PlayerUtils.getPlayer();
             if (entityPlayer == null) return -1;
 
             if (nameLookupRunning) {

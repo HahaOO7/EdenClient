@@ -3,6 +3,7 @@ package at.haha007.edenclient.mods;
 import at.haha007.edenclient.callbacks.ConfigLoadCallback;
 import at.haha007.edenclient.callbacks.ConfigSaveCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
+import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.Scheduler;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -88,7 +89,7 @@ public class LifeSaver {
         if (!enabled || schedulerRunning) return;
 
         if (clientPlayerEntity.getY() < height || clientPlayerEntity.getHealth() < health) {
-            ClientPlayerEntity entityPlayer = MinecraftClient.getInstance().player;
+            ClientPlayerEntity entityPlayer = PlayerUtils.getPlayer();
             if (entityPlayer == null) {
                 return;
             }
@@ -97,7 +98,7 @@ public class LifeSaver {
 
             schedulerRunning = true;
             Scheduler.get().scheduleSyncRepeating(() -> {
-                ClientPlayerEntity entity = MinecraftClient.getInstance().player;
+                ClientPlayerEntity entity = PlayerUtils.getPlayer();
                 if (entity.getY() > height && entity.getHealth() > health) {
                     sendModMessage("I hope I saved your life!");
                     schedulerRunning = false;

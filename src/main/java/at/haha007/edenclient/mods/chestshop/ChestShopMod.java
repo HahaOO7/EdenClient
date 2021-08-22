@@ -6,6 +6,9 @@ import at.haha007.edenclient.callbacks.ConfigSaveCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.mods.datafetcher.ChestShopItemNames;
 import at.haha007.edenclient.utils.PlayerUtils;
+import at.haha007.edenclient.utils.tasks.RunnableTask;
+import at.haha007.edenclient.utils.tasks.TaskManager;
+import at.haha007.edenclient.utils.tasks.WaitForTicksTask;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
@@ -16,10 +19,7 @@ import net.minecraft.client.network.ClientCommandSource;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtList;
-import net.minecraft.text.ClickEvent;
-import net.minecraft.text.HoverEvent;
-import net.minecraft.text.LiteralText;
-import net.minecraft.text.Style;
+import net.minecraft.text.*;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.Vec3i;
@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static at.haha007.edenclient.command.CommandManager.*;
@@ -71,9 +72,14 @@ public class ChestShopMod {
         shops.put(chunk, cs);
     }
 
-    private void checkForShops(ClientPlayerEntity player) {
+
+    private void checkForShops(ClientPlayerEntity player, int radius) {
         ChunkManager cm = player.clientWorld.getChunkManager();
-        ChunkPos.stream(player.getChunkPos(), 5).forEach(cp -> checkForShops(cm, cp));
+        ChunkPos.stream(player.getChunkPos(), radius).forEach(cp -> checkForShops(cm, cp));
+    }
+
+    private void checkForShops(ClientPlayerEntity player) {
+        checkForShops(player, 5);
     }
 
     private void registerCommand(String name) {
@@ -82,6 +88,30 @@ public class ChestShopMod {
         node.then(literal("clear").executes(c -> {
             shops.clear();
             sendModMessage("Cleared ChestShop entries.");
+            return 1;
+        }));
+
+        node.then(literal("updateshops").executes(c -> {
+            var shops = EdenClient.INSTANCE.getDataFetcher().getPlayerWarps().getShops();
+            TaskManager tm = new TaskManager((shops.size() + 2) * 120);
+            sendModMessage(gold("Teleporting to all player warps, this will take about ")
+                    .append(aqua(Integer.toString(shops.size() * 5)))
+                    .append(gold(" seconds")));
+            int count = shops.size();
+            AtomicInteger i = new AtomicInteger(1);
+            for (String shop : shops.keySet()) {
+                tm.then(new RunnableTask(() -> PlayerUtils.messageC2S("/pw " + shop)));
+                tm.then(new WaitForTicksTask(100)); //wait for chunks to load
+                tm.then(new RunnableTask(() -> sendModMessage(gold("Shop ")
+                        .append(aqua((i.getAndIncrement())))
+                        .append(gold("/"))
+                        .append(aqua(count))
+                        .append(gold(" | "))
+                        .append(aqua((count - i.get() + 1) * 5))
+                        .append(gold(" seconds left")))));
+                tm.then(new RunnableTask(() -> checkForShops(PlayerUtils.getPlayer(), 8)));
+            }
+            tm.start();
             return 1;
         }));
 
@@ -254,6 +284,18 @@ public class ChestShopMod {
             return 1;
         });
         register(node);
+    }
+
+    private MutableText gold(String string) {
+        return new LiteralText(string).formatted(Formatting.GOLD);
+    }
+
+    private MutableText aqua(String string) {
+        return new LiteralText(string).formatted(Formatting.AQUA);
+    }
+
+    private MutableText aqua(int i) {
+        return aqua(Integer.toString(i));
     }
 
     private List<String> getExploitableShopsText() {
