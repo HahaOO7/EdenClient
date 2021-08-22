@@ -29,6 +29,7 @@ import net.minecraft.text.Style;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.ChunkPos;
+import net.minecraft.util.math.Vec3i;
 import net.minecraft.util.registry.DefaultedRegistry;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.chunk.ChunkManager;
@@ -142,13 +143,18 @@ public class ChestShopMod {
 
             shops.values().forEach(m -> m.stream().filter(ChestShopEntry::canSell).
                     filter(e -> e.getItem().equals(item)).forEach(matching::add));
-            matching.stream().sorted(Comparator.comparingDouble(ChestShopEntry::getSellPricePerItem).reversed()).limit(10).map(cs -> String.format(
-                    "%s [%d, %d, %d] for %.2f$/item",
-                    cs.getOwner(),
-                    cs.getPos().getX(),
-                    cs.getPos().getY(),
-                    cs.getPos().getZ(),
-                    cs.getSellPricePerItem())).forEach(PlayerUtils::sendModMessage);
+            matching.stream().sorted(Comparator.comparingDouble(ChestShopEntry::getSellPricePerItem).reversed())
+                    .limit(10)
+                    .map(cs -> {
+                        Optional<Map.Entry<String, Vec3i>> opw = getNearestPlayerWarp(cs.getPos());
+                        Style style = Style.EMPTY.withColor(Formatting.GOLD);
+                        if (opw.isPresent()) {
+                            style = style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new LiteralText("/pw " + opw.get().getKey())));
+                            style = style.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/pw " + opw.get().getKey()));
+
+                        }
+                        return new LiteralText(cs.formattedString(false)).setStyle(style);
+                    }).forEach(PlayerUtils::sendModMessage);
             return 1;
         })));
 
@@ -158,13 +164,19 @@ public class ChestShopMod {
             List<ChestShopEntry> matching = new ArrayList<>();
             shops.values().forEach(m -> m.stream().filter(ChestShopEntry::canBuy).
                     filter(e -> e.getItem().equals(item)).forEach(matching::add));
-            matching.stream().sorted(Comparator.comparingDouble(ChestShopEntry::getBuyPricePerItem)).limit(10).map(cs -> String.format(
-                    "%s [%d, %d, %d] for %.2f$/item",
-                    cs.getOwner(),
-                    cs.getPos().getX(),
-                    cs.getPos().getY(),
-                    cs.getPos().getZ(),
-                    cs.getBuyPricePerItem())).forEach(PlayerUtils::sendModMessage);
+            matching.stream().sorted(Comparator.comparingDouble(ChestShopEntry::getBuyPricePerItem))
+                    .limit(10)
+                    .map(cs -> {
+                        Optional<Map.Entry<String, Vec3i>> opw = getNearestPlayerWarp(cs.getPos());
+                        Style style = Style.EMPTY.withColor(Formatting.GOLD);
+                        if (opw.isPresent()) {
+                            style = style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new LiteralText("/pw " + opw.get().getKey())));
+                            style = style.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/pw " + opw.get().getKey()));
+
+                        }
+                        return new LiteralText(cs.formattedString(true)).setStyle(style);
+                    })
+                    .forEach(PlayerUtils::sendModMessage);
             return 1;
         })));
 
@@ -417,6 +429,10 @@ public class ChestShopMod {
             buyEntries.put(entry.getItem(), list);
         }));
         return buyEntries;
+    }
+
+    private Optional<Map.Entry<String, Vec3i>> getNearestPlayerWarp(Vec3i pos) {
+        return EdenClient.INSTANCE.getDataFetcher().getPlayerWarps().getShops().entrySet().stream().min(Comparator.comparingDouble(e -> e.getValue().getSquaredDistance(pos)));
     }
 
     private CompletableFuture<Suggestions> suggestSell

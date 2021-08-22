@@ -27,4 +27,7 @@ public class DataFetcher {
         playerWarps.load(tag.getCompound("playerWarps"));
     }
 
+    public PlayerWarps getPlayerWarps() {
+        return playerWarps;
+    }
 }

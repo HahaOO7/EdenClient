@@ -2,7 +2,6 @@ package at.haha007.edenclient;
 
 import at.haha007.edenclient.mods.*;
 import at.haha007.edenclient.mods.chestshop.ChestShopMod;
-import at.haha007.edenclient.mods.WorldEditReplaceHelper;
 import at.haha007.edenclient.mods.datafetcher.DataFetcher;
 import at.haha007.edenclient.utils.PerWorldConfig;
 import at.haha007.edenclient.utils.Scheduler;
@@ -14,6 +13,7 @@ import java.io.File;
 public class EdenClient implements ClientModInitializer {
     public static EdenClient INSTANCE;
     private MessageIgnorer messageIgnorer;
+    private DataFetcher dataFetcher;
 
     @Override
     public void onInitializeClient() {
@@ -43,11 +43,15 @@ public class EdenClient implements ClientModInitializer {
         new Rainbowifier();
         new NbtInfo();
         new WorldEditReplaceHelper();
-        new DataFetcher();
+        dataFetcher = new DataFetcher();
     }
 
     public MessageIgnorer getMessageIgnorer() {
         return messageIgnorer;
+    }
+
+    public DataFetcher getDataFetcher() {
+        return dataFetcher;
     }
 
     public static File getDataFolder() {
