@@ -77,7 +77,7 @@ public class WordHighlighter {
         if (tag.contains("color"))
             style = style.withColor(tag.getInt("color"));
         if (tag.contains("obfuscated"))
-            style = style.obfuscated(true);
+            style = style.obfuscated(tag.getBoolean("obfuscated"));
     }
 
     private void onSave(NbtCompound compoundTag) {
