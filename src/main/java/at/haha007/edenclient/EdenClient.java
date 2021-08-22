@@ -42,6 +42,7 @@ public class EdenClient implements ClientModInitializer {
         new Rainbowifier();
         new NbtInfo();
         new WorldEditReplaceHelper();
+        new DataFetcher();
     }
 
     public MessageIgnorer getMessageIgnorer() {
