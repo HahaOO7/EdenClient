@@ -1,6 +1,7 @@
 package at.haha007.edenclient.mixin;
 
 import at.haha007.edenclient.callbacks.AddChatMessageCallback;
+import at.haha007.edenclient.utils.PlayerUtils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawableHelper;
 import net.minecraft.client.gui.hud.ChatHud;
@@ -30,7 +31,7 @@ public abstract class ChatHudMixin extends DrawableHelper {
     @Inject(at = @At("HEAD"),
             method = "addMessage(Lnet/minecraft/text/Text;I)V", cancellable = true)
     private void onAddMessage(Text chatText, int chatLineId, CallbackInfo ci) {
-        AddChatMessageCallback.ChatAddEvent event = new AddChatMessageCallback.ChatAddEvent(MinecraftClient.getInstance().player, chatText, chatLineId, visibleMessages);
+        AddChatMessageCallback.ChatAddEvent event = new AddChatMessageCallback.ChatAddEvent(PlayerUtils.getPlayer(), chatText, chatLineId, visibleMessages);
         AddChatMessageCallback.EVENT.invoker().interact(event);
         chatText = event.getChatText();
         ci.cancel();

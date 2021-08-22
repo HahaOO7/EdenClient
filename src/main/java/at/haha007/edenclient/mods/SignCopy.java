@@ -5,6 +5,7 @@ import at.haha007.edenclient.callbacks.ConfigSaveCallback;
 import at.haha007.edenclient.callbacks.PlayerAttackBlockCallback;
 import at.haha007.edenclient.callbacks.PlayerEditSignCallback;
 import at.haha007.edenclient.command.CommandManager;
+import at.haha007.edenclient.utils.PlayerUtils;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.SignBlockEntity;
 import net.minecraft.client.MinecraftClient;
@@ -69,7 +70,7 @@ public class SignCopy {
     private ActionResult onAttackBlock(ClientPlayerEntity entity, BlockPos pos, Direction side) {
         if (!enabled) return ActionResult.PASS;
         BlockEntity b = MinecraftClient.getInstance().world.getBlockEntity(pos);
-        if (!ItemTags.SIGNS.contains(MinecraftClient.getInstance().player.getInventory().getMainHandStack().getItem()))
+        if (!ItemTags.SIGNS.contains(PlayerUtils.getPlayer().getInventory().getMainHandStack().getItem()))
             return ActionResult.PASS;
         if (!(b instanceof SignBlockEntity sign)) {
             shouldCopy = false;

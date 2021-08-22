@@ -1,6 +1,7 @@
 package at.haha007.edenclient.mixin;
 
 import at.haha007.edenclient.callbacks.PlayerInvChangeCallback;
+import at.haha007.edenclient.utils.PlayerUtils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
@@ -16,7 +17,6 @@ public class PlayerInventoryMixin {
             at = @At("TAIL"),
             method = "setStack")
     void addItem(int slot, ItemStack stack, CallbackInfo ci) {
-        //noinspection ConstantConditions
-        PlayerInvChangeCallback.EVENT.invoker().onInvChange(MinecraftClient.getInstance().player.getInventory());
+        PlayerInvChangeCallback.EVENT.invoker().onInvChange(PlayerUtils.getPlayer().getInventory());
     }
 }

@@ -5,6 +5,7 @@ import at.haha007.edenclient.callbacks.AddChatMessageCallback;
 import at.haha007.edenclient.mods.MessageIgnorer;
 import at.haha007.edenclient.utils.NbtLoadable;
 import at.haha007.edenclient.utils.NbtSavable;
+import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.Scheduler;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
@@ -25,7 +26,7 @@ import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static at.haha007.edenclient.command.CommandManager.*;
+import static at.haha007.edenclient.command.CommandManager.literal;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
 public class ChestShopItemNames implements NbtLoadable, NbtSavable {
@@ -34,7 +35,7 @@ public class ChestShopItemNames implements NbtLoadable, NbtSavable {
     private String lastFullNameCached = null;
     private boolean nameLookupRunning = false;
 
-    public ChestShopItemNames() {
+    ChestShopItemNames() {
         AddChatMessageCallback.EVENT.register(this::onChat);
     }
 
@@ -70,11 +71,11 @@ public class ChestShopItemNames implements NbtLoadable, NbtSavable {
 
     }
 
-    public String getLongName(String shortName){
+    public String getLongName(String shortName) {
         return itemNameMap.get(shortName);
     }
 
-    public String getShortName(String longName){
+    public String getShortName(String longName) {
         return itemNameMap.inverse().get(longName);
     }
 
@@ -86,7 +87,7 @@ public class ChestShopItemNames implements NbtLoadable, NbtSavable {
         });
 
         mapItemNames.then(literal("start").executes(c -> {
-            ClientPlayerEntity entityPlayer = MinecraftClient.getInstance().player;
+            ClientPlayerEntity entityPlayer = PlayerUtils.getPlayer();
             if (entityPlayer == null) return -1;
 
             if (nameLookupRunning) {

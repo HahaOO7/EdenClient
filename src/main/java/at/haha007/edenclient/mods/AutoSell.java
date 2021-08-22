@@ -3,6 +3,7 @@ package at.haha007.edenclient.mods;
 import at.haha007.edenclient.callbacks.ConfigLoadCallback;
 import at.haha007.edenclient.callbacks.ConfigSaveCallback;
 import at.haha007.edenclient.callbacks.PlayerInvChangeCallback;
+import at.haha007.edenclient.utils.PlayerUtils;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
@@ -74,7 +75,7 @@ public class AutoSell {
         }
 
         node.then(literal("remove").then(argument("item", StringArgumentType.greedyString()).suggests(this::suggestRemoveItems).executes(c -> {
-            var player = MinecraftClient.getInstance().player;
+            ClientPlayerEntity player = PlayerUtils.getPlayer();
             if (player == null) return 1;
 
             Optional<Item> opt = Registry.ITEM.getOrEmpty(new Identifier(c.getArgument("item", String.class).replace(" ", "_")));
@@ -92,7 +93,7 @@ public class AutoSell {
 
 
         node.then(literal("stats").executes(c -> {
-            ClientPlayerEntity entityPlayer = MinecraftClient.getInstance().player;
+            ClientPlayerEntity entityPlayer = PlayerUtils.getPlayer();
             if (entityPlayer != null) {
                 entityPlayer.sendChatMessage("/statstracker global");
             }
@@ -149,7 +150,7 @@ public class AutoSell {
     }
 
     private void executeAutoSell() {
-        ClientPlayerEntity player = MinecraftClient.getInstance().player;
+        ClientPlayerEntity player = PlayerUtils.getPlayer();
         if (player == null) return;
         long time = System.currentTimeMillis();
         if (time - 200 < lastSell) return;

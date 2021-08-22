@@ -32,6 +32,7 @@ public class PlayerWarps implements NbtLoadable, NbtSavable {
     private Map<String, Vec3i> farms = new HashMap<>();
     private Map<String, Vec3i> other = new HashMap<>();
     private Map<String, Vec3i> all = new HashMap<>();
+    private Map<String, Vec3i> hidden = new HashMap<>();
 
     PlayerWarps() {
     }
@@ -42,12 +43,14 @@ public class PlayerWarps implements NbtLoadable, NbtSavable {
         farms.clear();
         other.clear();
         all.clear();
+        hidden.clear();
 
         shops = map(tag.getCompound("shops"));
         builds = map(tag.getCompound("builds"));
         farms = map(tag.getCompound("farms"));
         other = map(tag.getCompound("other"));
         all = map(tag.getCompound("all"));
+        hidden = map(tag.getCompound("all"));
     }
 
     public NbtCompound save() {
@@ -57,6 +60,7 @@ public class PlayerWarps implements NbtLoadable, NbtSavable {
         tag.put("farms", tag(farms));
         tag.put("other", tag(other));
         tag.put("all", tag(all));
+        tag.put("hidden", tag(hidden));
         return tag;
     }
 
@@ -90,6 +94,7 @@ public class PlayerWarps implements NbtLoadable, NbtSavable {
         cmd.then(CommandManager.literal("farms").executes(c -> fetchData(farms, 14)));
         cmd.then(CommandManager.literal("other").executes(c -> fetchData(other, 16)));
         cmd.then(CommandManager.literal("all").executes(c -> fetchData(all, 4)));
+        cmd.then(CommandManager.literal("hidden").executes(c -> fetchData(hidden, 22)));
         cmd.then(CommandManager.literal("*").executes(c -> fetchData()));
         return cmd;
     }
@@ -101,6 +106,7 @@ public class PlayerWarps implements NbtLoadable, NbtSavable {
         q.add(new RunnableTask(() -> fetchData(tm, q, builds, 12)));
         q.add(new RunnableTask(() -> fetchData(tm, q, farms, 14)));
         q.add(new RunnableTask(() -> fetchData(tm, q, other, 16)));
+        q.add(new RunnableTask(() -> fetchData(tm, q, hidden, 22)));
         q.add(new RunnableTask(() -> {
             Screen screen = MinecraftClient.getInstance().currentScreen;
             if (screen == null) return;
@@ -123,6 +129,7 @@ public class PlayerWarps implements NbtLoadable, NbtSavable {
     }
 
     private void fetchData(TaskManager tm, Queue<ITask> endTask, Map<String, Vec3i> map, int slot) {
+        map.clear();
         tm.then(new RunnableTask(() -> PlayerUtils.messageC2S("/pw")));
         tm.then(new WaitForInventoryNameTask(Pattern.compile(". PlayerWarps - Kategorien")));
         tm.then(new RunnableTask(() -> PlayerUtils.clickSlot(slot)));
@@ -193,5 +200,9 @@ public class PlayerWarps implements NbtLoadable, NbtSavable {
 
     public Map<String, Vec3i> getAll() {
         return all;
+    }
+
+    public Map<String, Vec3i> getHidden() {
+        return hidden;
     }
 }

@@ -2,6 +2,7 @@ package at.haha007.edenclient.mods;
 
 import at.haha007.edenclient.callbacks.ConfigLoadCallback;
 import at.haha007.edenclient.callbacks.ConfigSaveCallback;
+import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.Scheduler;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -84,7 +85,7 @@ public class WorldEditReplaceHelper {
                 return 0;
             }
 
-            ClientPlayerEntity entityPlayer = MinecraftClient.getInstance().player;
+            ClientPlayerEntity entityPlayer = PlayerUtils.getPlayer();
             if (entityPlayer == null) {
                 sendModMessage("Error");
                 return 1;
@@ -102,7 +103,7 @@ public class WorldEditReplaceHelper {
                 return 0;
             }
 
-            ClientPlayerEntity entityPlayer = MinecraftClient.getInstance().player;
+            ClientPlayerEntity entityPlayer = PlayerUtils.getPlayer();
             if (entityPlayer == null) {
                 sendModMessage("Error");
                 return 1;
@@ -124,7 +125,7 @@ public class WorldEditReplaceHelper {
 
         node.then(literal("togglemessages").executes(c -> {
 
-            ClientPlayerEntity entityPlayer = MinecraftClient.getInstance().player;
+            ClientPlayerEntity entityPlayer = PlayerUtils.getPlayer();
             if (entityPlayer == null) {
                 sendModMessage("Error");
                 return 1;
@@ -386,7 +387,7 @@ public class WorldEditReplaceHelper {
     }
 
     private void sendStandardReplaceCommand(Block fromBlock, Block toBlock, String appendix) {
-        ClientPlayerEntity entityPlayer = MinecraftClient.getInstance().player;
+        ClientPlayerEntity entityPlayer = PlayerUtils.getPlayer();
         if (entityPlayer == null) {
             sendModMessage("Error");
             return;

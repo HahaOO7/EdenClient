@@ -2,6 +2,7 @@ package at.haha007.edenclient.mods;
 
 import at.haha007.edenclient.callbacks.ConfigLoadCallback;
 import at.haha007.edenclient.callbacks.ConfigSaveCallback;
+import at.haha007.edenclient.utils.PlayerUtils;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -53,7 +54,7 @@ public class Rainbowifier {
                 sendModMessage(new LiteralText("Your message is too long.").formatted(Formatting.GOLD));
                 return 0;
             }
-            ClientPlayerEntity entityPlayer = MinecraftClient.getInstance().player;
+            ClientPlayerEntity entityPlayer = PlayerUtils.getPlayer();
             if (entityPlayer != null) {
                 entityPlayer.sendChatMessage(rainbowifyMessageFancy(input));
             }
@@ -67,7 +68,7 @@ public class Rainbowifier {
                 sendModMessage(new LiteralText("Your message is too long.").formatted(Formatting.GOLD));
                 return 0;
             }
-            ClientPlayerEntity entityPlayer = MinecraftClient.getInstance().player;
+            ClientPlayerEntity entityPlayer = PlayerUtils.getPlayer();
             if (entityPlayer != null) {
                 entityPlayer.sendChatMessage(rainbowifyMessageSimple(input));
             }
@@ -85,7 +86,7 @@ public class Rainbowifier {
                     return 0;
                 }
             }
-            ClientPlayerEntity entityPlayer = MinecraftClient.getInstance().player;
+            ClientPlayerEntity entityPlayer = PlayerUtils.getPlayer();
             if (entityPlayer != null) {
                 entityPlayer.sendChatMessage(message);
             }
@@ -102,7 +103,7 @@ public class Rainbowifier {
                     return 0;
                 }
             }
-            ClientPlayerEntity entityPlayer = MinecraftClient.getInstance().player;
+            ClientPlayerEntity entityPlayer = PlayerUtils.getPlayer();
             if (entityPlayer != null) {
                 entityPlayer.sendChatMessage(message);
             }

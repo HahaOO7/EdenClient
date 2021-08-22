@@ -3,6 +3,7 @@ package at.haha007.edenclient.mixin;
 import at.haha007.edenclient.callbacks.PlayerEditSignCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.command.CommandManager;
+import at.haha007.edenclient.utils.PlayerUtils;
 import net.minecraft.block.entity.SignBlockEntity;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientCommandSource;
@@ -32,7 +33,7 @@ public abstract class ClientPlayerMixin {
             method = "openEditSignScreen",
             cancellable = true)
     private void onEditSign(SignBlockEntity sign, CallbackInfo info) {
-        ActionResult result = PlayerEditSignCallback.EVENT.invoker().interact(MinecraftClient.getInstance().player, sign);
+        ActionResult result = PlayerEditSignCallback.EVENT.invoker().interact(PlayerUtils.getPlayer(), sign);
         if (result == ActionResult.FAIL) info.cancel();
     }
 
@@ -40,7 +41,7 @@ public abstract class ClientPlayerMixin {
             method = "tick",
             cancellable = true)
     void tickMovement(CallbackInfo ci) {
-        PlayerTickCallback.EVENT.invoker().interact(MinecraftClient.getInstance().player);
+        PlayerTickCallback.EVENT.invoker().interact(PlayerUtils.getPlayer());
     }
 
     @Inject(at = @At("HEAD"),
