@@ -128,4 +128,14 @@ public class ChestShopEntry {
     public ChunkPos getChunkPos() {
         return new ChunkPos(new BlockPos(pos));
     }
+
+    public String formattedString(boolean buy) {
+        return String.format(
+                "%s [%d, %d, %d] for %.2f$/item",
+                getOwner(),
+                getPos().getX(),
+                getPos().getY(),
+                getPos().getZ(),
+                buy ? getBuyPricePerItem() : getSellPricePerItem());
+    }
 }

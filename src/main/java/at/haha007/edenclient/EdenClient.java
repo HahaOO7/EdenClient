@@ -2,7 +2,7 @@ package at.haha007.edenclient;
 
 import at.haha007.edenclient.mods.*;
 import at.haha007.edenclient.mods.chestshop.ChestShopMod;
-import at.haha007.edenclient.mods.WorldEditReplaceHelper;
+import at.haha007.edenclient.mods.datafetcher.DataFetcher;
 import at.haha007.edenclient.utils.PerWorldConfig;
 import at.haha007.edenclient.utils.Scheduler;
 import net.fabricmc.api.ClientModInitializer;
@@ -13,12 +13,15 @@ import java.io.File;
 public class EdenClient implements ClientModInitializer {
     public static EdenClient INSTANCE;
     private MessageIgnorer messageIgnorer;
+    private DataFetcher dataFetcher;
 
     @Override
     public void onInitializeClient() {
         INSTANCE = this;
         PerWorldConfig.getInstance();
         Scheduler.get();
+
+        dataFetcher = new DataFetcher();
 
         // Chat | These Mods interact with each message being sent to the client (in descending order)
         new SellStatsTracker();
@@ -46,6 +49,10 @@ public class EdenClient implements ClientModInitializer {
 
     public MessageIgnorer getMessageIgnorer() {
         return messageIgnorer;
+    }
+
+    public DataFetcher getDataFetcher() {
+        return dataFetcher;
     }
 
     public static File getDataFolder() {

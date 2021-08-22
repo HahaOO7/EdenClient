@@ -1,25 +1,19 @@
 package at.haha007.edenclient.mods.chestshop;
 
 import at.haha007.edenclient.EdenClient;
-import at.haha007.edenclient.callbacks.AddChatMessageCallback;
 import at.haha007.edenclient.callbacks.ConfigLoadCallback;
 import at.haha007.edenclient.callbacks.ConfigSaveCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
-import at.haha007.edenclient.mods.MessageIgnorer;
+import at.haha007.edenclient.mods.datafetcher.ChestShopItemNames;
 import at.haha007.edenclient.utils.PlayerUtils;
-import at.haha007.edenclient.utils.Scheduler;
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.block.entity.SignBlockEntity;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientCommandSource;
 import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.item.Item;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtList;
 import net.minecraft.text.ClickEvent;
@@ -27,10 +21,8 @@ import net.minecraft.text.HoverEvent;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.Style;
 import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
 import net.minecraft.util.math.ChunkPos;
-import net.minecraft.util.registry.DefaultedRegistry;
-import net.minecraft.util.registry.Registry;
+import net.minecraft.util.math.Vec3i;
 import net.minecraft.world.chunk.ChunkManager;
 import net.minecraft.world.chunk.WorldChunk;
 
@@ -41,10 +33,6 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Predicate;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static at.haha007.edenclient.command.CommandManager.*;
@@ -53,11 +41,8 @@ import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 public class ChestShopMod {
 
     private final Map<ChunkPos, Set<ChestShopEntry>> shops = new HashMap<>();
-    private final BiMap<String, String> itemNameMap = HashBiMap.create();
     private int[] chunk = {0, 0};
     private boolean searchEnabled = true;
-    private String lastFullNameCached = null;
-    private boolean nameLookupRunning = false;
 
     public ChestShopMod() {
         registerCommand("chestshop");
@@ -65,7 +50,6 @@ public class ChestShopMod {
         PlayerTickCallback.EVENT.register(this::tick);
         ConfigLoadCallback.EVENT.register(this::loadConfig);
         ConfigSaveCallback.EVENT.register(this::saveConfig);
-        AddChatMessageCallback.EVENT.register(this::onChat);
     }
 
     private void tick(ClientPlayerEntity player) {
@@ -74,26 +58,6 @@ public class ChestShopMod {
         if (!searchEnabled) return;
         this.chunk = chunk;
         checkForShops(player);
-    }
-
-    private void onChat(AddChatMessageCallback.ChatAddEvent event) {
-        String message = event.getChatText().getString();
-        String fullNameMessageSyntax = "Voller Name: (?<originalname>[A-Za-z0-9_ ]{1,40})";
-        String shortenedNameMessageSyntax = "Shop Schild: (?<shortenedname>[A-Za-z0-9_ ]{1,40})";
-
-        Matcher fullNameMatcher = Pattern.compile(fullNameMessageSyntax).matcher(message);
-        Matcher shortenedNameMatcher = Pattern.compile(shortenedNameMessageSyntax).matcher(message);
-
-        if (fullNameMatcher.matches()) {
-            lastFullNameCached = fullNameMatcher.group("originalname");
-        }
-
-        if (lastFullNameCached != null && shortenedNameMatcher.matches()) {
-            itemNameMap.put(shortenedNameMatcher.group("shortenedname").toLowerCase(), lastFullNameCached.toLowerCase());
-            System.out.println("Item mapped: " + lastFullNameCached);
-            lastFullNameCached = null;
-        }
-
     }
 
     private void checkForShops(ChunkManager cm, ChunkPos chunk) {
@@ -137,34 +101,45 @@ public class ChestShopMod {
 
         node.then(literal("sell").then(argument("item", StringArgumentType.greedyString()).suggests(this::suggestSell).executes(c -> {
             sendModMessage("Sell: ");
-            String item = itemNameMap.inverse().get(c.getArgument("item", String.class));
+            String item = EdenClient.INSTANCE.getDataFetcher().getChestShopItemNames().getShortName(c.getArgument("item", String.class));
             List<ChestShopEntry> matching = new ArrayList<>();
 
             shops.values().forEach(m -> m.stream().filter(ChestShopEntry::canSell).
                     filter(e -> e.getItem().equals(item)).forEach(matching::add));
-            matching.stream().sorted(Comparator.comparingDouble(ChestShopEntry::getSellPricePerItem).reversed()).limit(10).map(cs -> String.format(
-                    "%s [%d, %d, %d] for %.2f$/item",
-                    cs.getOwner(),
-                    cs.getPos().getX(),
-                    cs.getPos().getY(),
-                    cs.getPos().getZ(),
-                    cs.getSellPricePerItem())).forEach(PlayerUtils::sendModMessage);
+            matching.stream().sorted(Comparator.comparingDouble(ChestShopEntry::getSellPricePerItem).reversed())
+                    .limit(10)
+                    .map(cs -> {
+                        Optional<Map.Entry<String, Vec3i>> opw = getNearestPlayerWarp(cs.getPos());
+                        Style style = Style.EMPTY.withColor(Formatting.GOLD);
+                        if (opw.isPresent()) {
+                            style = style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new LiteralText("/pw " + opw.get().getKey())));
+                            style = style.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/pw " + opw.get().getKey()));
+
+                        }
+                        return new LiteralText(cs.formattedString(false)).setStyle(style);
+                    }).forEach(PlayerUtils::sendModMessage);
             return 1;
         })));
 
         node.then(literal("buy").then(argument("item", StringArgumentType.greedyString()).suggests(this::suggestBuy).executes(c -> {
-            String item = itemNameMap.inverse().get(c.getArgument("item", String.class));
+            String item = EdenClient.INSTANCE.getDataFetcher().getChestShopItemNames().getShortName(c.getArgument("item", String.class));
             sendModMessage("Buy: ");
             List<ChestShopEntry> matching = new ArrayList<>();
             shops.values().forEach(m -> m.stream().filter(ChestShopEntry::canBuy).
                     filter(e -> e.getItem().equals(item)).forEach(matching::add));
-            matching.stream().sorted(Comparator.comparingDouble(ChestShopEntry::getBuyPricePerItem)).limit(10).map(cs -> String.format(
-                    "%s [%d, %d, %d] for %.2f$/item",
-                    cs.getOwner(),
-                    cs.getPos().getX(),
-                    cs.getPos().getY(),
-                    cs.getPos().getZ(),
-                    cs.getBuyPricePerItem())).forEach(PlayerUtils::sendModMessage);
+            matching.stream().sorted(Comparator.comparingDouble(ChestShopEntry::getBuyPricePerItem))
+                    .limit(10)
+                    .map(cs -> {
+                        Optional<Map.Entry<String, Vec3i>> opw = getNearestPlayerWarp(cs.getPos());
+                        Style style = Style.EMPTY.withColor(Formatting.GOLD);
+                        if (opw.isPresent()) {
+                            style = style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new LiteralText("/pw " + opw.get().getKey())));
+                            style = style.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/pw " + opw.get().getKey()));
+
+                        }
+                        return new LiteralText(cs.formattedString(true)).setStyle(style);
+                    })
+                    .forEach(PlayerUtils::sendModMessage);
             return 1;
         })));
 
@@ -208,7 +183,7 @@ public class ChestShopMod {
             keys.addAll(buyEntries.keySet());
             keys.addAll(sellEntries.keySet());
             keys = keys.stream().sorted(Comparator.comparing(s -> s)).collect(Collectors.toList());
-
+            ChestShopItemNames itemNameMap = EdenClient.INSTANCE.getDataFetcher().getChestShopItemNames();
             for (String key : keys) {
                 List<ChestShopEntry> currentBuyEntries = buyEntries.get(key);
                 if (currentBuyEntries != null)
@@ -222,7 +197,7 @@ public class ChestShopMod {
                 else
                     currentSellEntries = new ArrayList<>();
 
-                String originalName = itemNameMap.get(key);
+                String originalName = itemNameMap.getLongName(key);
                 if (originalName == null) originalName = key;
 
                 lines.add(originalName + ":");
@@ -270,81 +245,6 @@ public class ChestShopMod {
             return 1;
         }));
 
-        LiteralArgumentBuilder<ClientCommandSource> mapItemNames = literal("mapitemnames");
-        mapItemNames.executes(c -> {
-            sendModMessage("/chestshop mapitemnames <start/check>");
-            return 1;
-        });
-
-        mapItemNames.then(literal("start").executes(c -> {
-            ClientPlayerEntity entityPlayer = MinecraftClient.getInstance().player;
-            if (entityPlayer == null) return -1;
-
-            if (nameLookupRunning) {
-                sendModMessage("Mapping of item names already running!");
-                return -1;
-            }
-
-            MessageIgnorer mi = EdenClient.INSTANCE.getMessageIgnorer();
-            mi.enable(MessageIgnorer.Predefined.ITEM_INFO);
-
-            boolean wasMessageIgnoringEnabled = mi.isEnabled();
-            mi.setEnabled(true);
-
-
-            DefaultedRegistry<Item> itemRegistry = Registry.ITEM;
-            String[] minecraftIDs = itemRegistry.stream()
-                    .map(itemRegistry::getId)
-                    .map(Identifier::toString)
-                    .map(itemName -> itemName.split(":")[1])
-                    .map(itemName -> itemName.replace('_', ' '))
-                    .map(String::toLowerCase)
-                    .filter(Predicate.not(itemNameMap::containsValue))
-                    .toList().toArray(new String[0]);
-            sendModMessage(new LiteralText("Startet Mapping. Mapping will take about ").formatted(Formatting.GOLD)
-                    .append(new LiteralText(Integer.toString(minecraftIDs.length / 60 + 1)).formatted(Formatting.AQUA))
-                    .append(new LiteralText(" minutes.").formatted(Formatting.GOLD)));
-
-            AtomicInteger index = new AtomicInteger();
-            nameLookupRunning = true;
-            Scheduler.get().scheduleSyncRepeating(() -> {
-                int i = index.getAndIncrement();
-                if (i >= minecraftIDs.length) {
-                    sendModMessage("Finished mapping of all items! Disconnect from the world now to save all items into the config properly! They will be loaded the next time you join the world.");
-                    Scheduler.get().scheduleSyncDelayed(() -> {
-                        nameLookupRunning = false;
-                        mi.disable(MessageIgnorer.Predefined.ITEM_INFO);
-                        mi.setEnabled(wasMessageIgnoringEnabled);
-                    }, 50);
-                    return false;
-                }
-                String item = minecraftIDs[i];
-                System.out.println("Mapping item:" + item);
-                entityPlayer.sendChatMessage("/iteminfo " + item);
-                if (i % 60 == 0) {
-                    sendModMessage(new LiteralText("Mapped ").formatted(Formatting.GOLD)
-                            .append(new LiteralText("" + i).formatted(Formatting.AQUA))
-                            .append(new LiteralText(" items of ").formatted(Formatting.GOLD))
-                            .append(new LiteralText("" + minecraftIDs.length).formatted(Formatting.AQUA))
-                            .append(new LiteralText(" this far.").formatted(Formatting.GOLD)));
-                }
-                return true;
-            }, 20, 0);
-            return 1;
-        }));
-        mapItemNames.then(literal("reset").executes(c -> {
-            sendModMessage("Mapped item names cleared.");
-            itemNameMap.clear();
-            return 1;
-        }));
-
-        mapItemNames.then(literal("check").executes(c -> {
-            sendModMessage(new LiteralText("Amount of items mapped: ").formatted(Formatting.GOLD)
-                    .append(new LiteralText("" + itemNameMap.size()).formatted(Formatting.AQUA)));
-            return 1;
-        }));
-        node.then(mapItemNames);
-
         node.executes(c -> {
             sendModMessage("/chestshop sell itemtype");
             sendModMessage("/chestshop buy itemtype");
@@ -360,7 +260,7 @@ public class ChestShopMod {
         Map<String, List<ChestShopEntry>> buyEntries = getBuyShops();
         Map<String, List<ChestShopEntry>> sellEntries = getSellShops();
         List<String> exploitableShopsText = new ArrayList<>();
-
+        ChestShopItemNames itemNameMap = EdenClient.INSTANCE.getDataFetcher().getChestShopItemNames();
         for (Map.Entry<String, List<ChestShopEntry>> entry : buyEntries.entrySet().stream().sorted(Map.Entry.comparingByKey()).collect(Collectors.toList())) {
             if (!sellEntries.containsKey(entry.getKey())) continue;
             List<ChestShopEntry> currentSellEntries = sellEntries.get(entry.getKey()).stream().sorted(Comparator.comparingDouble(ChestShopEntry::getSellPricePerItem).reversed()).collect(Collectors.toList());
@@ -373,7 +273,7 @@ public class ChestShopMod {
             if (currentSellEntry.getSellPricePerItem() <= currentBuyEntry.getBuyPricePerItem())
                 continue;
 
-            String nameOfItem = itemNameMap.get(entry.getKey());
+            String nameOfItem = itemNameMap.getLongName(entry.getKey());
             exploitableShopsText.add(nameOfItem + ":");
 
             while (currentSellEntry.getSellPricePerItem() > currentBuyEntry.getBuyPricePerItem()) {
@@ -419,15 +319,19 @@ public class ChestShopMod {
         return buyEntries;
     }
 
-    private CompletableFuture<Suggestions> suggestSell
-            (CommandContext<ClientCommandSource> context, SuggestionsBuilder suggestionsBuilder) {
-        shops.values().forEach(s -> s.stream().filter(ChestShopEntry::canSell).map(entry -> itemNameMap.get(entry.getItem())).filter(Objects::nonNull).forEach(suggestionsBuilder::suggest));
+    private Optional<Map.Entry<String, Vec3i>> getNearestPlayerWarp(Vec3i pos) {
+        return EdenClient.INSTANCE.getDataFetcher().getPlayerWarps().getShops().entrySet().stream().min(Comparator.comparingDouble(e -> e.getValue().getSquaredDistance(pos)));
+    }
+
+    private CompletableFuture<Suggestions> suggestSell(CommandContext<ClientCommandSource> context, SuggestionsBuilder suggestionsBuilder) {
+        ChestShopItemNames itemNameMap = EdenClient.INSTANCE.getDataFetcher().getChestShopItemNames();
+        shops.values().forEach(s -> s.stream().filter(ChestShopEntry::canSell).map(entry -> itemNameMap.getLongName(entry.getItem())).filter(Objects::nonNull).forEach(suggestionsBuilder::suggest));
         return suggestionsBuilder.buildFuture();
     }
 
-    private CompletableFuture<Suggestions> suggestBuy
-            (CommandContext<ClientCommandSource> context, SuggestionsBuilder suggestionsBuilder) {
-        shops.values().forEach(s -> s.stream().filter(ChestShopEntry::canBuy).map(entry -> itemNameMap.get(entry.getItem())).filter(Objects::nonNull).forEach(suggestionsBuilder::suggest));
+    private CompletableFuture<Suggestions> suggestBuy(CommandContext<ClientCommandSource> context, SuggestionsBuilder suggestionsBuilder) {
+        ChestShopItemNames itemNameMap = EdenClient.INSTANCE.getDataFetcher().getChestShopItemNames();
+        shops.values().forEach(s -> s.stream().filter(ChestShopEntry::canBuy).map(entry -> itemNameMap.getLongName(entry.getItem())).filter(Objects::nonNull).forEach(suggestionsBuilder::suggest));
         return suggestionsBuilder.buildFuture();
     }
 
@@ -443,10 +347,6 @@ public class ChestShopMod {
                     else
                         shops.put(entry.getChunkPos(), new HashSet<>(Set.of(entry)));
                 });
-        itemNameMap.clear();
-        NbtCompound mappedNamesCompound = tag.getCompound("itemNames");
-        mappedNamesCompound.getKeys().forEach(k -> itemNameMap.put(k, mappedNamesCompound.getString(k)));
-        nameLookupRunning = false;
     }
 
     private void saveConfig(NbtCompound overTag) {
@@ -454,9 +354,6 @@ public class ChestShopMod {
         tag.putBoolean("enabled", searchEnabled);
         NbtList list = new NbtList();
         shops.values().forEach(m -> m.forEach(cs -> list.add(cs.toTag())));
-        NbtCompound mappedNamesCompound = new NbtCompound();
-        itemNameMap.forEach(mappedNamesCompound::putString);
-        tag.put("itemNames", mappedNamesCompound);
         tag.put("entries", list);
         overTag.put("chestShop", tag);
     }

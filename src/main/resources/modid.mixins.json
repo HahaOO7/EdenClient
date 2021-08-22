@@ -10,6 +10,7 @@
     "ClientPlayerMixin",
     "ClientPlayNetworkHandlerMixin",
     "EntityRendererMixin",
+    "HandledScreenMixin",
     "ItemRendererMixin",
     "MinecraftClientMixin",
     "PlayerControllerMixin",
