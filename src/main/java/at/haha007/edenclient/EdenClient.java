@@ -3,6 +3,7 @@ package at.haha007.edenclient;
 import at.haha007.edenclient.mods.*;
 import at.haha007.edenclient.mods.chestshop.ChestShopMod;
 import at.haha007.edenclient.mods.WorldEditReplaceHelper;
+import at.haha007.edenclient.mods.datafetcher.DataFetcher;
 import at.haha007.edenclient.utils.PerWorldConfig;
 import at.haha007.edenclient.utils.Scheduler;
 import net.fabricmc.api.ClientModInitializer;
@@ -42,6 +43,7 @@ public class EdenClient implements ClientModInitializer {
         new Rainbowifier();
         new NbtInfo();
         new WorldEditReplaceHelper();
+        new DataFetcher();
     }
 
     public MessageIgnorer getMessageIgnorer() {

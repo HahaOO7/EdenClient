@@ -24,4 +24,8 @@ public class MathUtils {
     public static int clamp(int n, int min, int max) {
         return Math.max(min, Math.min(n, max));
     }
+
+    public static int integer(String string) {
+        return Integer.parseInt(string);
+    }
 }
