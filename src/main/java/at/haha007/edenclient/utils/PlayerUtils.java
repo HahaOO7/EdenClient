@@ -16,8 +16,7 @@ public class PlayerUtils {
     private static final Text prefix = new LiteralText("[EC] ").setStyle(Style.EMPTY.withFormatting(Formatting.LIGHT_PURPLE, Formatting.BOLD));
 
     public static void messageC2S(String msg) {
-        ClientPlayerEntity player =PlayerUtils.getPlayer();
-        if (player == null || msg.length() > 256) return;
+        ClientPlayerEntity player = PlayerUtils.getPlayer();
         player.sendChatMessage(msg);
     }
 
@@ -47,11 +46,14 @@ public class PlayerUtils {
 
     public static void clickSlot(int slotId) {
         Screen screen = MinecraftClient.getInstance().currentScreen;
-        if(!(screen instanceof GenericContainerScreen gcs))return;
+        if (!(screen instanceof GenericContainerScreen gcs)) return;
         ((IHandledScreen) screen).clickMouse(gcs.getScreenHandler().slots.get(slotId), slotId, 0, SlotActionType.PICKUP_ALL);
     }
 
     public static ClientPlayerEntity getPlayer() {
-        return MinecraftClient.getInstance().player;
+        ClientPlayerEntity player = MinecraftClient.getInstance().player;
+        if (player == null)
+            throw new NullPointerException("Player is null.");
+        return player;
     }
 }

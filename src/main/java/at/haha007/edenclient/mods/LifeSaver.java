@@ -90,9 +90,6 @@ public class LifeSaver {
 
         if (clientPlayerEntity.getY() < height || clientPlayerEntity.getHealth() < health) {
             ClientPlayerEntity entityPlayer = PlayerUtils.getPlayer();
-            if (entityPlayer == null) {
-                return;
-            }
 
             sendModMessage("Trying to save your life!");
 

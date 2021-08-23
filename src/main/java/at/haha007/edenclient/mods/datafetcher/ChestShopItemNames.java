@@ -88,7 +88,6 @@ public class ChestShopItemNames implements NbtLoadable, NbtSavable {
 
         mapItemNames.then(literal("start").executes(c -> {
             ClientPlayerEntity entityPlayer = PlayerUtils.getPlayer();
-            if (entityPlayer == null) return -1;
 
             if (nameLookupRunning) {
                 sendModMessage("Mapping of item names already running!");

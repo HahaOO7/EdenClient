@@ -17,10 +17,6 @@ public class NbtInfo {
     public NbtInfo() {
         CommandManager.register(CommandManager.literal("nbt").executes(c -> {
             ClientPlayerEntity player = PlayerUtils.getPlayer();
-            if (player == null){
-                sendModMessage(new LiteralText("Error: Player is null!").formatted(Formatting.GOLD));
-                return 0;
-            }
             PlayerInventory inv = player.getInventory();
             ItemStack stack = inv.getMainHandStack();
             if (stack.isEmpty()) {
