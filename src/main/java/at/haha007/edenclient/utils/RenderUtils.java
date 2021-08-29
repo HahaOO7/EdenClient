@@ -2,6 +2,7 @@ package at.haha007.edenclient.utils;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gl.VertexBuffer;
 import net.minecraft.client.render.*;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.BlockPos;
@@ -31,6 +32,53 @@ public enum RenderUtils {
     public static BlockPos getCameraBlockPos() {
         return MinecraftClient.getInstance().getBlockEntityRenderDispatcher().camera
                 .getBlockPos();
+    }
+
+
+    public static void drawOutlinedBox(Box bb, VertexBuffer vertexBuffer) {
+        BufferBuilder bufferBuilder = Tessellator.getInstance().getBuffer();
+
+        bufferBuilder.begin(VertexFormat.DrawMode.DEBUG_LINES, VertexFormats.POSITION);
+
+        bufferBuilder.vertex(bb.minX, bb.minY, bb.minZ).next();
+        bufferBuilder.vertex(bb.maxX, bb.minY, bb.minZ).next();
+
+        bufferBuilder.vertex(bb.maxX, bb.minY, bb.minZ).next();
+        bufferBuilder.vertex(bb.maxX, bb.minY, bb.maxZ).next();
+
+        bufferBuilder.vertex(bb.maxX, bb.minY, bb.maxZ).next();
+        bufferBuilder.vertex(bb.minX, bb.minY, bb.maxZ).next();
+
+        bufferBuilder.vertex(bb.minX, bb.minY, bb.maxZ).next();
+        bufferBuilder.vertex(bb.minX, bb.minY, bb.minZ).next();
+
+        bufferBuilder.vertex(bb.minX, bb.minY, bb.minZ).next();
+        bufferBuilder.vertex(bb.minX, bb.maxY, bb.minZ).next();
+
+        bufferBuilder.vertex(bb.maxX, bb.minY, bb.minZ).next();
+        bufferBuilder.vertex(bb.maxX, bb.maxY, bb.minZ).next();
+
+        bufferBuilder.vertex(bb.maxX, bb.minY, bb.maxZ).next();
+        bufferBuilder.vertex(bb.maxX, bb.maxY, bb.maxZ).next();
+
+        bufferBuilder.vertex(bb.minX, bb.minY, bb.maxZ).next();
+        bufferBuilder.vertex(bb.minX, bb.maxY, bb.maxZ).next();
+
+        bufferBuilder.vertex(bb.minX, bb.maxY, bb.minZ).next();
+        bufferBuilder.vertex(bb.maxX, bb.maxY, bb.minZ).next();
+
+        bufferBuilder.vertex(bb.maxX, bb.maxY, bb.minZ).next();
+        bufferBuilder.vertex(bb.maxX, bb.maxY, bb.maxZ).next();
+
+        bufferBuilder.vertex(bb.maxX, bb.maxY, bb.maxZ).next();
+        bufferBuilder.vertex(bb.minX, bb.maxY, bb.maxZ).next();
+
+        bufferBuilder.vertex(bb.minX, bb.maxY, bb.maxZ).next();
+        bufferBuilder.vertex(bb.minX, bb.maxY, bb.minZ).next();
+
+        bufferBuilder.end();
+
+        vertexBuffer.upload(bufferBuilder);
     }
 
     public static void drawSolidBox(Box bb, MatrixStack matrixStack, float r, float g, float b) {

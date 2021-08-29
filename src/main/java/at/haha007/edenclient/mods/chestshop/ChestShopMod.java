@@ -141,10 +141,15 @@ public class ChestShopMod {
                     .map(cs -> {
                         Optional<Map.Entry<String, Vec3i>> opw = getNearestPlayerWarp(cs.getPos());
                         Style style = Style.EMPTY.withColor(Formatting.GOLD);
-                        if (opw.isPresent()) {
-                            style = style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new LiteralText("/pw " + opw.get().getKey())));
-                            style = style.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/pw " + opw.get().getKey()));
 
+                        if (opw.isPresent()) {
+                            Vec3i pos = cs.getPos();
+                            String boxPosStr = pos.getX() + " " + pos.getY() + " " + pos.getZ();
+                            String cmd = "/multicommand pw " + opw.get().getKey() +
+                                    " %|% rendershape box " + boxPosStr + " " + boxPosStr + " 10" +
+                                    " %|% rendershape tracer " + boxPosStr + " 10";
+                            style = style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new LiteralText("click me!").formatted(Formatting.GOLD)));
+                            style = style.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, cmd));
                         }
                         return new LiteralText(cs.formattedString(false)).setStyle(style);
                     }).forEach(PlayerUtils::sendModMessage);
@@ -163,9 +168,13 @@ public class ChestShopMod {
                         Optional<Map.Entry<String, Vec3i>> opw = getNearestPlayerWarp(cs.getPos());
                         Style style = Style.EMPTY.withColor(Formatting.GOLD);
                         if (opw.isPresent()) {
-                            style = style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new LiteralText("/pw " + opw.get().getKey())));
-                            style = style.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/pw " + opw.get().getKey()));
-
+                            Vec3i pos = cs.getPos();
+                            String boxPosStr = pos.getX() + " " + pos.getY() + " " + pos.getZ();
+                            String cmd = "/multicommand pw " + opw.get().getKey() +
+                                    " %|% rendershape box " + boxPosStr + " " + boxPosStr + " 10" +
+                                    " %|% rendershape tracer " + boxPosStr + " 10";
+                            style = style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new LiteralText("click me!").formatted(Formatting.GOLD)));
+                            style = style.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, cmd));
                         }
                         return new LiteralText(cs.formattedString(true)).setStyle(style);
                     })
@@ -362,7 +371,7 @@ public class ChestShopMod {
     }
 
     private Optional<Map.Entry<String, Vec3i>> getNearestPlayerWarp(Vec3i pos) {
-        return EdenClient.INSTANCE.getDataFetcher().getPlayerWarps().getShops().entrySet().stream().min(Comparator.comparingDouble(e -> e.getValue().getSquaredDistance(pos)));
+        return EdenClient.INSTANCE.getDataFetcher().getPlayerWarps().getAll().entrySet().stream().min(Comparator.comparingDouble(e -> e.getValue().getSquaredDistance(pos)));
     }
 
     private CompletableFuture<Suggestions> suggestSell(CommandContext<ClientCommandSource> context, SuggestionsBuilder suggestionsBuilder) {
