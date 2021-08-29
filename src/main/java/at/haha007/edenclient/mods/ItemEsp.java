@@ -6,7 +6,6 @@ import at.haha007.edenclient.callbacks.GameRenderCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.utils.RenderUtils;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.brigadier.arguments.FloatArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
@@ -31,7 +30,6 @@ import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
 public class ItemEsp {
     boolean enabled = false;
-    float size = 1.0f;
     float r, g, b;
     boolean solid;
     List<ItemEntity> items = new ArrayList<>();
@@ -82,8 +80,6 @@ public class ItemEsp {
             solid = tag.getBoolean("solid");
         else
             solid = false;
-        if (tag.contains("size")) size = tag.getFloat("size");
-        else size = 1.0f;
         if (tag.contains("r")) r = tag.getFloat("r");
         else r = 1;
         if (tag.contains("g")) g = tag.getFloat("g");
@@ -103,7 +99,6 @@ public class ItemEsp {
         NbtCompound tag = new NbtCompound();
         tag.putBoolean("enabled", enabled);
         tag.putBoolean("solid", solid);
-        tag.putFloat("size", size);
         tag.putFloat("r", r);
         tag.putFloat("g", g);
         tag.putFloat("b", b);
@@ -128,12 +123,6 @@ public class ItemEsp {
             sendModMessage(new LiteralText("Item ESP " + (solid ? "solid" : "transparent")).formatted(Formatting.GOLD));
             return 1;
         }));
-
-        node.then(literal("size").then(argument("size", FloatArgumentType.floatArg(0.1f)).executes(c -> {
-            size = c.getArgument("size", Float.class);
-            sendModMessage(new LiteralText("Size: " + size).formatted(Formatting.GOLD));
-            return 1;
-        })));
 
         node.then(literal("color").then(arg("r").then(arg("g").then(arg("b").executes(c -> {
             setColor(c);

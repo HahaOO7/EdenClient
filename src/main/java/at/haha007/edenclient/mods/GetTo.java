@@ -125,7 +125,7 @@ public class GetTo {
         Vec3i pp = PlayerUtils.getPlayer().getBlockPos();
         return EdenClient.INSTANCE.getDataFetcher().getPlayerWarps().getAll().entrySet().stream()
                 .min(Comparator.comparingDouble(e -> e.getValue().getSquaredDistance(pos)))
-                .map(e -> dist(e.getValue(), pp) < dist(e.getValue(), pos) ? null : e.getKey());
+                .map(e -> dist(pos, pp) < dist(e.getValue(), pos) ? null : e.getKey());
     }
 
     private double dist(Vec3i a, Vec3i b) {
