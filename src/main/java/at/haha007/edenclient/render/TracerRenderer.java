@@ -1,5 +1,6 @@
 package at.haha007.edenclient.render;
 
+import at.haha007.edenclient.callbacks.ConfigSaveCallback;
 import at.haha007.edenclient.callbacks.GameRenderCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.utils.PlayerUtils;
@@ -8,6 +9,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.render.*;
 import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.util.math.Matrix4f;
 import net.minecraft.util.math.Vec3d;
 
@@ -22,6 +24,11 @@ public class TracerRenderer {
     public TracerRenderer() {
         GameRenderCallback.EVENT.register(this::render);
         PlayerTickCallback.EVENT.register(this::tick);
+        ConfigSaveCallback.EVENT.register(this::save);
+    }
+
+    private void save(NbtCompound nbtCompound) {
+        tracers.clear();
     }
 
     private void tick(ClientPlayerEntity player) {

@@ -41,6 +41,7 @@ public class CubeRenderer {
 
     private void save(NbtCompound nbtCompound) {
         box.close();
+        cubes.clear();
     }
 
     private void load(NbtCompound nbtCompound) {
