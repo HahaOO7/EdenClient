@@ -72,7 +72,6 @@ public class ChestShopMod {
         shops.put(chunk, cs);
     }
 
-
     private void checkForShops(ClientPlayerEntity player, int radius) {
         ChunkManager cm = player.clientWorld.getChunkManager();
         ChunkPos.stream(player.getChunkPos(), radius).forEach(cp -> checkForShops(cm, cp));
@@ -145,9 +144,7 @@ public class ChestShopMod {
                         if (opw.isPresent()) {
                             Vec3i pos = cs.getPos();
                             String boxPosStr = pos.getX() + " " + pos.getY() + " " + pos.getZ();
-                            String cmd = "/multicommand pw " + opw.get().getKey() +
-                                    " %|% rendershape box " + boxPosStr + " " + boxPosStr + " 10" +
-                                    " %|% rendershape tracer " + boxPosStr + " 10";
+                            String cmd = "/getto " + boxPosStr;
                             style = style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new LiteralText("click me!").formatted(Formatting.GOLD)));
                             style = style.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, cmd));
                         }
@@ -170,9 +167,7 @@ public class ChestShopMod {
                         if (opw.isPresent()) {
                             Vec3i pos = cs.getPos();
                             String boxPosStr = pos.getX() + " " + pos.getY() + " " + pos.getZ();
-                            String cmd = "/multicommand pw " + opw.get().getKey() +
-                                    " %|% rendershape box " + boxPosStr + " " + boxPosStr + " 10" +
-                                    " %|% rendershape tracer " + boxPosStr + " 10";
+                            String cmd = "/getto " + boxPosStr;
                             style = style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new LiteralText("click me!").formatted(Formatting.GOLD)));
                             style = style.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, cmd));
                         }

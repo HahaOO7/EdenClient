@@ -46,13 +46,13 @@ public class EdenClient implements ClientModInitializer {
         new SignCopy();
         new Nuker();
         new LifeSaver();
+        new GetTo();
 
         // Commands only | These Mods only actively interact with your gameplay when directly using its commands
         new Rainbowifier();
         new NbtInfo();
         new WorldEditReplaceHelper();
         new RenderShape();
-        new MultiCommand();
     }
 
     public MessageIgnorer getMessageIgnorer() {
