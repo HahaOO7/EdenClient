@@ -119,7 +119,7 @@ public class EntityEsp {
 
         nbtCompound.put("entityEsp", tag);
 
-        entities.clear();
+        this.entities.clear();
         wireframeBox.close();
         solidBox.close();
     }
