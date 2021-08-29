@@ -2,21 +2,29 @@ package at.haha007.edenclient.mods;
 
 import at.haha007.edenclient.callbacks.ConfigLoadCallback;
 import at.haha007.edenclient.callbacks.ConfigSaveCallback;
-import at.haha007.edenclient.callbacks.ItemRenderCallback;
+import at.haha007.edenclient.callbacks.GameRenderCallback;
+import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.utils.RenderUtils;
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.brigadier.arguments.FloatArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
+import net.minecraft.client.gl.VertexBuffer;
 import net.minecraft.client.network.ClientCommandSource;
+import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.client.render.GameRenderer;
+import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.Formatting;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
@@ -26,12 +34,42 @@ public class ItemEsp {
     float size = 1.0f;
     float r, g, b;
     boolean solid;
+    List<ItemEntity> items = new ArrayList<>();
+    private VertexBuffer wireframeBox;
+    private VertexBuffer solidBox;
+
 
     public ItemEsp() {
-        ItemRenderCallback.EVENT.register(this::renderItem);
         registerCommand();
         ConfigSaveCallback.EVENT.register(this::onSave);
         ConfigLoadCallback.EVENT.register(this::onLoad);
+        GameRenderCallback.EVENT.register(this::render);
+        PlayerTickCallback.EVENT.register(this::tick);
+    }
+
+    private void tick(ClientPlayerEntity player) {
+        items = player.getEntityWorld().getEntitiesByClass(ItemEntity.class, player.getBoundingBox().expand(10000, 500, 10000), i -> true);
+    }
+
+
+    private void render(MatrixStack matrixStack, VertexConsumerProvider.Immediate vertexConsumerProvider, float tickDelta) {
+        if (!enabled) return;
+        RenderSystem.setShader(GameRenderer::getPositionShader);
+        RenderSystem.setShaderColor(r, g, b, 1);
+        RenderSystem.disableDepthTest();
+        Runnable drawBoxTask =
+                solid ? () -> solidBox.setShader(matrixStack.peek().getModel(), RenderSystem.getProjectionMatrix(), RenderSystem.getShader())
+                        : () -> wireframeBox.setShader(matrixStack.peek().getModel(), RenderSystem.getProjectionMatrix(), RenderSystem.getShader());
+        for (ItemEntity target : items) {
+            matrixStack.push();
+            matrixStack.translate(
+                    target.prevX + (target.getX() - target.prevX) * tickDelta,
+                    target.prevY + (target.getY() - target.prevY) * tickDelta,
+                    target.prevZ + (target.getZ() - target.prevZ) * tickDelta
+            );
+            drawBoxTask.run();
+            matrixStack.pop();
+        }
     }
 
     private void onLoad(NbtCompound compoundTag) {
@@ -52,6 +90,13 @@ public class ItemEsp {
         else g = 1;
         if (tag.contains("b")) b = tag.getFloat("b");
         else b = 1;
+
+        wireframeBox = new VertexBuffer();
+        Box bb = new Box(-0.25, -0.0, -0.25, 0.25, 0.5, 0.25);
+        RenderUtils.drawOutlinedBox(bb, wireframeBox);
+
+        solidBox = new VertexBuffer();
+        RenderUtils.drawSolidBox(bb, solidBox);
     }
 
     private void onSave(NbtCompound compoundTag) {
@@ -63,6 +108,10 @@ public class ItemEsp {
         tag.putFloat("g", g);
         tag.putFloat("b", b);
         compoundTag.put("itemesp", tag);
+
+        items.clear();
+        wireframeBox.close();
+        solidBox.close();
     }
 
     private void registerCommand() {
@@ -102,43 +151,13 @@ public class ItemEsp {
     }
 
     RequiredArgumentBuilder<ClientCommandSource, Integer> arg(String key) {
-        return argument(key, IntegerArgumentType.integer(0, 255));
+        return argument(key, IntegerArgumentType.integer(0, 256));
     }
 
     private void setColor(CommandContext<ClientCommandSource> c) {
-        this.r = c.getArgument("r", Integer.class);
-        this.g = c.getArgument("g", Integer.class);
-        this.b = c.getArgument("b", Integer.class);
+        this.r = c.getArgument("r", Integer.class) / 256f;
+        this.g = c.getArgument("g", Integer.class) / 256f;
+        this.b = c.getArgument("b", Integer.class) / 256f;
         sendModMessage(new LiteralText("Color updated.").formatted(Formatting.GOLD));
-    }
-
-    private void renderItem(ItemEntity itemEntity, float yaw, float tickDelta, int light, MatrixStack matrixStack) {
-        if (!enabled) return;
-
-        matrixStack.push();
-
-        RenderUtils.applyRegionalRenderOffset(matrixStack);
-        matrixStack.push();
-
-        BlockPos camPos = RenderUtils.getCameraBlockPos();
-        int regionX = (camPos.getX() >> 9) * 512;
-        int regionZ = (camPos.getZ() >> 9) * 512;
-
-        matrixStack.translate(
-                itemEntity.prevX + (itemEntity.getX() - itemEntity.prevX) * tickDelta - regionX,
-                itemEntity.prevY + (itemEntity.getY() - itemEntity.prevY) * tickDelta,
-                itemEntity.prevZ + (itemEntity.getZ() - itemEntity.prevZ) * tickDelta - regionZ);
-
-        matrixStack.push();
-        matrixStack.scale(size, size, size);
-
-        if (solid)
-            RenderUtils.drawSolidBox(new Box(-0.5, 0, -0.5, 0.5, 1, 0.5), matrixStack, r, g, b);
-        else
-            RenderUtils.drawOutlinedBox(new Box(-0.5, 0, -0.5, 0.5, 1, 0.5), matrixStack, r, g, b);
-
-        matrixStack.pop();
-        matrixStack.pop();
-        matrixStack.pop();
     }
 }
