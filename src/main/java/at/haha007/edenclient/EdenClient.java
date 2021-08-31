@@ -41,6 +41,7 @@ public class EdenClient implements ClientModInitializer {
         new BarrierDisplay();
         new ItemEsp();
         new EntityEsp();
+        new TileEntityEsp();
         new AntiStrip();
         new AutoSheer();
         new SignCopy();

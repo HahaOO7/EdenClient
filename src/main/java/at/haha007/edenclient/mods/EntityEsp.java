@@ -60,12 +60,23 @@ public class EntityEsp {
     }
 
     private void tick(ClientPlayerEntity player) {
+        if (!enabled) {
+            entities = new ArrayList<>();
+            return;
+        }
         entities = player.getEntityWorld().getEntitiesByClass(Entity.class,
                 player.getBoundingBox().expand(10000, 500, 10000),
                 e -> Arrays.binarySearch(entityTypes, e.getType(), Comparator.comparing(Object::hashCode)) >= 0);
     }
 
     private void load(NbtCompound nbtCompound) {
+        wireframeBox = new VertexBuffer();
+        Box bb = new Box(-0.5, 0, -0.5, 0.5, 1, 0.5);
+        RenderUtils.drawOutlinedBox(bb, wireframeBox);
+
+        solidBox = new VertexBuffer();
+        RenderUtils.drawSolidBox(bb, solidBox);
+
         var tag = nbtCompound.getCompound("entityEsp");
         if (tag.isEmpty()) {
             enabled = false;
@@ -92,13 +103,6 @@ public class EntityEsp {
                 .toArray(new EntityType[0]);
 
         Arrays.sort(entityTypes, Comparator.comparing(Object::hashCode));
-
-        wireframeBox = new VertexBuffer();
-        Box bb = new Box(-0.5, 0, -0.5, 0.5, 1, 0.5);
-        RenderUtils.drawOutlinedBox(bb, wireframeBox);
-
-        solidBox = new VertexBuffer();
-        RenderUtils.drawSolidBox(bb, solidBox);
     }
 
     private void save(NbtCompound nbtCompound) {
