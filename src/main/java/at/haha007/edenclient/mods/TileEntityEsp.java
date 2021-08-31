@@ -12,6 +12,7 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
+import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.client.gl.VertexBuffer;
 import net.minecraft.client.network.ClientCommandSource;
 import net.minecraft.client.network.ClientPlayerEntity;
@@ -19,14 +20,17 @@ import net.minecraft.client.render.*;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.client.world.ClientChunkManager;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtElement;
+import net.minecraft.nbt.NbtList;
+import net.minecraft.nbt.NbtString;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.*;
+import net.minecraft.util.registry.Registry;
 import net.minecraft.world.chunk.WorldChunk;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 import static at.haha007.edenclient.command.CommandManager.argument;
 import static at.haha007.edenclient.command.CommandManager.literal;
@@ -37,6 +41,7 @@ public class TileEntityEsp {
     boolean tracer;
     int r, g, b, distance, maxCount;
     List<Vec3i> tileEntities = new ArrayList<>();
+    Set<BlockEntityType<?>> types = new HashSet<>();
     private VertexBuffer wireframeBox;
 
     public TileEntityEsp() {
@@ -59,8 +64,10 @@ public class TileEntityEsp {
                 .flatMap(cp -> {
                     WorldChunk wc = cm.getWorldChunk(cp.x, cp.z, false);
                     if (wc == null) return null;
-                    return wc.getBlockEntities().keySet().stream();
+                    return wc.getBlockEntities().entrySet().stream();
                 })
+                .filter(e -> types.contains(e.getValue().getType()))
+                .map(Map.Entry::getKey)
                 .sorted(Comparator.comparingDouble(pos -> pos.getSquaredDistance(pp)))
                 .limit(maxCount)
                 .map(v -> (Vec3i) v).toList();
@@ -72,6 +79,7 @@ public class TileEntityEsp {
         RenderUtils.drawOutlinedBox(bb, wireframeBox);
 
         NbtCompound tag = nbtCompound.getCompound("tileEntityEsp");
+        types = new HashSet<>();
         if (tag.isEmpty()) {
             enabled = false;
             r = g = b = 255;
@@ -86,6 +94,11 @@ public class TileEntityEsp {
         r = tag.getInt("r");
         g = tag.getInt("g");
         b = tag.getInt("b");
+
+        Registry<BlockEntityType<?>> registry = Registry.BLOCK_ENTITY_TYPE;
+        for (NbtElement nbtElement : tag.getList("types", NbtElement.STRING_TYPE)) {
+            types.add(registry.get(new Identifier(nbtElement.asString())));
+        }
 
         distance = tag.getInt("distance");
         maxCount = tag.getInt("maxCount");
@@ -105,6 +118,14 @@ public class TileEntityEsp {
 
         nbtCompound.put("tileEntityEsp", tag);
 
+        Registry<BlockEntityType<?>> registry = Registry.BLOCK_ENTITY_TYPE;
+        NbtList nbtTypeList = new NbtList();
+        for (BlockEntityType<?> type : types) {
+            nbtTypeList.add(NbtString.of(Objects.requireNonNull(registry.getId(type)).toString()));
+        }
+        tag.put("types", nbtTypeList);
+
+
         tileEntities = new ArrayList<>();
         wireframeBox.close();
         wireframeBox = null;
@@ -119,6 +140,22 @@ public class TileEntityEsp {
             return 1;
         });
 
+        Registry<BlockEntityType<?>> registry = Registry.BLOCK_ENTITY_TYPE;
+
+        for (BlockEntityType<?> type : registry) {
+            toggle.then(literal(Objects.requireNonNull(registry.getId(type)).toString().replace("minecraft:", ""))
+                    .executes(c -> {
+                        if (types.contains(type)) {
+                            types.remove(type);
+                            sendModMessage("TileEntityType removed");
+                        } else {
+                            types.add(type);
+                            sendModMessage("TileEntityType added");
+                        }
+                        return 1;
+                    }));
+        }
+
         cmd.then(literal("tracer").executes(c -> {
             tracer = !tracer;
             sendModMessage(tracer ? "Tracer enabled" : "Tracer disabled");
@@ -131,6 +168,8 @@ public class TileEntityEsp {
             return 1;
         }).then(argument("dist", IntegerArgumentType.integer(1)).executes(c -> {
             distance = c.getArgument("dist", Integer.class);
+            sendModMessage(new LiteralText("Distance: ").formatted(Formatting.GOLD)
+                    .append(new LiteralText(Integer.toString(distance)).formatted(Formatting.AQUA)));
             return 1;
         })));
 
@@ -140,6 +179,8 @@ public class TileEntityEsp {
             return 1;
         }).then(argument("count", IntegerArgumentType.integer(1)).executes(c -> {
             maxCount = c.getArgument("count", Integer.class);
+            sendModMessage(new LiteralText("Max count: ").formatted(Formatting.GOLD)
+                    .append(new LiteralText(Integer.toString(maxCount)).formatted(Formatting.AQUA)));
             return 1;
         })));
 
