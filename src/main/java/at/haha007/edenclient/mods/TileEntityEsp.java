@@ -136,7 +136,7 @@ public class TileEntityEsp {
         LiteralArgumentBuilder<ClientCommandSource> toggle = literal("toggle");
         toggle.executes(c -> {
             enabled = !enabled;
-            sendModMessage(enabled ? "EntityEsp enabled" : "EntityEsp disabled");
+            sendModMessage(enabled ? "TileEntityEsp enabled" : "TileEntityEsp disabled");
             return 1;
         });
 

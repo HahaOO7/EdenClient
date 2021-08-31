@@ -94,13 +94,13 @@ public class ChestShopMod {
             var shops = EdenClient.INSTANCE.getDataFetcher().getPlayerWarps().getShops();
             TaskManager tm = new TaskManager((shops.size() + 2) * 120);
             sendModMessage(gold("Teleporting to all player warps, this will take about ")
-                    .append(aqua(Integer.toString(shops.size() * 5)))
+                    .append(aqua(Integer.toString(shops.size() * 6)))
                     .append(gold(" seconds")));
             int count = shops.size();
             AtomicInteger i = new AtomicInteger(1);
             for (String shop : shops.keySet()) {
                 tm.then(new RunnableTask(() -> PlayerUtils.messageC2S("/pw " + shop)));
-                tm.then(new WaitForTicksTask(100)); //wait for chunks to load
+                tm.then(new WaitForTicksTask(120)); //wait for chunks to load
                 tm.then(new RunnableTask(() -> sendModMessage(gold("Shop ")
                         .append(aqua((i.getAndIncrement())))
                         .append(gold("/"))

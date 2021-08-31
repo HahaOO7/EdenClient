@@ -34,6 +34,7 @@ public class EdenClient implements ClientModInitializer {
         new ChestShopMod();
         messageIgnorer = new MessageIgnorer();
         new WordHighlighter();
+        new Greetings();
         new AntiSpam();
 
         // Gameplay | These Mods interact with your gameplay passively

@@ -66,7 +66,7 @@ public class EntityEsp {
         }
         entities = player.getEntityWorld().getEntitiesByClass(Entity.class,
                 player.getBoundingBox().expand(10000, 500, 10000),
-                e -> Arrays.binarySearch(entityTypes, e.getType(), Comparator.comparing(Object::hashCode)) >= 0);
+                e -> e.isAlive() && Arrays.binarySearch(entityTypes, e.getType(), Comparator.comparing(Object::hashCode)) >= 0);
     }
 
     private void load(NbtCompound nbtCompound) {
