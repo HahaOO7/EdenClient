@@ -141,13 +141,12 @@ public class ChestShopMod {
                         Optional<Map.Entry<String, Vec3i>> opw = getNearestPlayerWarp(cs.getPos());
                         Style style = Style.EMPTY.withColor(Formatting.GOLD);
 
-                        if (opw.isPresent()) {
-                            Vec3i pos = cs.getPos();
-                            String boxPosStr = pos.getX() + " " + pos.getY() + " " + pos.getZ();
-                            String cmd = "/getto " + boxPosStr;
-                            style = style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new LiteralText("click me!").formatted(Formatting.GOLD)));
-                            style = style.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, cmd));
-                        }
+                        Vec3i pos = cs.getPos();
+                        String boxPosStr = pos.getX() + " " + pos.getY() + " " + pos.getZ();
+                        String cmd = "/getto " + boxPosStr;
+                        Text hoverText = new LiteralText(opw.isPresent() ? opw.get().getKey() : "click me!").formatted(Formatting.GOLD);
+                        style = style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hoverText));
+                        style = style.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, cmd));
                         return new LiteralText(cs.formattedString(false)).setStyle(style);
                     }).forEach(PlayerUtils::sendModMessage);
             return 1;
@@ -164,13 +163,12 @@ public class ChestShopMod {
                     .map(cs -> {
                         Optional<Map.Entry<String, Vec3i>> opw = getNearestPlayerWarp(cs.getPos());
                         Style style = Style.EMPTY.withColor(Formatting.GOLD);
-                        if (opw.isPresent()) {
-                            Vec3i pos = cs.getPos();
-                            String boxPosStr = pos.getX() + " " + pos.getY() + " " + pos.getZ();
-                            String cmd = "/getto " + boxPosStr;
-                            style = style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new LiteralText("click me!").formatted(Formatting.GOLD)));
-                            style = style.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, cmd));
-                        }
+                        Vec3i pos = cs.getPos();
+                        String boxPosStr = pos.getX() + " " + pos.getY() + " " + pos.getZ();
+                        String cmd = "/getto " + boxPosStr;
+                        Text hoverText = new LiteralText(opw.isPresent() ? opw.get().getKey() : "click me!").formatted(Formatting.GOLD);
+                        style = style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hoverText));
+                        style = style.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, cmd));
                         return new LiteralText(cs.formattedString(true)).setStyle(style);
                     })
                     .forEach(PlayerUtils::sendModMessage);
@@ -289,6 +287,17 @@ public class ChestShopMod {
         });
         register(node);
     }
+
+//    private Optional<String> getNearestPlayerWarp(Vec3i pos) {
+//        Vec3i pp = PlayerUtils.getPlayer().getBlockPos();
+//        return EdenClient.INSTANCE.getDataFetcher().getPlayerWarps().getAll().entrySet().stream()
+//                .min(Comparator.comparingDouble(e -> e.getValue().getSquaredDistance(pos)))
+//                .map(e -> dist(pos, pp) < dist(e.getValue(), pos) ? null : e.getKey());
+//    }
+//
+//    private double dist(Vec3i a, Vec3i b) {
+//        return a.getSquaredDistance(b);
+//    }
 
     private MutableText gold(String string) {
         return new LiteralText(string).formatted(Formatting.GOLD);
