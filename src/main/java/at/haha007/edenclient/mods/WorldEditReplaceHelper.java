@@ -12,7 +12,6 @@ import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.block.*;
 import net.minecraft.block.enums.*;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientCommandSource;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.nbt.NbtCompound;
@@ -85,8 +84,6 @@ public class WorldEditReplaceHelper {
                 return 0;
             }
 
-            ClientPlayerEntity entityPlayer = PlayerUtils.getPlayer();
-
             replaceUndoRequest(Registry.BLOCK.get(new Identifier(undoCommandStack.getFirst()[0])), Registry.BLOCK.get(new Identifier(undoCommandStack.getFirst()[1])), delay);
             redoCommandStack.addFirst(new String[]{undoCommandStack.getFirst()[1], undoCommandStack.getFirst()[0]});
             undoCommandStack.removeFirst();
@@ -98,8 +95,6 @@ public class WorldEditReplaceHelper {
                 sendModMessage("Nothing left to redo.");
                 return 0;
             }
-
-            ClientPlayerEntity entityPlayer = PlayerUtils.getPlayer();
 
             replaceRedoRequest(Registry.BLOCK.get(new Identifier(redoCommandStack.getFirst()[0])), Registry.BLOCK.get(new Identifier(redoCommandStack.getFirst()[1])), delay);
             undoCommandStack.addFirst(new String[]{redoCommandStack.getFirst()[1], redoCommandStack.getFirst()[0]});
