@@ -17,9 +17,7 @@ import net.minecraft.nbt.NbtList;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.Formatting;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -32,9 +30,12 @@ public class Greetings {
     private Set<String> sentPlayers;
     private Set<String> quitPlayers;
     private Set<String> ignoredPlayers;
-    private String newPlayer;
-    private String wbText;
-    private String oldPlayer;
+    private Map<String, String> specificPlayerGreetMessages;
+    private Map<String, String> specificPlayerWBMessages;
+    private String welcomeNewPlayerMessage;
+    private String greetReturningPlayerMessage;
+    private String greetOldPlayerMessage;
+    private final Random random = new Random();
 
     public Greetings() {
         registerCommand();
@@ -48,22 +49,26 @@ public class Greetings {
         sentPlayers = new HashSet<>();
         quitPlayers = new HashSet<>();
         ignoredPlayers = new HashSet<>();
+        specificPlayerGreetMessages = new HashMap<>();
+        specificPlayerWBMessages = new HashMap<>();
         if (tag.isEmpty()) {
             enabled = false;
             minDelay = 1200;
             wbDelay = 1200;
-            newPlayer = "Hey %player%";
-            oldPlayer = "Hey %player%";
-            wbText = "Wb %player%";
+            welcomeNewPlayerMessage = "Hey %player%";
+            greetOldPlayerMessage = "Hey %player%";
+            greetReturningPlayerMessage = "Wb %player%";
             return;
         }
         enabled = tag.getBoolean("enabled");
         minDelay = tag.getInt("delay");
         wbDelay = Math.min(tag.getInt("wbDelay"), 20);
-        newPlayer = tag.getString("newPlayer");
-        oldPlayer = tag.getString("oldPlayer");
-        wbText = tag.getString("wbText");
+        welcomeNewPlayerMessage = tag.getString("newPlayer");
+        greetOldPlayerMessage = tag.getString("oldPlayer");
+        greetReturningPlayerMessage = tag.getString("wbText");
         ignoredPlayers = tag.getList("ignoredPlayers", 10).stream().map(nbt -> (NbtCompound) nbt).map(nbtCompound1 -> nbtCompound1.getString("player")).collect(Collectors.toSet());
+        tag.getList("specificGreetMessageList", 10).stream().map(nbt -> (NbtCompound) nbt).forEach(nbt -> specificPlayerGreetMessages.put(nbt.getString("player"), nbt.getString("message")));
+        tag.getList("specificWBMessageList", 10).stream().map(nbt -> (NbtCompound) nbt).forEach(nbt -> specificPlayerWBMessages.put(nbt.getString("player"), nbt.getString("message")));
     }
 
     private void save(NbtCompound nbtCompound) {
@@ -71,9 +76,10 @@ public class Greetings {
         tag.putBoolean("enabled", enabled);
         tag.putInt("delay", minDelay);
         tag.putInt("wbDelay", wbDelay);
-        tag.putString("newPlayer", newPlayer);
-        tag.putString("oldPlayer", oldPlayer);
-        tag.putString("wbText", wbText);
+        tag.putString("newPlayer", welcomeNewPlayerMessage);
+        tag.putString("oldPlayer", greetOldPlayerMessage);
+        tag.putString("wbText", greetReturningPlayerMessage);
+
         NbtList ignoredPlayersComp = new NbtList();
         ignoredPlayers.forEach(s -> {
             NbtCompound playerComp = new NbtCompound();
@@ -81,6 +87,25 @@ public class Greetings {
             ignoredPlayersComp.add(playerComp);
         });
         tag.put("ignoredPlayers", ignoredPlayersComp);
+
+        NbtList specificGreetMessageList = new NbtList();
+        specificPlayerGreetMessages.forEach((key, value) -> {
+            NbtCompound greetComp = new NbtCompound();
+            greetComp.putString("player", key);
+            greetComp.putString("message", value);
+            specificGreetMessageList.add(greetComp);
+        });
+        tag.put("specificGreetMessageList", specificGreetMessageList);
+
+        NbtList specificWBMessageList = new NbtList();
+        specificPlayerWBMessages.forEach((key, value) -> {
+            NbtCompound wbComp = new NbtCompound();
+            wbComp.putString("player", key);
+            wbComp.putString("message", value);
+            specificWBMessageList.add(wbComp);
+        });
+        tag.put("specificWBMessageList", specificWBMessageList);
+
         nbtCompound.put("greeting", tag);
     }
 
@@ -91,20 +116,20 @@ public class Greetings {
 
         if (msg.startsWith("[-] ")) {
             String name = msg.substring(4);
-            if (ignoredPlayers.contains(name.toLowerCase())) return;
             quitPlayers.add(name);
             Scheduler.get().scheduleSyncDelayed(() -> quitPlayers.remove(name), wbDelay);
         }
 
         if (msg.startsWith("[+] ")) {
             String name = msg.substring(4);
+            if (ignoredPlayers.contains(name.toLowerCase())) return;
             if (quitPlayers.contains(name))
-                addDelay(name, wbText);
+                addDelay(name, specificPlayerWBMessages.containsKey(name.toLowerCase()) ? specificPlayerWBMessages.get(name.toLowerCase()) : greetReturningPlayerMessage);
             else
-                addDelay(name, oldPlayer);
+                addDelay(name, specificPlayerGreetMessages.containsKey(name.toLowerCase()) ? specificPlayerGreetMessages.get(name.toLowerCase()) : greetOldPlayerMessage);
         } else if (msg.substring(1).startsWith(" Willkommen, ") && msg.endsWith(" :) Viel Spaß auf OpenMC!")) {
             String name = msg.substring(14, msg.length() - 25);
-            addDelay(name, newPlayer);
+            addDelay(name, welcomeNewPlayerMessage);
         }
     }
 
@@ -114,26 +139,26 @@ public class Greetings {
         Scheduler.get().scheduleSyncDelayed(() -> {
             PlayerUtils.messageC2S(message.replace("%player%", name));
             Scheduler.get().scheduleSyncDelayed(() -> sentPlayers.remove(name), minDelay);
-        }, 60);
+        }, random.nextInt(100) + 60);
     }
 
     private void registerCommand() {
         LiteralArgumentBuilder<ClientCommandSource> cmd = literal("greet");
 
         cmd.then(literal("new").then(argument("text", StringArgumentType.greedyString()).executes(c -> {
-            newPlayer = c.getArgument("text", String.class);
+            welcomeNewPlayerMessage = c.getArgument("text", String.class);
             PlayerUtils.sendModMessage("Message updated");
             return 1;
         })));
 
         cmd.then(literal("old").then(argument("text", StringArgumentType.greedyString()).executes(c -> {
-            oldPlayer = c.getArgument("text", String.class);
+            greetOldPlayerMessage = c.getArgument("text", String.class);
             PlayerUtils.sendModMessage("Message updated");
             return 1;
         })));
 
         cmd.then(literal("wb").then(argument("text", StringArgumentType.greedyString()).executes(c -> {
-            wbText = c.getArgument("text", String.class);
+            greetReturningPlayerMessage = c.getArgument("text", String.class);
             PlayerUtils.sendModMessage("Message updated");
             return 1;
         })));
@@ -197,6 +222,64 @@ public class Greetings {
             return 1;
         })));
 
+        cmd.then(literal("player").then(literal("greet").then(literal("add").then(argument("player", StringArgumentType.word()).then(argument("phrase", StringArgumentType.greedyString()).executes(c -> {
+            String player = c.getArgument("player", String.class);
+            if (!player.matches("[A-Za-z0-9_]{4,16}")) {
+                PlayerUtils.sendModMessage("Your input is not a valid username.");
+                return 0;
+            }
+            if (specificPlayerGreetMessages.containsKey(player.toLowerCase())) {
+                PlayerUtils.sendModMessage("Already contained an greet-entry for this player. Updated entry.");
+            } else {
+                PlayerUtils.sendModMessage("Added new greet-entry for player.");
+            }
+            specificPlayerGreetMessages.put(player.toLowerCase(), c.getArgument("phrase", String.class));
+
+            return 1;
+        }))))));
+
+        cmd.then(literal("player").then(literal("greet").then(literal("remove").then(argument("player", StringArgumentType.word()).suggests(this::suggestSpecificGreetMessagePlayers).executes(c -> {
+            String player = c.getArgument("player", String.class);
+
+            if (specificPlayerGreetMessages.remove(player.toLowerCase()) != null) {
+                PlayerUtils.sendModMessage(new LiteralText("Removed greet message for ").formatted(Formatting.GOLD)
+                        .append(new LiteralText(player)).formatted(Formatting.AQUA));
+            } else {
+                PlayerUtils.sendModMessage("No message found for that player.");
+            }
+
+            return 1;
+        })))));
+
+        cmd.then(literal("player").then(literal("welcomeback").then(literal("add").then(argument("player", StringArgumentType.word()).then(argument("phrase", StringArgumentType.greedyString()).executes(c -> {
+            String player = c.getArgument("player", String.class);
+            if (!player.matches("[A-Za-z0-9_]{4,16}")) {
+                PlayerUtils.sendModMessage("Your input is not a valid username.");
+                return 0;
+            }
+            if (specificPlayerWBMessages.containsKey(player.toLowerCase())) {
+                PlayerUtils.sendModMessage("Already contained a wb-entry for this player. Updated entry.");
+            } else {
+                PlayerUtils.sendModMessage("Added new wb-entry for player.");
+            }
+            specificPlayerWBMessages.put(player.toLowerCase(), c.getArgument("phrase", String.class));
+
+            return 1;
+        }))))));
+
+        cmd.then(literal("player").then(literal("welcomeback").then(literal("remove").then(argument("player", StringArgumentType.word()).suggests(this::suggestSpecificWBMessagePlayers).executes(c -> {
+            String player = c.getArgument("player", String.class);
+
+            if (specificPlayerWBMessages.remove(player.toLowerCase()) != null) {
+                PlayerUtils.sendModMessage(new LiteralText("Removed wb message for ").formatted(Formatting.GOLD)
+                        .append(new LiteralText(player)).formatted(Formatting.AQUA));
+            } else {
+                PlayerUtils.sendModMessage("No wb-message found for that player.");
+            }
+
+            return 1;
+        })))));
+
         register(cmd);
     }
 
@@ -204,4 +287,15 @@ public class Greetings {
         ignoredPlayers.forEach(suggestionsBuilder::suggest);
         return suggestionsBuilder.buildFuture();
     }
+
+    private CompletableFuture<Suggestions> suggestSpecificGreetMessagePlayers(CommandContext<ClientCommandSource> clientCommandSourceCommandContext, SuggestionsBuilder suggestionsBuilder) {
+        specificPlayerGreetMessages.keySet().forEach(suggestionsBuilder::suggest);
+        return suggestionsBuilder.buildFuture();
+    }
+
+    private CompletableFuture<Suggestions> suggestSpecificWBMessagePlayers(CommandContext<ClientCommandSource> clientCommandSourceCommandContext, SuggestionsBuilder suggestionsBuilder) {
+        specificPlayerWBMessages.keySet().forEach(suggestionsBuilder::suggest);
+        return suggestionsBuilder.buildFuture();
+    }
+
 }
