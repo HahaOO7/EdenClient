@@ -32,9 +32,9 @@ public class Greetings {
     private Set<String> ignoredPlayers;
     private Map<String, String> specificPlayerGreetMessages;
     private Map<String, String> specificPlayerWBMessages;
-    private String welcomeNewPlayerMessage;
-    private String greetReturningPlayerMessage;
-    private String greetOldPlayerMessage;
+    private List<String> welcomeNewPlayerMessages;
+    private List<String> welcomeBackPlayerMessages;
+    private List<String> greetOldPlayerMessages;
     private final Random random = new Random();
 
     public Greetings() {
@@ -55,17 +55,17 @@ public class Greetings {
             enabled = false;
             minDelay = 1200;
             wbDelay = 1200;
-            welcomeNewPlayerMessage = "Hey %player%";
-            greetOldPlayerMessage = "Hey %player%";
-            greetReturningPlayerMessage = "Wb %player%";
+            welcomeNewPlayerMessages = List.of("Hey %player%");
+            greetOldPlayerMessages = List.of("Hey %player%");
+            welcomeBackPlayerMessages = List.of("Wb %player%");
             return;
         }
         enabled = tag.getBoolean("enabled");
         minDelay = tag.getInt("delay");
         wbDelay = Math.min(tag.getInt("wbDelay"), 20);
-        welcomeNewPlayerMessage = tag.getString("newPlayer");
-        greetOldPlayerMessage = tag.getString("oldPlayer");
-        greetReturningPlayerMessage = tag.getString("wbText");
+        welcomeNewPlayerMessages = tag.getList("welcomeNewPlayerMessageList", 10).stream().map(nbt -> (NbtCompound) nbt).map(nbtCompound1 -> nbtCompound1.getString("player")).collect(Collectors.toList());
+        greetOldPlayerMessages = tag.getList("greetOldPlayerMessageList", 10).stream().map(nbt -> (NbtCompound) nbt).map(nbtCompound1 -> nbtCompound1.getString("player")).collect(Collectors.toList());
+        welcomeBackPlayerMessages = tag.getList("welcomeBackPlayerMessageList", 10).stream().map(nbt -> (NbtCompound) nbt).map(nbtCompound1 -> nbtCompound1.getString("player")).collect(Collectors.toList());
         ignoredPlayers = tag.getList("ignoredPlayers", 10).stream().map(nbt -> (NbtCompound) nbt).map(nbtCompound1 -> nbtCompound1.getString("player")).collect(Collectors.toSet());
         tag.getList("specificGreetMessageList", 10).stream().map(nbt -> (NbtCompound) nbt).forEach(nbt -> specificPlayerGreetMessages.put(nbt.getString("player"), nbt.getString("message")));
         tag.getList("specificWBMessageList", 10).stream().map(nbt -> (NbtCompound) nbt).forEach(nbt -> specificPlayerWBMessages.put(nbt.getString("player"), nbt.getString("message")));
@@ -76,9 +76,30 @@ public class Greetings {
         tag.putBoolean("enabled", enabled);
         tag.putInt("delay", minDelay);
         tag.putInt("wbDelay", wbDelay);
-        tag.putString("newPlayer", welcomeNewPlayerMessage);
-        tag.putString("oldPlayer", greetOldPlayerMessage);
-        tag.putString("wbText", greetReturningPlayerMessage);
+
+        NbtList welcomeNewPlayerMessageList = new NbtList();
+        welcomeNewPlayerMessages.forEach(s -> {
+            NbtCompound messageComp = new NbtCompound();
+            messageComp.putString("message", s);
+            welcomeNewPlayerMessageList.add(messageComp);
+        });
+        tag.put("welcomeNewPlayerMessageList", welcomeNewPlayerMessageList);
+
+        NbtList greetOldPlayerMessageList = new NbtList();
+        greetOldPlayerMessages.forEach(s -> {
+            NbtCompound messageComp = new NbtCompound();
+            messageComp.putString("message", s);
+            greetOldPlayerMessageList.add(messageComp);
+        });
+        tag.put("greetOldPlayerMessageList", greetOldPlayerMessageList);
+
+        NbtList welcomeBackPlayerMessageList = new NbtList();
+        welcomeBackPlayerMessages.forEach(s -> {
+            NbtCompound messageComp = new NbtCompound();
+            messageComp.putString("message", s);
+            welcomeBackPlayerMessageList.add(messageComp);
+        });
+        tag.put("welcomeBackPlayerMessageList", welcomeBackPlayerMessageList);
 
         NbtList ignoredPlayersComp = new NbtList();
         ignoredPlayers.forEach(s -> {
@@ -123,13 +144,17 @@ public class Greetings {
         if (msg.startsWith("[+] ")) {
             String name = msg.substring(4);
             if (ignoredPlayers.contains(name.toLowerCase())) return;
-            if (quitPlayers.contains(name))
-                addDelay(name, specificPlayerWBMessages.containsKey(name.toLowerCase()) ? specificPlayerWBMessages.get(name.toLowerCase()) : greetReturningPlayerMessage);
-            else
-                addDelay(name, specificPlayerGreetMessages.containsKey(name.toLowerCase()) ? specificPlayerGreetMessages.get(name.toLowerCase()) : greetOldPlayerMessage);
+            if (quitPlayers.contains(name)) {
+                Collections.shuffle(welcomeBackPlayerMessages);
+                addDelay(name, specificPlayerWBMessages.containsKey(name.toLowerCase()) ? specificPlayerWBMessages.get(name.toLowerCase()) : welcomeBackPlayerMessages.get(0));
+            } else {
+                Collections.shuffle(greetOldPlayerMessages);
+                addDelay(name, specificPlayerGreetMessages.containsKey(name.toLowerCase()) ? specificPlayerGreetMessages.get(name.toLowerCase()) : greetOldPlayerMessages.get(0));
+            }
         } else if (msg.substring(1).startsWith(" Willkommen, ") && msg.endsWith(" :) Viel Spaß auf OpenMC!")) {
             String name = msg.substring(14, msg.length() - 25);
-            addDelay(name, welcomeNewPlayerMessage);
+            Collections.shuffle(welcomeNewPlayerMessages);
+            addDelay(name, welcomeNewPlayerMessages.get(0));
         }
     }
 
@@ -145,21 +170,87 @@ public class Greetings {
     private void registerCommand() {
         LiteralArgumentBuilder<ClientCommandSource> cmd = literal("greet");
 
-        cmd.then(literal("new").then(argument("text", StringArgumentType.greedyString()).executes(c -> {
-            welcomeNewPlayerMessage = c.getArgument("text", String.class);
-            PlayerUtils.sendModMessage("Message updated");
+        cmd.then(literal("new").then(literal("add").then(argument("text", StringArgumentType.greedyString()).executes(c -> {
+            welcomeNewPlayerMessages.add(c.getArgument("text", String.class));
+            PlayerUtils.sendModMessage("Message added");
+            return 1;
+        }))));
+
+        cmd.then(literal("new").then(literal("remove").then(argument("text", StringArgumentType.greedyString()).suggests(this::suggestWelcomeNewPlayerMessages).executes(c -> {
+            if (welcomeNewPlayerMessages.remove(c.getArgument("text", String.class))) {
+                PlayerUtils.sendModMessage("Message removed");
+            } else {
+                PlayerUtils.sendModMessage("This message doesnt exist");
+            }
+            return 1;
+        }))));
+
+        cmd.then(literal("new").then(literal("list").executes(c -> {
+            List<String> newMessages = welcomeNewPlayerMessages.stream().toList();
+            if (newMessages.size() == 0){
+                PlayerUtils.sendModMessage("No messages registered.");
+            }
+            PlayerUtils.sendModMessage("Messages for new players:");
+            for (int i = 0; i < newMessages.size(); i++) {
+                PlayerUtils.sendModMessage(new LiteralText("[" + (i + 1) + "] ").formatted(Formatting.GOLD)
+                        .append(new LiteralText(newMessages.get(i)).formatted(Formatting.AQUA)));
+            }
             return 1;
         })));
 
-        cmd.then(literal("old").then(argument("text", StringArgumentType.greedyString()).executes(c -> {
-            greetOldPlayerMessage = c.getArgument("text", String.class);
-            PlayerUtils.sendModMessage("Message updated");
+        cmd.then(literal("old").then(literal("add").then(argument("text", StringArgumentType.greedyString()).executes(c -> {
+            greetOldPlayerMessages.add(c.getArgument("text", String.class));
+            PlayerUtils.sendModMessage("Message added");
+            return 1;
+        }))));
+
+        cmd.then(literal("old").then(literal("remove").then(argument("text", StringArgumentType.greedyString()).suggests(this::suggestWelcomeOldPlayerMessages).executes(c -> {
+            if (greetOldPlayerMessages.remove(c.getArgument("text", String.class))) {
+                PlayerUtils.sendModMessage("Message removed");
+            } else {
+                PlayerUtils.sendModMessage("This message doesnt exist");
+            }
+            return 1;
+        }))));
+
+        cmd.then(literal("old").then(literal("list").executes(c -> {
+            List<String> oldMessages = greetOldPlayerMessages.stream().toList();
+            if (oldMessages.size() == 0){
+                PlayerUtils.sendModMessage("No messages registered.");
+            }
+            PlayerUtils.sendModMessage("Messages for old players:");
+            for (int i = 0; i < oldMessages.size(); i++) {
+                PlayerUtils.sendModMessage(new LiteralText("[" + (i + 1) + "] ").formatted(Formatting.GOLD)
+                        .append(new LiteralText(oldMessages.get(i)).formatted(Formatting.AQUA)));
+            }
             return 1;
         })));
 
-        cmd.then(literal("wb").then(argument("text", StringArgumentType.greedyString()).executes(c -> {
-            greetReturningPlayerMessage = c.getArgument("text", String.class);
-            PlayerUtils.sendModMessage("Message updated");
+        cmd.then(literal("wb").then(literal("add").then(argument("text", StringArgumentType.greedyString()).executes(c -> {
+            welcomeBackPlayerMessages.add(c.getArgument("text", String.class));
+            PlayerUtils.sendModMessage("Message added");
+            return 1;
+        }))));
+
+        cmd.then(literal("wb").then(literal("remove").then(argument("text", StringArgumentType.greedyString()).suggests(this::suggestWelcomeBackPlayerMessages).executes(c -> {
+            if (welcomeBackPlayerMessages.remove(c.getArgument("text", String.class))) {
+                PlayerUtils.sendModMessage("Message removed");
+            } else {
+                PlayerUtils.sendModMessage("This message doesnt exist");
+            }
+            return 1;
+        }))));
+
+        cmd.then(literal("wb").then(literal("list").executes(c -> {
+            List<String> wbMessages = welcomeBackPlayerMessages.stream().toList();
+            if (wbMessages.size() == 0){
+                PlayerUtils.sendModMessage("No messages registered.");
+            }
+            PlayerUtils.sendModMessage("Messages for welcome-back players:");
+            for (int i = 0; i < wbMessages.size(); i++) {
+                PlayerUtils.sendModMessage(new LiteralText("[" + (i + 1) + "] ").formatted(Formatting.GOLD)
+                        .append(new LiteralText(wbMessages.get(i)).formatted(Formatting.AQUA)));
+            }
             return 1;
         })));
 
@@ -251,7 +342,21 @@ public class Greetings {
             return 1;
         })))));
 
-        cmd.then(literal("player").then(literal("welcomeback").then(literal("add").then(argument("player", StringArgumentType.word()).then(argument("phrase", StringArgumentType.greedyString()).executes(c -> {
+        cmd.then(literal("player").then(literal("greet").then(literal("list").executes(c -> {
+            if (specificPlayerGreetMessages.entrySet().size() == 0) {
+                PlayerUtils.sendModMessage("No specific messages for any player registered.");
+                return 0;
+            }
+
+            List<Map.Entry<String, String>> list = specificPlayerGreetMessages.entrySet().stream().toList();
+            for (int i = 0; i < list.size(); i++) {
+                PlayerUtils.sendModMessage(new LiteralText("[" + (i + 1) + "] ").formatted(Formatting.GOLD)
+                        .append(new LiteralText(String.format("%-17s - %s", list.get(i).getKey(), list.get(i).getValue())).formatted(Formatting.AQUA)));
+            }
+            return 1;
+        }))));
+
+        cmd.then(literal("player").then(literal("wb").then(literal("add").then(argument("player", StringArgumentType.word()).then(argument("phrase", StringArgumentType.greedyString()).executes(c -> {
             String player = c.getArgument("player", String.class);
             if (!player.matches("[A-Za-z0-9_]{4,16}")) {
                 PlayerUtils.sendModMessage("Your input is not a valid username.");
@@ -267,7 +372,7 @@ public class Greetings {
             return 1;
         }))))));
 
-        cmd.then(literal("player").then(literal("welcomeback").then(literal("remove").then(argument("player", StringArgumentType.word()).suggests(this::suggestSpecificWBMessagePlayers).executes(c -> {
+        cmd.then(literal("player").then(literal("wb").then(literal("remove").then(argument("player", StringArgumentType.word()).suggests(this::suggestSpecificWBMessagePlayers).executes(c -> {
             String player = c.getArgument("player", String.class);
 
             if (specificPlayerWBMessages.remove(player.toLowerCase()) != null) {
@@ -280,20 +385,55 @@ public class Greetings {
             return 1;
         })))));
 
+        cmd.then(literal("player").then(literal("wb").then(literal("list").executes(c -> {
+            if (specificPlayerWBMessages.entrySet().size() == 0) {
+                PlayerUtils.sendModMessage("No specific messages for any player registered.");
+                return 0;
+            }
+
+            List<Map.Entry<String, String>> list = specificPlayerWBMessages.entrySet().stream().toList();
+            for (int i = 0; i < list.size(); i++) {
+                PlayerUtils.sendModMessage(new LiteralText("[" + (i + 1) + "] ").formatted(Formatting.GOLD)
+                        .append(new LiteralText(String.format("%-17s - %s", list.get(i).getKey(), list.get(i).getValue())).formatted(Formatting.AQUA)));
+            }
+            return 1;
+        }))));
+
         register(cmd);
     }
 
-    private CompletableFuture<Suggestions> suggestIgnoredPlayers(CommandContext<ClientCommandSource> clientCommandSourceCommandContext, SuggestionsBuilder suggestionsBuilder) {
+    private CompletableFuture<Suggestions> suggestWelcomeBackPlayerMessages
+            (CommandContext<ClientCommandSource> clientCommandSourceCommandContext, SuggestionsBuilder suggestionsBuilder) {
+        welcomeBackPlayerMessages.forEach(suggestionsBuilder::suggest);
+        return suggestionsBuilder.buildFuture();
+    }
+
+    private CompletableFuture<Suggestions> suggestWelcomeOldPlayerMessages
+            (CommandContext<ClientCommandSource> clientCommandSourceCommandContext, SuggestionsBuilder suggestionsBuilder) {
+        greetOldPlayerMessages.forEach(suggestionsBuilder::suggest);
+        return suggestionsBuilder.buildFuture();
+    }
+
+    private CompletableFuture<Suggestions> suggestWelcomeNewPlayerMessages
+            (CommandContext<ClientCommandSource> clientCommandSourceCommandContext, SuggestionsBuilder suggestionsBuilder) {
+        welcomeNewPlayerMessages.forEach(suggestionsBuilder::suggest);
+        return suggestionsBuilder.buildFuture();
+    }
+
+    private CompletableFuture<Suggestions> suggestIgnoredPlayers
+            (CommandContext<ClientCommandSource> clientCommandSourceCommandContext, SuggestionsBuilder suggestionsBuilder) {
         ignoredPlayers.forEach(suggestionsBuilder::suggest);
         return suggestionsBuilder.buildFuture();
     }
 
-    private CompletableFuture<Suggestions> suggestSpecificGreetMessagePlayers(CommandContext<ClientCommandSource> clientCommandSourceCommandContext, SuggestionsBuilder suggestionsBuilder) {
+    private CompletableFuture<Suggestions> suggestSpecificGreetMessagePlayers
+            (CommandContext<ClientCommandSource> clientCommandSourceCommandContext, SuggestionsBuilder suggestionsBuilder) {
         specificPlayerGreetMessages.keySet().forEach(suggestionsBuilder::suggest);
         return suggestionsBuilder.buildFuture();
     }
 
-    private CompletableFuture<Suggestions> suggestSpecificWBMessagePlayers(CommandContext<ClientCommandSource> clientCommandSourceCommandContext, SuggestionsBuilder suggestionsBuilder) {
+    private CompletableFuture<Suggestions> suggestSpecificWBMessagePlayers
+            (CommandContext<ClientCommandSource> clientCommandSourceCommandContext, SuggestionsBuilder suggestionsBuilder) {
         specificPlayerWBMessages.keySet().forEach(suggestionsBuilder::suggest);
         return suggestionsBuilder.buildFuture();
     }
