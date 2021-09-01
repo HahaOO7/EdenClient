@@ -46,7 +46,7 @@ public class EntityEsp {
     private EntityType<?>[] entityTypes;
     boolean solid;
     boolean tracer;
-    int r, g, b;
+    float r, g, b;
     List<Entity> entities = new ArrayList<>();
     private VertexBuffer wireframeBox;
     private VertexBuffer solidBox;
@@ -89,9 +89,9 @@ public class EntityEsp {
         solid = tag.getBoolean("solid");
         tracer = tag.getBoolean("tracer");
 
-        r = tag.getInt("r");
-        g = tag.getInt("g");
-        b = tag.getInt("b");
+        r = tag.getFloat("r");
+        g = tag.getFloat("g");
+        b = tag.getFloat("b");
 
         NbtList entities = tag.getList("entityTypes", NbtElement.STRING_TYPE);
         DefaultedRegistry<EntityType<?>> registry = Registry.ENTITY_TYPE;
@@ -111,9 +111,9 @@ public class EntityEsp {
         tag.putBoolean("solid", solid);
         tag.putBoolean("tracer", tracer);
 
-        tag.putInt("r", r);
-        tag.putInt("g", g);
-        tag.putInt("b", b);
+        tag.putFloat("r", r);
+        tag.putFloat("g", g);
+        tag.putFloat("b", b);
 
         NbtList entities = new NbtList();
         for (EntityType<?> type : entityTypes) {
@@ -180,9 +180,9 @@ public class EntityEsp {
     }
 
     private int setColor(CommandContext<ClientCommandSource> c) {
-        this.r = c.getArgument("r", Integer.class);
-        this.g = c.getArgument("g", Integer.class);
-        this.b = c.getArgument("b", Integer.class);
+        this.r = c.getArgument("r", Integer.class) / 256f;
+        this.g = c.getArgument("g", Integer.class) / 256f;
+        this.b = c.getArgument("b", Integer.class) / 256f;
         sendModMessage(new LiteralText("Color updated.").formatted(Formatting.GOLD));
         return 1;
     }
