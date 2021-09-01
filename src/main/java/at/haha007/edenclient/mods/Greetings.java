@@ -55,9 +55,9 @@ public class Greetings {
             enabled = false;
             minDelay = 1200;
             wbDelay = 1200;
-            welcomeNewPlayerMessages = List.of("Hey %player%");
-            greetOldPlayerMessages = List.of("Hey %player%");
-            welcomeBackPlayerMessages = List.of("Wb %player%");
+            welcomeNewPlayerMessages = new ArrayList<>(Arrays.asList("Hey %player%"));
+            greetOldPlayerMessages = new ArrayList<>(Arrays.asList("Hey %player%"));
+            welcomeBackPlayerMessages = new ArrayList<>(Arrays.asList("Wb %player%"));
             return;
         }
         enabled = tag.getBoolean("enabled");
@@ -170,6 +170,9 @@ public class Greetings {
     private void registerCommand() {
         LiteralArgumentBuilder<ClientCommandSource> cmd = literal("greet");
 
+        /*
+        MESSAGES FOR NEW PLAYERS
+         */
         cmd.then(literal("new").then(literal("add").then(argument("text", StringArgumentType.greedyString()).executes(c -> {
             welcomeNewPlayerMessages.add(c.getArgument("text", String.class));
             PlayerUtils.sendModMessage("Message added");
@@ -187,7 +190,7 @@ public class Greetings {
 
         cmd.then(literal("new").then(literal("list").executes(c -> {
             List<String> newMessages = welcomeNewPlayerMessages.stream().toList();
-            if (newMessages.size() == 0){
+            if (newMessages.size() == 0) {
                 PlayerUtils.sendModMessage("No messages registered.");
             }
             PlayerUtils.sendModMessage("Messages for new players:");
@@ -197,6 +200,10 @@ public class Greetings {
             }
             return 1;
         })));
+
+        /*
+        MESSAGES FOR OLD PLAYERS
+        */
 
         cmd.then(literal("old").then(literal("add").then(argument("text", StringArgumentType.greedyString()).executes(c -> {
             greetOldPlayerMessages.add(c.getArgument("text", String.class));
@@ -215,7 +222,7 @@ public class Greetings {
 
         cmd.then(literal("old").then(literal("list").executes(c -> {
             List<String> oldMessages = greetOldPlayerMessages.stream().toList();
-            if (oldMessages.size() == 0){
+            if (oldMessages.size() == 0) {
                 PlayerUtils.sendModMessage("No messages registered.");
             }
             PlayerUtils.sendModMessage("Messages for old players:");
@@ -225,6 +232,10 @@ public class Greetings {
             }
             return 1;
         })));
+
+        /*
+        MESSAGES FOR PLAYERS WHO ALREADY JOINED THIS SESSION ONCE
+        */
 
         cmd.then(literal("wb").then(literal("add").then(argument("text", StringArgumentType.greedyString()).executes(c -> {
             welcomeBackPlayerMessages.add(c.getArgument("text", String.class));
@@ -243,7 +254,7 @@ public class Greetings {
 
         cmd.then(literal("wb").then(literal("list").executes(c -> {
             List<String> wbMessages = welcomeBackPlayerMessages.stream().toList();
-            if (wbMessages.size() == 0){
+            if (wbMessages.size() == 0) {
                 PlayerUtils.sendModMessage("No messages registered.");
             }
             PlayerUtils.sendModMessage("Messages for welcome-back players:");
@@ -254,11 +265,19 @@ public class Greetings {
             return 1;
         })));
 
+        /*
+        SET MINIMUM DELAY IN SECONDS UNTIL A PLAYERS GETS GREETED TWICE
+        */
+
         cmd.then(literal("delay").then(argument("delay", IntegerArgumentType.integer(1)).executes(c -> {
             minDelay = c.getArgument("delay", Integer.class) * 20;
             PlayerUtils.sendModMessage("Minimal delay updated");
             return 1;
         })));
+
+        /*
+        SET MINIMUM DELAY IN SECONDS UNTIL A PLAYERS GETS GREETED TWICE AFTER RETURNING
+        */
 
         cmd.then(literal("wbdelay").then(argument("delay", IntegerArgumentType.integer(1)).executes(c -> {
             wbDelay = c.getArgument("delay", Integer.class) * 20;
@@ -266,11 +285,19 @@ public class Greetings {
             return 1;
         })));
 
+        /*
+        TOGGLE IF GREETINGS ARE SENT
+        */
+
         cmd.then(literal("toggle").executes(c -> {
             enabled = !enabled;
             PlayerUtils.sendModMessage(enabled ? "Greetings enabled" : "Greetings disabled");
             return 1;
         }));
+
+        /*
+        IGNORE PLAYERS SO NO GREETINGS ARE SENT TO THEM
+        */
 
         cmd.then(literal("ignore").then(literal("add").then(argument("player", StringArgumentType.word()).executes(c -> {
             String player = c.getArgument("player", String.class);
@@ -313,6 +340,10 @@ public class Greetings {
             return 1;
         })));
 
+        /*
+        GREET MESSAGES FOR SPECIFIC PLAYERS
+        */
+
         cmd.then(literal("player").then(literal("greet").then(literal("add").then(argument("player", StringArgumentType.word()).then(argument("phrase", StringArgumentType.greedyString()).executes(c -> {
             String player = c.getArgument("player", String.class);
             if (!player.matches("[A-Za-z0-9_]{4,16}")) {
@@ -351,10 +382,14 @@ public class Greetings {
             List<Map.Entry<String, String>> list = specificPlayerGreetMessages.entrySet().stream().toList();
             for (int i = 0; i < list.size(); i++) {
                 PlayerUtils.sendModMessage(new LiteralText("[" + (i + 1) + "] ").formatted(Formatting.GOLD)
-                        .append(new LiteralText(String.format("%-17s - %s", list.get(i).getKey(), list.get(i).getValue())).formatted(Formatting.AQUA)));
+                        .append(new LiteralText(String.format("%s - %s", list.get(i).getKey(), list.get(i).getValue())).formatted(Formatting.AQUA)));
             }
             return 1;
         }))));
+
+        /*
+        WELCOME BACK MESSAGES FOR SPECIFIC PLAYERS
+        */
 
         cmd.then(literal("player").then(literal("wb").then(literal("add").then(argument("player", StringArgumentType.word()).then(argument("phrase", StringArgumentType.greedyString()).executes(c -> {
             String player = c.getArgument("player", String.class);
@@ -394,7 +429,7 @@ public class Greetings {
             List<Map.Entry<String, String>> list = specificPlayerWBMessages.entrySet().stream().toList();
             for (int i = 0; i < list.size(); i++) {
                 PlayerUtils.sendModMessage(new LiteralText("[" + (i + 1) + "] ").formatted(Formatting.GOLD)
-                        .append(new LiteralText(String.format("%-17s - %s", list.get(i).getKey(), list.get(i).getValue())).formatted(Formatting.AQUA)));
+                        .append(new LiteralText(String.format("%s - %s", list.get(i).getKey(), list.get(i).getValue())).formatted(Formatting.AQUA)));
             }
             return 1;
         }))));
