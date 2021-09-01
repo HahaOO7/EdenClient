@@ -96,7 +96,19 @@ public class PlayerWarps implements NbtLoadable, NbtSavable {
         cmd.then(CommandManager.literal("all").executes(c -> fetchData(all, 4)));
         cmd.then(CommandManager.literal("hidden").executes(c -> fetchData(hidden, 22)));
         cmd.then(CommandManager.literal("*").executes(c -> fetchData()));
+        cmd.then(CommandManager.literal("clear").executes(c -> clearData()));
         return cmd;
+    }
+
+    private int clearData() {
+        shops = new HashMap<>();
+        builds = new HashMap<>();
+        farms = new HashMap<>();
+        other = new HashMap<>();
+        all = new HashMap<>();
+        hidden = new HashMap<>();
+        PlayerUtils.sendModMessage("Cleared data!");
+        return 1;
     }
 
     private int fetchData() {
