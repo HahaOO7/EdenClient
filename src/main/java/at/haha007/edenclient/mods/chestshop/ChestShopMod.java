@@ -72,7 +72,6 @@ public class ChestShopMod {
         shops.put(chunk, cs);
     }
 
-
     private void checkForShops(ClientPlayerEntity player, int radius) {
         ChunkManager cm = player.clientWorld.getChunkManager();
         ChunkPos.stream(player.getChunkPos(), radius).forEach(cp -> checkForShops(cm, cp));
@@ -95,13 +94,13 @@ public class ChestShopMod {
             var shops = EdenClient.INSTANCE.getDataFetcher().getPlayerWarps().getShops();
             TaskManager tm = new TaskManager((shops.size() + 2) * 120);
             sendModMessage(gold("Teleporting to all player warps, this will take about ")
-                    .append(aqua(Integer.toString(shops.size() * 5)))
+                    .append(aqua(Integer.toString(shops.size() * 6)))
                     .append(gold(" seconds")));
             int count = shops.size();
             AtomicInteger i = new AtomicInteger(1);
             for (String shop : shops.keySet()) {
                 tm.then(new RunnableTask(() -> PlayerUtils.messageC2S("/pw " + shop)));
-                tm.then(new WaitForTicksTask(100)); //wait for chunks to load
+                tm.then(new WaitForTicksTask(120)); //wait for chunks to load
                 tm.then(new RunnableTask(() -> sendModMessage(gold("Shop ")
                         .append(aqua((i.getAndIncrement())))
                         .append(gold("/"))
@@ -141,10 +140,13 @@ public class ChestShopMod {
                     .map(cs -> {
                         Optional<Map.Entry<String, Vec3i>> opw = getNearestPlayerWarp(cs.getPos());
                         Style style = Style.EMPTY.withColor(Formatting.GOLD);
-                        if (opw.isPresent()) {
-                            style = style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new LiteralText("/pw " + opw.get().getKey())));
-                            style = style.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/pw " + opw.get().getKey()));
 
+                        if (opw.isPresent()) {
+                            Vec3i pos = cs.getPos();
+                            String boxPosStr = pos.getX() + " " + pos.getY() + " " + pos.getZ();
+                            String cmd = "/getto " + boxPosStr;
+                            style = style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new LiteralText("click me!").formatted(Formatting.GOLD)));
+                            style = style.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, cmd));
                         }
                         return new LiteralText(cs.formattedString(false)).setStyle(style);
                     }).forEach(PlayerUtils::sendModMessage);
@@ -163,9 +165,11 @@ public class ChestShopMod {
                         Optional<Map.Entry<String, Vec3i>> opw = getNearestPlayerWarp(cs.getPos());
                         Style style = Style.EMPTY.withColor(Formatting.GOLD);
                         if (opw.isPresent()) {
-                            style = style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new LiteralText("/pw " + opw.get().getKey())));
-                            style = style.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/pw " + opw.get().getKey()));
-
+                            Vec3i pos = cs.getPos();
+                            String boxPosStr = pos.getX() + " " + pos.getY() + " " + pos.getZ();
+                            String cmd = "/getto " + boxPosStr;
+                            style = style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new LiteralText("click me!").formatted(Formatting.GOLD)));
+                            style = style.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, cmd));
                         }
                         return new LiteralText(cs.formattedString(true)).setStyle(style);
                     })
@@ -362,7 +366,7 @@ public class ChestShopMod {
     }
 
     private Optional<Map.Entry<String, Vec3i>> getNearestPlayerWarp(Vec3i pos) {
-        return EdenClient.INSTANCE.getDataFetcher().getPlayerWarps().getShops().entrySet().stream().min(Comparator.comparingDouble(e -> e.getValue().getSquaredDistance(pos)));
+        return EdenClient.INSTANCE.getDataFetcher().getPlayerWarps().getAll().entrySet().stream().min(Comparator.comparingDouble(e -> e.getValue().getSquaredDistance(pos)));
     }
 
     private CompletableFuture<Suggestions> suggestSell(CommandContext<ClientCommandSource> context, SuggestionsBuilder suggestionsBuilder) {

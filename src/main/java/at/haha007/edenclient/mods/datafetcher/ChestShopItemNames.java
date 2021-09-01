@@ -10,7 +10,6 @@ import at.haha007.edenclient.utils.Scheduler;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientCommandSource;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.item.Item;
@@ -60,11 +59,11 @@ public class ChestShopItemNames implements NbtLoadable, NbtSavable {
         Matcher shortenedNameMatcher = Pattern.compile(shortenedNameMessageSyntax).matcher(message);
 
         if (fullNameMatcher.matches()) {
-            lastFullNameCached = fullNameMatcher.group("originalname");
+            lastFullNameCached = fullNameMatcher.group("originalname").trim().toLowerCase().replace(' ', '_');
         }
 
         if (lastFullNameCached != null && shortenedNameMatcher.matches()) {
-            itemNameMap.put(shortenedNameMatcher.group("shortenedname").toLowerCase(), lastFullNameCached.toLowerCase());
+            itemNameMap.put(shortenedNameMatcher.group("shortenedname").toLowerCase(), lastFullNameCached);
             System.out.println("Item mapped: " + lastFullNameCached);
             lastFullNameCached = null;
         }
@@ -82,7 +81,7 @@ public class ChestShopItemNames implements NbtLoadable, NbtSavable {
     public LiteralArgumentBuilder<ClientCommandSource> registerCommand() {
         LiteralArgumentBuilder<ClientCommandSource> mapItemNames = literal("mapitemnames");
         mapItemNames.executes(c -> {
-            sendModMessage("/chestshop mapitemnames <start/check>");
+            sendModMessage("/datafetcher mapitemnames <start/check>");
             return 1;
         });
 

@@ -10,6 +10,8 @@ import net.minecraft.text.LiteralText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3d;
 
 public class PlayerUtils {
 
@@ -17,6 +19,7 @@ public class PlayerUtils {
 
     public static void messageC2S(String msg) {
         ClientPlayerEntity player = PlayerUtils.getPlayer();
+        if (player == null || msg.length() > 256) return;
         player.sendChatMessage(msg);
     }
 
@@ -48,6 +51,19 @@ public class PlayerUtils {
         Screen screen = MinecraftClient.getInstance().currentScreen;
         if (!(screen instanceof GenericContainerScreen gcs)) return;
         ((IHandledScreen) screen).clickMouse(gcs.getScreenHandler().slots.get(slotId), slotId, 0, SlotActionType.PICKUP_ALL);
+    }
+
+    public static Vec3d getClientLookVec() {
+        ClientPlayerEntity player = getPlayer();
+        float f = 0.017453292F;
+        float pi = (float) Math.PI;
+
+        float f1 = MathHelper.cos(-player.getYaw() * f - pi);
+        float f2 = MathHelper.sin(-player.getYaw() * f - pi);
+        float f3 = -MathHelper.cos(-player.getPitch() * f);
+        float f4 = MathHelper.sin(-player.getPitch() * f);
+
+        return new Vec3d(f2 * f3, f4, f1 * f3);
     }
 
     public static ClientPlayerEntity getPlayer() {

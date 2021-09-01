@@ -7,10 +7,7 @@ import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.nbt.NbtCompound;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.function.BooleanSupplier;
 
 public class Scheduler {
@@ -19,7 +16,7 @@ public class Scheduler {
 
     private final Set<Runnable> sync = Collections.synchronizedSet(new HashSet<>());
     private final TreeMap<Long, Set<Runnable>> delayedSync = new TreeMap<>();
-    private final TreeMap<Long, RepeatingRunnable> repeatingSync = new TreeMap<>();
+    private final TreeMap<Long, Set<RepeatingRunnable>> repeatingSync = new TreeMap<>();
     private long tick;
 
     public static Scheduler get() {
@@ -52,15 +49,18 @@ public class Scheduler {
         }
         sync.clear();
 
-        while (delayedSync.size() > 0 && delayedSync.firstKey() < tick) {
+        while (delayedSync.size() > 0 && delayedSync.firstKey() <= tick) {
             delayedSync.pollFirstEntry().getValue().forEach(Runnable::run);
         }
 
-        while (repeatingSync.size() > 0 && repeatingSync.firstKey() < tick) {
-            RepeatingRunnable run = repeatingSync.pollFirstEntry().getValue();
-            if (run.runnable().getAsBoolean()) {
-                repeatingSync.put(tick + run.delta(), run);
-            }
+        while (repeatingSync.size() > 0 && repeatingSync.firstKey() <= tick) {
+            Map.Entry<Long, Set<RepeatingRunnable>> entry = repeatingSync.pollFirstEntry();
+            entry.getValue().forEach(run -> {
+                if (run.runnable().getAsBoolean()) {
+                    Set<RepeatingRunnable> set = repeatingSync.computeIfAbsent(tick + run.delta(), (l) -> new HashSet<>());
+                    set.add(run);
+                }
+            });
         }
     }
 
@@ -71,14 +71,14 @@ public class Scheduler {
     // stops running if return value is FALSE
     public synchronized void scheduleSyncRepeating(@NotNull BooleanSupplier runnable, int tickDelta, int startDelay) {
         if (tickDelta <= 0) throw new IllegalArgumentException("tickDelta has to be >= 1");
-        repeatingSync.put(startDelay + tick, new RepeatingRunnable(tickDelta, runnable));
+        Set<RepeatingRunnable> set = repeatingSync.computeIfAbsent(tick + startDelay, (l) -> new HashSet<>());
+        set.add(new RepeatingRunnable(tickDelta, runnable));
     }
 
     public synchronized void scheduleSyncDelayed(@NotNull Runnable runnable, int delay) {
-        Set<Runnable> set = delayedSync.get(delay + tick);
-        if (set == null) set = new HashSet<>();
+        if (delay <= 0) throw new IllegalArgumentException("tickDelta has to be >= 1");
+        Set<Runnable> set = delayedSync.computeIfAbsent(delay + tick, k -> new HashSet<>());
         set.add(runnable);
-        delayedSync.put(delay + tick, set);
     }
 
     public void runAsync(@NotNull Runnable runnable) {

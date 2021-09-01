@@ -9,9 +9,8 @@
     "ChatHudMixin",
     "ClientPlayerMixin",
     "ClientPlayNetworkHandlerMixin",
-    "EntityRendererMixin",
+    "GameRendererMixin",
     "HandledScreenMixin",
-    "ItemRendererMixin",
     "MinecraftClientMixin",
     "PlayerControllerMixin",
     "PlayerInventoryMixin"
