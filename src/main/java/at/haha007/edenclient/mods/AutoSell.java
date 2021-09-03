@@ -76,7 +76,6 @@ public class AutoSell {
 
         node.then(literal("remove").then(argument("item", StringArgumentType.greedyString()).suggests(this::suggestRemoveItems).executes(c -> {
             ClientPlayerEntity player = PlayerUtils.getPlayer();
-            if (player == null) return 1;
 
             Optional<Item> opt = Registry.ITEM.getOrEmpty(new Identifier(c.getArgument("item", String.class).replace(" ", "_")));
             if (opt.isEmpty()) {
@@ -94,9 +93,7 @@ public class AutoSell {
 
         node.then(literal("stats").executes(c -> {
             ClientPlayerEntity entityPlayer = PlayerUtils.getPlayer();
-            if (entityPlayer != null) {
-                entityPlayer.sendChatMessage("/statstracker global");
-            }
+            entityPlayer.sendChatMessage("/statstracker global");
             return 1;
         }));
 
@@ -151,7 +148,6 @@ public class AutoSell {
 
     private void executeAutoSell() {
         ClientPlayerEntity player = PlayerUtils.getPlayer();
-        if (player == null) return;
         long time = System.currentTimeMillis();
         if (time - 200 < lastSell) return;
         autoSellItems

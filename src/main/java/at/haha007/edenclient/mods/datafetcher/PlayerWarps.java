@@ -155,19 +155,19 @@ public class PlayerWarps implements NbtLoadable, NbtSavable {
             int pages = Integer.parseInt(macher.group("pages"));
 
             tm.then(new WaitForTicksTask(5));
-            tm.then(new RunnableTask(() -> scannWarps(map)));
+            tm.then(new RunnableTask(() -> scanWarps(map)));
             for (int i = 2; i <= pages; i++) {
                 tm.then(new RunnableTask(() -> PlayerUtils.clickSlot(50)));
                 tm.then(new WaitForInventoryNameTask(Pattern.compile(". PlayerWarps - Seite " + i + "/" + pages)));
                 tm.then(new WaitForTicksTask(5));
-                tm.then(new RunnableTask(() -> scannWarps(map)));
+                tm.then(new RunnableTask(() -> scanWarps(map)));
             }
             tm.then(endTask.poll());
         }));
     }
 
 
-    private void scannWarps(Map<String, Vec3i> map) {
+    private void scanWarps(Map<String, Vec3i> map) {
         Screen sc = MinecraftClient.getInstance().currentScreen;
         if (sc == null) return;
         if (!(sc instanceof GenericContainerScreen containerScreen)) return;

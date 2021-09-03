@@ -12,7 +12,6 @@ import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.block.*;
 import net.minecraft.block.enums.*;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientCommandSource;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.nbt.NbtCompound;
@@ -85,12 +84,6 @@ public class WorldEditReplaceHelper {
                 return 0;
             }
 
-            ClientPlayerEntity entityPlayer = PlayerUtils.getPlayer();
-            if (entityPlayer == null) {
-                sendModMessage("Error");
-                return 1;
-            }
-
             replaceUndoRequest(Registry.BLOCK.get(new Identifier(undoCommandStack.getFirst()[0])), Registry.BLOCK.get(new Identifier(undoCommandStack.getFirst()[1])), delay);
             redoCommandStack.addFirst(new String[]{undoCommandStack.getFirst()[1], undoCommandStack.getFirst()[0]});
             undoCommandStack.removeFirst();
@@ -101,12 +94,6 @@ public class WorldEditReplaceHelper {
             if (redoCommandStack.size() == 0) {
                 sendModMessage("Nothing left to redo.");
                 return 0;
-            }
-
-            ClientPlayerEntity entityPlayer = PlayerUtils.getPlayer();
-            if (entityPlayer == null) {
-                sendModMessage("Error");
-                return 1;
             }
 
             replaceRedoRequest(Registry.BLOCK.get(new Identifier(redoCommandStack.getFirst()[0])), Registry.BLOCK.get(new Identifier(redoCommandStack.getFirst()[1])), delay);
@@ -126,10 +113,6 @@ public class WorldEditReplaceHelper {
         node.then(literal("togglemessages").executes(c -> {
 
             ClientPlayerEntity entityPlayer = PlayerUtils.getPlayer();
-            if (entityPlayer == null) {
-                sendModMessage("Error");
-                return 1;
-            }
 
             entityPlayer.sendChatMessage("/im predefined worldedit");
 
@@ -388,10 +371,7 @@ public class WorldEditReplaceHelper {
 
     private void sendStandardReplaceCommand(Block fromBlock, Block toBlock, String appendix) {
         ClientPlayerEntity entityPlayer = PlayerUtils.getPlayer();
-        if (entityPlayer == null) {
-            sendModMessage("Error");
-            return;
-        }
+
         String message = "//replace " + getBlockIDFromBlock(fromBlock) + appendix + " " + getBlockIDFromBlock(toBlock) + appendix;
         if (message.length() > 256)
             sendModMessage("Cannot execute: " + message + " because this command too long.");

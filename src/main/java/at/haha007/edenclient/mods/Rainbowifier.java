@@ -6,7 +6,6 @@ import at.haha007.edenclient.utils.PlayerUtils;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientCommandSource;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.nbt.NbtCompound;
@@ -55,9 +54,7 @@ public class Rainbowifier {
                 return 0;
             }
             ClientPlayerEntity entityPlayer = PlayerUtils.getPlayer();
-            if (entityPlayer != null) {
-                entityPlayer.sendChatMessage(rainbowifyMessageFancy(input));
-            }
+            entityPlayer.sendChatMessage(rainbowifyMessageFancy(input));
             return 1;
         })));
 
@@ -69,9 +66,7 @@ public class Rainbowifier {
                 return 0;
             }
             ClientPlayerEntity entityPlayer = PlayerUtils.getPlayer();
-            if (entityPlayer != null) {
-                entityPlayer.sendChatMessage(rainbowifyMessageSimple(input));
-            }
+            entityPlayer.sendChatMessage(rainbowifyMessageSimple(input));
             return 1;
         })));
 
@@ -87,9 +82,7 @@ public class Rainbowifier {
                 }
             }
             ClientPlayerEntity entityPlayer = PlayerUtils.getPlayer();
-            if (entityPlayer != null) {
-                entityPlayer.sendChatMessage(message);
-            }
+            entityPlayer.sendChatMessage(message);
             return 1;
         }))));
 
@@ -104,9 +97,7 @@ public class Rainbowifier {
                 }
             }
             ClientPlayerEntity entityPlayer = PlayerUtils.getPlayer();
-            if (entityPlayer != null) {
-                entityPlayer.sendChatMessage(message);
-            }
+            entityPlayer.sendChatMessage(message);
             return 1;
         })));
 
