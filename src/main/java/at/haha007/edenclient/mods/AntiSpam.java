@@ -1,15 +1,14 @@
 package at.haha007.edenclient.mods;
 
 import at.haha007.edenclient.callbacks.AddChatMessageCallback;
-import at.haha007.edenclient.callbacks.ConfigLoadCallback;
-import at.haha007.edenclient.callbacks.ConfigSaveCallback;
 import at.haha007.edenclient.command.CommandManager;
 import at.haha007.edenclient.utils.MathUtils;
+import at.haha007.edenclient.utils.config.ConfigSubscriber;
+import at.haha007.edenclient.utils.config.PerWorldConfig;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.ChatHudLine;
 import net.minecraft.client.util.ChatMessages;
-import net.minecraft.nbt.NbtCompound;
 import net.minecraft.text.CharacterVisitor;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.OrderedText;
@@ -23,13 +22,13 @@ import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
 public class AntiSpam {
     private final MinecraftClient MC = MinecraftClient.getInstance();
-    private boolean enabled = true;
+    @ConfigSubscriber("false")
+    private boolean enabled;
 
     public AntiSpam() {
         registerCommand();
         AddChatMessageCallback.EVENT.register(this::onChat);
-        ConfigSaveCallback.EVENT.register(this::onSave);
-        ConfigLoadCallback.EVENT.register(this::onLoad);
+        PerWorldConfig.get().register(this, "antiSpam");
     }
 
     private void registerCommand() {
@@ -39,7 +38,6 @@ public class AntiSpam {
             return 1;
         }));
     }
-
 
     private void onChat(AddChatMessageCallback.ChatAddEvent event) {
         if (!enabled) return;
@@ -151,16 +149,5 @@ public class AntiSpam {
         }
 
         event.setChatText(chatText);
-    }
-
-    private void onLoad(NbtCompound cfg) {
-        NbtCompound tag = cfg.getCompound("antiSpam");
-        enabled = !tag.contains("enabled") || tag.getBoolean("enabled");
-    }
-
-    private void onSave(NbtCompound cfg) {
-        NbtCompound tag = cfg.getCompound("antiSpam");
-        tag.putBoolean("enabled", enabled);
-        cfg.put("antiSpam", tag);
     }
 }

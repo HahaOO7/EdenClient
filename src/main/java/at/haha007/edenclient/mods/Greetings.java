@@ -3,6 +3,7 @@ package at.haha007.edenclient.mods;
 import at.haha007.edenclient.callbacks.AddChatMessageCallback;
 import at.haha007.edenclient.callbacks.ConfigLoadCallback;
 import at.haha007.edenclient.callbacks.ConfigSaveCallback;
+import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.Scheduler;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
@@ -19,6 +20,7 @@ import net.minecraft.util.Formatting;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static at.haha007.edenclient.command.CommandManager.*;
@@ -28,12 +30,13 @@ public class Greetings {
     private int minDelay;
     private int wbDelay;
     private Set<String> sentPlayers;
-    private Set<String> quitPlayers;
+    private Map<String, Runnable> wbTasks = new HashMap<>();
     private Set<String> ignoredPlayers;
     private Map<String, String> specificPlayerGreetMessages;
     private Map<String, String> specificPlayerWBMessages;
     private List<String> welcomeNewPlayerMessages;
     private List<String> welcomeBackPlayerMessages;
+
     private List<String> greetOldPlayerMessages;
     private final Random random = new Random();
 
@@ -47,7 +50,7 @@ public class Greetings {
     private void load(NbtCompound nbtCompound) {
         NbtCompound tag = nbtCompound.getCompound("greeting");
         sentPlayers = new HashSet<>();
-        quitPlayers = new HashSet<>();
+        wbTasks = new HashMap<>();
         ignoredPlayers = new HashSet<>();
         specificPlayerGreetMessages = new HashMap<>();
         specificPlayerWBMessages = new HashMap<>();
@@ -55,18 +58,18 @@ public class Greetings {
             enabled = false;
             minDelay = 1200;
             wbDelay = 1200;
-            welcomeNewPlayerMessages = new ArrayList<>(Arrays.asList("Hey %player%"));
-            greetOldPlayerMessages = new ArrayList<>(Arrays.asList("Hey %player%"));
-            welcomeBackPlayerMessages = new ArrayList<>(Arrays.asList("Wb %player%"));
+            welcomeNewPlayerMessages = new ArrayList<>(List.of("Hey %player%"));
+            greetOldPlayerMessages = new ArrayList<>(List.of("Hey %player%"));
+            welcomeBackPlayerMessages = new ArrayList<>(List.of("Wb %player%"));
             return;
         }
         enabled = tag.getBoolean("enabled");
         minDelay = tag.getInt("delay");
         wbDelay = Math.min(tag.getInt("wbDelay"), 20);
-        welcomeNewPlayerMessages = tag.getList("welcomeNewPlayerMessageList", 10).stream().map(nbt -> (NbtCompound) nbt).map(nbtCompound1 -> nbtCompound1.getString("player")).collect(Collectors.toList());
-        greetOldPlayerMessages = tag.getList("greetOldPlayerMessageList", 10).stream().map(nbt -> (NbtCompound) nbt).map(nbtCompound1 -> nbtCompound1.getString("player")).collect(Collectors.toList());
-        welcomeBackPlayerMessages = tag.getList("welcomeBackPlayerMessageList", 10).stream().map(nbt -> (NbtCompound) nbt).map(nbtCompound1 -> nbtCompound1.getString("player")).collect(Collectors.toList());
-        ignoredPlayers = tag.getList("ignoredPlayers", 10).stream().map(nbt -> (NbtCompound) nbt).map(nbtCompound1 -> nbtCompound1.getString("player")).collect(Collectors.toSet());
+        welcomeNewPlayerMessages = tag.getList("welcomeNewPlayerMessageList", 10).stream().map(nbt -> (NbtCompound) nbt).map(nbtCompound1 -> nbtCompound1.getString("message")).filter(Predicate.not(String::isBlank)).collect(Collectors.toList());
+        greetOldPlayerMessages = tag.getList("greetOldPlayerMessageList", 10).stream().map(nbt -> (NbtCompound) nbt).map(nbtCompound1 -> nbtCompound1.getString("message")).filter(Predicate.not(String::isBlank)).collect(Collectors.toList());
+        welcomeBackPlayerMessages = tag.getList("welcomeBackPlayerMessageList", 10).stream().map(nbt -> (NbtCompound) nbt).map(nbtCompound1 -> nbtCompound1.getString("message")).filter(Predicate.not(String::isBlank)).collect(Collectors.toList());
+        ignoredPlayers = tag.getList("ignoredPlayers", 10).stream().map(nbt -> (NbtCompound) nbt).map(nbtCompound1 -> nbtCompound1.getString("player")).filter(Predicate.not(String::isBlank)).collect(Collectors.toSet());
         tag.getList("specificGreetMessageList", 10).stream().map(nbt -> (NbtCompound) nbt).forEach(nbt -> specificPlayerGreetMessages.put(nbt.getString("player"), nbt.getString("message")));
         tag.getList("specificWBMessageList", 10).stream().map(nbt -> (NbtCompound) nbt).forEach(nbt -> specificPlayerWBMessages.put(nbt.getString("player"), nbt.getString("message")));
     }
@@ -137,14 +140,21 @@ public class Greetings {
 
         if (msg.startsWith("[-] ")) {
             String name = msg.substring(4);
-            quitPlayers.add(name);
-            Scheduler.get().scheduleSyncDelayed(() -> quitPlayers.remove(name), wbDelay);
+
+            wbTasks.computeIfPresent(name, (k, v) -> {
+                Scheduler.get().cancelTask(v);
+                return null;
+            });
+
+            Runnable r = () -> wbTasks.remove(name);
+            wbTasks.put(name, r);
+            Scheduler.get().scheduleSyncDelayed(() -> wbTasks.remove(name), wbDelay);
         }
 
         if (msg.startsWith("[+] ")) {
             String name = msg.substring(4);
             if (ignoredPlayers.contains(name.toLowerCase())) return;
-            if (quitPlayers.contains(name)) {
+            if (wbTasks.containsKey(name)) {
                 Collections.shuffle(welcomeBackPlayerMessages);
                 addDelay(name, specificPlayerWBMessages.containsKey(name.toLowerCase()) ? specificPlayerWBMessages.get(name.toLowerCase()) : welcomeBackPlayerMessages.get(0));
             } else {

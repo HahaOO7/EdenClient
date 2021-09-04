@@ -1,8 +1,8 @@
 package at.haha007.edenclient.mods.datafetcher;
 
 import at.haha007.edenclient.command.CommandManager;
-import at.haha007.edenclient.utils.NbtLoadable;
-import at.haha007.edenclient.utils.NbtSavable;
+import at.haha007.edenclient.utils.config.NbtLoadable;
+import at.haha007.edenclient.utils.config.NbtSavable;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.tasks.*;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;

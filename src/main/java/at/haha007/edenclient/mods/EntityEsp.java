@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static at.haha007.edenclient.command.CommandManager.argument;
 import static at.haha007.edenclient.command.CommandManager.literal;
@@ -66,7 +67,7 @@ public class EntityEsp {
         }
         entities = player.getEntityWorld().getEntitiesByClass(Entity.class,
                 player.getBoundingBox().expand(10000, 500, 10000),
-                e -> e.isAlive() && Arrays.binarySearch(entityTypes, e.getType(), Comparator.comparing(Object::hashCode)) >= 0);
+                e -> e.isAlive() && e != player && Arrays.binarySearch(entityTypes, e.getType(), Comparator.comparing(Object::hashCode)) >= 0);
     }
 
     private void load(NbtCompound nbtCompound) {
@@ -155,6 +156,16 @@ public class EntityEsp {
         cmd.then(literal("clear").executes(c -> {
             entityTypes = new EntityType[0];
             sendModMessage("EntityEsp cleared!");
+            return 1;
+        }));
+
+        cmd.then(literal("list").executes(c -> {
+            String str = Arrays.stream(entityTypes)
+                    .map(Registry.ENTITY_TYPE::getId)
+                    .map(Identifier::toString)
+                    .map(s -> s.substring(10))
+                    .collect(Collectors.joining(", "));
+            sendModMessage(str);
             return 1;
         }));
 

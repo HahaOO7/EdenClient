@@ -31,6 +31,7 @@ import net.minecraft.util.registry.Registry;
 import net.minecraft.world.chunk.WorldChunk;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static at.haha007.edenclient.command.CommandManager.argument;
 import static at.haha007.edenclient.command.CommandManager.literal;
@@ -183,6 +184,16 @@ public class TileEntityEsp {
                     .append(new LiteralText(Integer.toString(maxCount)).formatted(Formatting.AQUA)));
             return 1;
         })));
+
+        cmd.then(literal("list").executes(c -> {
+            String str = types.stream()
+                    .map(Registry.BLOCK_ENTITY_TYPE::getId)
+                    .map(String::valueOf)
+                    .map(s -> s.substring(10))
+                    .collect(Collectors.joining(", "));
+            sendModMessage(str);
+            return 1;
+        }));
 
         cmd.then(literal("tracer").executes(c -> {
             tracer = !tracer;

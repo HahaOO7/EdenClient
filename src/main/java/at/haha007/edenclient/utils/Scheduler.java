@@ -8,6 +8,7 @@ import net.minecraft.nbt.NbtCompound;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
 
 public class Scheduler {
@@ -79,6 +80,18 @@ public class Scheduler {
         if (delay <= 0) throw new IllegalArgumentException("tickDelta has to be >= 1");
         Set<Runnable> set = delayedSync.computeIfAbsent(delay + tick, k -> new HashSet<>());
         set.add(runnable);
+    }
+
+    public boolean cancelTask(Runnable runnable) {
+        AtomicBoolean found = new AtomicBoolean(false);
+        delayedSync.values().forEach(c -> found.set(found.get() || c.remove(runnable)));
+        return found.get();
+    }
+
+    public boolean cancelTask(BooleanSupplier runnable) {
+        AtomicBoolean found = new AtomicBoolean(false);
+        repeatingSync.values().forEach(c -> found.set(found.get() || c.removeIf(e -> e.runnable == runnable)));
+        return found.get();
     }
 
     public void runAsync(@NotNull Runnable runnable) {
