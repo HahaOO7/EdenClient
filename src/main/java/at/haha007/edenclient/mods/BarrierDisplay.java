@@ -1,15 +1,14 @@
 package at.haha007.edenclient.mods;
 
-import at.haha007.edenclient.callbacks.ConfigLoadCallback;
-import at.haha007.edenclient.callbacks.ConfigSaveCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
+import at.haha007.edenclient.utils.config.ConfigSubscriber;
+import at.haha007.edenclient.utils.config.PerWorldConfig;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.particle.ItemBillboardParticle;
 import net.minecraft.item.Items;
-import net.minecraft.nbt.NbtCompound;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.BlockPos;
@@ -22,13 +21,13 @@ import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 public class BarrierDisplay {
     private static final int dist = 5;
     private final Random rand = new Random();
+    @ConfigSubscriber("0")
     private int counter = 20;
 
     public BarrierDisplay() {
         registerCommand();
         PlayerTickCallback.EVENT.register(this::onTick);
-        ConfigSaveCallback.EVENT.register(this::onSave);
-        ConfigLoadCallback.EVENT.register(this::onLoad);
+        PerWorldConfig.get().register(this, "barrierDisplay");
     }
 
     private void onTick(ClientPlayerEntity player) {
@@ -50,16 +49,5 @@ public class BarrierDisplay {
             sendModMessage(new LiteralText("/barrier <count>"));
             return 1;
         }));
-    }
-
-    private void onSave(NbtCompound compoundTag) {
-        NbtCompound tag = compoundTag.getCompound("barrier");
-        tag.putInt("counter", counter);
-        compoundTag.put("barrier", tag);
-    }
-
-    private void onLoad(NbtCompound compoundTag) {
-        NbtCompound tag = compoundTag.getCompound("barrier");
-        counter = tag.contains("counter") ? tag.getInt("counter") : 20;
     }
 }

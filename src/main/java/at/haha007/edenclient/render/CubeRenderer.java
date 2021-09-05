@@ -1,8 +1,8 @@
 package at.haha007.edenclient.render;
 
-import at.haha007.edenclient.callbacks.ConfigLoadCallback;
-import at.haha007.edenclient.callbacks.ConfigSaveCallback;
 import at.haha007.edenclient.callbacks.GameRenderCallback;
+import at.haha007.edenclient.callbacks.JoinWorldCallback;
+import at.haha007.edenclient.callbacks.LeaveWorldCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.utils.RenderUtils;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -11,7 +11,6 @@ import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.render.GameRenderer;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.nbt.NbtCompound;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 
@@ -25,8 +24,8 @@ public class CubeRenderer {
     private VertexBuffer box;
 
     public CubeRenderer() {
-        ConfigLoadCallback.EVENT.register(this::load);
-        ConfigSaveCallback.EVENT.register(this::save);
+        JoinWorldCallback.EVENT.register(this::build);
+        LeaveWorldCallback.EVENT.register(this::destroy);
         GameRenderCallback.EVENT.register(this::render);
         PlayerTickCallback.EVENT.register(this::tick);
     }
@@ -39,12 +38,12 @@ public class CubeRenderer {
         }
     }
 
-    private void save(NbtCompound nbtCompound) {
+    private void destroy() {
         box.close();
         cubes.clear();
     }
 
-    private void load(NbtCompound nbtCompound) {
+    private void build() {
         box = new VertexBuffer();
         Box bb = new Box(-0.5, -0.5, -0.5, 0.5, 0.5, 0.5);
         RenderUtils.drawOutlinedBox(bb, box);

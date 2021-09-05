@@ -12,6 +12,7 @@ public class BooleanLoader implements ConfigLoader<NbtByte, Boolean> {
     }
 
     public NbtByte parse(String s) {
+        if (s.isEmpty()) return NbtByte.of(false);
         return NbtByte.of(Boolean.parseBoolean(s));
     }
 }

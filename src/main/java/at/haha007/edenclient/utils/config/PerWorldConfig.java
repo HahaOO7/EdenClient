@@ -1,17 +1,21 @@
 package at.haha007.edenclient.utils.config;
 
 import at.haha007.edenclient.EdenClient;
-import at.haha007.edenclient.callbacks.ConfigLoadCallback;
-import at.haha007.edenclient.callbacks.ConfigSaveCallback;
 import at.haha007.edenclient.callbacks.JoinWorldCallback;
 import at.haha007.edenclient.callbacks.LeaveWorldCallback;
 import at.haha007.edenclient.utils.StringUtils;
-import at.haha007.edenclient.utils.config.loaders.BooleanLoader;
-import at.haha007.edenclient.utils.config.loaders.ConfigLoader;
-import at.haha007.edenclient.utils.config.loaders.IntegerLoader;
+import at.haha007.edenclient.utils.config.loaders.*;
+import at.haha007.edenclient.utils.config.wrappers.*;
+import net.minecraft.block.Block;
+import net.minecraft.block.entity.BlockEntityType;
+import net.minecraft.entity.EntityType;
+import net.minecraft.item.Item;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtIo;
+import net.minecraft.text.Style;
+import net.minecraft.util.math.BlockBox;
+import net.minecraft.util.math.Vec3i;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,7 +29,7 @@ public class PerWorldConfig {
     private static PerWorldConfig INSTANCE;
     private final Map<String, Object> registered = new HashMap<>();
     private final Map<Class<?>, ConfigLoader<NbtElement, ?>> loaders = new HashMap<>();
-    private NbtCompound tag = new NbtCompound();
+    //    private NbtCompound tag = new NbtCompound();
     private String worldName = "null";
     private final File folder;
     private final Map<Class<?>, Class<?>> wrapperClasses = Map.of(
@@ -48,16 +52,45 @@ public class PerWorldConfig {
         registered.put(path, obj);
     }
 
-    public void register(ConfigLoader<NbtElement, ?> loader, Class<?> loadableType) {
-        loaders.put(loadableType, loader);
+    public void register(ConfigLoader<? extends NbtElement, ?> loader, Class<?> loadableType) {
+        loaders.put(loadableType, castLoader(loader));
     }
 
     private PerWorldConfig() {
         folder = new File(EdenClient.getDataFolder(), "PerWorldCfg");
         JoinWorldCallback.EVENT.register(this::onJoin);
         LeaveWorldCallback.EVENT.register(this::onLeave);
-        register(castLoader(new IntegerLoader()), Integer.class);
-        register(castLoader(new BooleanLoader()), Boolean.class);
+        register(new IntegerLoader(), Integer.class);
+        register(new BooleanLoader(), Boolean.class);
+
+        register(new FloatLoader(), Float.class);
+        register(new DoubleLoader(), Double.class);
+
+        register(new ItemLoader(), Item.class);
+        register(new ItemSetLoader(), ItemSet.class);
+
+        register(new EntityTypeLoader(), EntityType.class);
+        register(new EntityTypeSetLoader(), EntityTypeSet.class);
+
+        register(new StringLoader(), String.class);
+        register(new StringListLoader(), StringList.class);
+        register(new StringSetLoader(), StringSet.class);
+        register(new StringStringMapLoader(), StringStringMap.class);
+
+        register(new BlockBoxLoader(), BlockBox.class);
+
+        register(new BlockLoader(), Block.class);
+        register(new BlockSetLoader(), BlockSet.class);
+
+        register(new BlockEntityTypeLoader(), BlockEntityType.class);
+        register(new BlockEntityTypeSetLoader(), BlockEntityTypeSet.class);
+
+        register(new StyleLoader(), Style.class);
+
+        register(new Vec3iLoader(), Vec3i.class);
+        register(new StringVec3iMapLoader(), StringVec3iMap.class);
+
+        register(new BiStringStringMapLoader(), BiStringStringMap.class);
     }
 
     @SuppressWarnings("unchecked")
@@ -65,39 +98,42 @@ public class PerWorldConfig {
         return (ConfigLoader<NbtElement, ?>) object;
     }
 
-    @SuppressWarnings("RedundantStringFormatCall")
     private void onLeave() {
         long start = System.nanoTime();
         System.out.println("[EC] Start saving config: " + worldName);
         saveConfig();
-        System.out.println(String.format("[EC] Saving done, this took %sms.%n%n", TimeUnit.NANOSECONDS.toMillis((System.nanoTime() - start))));
+        //noinspection RedundantStringFormatCall
+        System.out.println(String.format("[EC] Saving done, this took %sms.", TimeUnit.NANOSECONDS.toMillis((System.nanoTime() - start))));
     }
 
-    @SuppressWarnings("RedundantStringFormatCall")
     private void onJoin() {
         worldName = StringUtils.getWorldOrServerName();
         long start = System.nanoTime();
         System.out.println("[EC] Start loading config: " + worldName);
         loadConfig();
-        System.out.println(String.format("[EC] Loading done, this took %sms.%n", TimeUnit.NANOSECONDS.toMillis((System.nanoTime() - start))));
+        //noinspection RedundantStringFormatCall
+        System.out.println(String.format("[EC] Loading done, this took %sms.", TimeUnit.NANOSECONDS.toMillis((System.nanoTime() - start))));
     }
 
     private void loadConfig() {
         File file = new File(folder, worldName + ".mca");
         if (!folder.exists()) folder.mkdirs();
+        NbtCompound tag = new NbtCompound();
         try {
             tag = file.exists() ? NbtIo.readCompressed(file) : new NbtCompound();
         } catch (IOException e) {
             System.err.println("Error while loading PerWorldConfig: " + worldName);
-            tag = new NbtCompound();
         }
-        registered.forEach((key, obj) -> load(tag.getCompound(key), obj));
-        ConfigLoadCallback.EVENT.invoker().onLoad(tag);
+        NbtCompound finalTag = tag;
+        registered.forEach((key, obj) -> load(getCompound(finalTag, key), obj));
     }
 
     private void saveConfig() {
-        ConfigSaveCallback.EVENT.invoker().onSave(tag);
-        registered.forEach((key, obj) -> save((NbtCompound) tag.put(key, tag.getCompound(key)), obj));
+        NbtCompound tag = new NbtCompound();
+        registered.forEach((key, obj) -> {
+            NbtCompound compound = getCompound(tag, key);
+            save(compound, obj);
+        });
         File file = new File(folder, worldName + ".mca");
         if (!folder.exists()) folder.mkdirs();
         try {
@@ -107,12 +143,13 @@ public class PerWorldConfig {
         }
     }
 
+
     private void load(NbtCompound tag, Object obj) {
         for (Field field : obj.getClass().getDeclaredFields()) {
             var annotation = field.getDeclaredAnnotation(ConfigSubscriber.class);
             if (annotation == null) continue;
             Class<?> c = getClass(field);
-            ConfigLoader<NbtElement, ?> loader = loaders.get(c);
+            ConfigLoader<NbtElement, ?> loader = getLoader(c);
             if (loader == null) {
                 System.err.println("Error loading config: No loader found for class: " + c.getCanonicalName());
                 continue;
@@ -121,7 +158,13 @@ public class PerWorldConfig {
                 field.setAccessible(true);
                 String fieldName = field.getName();
                 NbtElement nbt = tag.contains(fieldName) ? tag.get(fieldName) : loader.parse(annotation.value());
-                Object value = loader.load(nbt);
+                Object value;
+                try {
+                    value = loader.load(nbt);
+                } catch (ClassCastException e) {
+                    System.err.println("Error while loading " + field.getName() + " in class " + obj.getClass().getSimpleName());
+                    value = loader.load(loader.parse(annotation.value()));
+                }
                 field.set(obj, value);
             } catch (IllegalAccessException e) {
                 System.err.println("Error loading config: Can't access field: " + c.getCanonicalName() + "." + field.getName());
@@ -129,12 +172,11 @@ public class PerWorldConfig {
         }
     }
 
-
     private void save(NbtCompound tag, Object obj) {
         for (Field field : obj.getClass().getDeclaredFields()) {
             if (!field.isAnnotationPresent(ConfigSubscriber.class)) continue;
             Class<?> c = getClass(field);
-            ConfigLoader<NbtElement, ?> loader = loaders.get(c);
+            ConfigLoader<NbtElement, ?> loader = getLoader(c);
             if (loader == null) {
                 System.err.println("Error loading config: No loader found for class: " + c.getCanonicalName());
                 continue;
@@ -153,4 +195,44 @@ public class PerWorldConfig {
         return wrapperClasses.getOrDefault(clazz, clazz);
     }
 
+    private Class<?> getClass(Class<?> clazz) {
+        return wrapperClasses.getOrDefault(clazz, clazz);
+    }
+
+    private ConfigLoader<NbtElement, ?> getLoader(Class<?> clazz) {
+        if (null == clazz) return null;
+        ConfigLoader<NbtElement, ?> loader = loaders.get(getClass(clazz));
+        if (loader == null) return getLoader(clazz.getSuperclass());
+        return loader;
+    }
+
+    private NbtCompound getCompound(NbtCompound root, String path) {
+        if (path.isEmpty()) return root;
+        String[] a = path.split("\\.");
+        for (String s : a) {
+            NbtCompound tag = root.getCompound(s);
+            root.put(s, tag);
+            root = tag;
+        }
+        return root;
+    }
+
+    public NbtElement toNbt(Object object) {
+        ConfigLoader<NbtElement, ?> loader = getLoader(object.getClass());
+        if (loader == null) {
+            System.err.println("Error loading config: No loader found for class: " + object.getClass().getCanonicalName());
+            return null;
+        }
+        return loader.save(object);
+    }
+
+    public <T> T toObject(NbtElement nbt, Class<T> type) {
+        ConfigLoader<NbtElement, ?> loader = getLoader(type);
+        if (loader == null) {
+            System.err.println("Error loading config: No loader found for class: " + type.getCanonicalName());
+            return null;
+        }
+        //noinspection unchecked
+        return (T) loader.load(nbt);
+    }
 }

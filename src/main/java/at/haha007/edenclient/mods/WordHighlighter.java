@@ -1,16 +1,13 @@
 package at.haha007.edenclient.mods;
 
 import at.haha007.edenclient.callbacks.AddChatMessageCallback;
-import at.haha007.edenclient.callbacks.ConfigLoadCallback;
-import at.haha007.edenclient.callbacks.ConfigSaveCallback;
+import at.haha007.edenclient.utils.config.ConfigSubscriber;
+import at.haha007.edenclient.utils.config.PerWorldConfig;
+import at.haha007.edenclient.utils.config.wrappers.StringList;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.client.network.ClientCommandSource;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.nbt.NbtList;
-import net.minecraft.nbt.NbtString;
 import net.minecraft.text.*;
 import net.minecraft.util.Formatting;
 
@@ -27,18 +24,19 @@ import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
 public class WordHighlighter {
-
-    private List<String> words = new ArrayList<>();
+    @ConfigSubscriber
+    private StringList words = new StringList();
+    @ConfigSubscriber("false")
     private boolean enabled;
 
+    @ConfigSubscriber
     private Style style = Style.EMPTY;
 
     public WordHighlighter() {
         registerCommand("highlight");
         registerCommand("hl");
         AddChatMessageCallback.EVENT.register(this::onChat);
-        ConfigSaveCallback.EVENT.register(this::onSave);
-        ConfigLoadCallback.EVENT.register(this::onLoad);
+        PerWorldConfig.get().register(this, "wordhighlighter");
     }
 
     private void onChat(AddChatMessageCallback.ChatAddEvent event) {
@@ -46,59 +44,6 @@ public class WordHighlighter {
         for (String word : words) {
             event.setChatText(highlight(event.getChatText(), word));
         }
-    }
-
-    private void onLoad(NbtCompound compoundTag) {
-        NbtCompound tag = compoundTag.getCompound("wordhighlighter");
-        style = Style.EMPTY.withFormatting(Formatting.AQUA, Formatting.BOLD);
-        if (tag == null) {
-            words = new ArrayList<>();
-            return;
-        }
-        if (!tag.contains("enabled")) {
-            enabled = false;
-        } else {
-            enabled = tag.getBoolean("enabled");
-        }
-        NbtList nbtList = tag.getList("words", 8);
-        words = new ArrayList<>();
-        if (nbtList != null) {
-            for (NbtElement tag1 : nbtList) {
-                words.add(tag1.asString());
-            }
-            words.sort(Comparator.comparingInt(String::length).reversed());
-        }
-        if (tag.contains("bold"))
-            style = style.withBold(tag.getBoolean("bold"));
-        if (tag.contains("italic"))
-            style = style.withItalic(tag.getBoolean("italic"));
-        if (tag.contains("underlined"))
-            style = style.withUnderline(tag.getBoolean("underlined"));
-        if (tag.contains("color"))
-            style = style.withColor(tag.getInt("color"));
-        if (tag.contains("obfuscated"))
-            style = style.obfuscated(tag.getBoolean("obfuscated"));
-    }
-
-    private void onSave(NbtCompound compoundTag) {
-        NbtCompound tag = new NbtCompound();
-        tag.putBoolean("enabled", enabled);
-        NbtList nbtList = new NbtList();
-        for (String word : words) {
-            nbtList.add(NbtString.of(word));
-        }
-        tag.put("words", nbtList);
-        tag.putBoolean("bold", style.isBold());
-        tag.putBoolean("italic", style.isItalic());
-        tag.putBoolean("underlined", style.isUnderlined());
-        tag.putBoolean("obfuscated", style.isObfuscated());
-
-        if (style.getColor() != null)
-            tag.putInt("color", style.getColor().getRgb());
-        else
-            tag.putInt("color", 16755200);
-
-        compoundTag.put("wordhighlighter", tag);
     }
 
     private void registerCommand(String cmd) {

@@ -1,11 +1,13 @@
 package at.haha007.edenclient.mods;
 
 import at.haha007.edenclient.callbacks.AddChatMessageCallback;
-import at.haha007.edenclient.callbacks.ConfigLoadCallback;
-import at.haha007.edenclient.callbacks.ConfigSaveCallback;
-import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.Scheduler;
+import at.haha007.edenclient.utils.config.ConfigSubscriber;
+import at.haha007.edenclient.utils.config.PerWorldConfig;
+import at.haha007.edenclient.utils.config.wrappers.StringList;
+import at.haha007.edenclient.utils.config.wrappers.StringSet;
+import at.haha007.edenclient.utils.config.wrappers.StringStringMap;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -13,124 +15,43 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.client.network.ClientCommandSource;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtList;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.Formatting;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static at.haha007.edenclient.command.CommandManager.*;
 
 public class Greetings {
+    @ConfigSubscriber("false")
     private boolean enabled;
+    @ConfigSubscriber("1200")
     private int minDelay;
+    @ConfigSubscriber("1200")
     private int wbDelay;
-    private Set<String> sentPlayers;
-    private Map<String, Runnable> wbTasks = new HashMap<>();
-    private Set<String> ignoredPlayers;
-    private Map<String, String> specificPlayerGreetMessages;
-    private Map<String, String> specificPlayerWBMessages;
-    private List<String> welcomeNewPlayerMessages;
-    private List<String> welcomeBackPlayerMessages;
+    @ConfigSubscriber("Haha007")
+    private StringSet ignoredPlayers;
+    @ConfigSubscriber
+    private StringStringMap specificPlayerGreetMessages;
+    @ConfigSubscriber
+    private StringStringMap specificPlayerWBMessages;
+    @ConfigSubscriber("Hey %player%")
+    private StringList welcomeNewPlayerMessages;
+    @ConfigSubscriber("Wb %player%")
+    private StringList welcomeBackPlayerMessages;
+    @ConfigSubscriber("Huhu %player%")
+    private StringList greetOldPlayerMessages;
 
-    private List<String> greetOldPlayerMessages;
+    private final Set<String> sentPlayers = new HashSet<>();
+    private final Map<String, Runnable> wbTasks = new HashMap<>();
     private final Random random = new Random();
 
     public Greetings() {
         registerCommand();
         AddChatMessageCallback.EVENT.register(this::onChat);
-        ConfigLoadCallback.EVENT.register(this::load);
-        ConfigSaveCallback.EVENT.register(this::save);
-    }
-
-    private void load(NbtCompound nbtCompound) {
-        NbtCompound tag = nbtCompound.getCompound("greeting");
-        sentPlayers = new HashSet<>();
-        wbTasks = new HashMap<>();
-        ignoredPlayers = new HashSet<>();
-        specificPlayerGreetMessages = new HashMap<>();
-        specificPlayerWBMessages = new HashMap<>();
-        if (tag.isEmpty()) {
-            enabled = false;
-            minDelay = 1200;
-            wbDelay = 1200;
-            welcomeNewPlayerMessages = new ArrayList<>(List.of("Hey %player%"));
-            greetOldPlayerMessages = new ArrayList<>(List.of("Hey %player%"));
-            welcomeBackPlayerMessages = new ArrayList<>(List.of("Wb %player%"));
-            return;
-        }
-        enabled = tag.getBoolean("enabled");
-        minDelay = tag.getInt("delay");
-        wbDelay = Math.min(tag.getInt("wbDelay"), 20);
-        welcomeNewPlayerMessages = tag.getList("welcomeNewPlayerMessageList", 10).stream().map(nbt -> (NbtCompound) nbt).map(nbtCompound1 -> nbtCompound1.getString("message")).filter(Predicate.not(String::isBlank)).collect(Collectors.toList());
-        greetOldPlayerMessages = tag.getList("greetOldPlayerMessageList", 10).stream().map(nbt -> (NbtCompound) nbt).map(nbtCompound1 -> nbtCompound1.getString("message")).filter(Predicate.not(String::isBlank)).collect(Collectors.toList());
-        welcomeBackPlayerMessages = tag.getList("welcomeBackPlayerMessageList", 10).stream().map(nbt -> (NbtCompound) nbt).map(nbtCompound1 -> nbtCompound1.getString("message")).filter(Predicate.not(String::isBlank)).collect(Collectors.toList());
-        ignoredPlayers = tag.getList("ignoredPlayers", 10).stream().map(nbt -> (NbtCompound) nbt).map(nbtCompound1 -> nbtCompound1.getString("player")).filter(Predicate.not(String::isBlank)).collect(Collectors.toSet());
-        tag.getList("specificGreetMessageList", 10).stream().map(nbt -> (NbtCompound) nbt).forEach(nbt -> specificPlayerGreetMessages.put(nbt.getString("player"), nbt.getString("message")));
-        tag.getList("specificWBMessageList", 10).stream().map(nbt -> (NbtCompound) nbt).forEach(nbt -> specificPlayerWBMessages.put(nbt.getString("player"), nbt.getString("message")));
-    }
-
-    private void save(NbtCompound nbtCompound) {
-        NbtCompound tag = new NbtCompound();
-        tag.putBoolean("enabled", enabled);
-        tag.putInt("delay", minDelay);
-        tag.putInt("wbDelay", wbDelay);
-
-        NbtList welcomeNewPlayerMessageList = new NbtList();
-        welcomeNewPlayerMessages.forEach(s -> {
-            NbtCompound messageComp = new NbtCompound();
-            messageComp.putString("message", s);
-            welcomeNewPlayerMessageList.add(messageComp);
-        });
-        tag.put("welcomeNewPlayerMessageList", welcomeNewPlayerMessageList);
-
-        NbtList greetOldPlayerMessageList = new NbtList();
-        greetOldPlayerMessages.forEach(s -> {
-            NbtCompound messageComp = new NbtCompound();
-            messageComp.putString("message", s);
-            greetOldPlayerMessageList.add(messageComp);
-        });
-        tag.put("greetOldPlayerMessageList", greetOldPlayerMessageList);
-
-        NbtList welcomeBackPlayerMessageList = new NbtList();
-        welcomeBackPlayerMessages.forEach(s -> {
-            NbtCompound messageComp = new NbtCompound();
-            messageComp.putString("message", s);
-            welcomeBackPlayerMessageList.add(messageComp);
-        });
-        tag.put("welcomeBackPlayerMessageList", welcomeBackPlayerMessageList);
-
-        NbtList ignoredPlayersComp = new NbtList();
-        ignoredPlayers.forEach(s -> {
-            NbtCompound playerComp = new NbtCompound();
-            playerComp.putString("player", s);
-            ignoredPlayersComp.add(playerComp);
-        });
-        tag.put("ignoredPlayers", ignoredPlayersComp);
-
-        NbtList specificGreetMessageList = new NbtList();
-        specificPlayerGreetMessages.forEach((key, value) -> {
-            NbtCompound greetComp = new NbtCompound();
-            greetComp.putString("player", key);
-            greetComp.putString("message", value);
-            specificGreetMessageList.add(greetComp);
-        });
-        tag.put("specificGreetMessageList", specificGreetMessageList);
-
-        NbtList specificWBMessageList = new NbtList();
-        specificPlayerWBMessages.forEach((key, value) -> {
-            NbtCompound wbComp = new NbtCompound();
-            wbComp.putString("player", key);
-            wbComp.putString("message", value);
-            specificWBMessageList.add(wbComp);
-        });
-        tag.put("specificWBMessageList", specificWBMessageList);
-
-        nbtCompound.put("greeting", tag);
+        PerWorldConfig.get().register(this, "greeting");
     }
 
     private void onChat(AddChatMessageCallback.ChatAddEvent chatAddEvent) {

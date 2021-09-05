@@ -1,10 +1,9 @@
 package at.haha007.edenclient.utils;
 
 import at.haha007.edenclient.EdenClient;
-import at.haha007.edenclient.callbacks.ConfigLoadCallback;
+import at.haha007.edenclient.callbacks.JoinWorldCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.nbt.NbtCompound;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -31,11 +30,11 @@ public class Scheduler {
     private Scheduler() {
         if (EdenClient.INSTANCE == null)
             throw new ExceptionInInitializerError("Scheduler cant be called before initializing EdenClient");
-        ConfigLoadCallback.EVENT.register(this::onConfigLoad);
+        JoinWorldCallback.EVENT.register(this::cleanup);
         PlayerTickCallback.EVENT.register(this::tick);
     }
 
-    private synchronized void onConfigLoad(NbtCompound nbtCompound) {
+    private synchronized void cleanup() {
         sync.clear();
         delayedSync.clear();
         repeatingSync.clear();

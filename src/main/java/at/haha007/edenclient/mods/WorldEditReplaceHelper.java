@@ -1,9 +1,9 @@
 package at.haha007.edenclient.mods;
 
-import at.haha007.edenclient.callbacks.ConfigLoadCallback;
-import at.haha007.edenclient.callbacks.ConfigSaveCallback;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.Scheduler;
+import at.haha007.edenclient.utils.config.ConfigSubscriber;
+import at.haha007.edenclient.utils.config.PerWorldConfig;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -14,7 +14,6 @@ import net.minecraft.block.*;
 import net.minecraft.block.enums.*;
 import net.minecraft.client.network.ClientCommandSource;
 import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.nbt.NbtCompound;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
@@ -23,9 +22,9 @@ import net.minecraft.util.registry.DefaultedRegistry;
 import net.minecraft.util.registry.Registry;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Stack;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -40,15 +39,15 @@ public class WorldEditReplaceHelper {
     WorldEditHelper Command Manager starts here
     */
 
+    @ConfigSubscriber("0")
     private int delay = 0;
-    private final LinkedList<String[]> undoCommandStack = new LinkedList<>();
-    private final LinkedList<String[]> redoCommandStack = new LinkedList<>();
+    private final Stack<String[]> undoCommandStack = new Stack<>();
+    private final Stack<String[]> redoCommandStack = new Stack<>();
 
     public WorldEditReplaceHelper() {
         registerCommand("ewe");
         registerCommand("edenwe");
-        ConfigLoadCallback.EVENT.register(this::loadConfig);
-        ConfigSaveCallback.EVENT.register(this::saveConfig);
+        PerWorldConfig.get().register(this, "worldEditHelper");
     }
 
     private void registerCommand(String command) {
@@ -73,7 +72,7 @@ public class WorldEditReplaceHelper {
                     }
 
                     String[] currentOperation = new String[]{getBlockIDFromBlock(toBlock), getBlockIDFromBlock(fromBlock)};
-                    undoCommandStack.addFirst(currentOperation);
+                    undoCommandStack.add(currentOperation);
 
                     return replaceCommandRequest(fromBlock, toBlock, delay, true);
                 }))));
@@ -84,9 +83,9 @@ public class WorldEditReplaceHelper {
                 return 0;
             }
 
-            replaceUndoRequest(Registry.BLOCK.get(new Identifier(undoCommandStack.getFirst()[0])), Registry.BLOCK.get(new Identifier(undoCommandStack.getFirst()[1])), delay);
-            redoCommandStack.addFirst(new String[]{undoCommandStack.getFirst()[1], undoCommandStack.getFirst()[0]});
-            undoCommandStack.removeFirst();
+            replaceUndoRequest(Registry.BLOCK.get(new Identifier(undoCommandStack.peek()[0])), Registry.BLOCK.get(new Identifier(undoCommandStack.peek()[1])), delay);
+            redoCommandStack.add(new String[]{undoCommandStack.peek()[1], undoCommandStack.peek()[0]});
+            undoCommandStack.pop();
             return 1;
         }));
 
@@ -96,9 +95,9 @@ public class WorldEditReplaceHelper {
                 return 0;
             }
 
-            replaceRedoRequest(Registry.BLOCK.get(new Identifier(redoCommandStack.getFirst()[0])), Registry.BLOCK.get(new Identifier(redoCommandStack.getFirst()[1])), delay);
-            undoCommandStack.addFirst(new String[]{redoCommandStack.getFirst()[1], redoCommandStack.getFirst()[0]});
-            redoCommandStack.removeFirst();
+            replaceRedoRequest(Registry.BLOCK.get(new Identifier(redoCommandStack.peek()[0])), Registry.BLOCK.get(new Identifier(redoCommandStack.peek()[1])), delay);
+            undoCommandStack.add(new String[]{redoCommandStack.peek()[1], redoCommandStack.peek()[0]});
+            redoCommandStack.pop();
             return 1;
         }));
 
@@ -130,19 +129,6 @@ public class WorldEditReplaceHelper {
                 .map(itemName -> itemName.split(":")[1])
                 .map(String::toLowerCase).toList().forEach(suggestionsBuilder::suggest);
         return suggestionsBuilder.buildFuture();
-    }
-
-    private void loadConfig(NbtCompound nbtCompound) {
-        if (nbtCompound.contains("worldEditHelper")) {
-            NbtCompound compound = nbtCompound.getCompound("worldEditHelper");
-            delay = compound.getInt("delay");
-        }
-    }
-
-    private void saveConfig(NbtCompound nbtCompound) {
-        NbtCompound comp = new NbtCompound();
-        comp.putInt("delay", delay);
-        nbtCompound.put("worldEditHelper", comp);
     }
 
     /*

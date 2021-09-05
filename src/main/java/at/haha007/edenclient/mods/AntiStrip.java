@@ -1,14 +1,13 @@
 package at.haha007.edenclient.mods;
 
-import at.haha007.edenclient.callbacks.ConfigLoadCallback;
-import at.haha007.edenclient.callbacks.ConfigSaveCallback;
 import at.haha007.edenclient.callbacks.PlayerInteractBlockEvent;
 import at.haha007.edenclient.command.CommandManager;
+import at.haha007.edenclient.utils.config.ConfigSubscriber;
+import at.haha007.edenclient.utils.config.PerWorldConfig;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.item.Item;
 import net.minecraft.item.Items;
-import net.minecraft.nbt.NbtCompound;
 import net.minecraft.tag.BlockTags;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.ActionResult;
@@ -16,37 +15,27 @@ import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 
-import java.util.Collection;
-import java.util.HashSet;
+import java.util.Set;
 
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
 public class AntiStrip {
-    private final Collection<Item> axeItems = new HashSet<>();
+    private final Set<Item> axeItems = Set.of(
+            Items.WOODEN_AXE,
+            Items.STONE_AXE,
+            Items.IRON_AXE,
+            Items.GOLDEN_AXE,
+            Items.DIAMOND_AXE,
+            Items.NETHERITE_AXE
+    );
+
+    @ConfigSubscriber("false")
     private boolean enabled = true;
 
     public AntiStrip() {
         PlayerInteractBlockEvent.EVENT.register(this::onInteractBlock);
-        ConfigLoadCallback.EVENT.register(this::loadCfg);
-        ConfigSaveCallback.EVENT.register(this::saveCfg);
+        PerWorldConfig.get().register(this, "antiStrip");
         registerCommand();
-        axeItems.add(Items.WOODEN_AXE);
-        axeItems.add(Items.STONE_AXE);
-        axeItems.add(Items.IRON_AXE);
-        axeItems.add(Items.GOLDEN_AXE);
-        axeItems.add(Items.DIAMOND_AXE);
-        axeItems.add(Items.NETHERITE_AXE);
-    }
-
-    private void loadCfg(NbtCompound compoundTag) {
-        NbtCompound tag = compoundTag.getCompound("antiStrip");
-        enabled = !tag.contains("enabled") || tag.getBoolean("enabled");
-    }
-
-    private void saveCfg(NbtCompound compoundTag) {
-        NbtCompound tag = compoundTag.getCompound("antiStrip");
-        tag.putBoolean("enabled", enabled);
-        compoundTag.put("antiStrip", tag);
     }
 
     private void registerCommand() {

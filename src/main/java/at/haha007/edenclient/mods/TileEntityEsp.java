@@ -1,12 +1,15 @@
 package at.haha007.edenclient.mods;
 
-import at.haha007.edenclient.callbacks.ConfigLoadCallback;
-import at.haha007.edenclient.callbacks.ConfigSaveCallback;
 import at.haha007.edenclient.callbacks.GameRenderCallback;
+import at.haha007.edenclient.callbacks.JoinWorldCallback;
+import at.haha007.edenclient.callbacks.LeaveWorldCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.command.CommandManager;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.RenderUtils;
+import at.haha007.edenclient.utils.config.ConfigSubscriber;
+import at.haha007.edenclient.utils.config.PerWorldConfig;
+import at.haha007.edenclient.utils.config.wrappers.BlockEntityTypeSet;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -19,13 +22,8 @@ import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.render.*;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.client.world.ClientChunkManager;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.nbt.NbtList;
-import net.minecraft.nbt.NbtString;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
 import net.minecraft.util.math.*;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.chunk.WorldChunk;
@@ -38,18 +36,27 @@ import static at.haha007.edenclient.command.CommandManager.literal;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
 public class TileEntityEsp {
+    @ConfigSubscriber("false")
     private boolean enabled;
+    @ConfigSubscriber("true")
     boolean tracer;
-    int r, g, b, distance, maxCount;
+    @ConfigSubscriber("1")
+    float r, g, b;
+    @ConfigSubscriber("1000")
+    int distance;
+    @ConfigSubscriber("1000")
+    int maxCount;
+    @ConfigSubscriber("chest")
+    BlockEntityTypeSet types = new BlockEntityTypeSet();
     List<Vec3i> tileEntities = new ArrayList<>();
-    Set<BlockEntityType<?>> types = new HashSet<>();
     private VertexBuffer wireframeBox;
 
     public TileEntityEsp() {
         GameRenderCallback.EVENT.register(this::render);
         PlayerTickCallback.EVENT.register(this::tick);
-        ConfigLoadCallback.EVENT.register(this::load);
-        ConfigSaveCallback.EVENT.register(this::save);
+        JoinWorldCallback.EVENT.register(this::build);
+        LeaveWorldCallback.EVENT.register(this::destroy);
+        PerWorldConfig.get().register(this, "tileEntityEsp");
         registerCommand();
     }
 
@@ -74,62 +81,15 @@ public class TileEntityEsp {
                 .map(v -> (Vec3i) v).toList();
     }
 
-    private void load(NbtCompound nbtCompound) {
+    private void build() {
         wireframeBox = new VertexBuffer();
         Box bb = new Box(0, 0, 0, 1, 1, 1);
         RenderUtils.drawOutlinedBox(bb, wireframeBox);
-
-        NbtCompound tag = nbtCompound.getCompound("tileEntityEsp");
-        types = new HashSet<>();
-        if (tag.isEmpty()) {
-            enabled = false;
-            r = g = b = 255;
-            distance = 5;
-            tracer = false;
-            maxCount = 100;
-            return;
-        }
-        enabled = tag.getBoolean("enabled");
-        tracer = tag.getBoolean("tracer");
-
-        r = tag.getInt("r");
-        g = tag.getInt("g");
-        b = tag.getInt("b");
-
-        Registry<BlockEntityType<?>> registry = Registry.BLOCK_ENTITY_TYPE;
-        for (NbtElement nbtElement : tag.getList("types", NbtElement.STRING_TYPE)) {
-            types.add(registry.get(new Identifier(nbtElement.asString())));
-        }
-
-        distance = tag.getInt("distance");
-        maxCount = tag.getInt("maxCount");
     }
 
-    private void save(NbtCompound nbtCompound) {
-        NbtCompound tag = new NbtCompound();
-        tag.putBoolean("enabled", enabled);
-        tag.putBoolean("tracer", tracer);
-
-        tag.putInt("r", r);
-        tag.putInt("g", g);
-        tag.putInt("b", b);
-
-        tag.putInt("maxCount", maxCount);
-        tag.putInt("distance", distance);
-
-        nbtCompound.put("tileEntityEsp", tag);
-
-        Registry<BlockEntityType<?>> registry = Registry.BLOCK_ENTITY_TYPE;
-        NbtList nbtTypeList = new NbtList();
-        for (BlockEntityType<?> type : types) {
-            nbtTypeList.add(NbtString.of(Objects.requireNonNull(registry.getId(type)).toString()));
-        }
-        tag.put("types", nbtTypeList);
-
-
+    private void destroy() {
         tileEntities = new ArrayList<>();
         wireframeBox.close();
-        wireframeBox = null;
     }
 
     private void registerCommand() {
@@ -218,9 +178,9 @@ public class TileEntityEsp {
     }
 
     private int setColor(CommandContext<ClientCommandSource> c) {
-        this.r = c.getArgument("r", Integer.class);
-        this.g = c.getArgument("g", Integer.class);
-        this.b = c.getArgument("b", Integer.class);
+        this.r = c.getArgument("r", Integer.class) / 256f;
+        this.g = c.getArgument("g", Integer.class) / 256f;
+        this.b = c.getArgument("b", Integer.class) / 256f;
         sendModMessage(new LiteralText("Color updated.").formatted(Formatting.GOLD));
         return 1;
     }

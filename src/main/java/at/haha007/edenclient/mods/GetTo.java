@@ -1,9 +1,9 @@
 package at.haha007.edenclient.mods;
 
 import at.haha007.edenclient.EdenClient;
-import at.haha007.edenclient.callbacks.ConfigLoadCallback;
-import at.haha007.edenclient.callbacks.ConfigSaveCallback;
 import at.haha007.edenclient.callbacks.GameRenderCallback;
+import at.haha007.edenclient.callbacks.JoinWorldCallback;
+import at.haha007.edenclient.callbacks.LeaveWorldCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.RenderUtils;
@@ -17,7 +17,6 @@ import net.minecraft.client.render.*;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.command.argument.BlockPosArgumentType;
 import net.minecraft.command.argument.PosArgument;
-import net.minecraft.nbt.NbtCompound;
 import net.minecraft.util.math.*;
 
 import java.util.Comparator;
@@ -32,17 +31,17 @@ public class GetTo {
 
     public GetTo() {
         registerCommand();
-        ConfigLoadCallback.EVENT.register(this::load);
-        ConfigSaveCallback.EVENT.register(this::save);
+        JoinWorldCallback.EVENT.register(this::build);
+        LeaveWorldCallback.EVENT.register(this::destroy);
         GameRenderCallback.EVENT.register(this::render);
         PlayerTickCallback.EVENT.register(this::tick);
     }
 
-    private void save(NbtCompound nbtCompound) {
+    private void destroy() {
         vb.close();
     }
 
-    private void load(NbtCompound nbtCompound) {
+    private void build() {
         vb = new VertexBuffer();
         Box bb = new Box(0, 0, 0, 1, 1, 1);
         RenderUtils.drawOutlinedBox(bb, vb);
