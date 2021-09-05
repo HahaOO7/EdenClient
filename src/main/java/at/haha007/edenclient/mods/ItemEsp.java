@@ -6,6 +6,7 @@ import at.haha007.edenclient.callbacks.LeaveWorldCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.utils.RenderUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
+import at.haha007.edenclient.utils.config.PerWorldConfig;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -42,6 +43,7 @@ public class ItemEsp {
 
     public ItemEsp() {
         registerCommand();
+        PerWorldConfig.get().register(this, "itemEsp");
         LeaveWorldCallback.EVENT.register(this::destroy);
         JoinWorldCallback.EVENT.register(this::build);
         GameRenderCallback.EVENT.register(this::render);
@@ -51,7 +53,6 @@ public class ItemEsp {
     private void tick(ClientPlayerEntity player) {
         items = player.getEntityWorld().getEntitiesByClass(ItemEntity.class, player.getBoundingBox().expand(10000, 500, 10000), i -> true);
     }
-
 
     private void render(MatrixStack matrixStack, VertexConsumerProvider.Immediate vertexConsumerProvider, float tickDelta) {
         if (!enabled) return;
