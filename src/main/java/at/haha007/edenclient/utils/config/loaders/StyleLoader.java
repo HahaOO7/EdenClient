@@ -23,13 +23,13 @@ public class StyleLoader implements ConfigLoader<NbtCompound, Style> {
     @Override
     public Style load(NbtCompound tag) {
         Style style = Style.EMPTY;
-        style.withBold(tag.getBoolean("bold"));
-        style.obfuscated(tag.getBoolean("obfuscated"));
-        style.withItalic(tag.getBoolean("italic"));
-        style.withStrikethrough(tag.getBoolean("strikethrough"));
-        style.withUnderline(tag.getBoolean("underlined"));
+        style = style.withBold(tag.getBoolean("bold"));
+        style = style.obfuscated(tag.getBoolean("obfuscated"));
+        style = style.withItalic(tag.getBoolean("italic"));
+        style = style.withStrikethrough(tag.getBoolean("strikethrough"));
+        style = style.withUnderline(tag.getBoolean("underlined"));
         if (tag.contains("rgb"))
-            style.withColor(tag.getInt("rgb"));
+            style = style.withColor(tag.getInt("rgb"));
         return style;
     }
 
