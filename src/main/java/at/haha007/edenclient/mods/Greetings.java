@@ -30,7 +30,9 @@ public class Greetings {
     @ConfigSubscriber("1200")
     private int minDelay;
     @ConfigSubscriber("1200")
-    private int wbDelay;
+    private int wbMinDelay;
+    @ConfigSubscriber("1200")
+    private int wbMaxDelay;
     @ConfigSubscriber("Haha007")
     private StringSet ignoredPlayers;
     @ConfigSubscriber
@@ -45,7 +47,7 @@ public class Greetings {
     private StringList greetOldPlayerMessages;
 
     private final Set<String> sentPlayers = new HashSet<>();
-    private final Map<String, Runnable> wbTasks = new HashMap<>();
+    private final Map<String, Long> quitTimes = new HashMap<>();
     private final Random random = new Random();
 
     public Greetings() {
@@ -61,21 +63,17 @@ public class Greetings {
 
         if (msg.startsWith("[-] ")) {
             String name = msg.substring(4);
-
-            wbTasks.computeIfPresent(name, (k, v) -> {
-                Scheduler.get().cancelTask(v);
-                return null;
-            });
-
-            Runnable r = () -> wbTasks.remove(name);
-            wbTasks.put(name, r);
-            Scheduler.get().scheduleSyncDelayed(() -> wbTasks.remove(name), wbDelay);
+            quitTimes.put(name, System.currentTimeMillis());
+            Scheduler.get().scheduleSyncDelayed(() -> {
+                quitTimes.remove(name);
+            }, wbMaxDelay);
         }
 
         if (msg.startsWith("[+] ")) {
             String name = msg.substring(4);
             if (ignoredPlayers.contains(name.toLowerCase())) return;
-            if (wbTasks.containsKey(name)) {
+            if (quitTimes.containsKey(name)) {
+                if (quitTimes.get(name) + wbMinDelay < System.currentTimeMillis()) return;
                 Collections.shuffle(welcomeBackPlayerMessages);
                 addDelay(name, specificPlayerWBMessages.containsKey(name.toLowerCase()) ? specificPlayerWBMessages.get(name.toLowerCase()) : welcomeBackPlayerMessages.get(0));
             } else {
@@ -210,11 +208,13 @@ public class Greetings {
         SET MINIMUM DELAY IN SECONDS UNTIL A PLAYERS GETS GREETED TWICE AFTER RETURNING
         */
 
-        cmd.then(literal("wbdelay").then(argument("delay", IntegerArgumentType.integer(1)).executes(c -> {
-            wbDelay = c.getArgument("delay", Integer.class) * 20;
-            PlayerUtils.sendModMessage("Wb delay updated");
-            return 1;
-        })));
+        cmd.then(literal("wbdelay").then(argument("minDelay", IntegerArgumentType.integer(1))
+                .then(argument("maxDelay", IntegerArgumentType.integer(1)).executes(c -> {
+                    wbMinDelay = c.getArgument("minDelay", Integer.class) * 20;
+                    wbMaxDelay = c.getArgument("minDelay", Integer.class) * 20;
+                    PlayerUtils.sendModMessage("Wb delay updated");
+                    return 1;
+                }))));
 
         /*
         TOGGLE IF GREETINGS ARE SENT

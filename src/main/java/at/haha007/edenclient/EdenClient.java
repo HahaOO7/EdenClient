@@ -49,6 +49,7 @@ public class EdenClient implements ClientModInitializer {
         new Nuker();
         new LifeSaver();
         new GetTo();
+        new AntiAfk();
 
         // Commands only | These Mods only actively interact with your gameplay when directly using its commands
         new Rainbowifier();
