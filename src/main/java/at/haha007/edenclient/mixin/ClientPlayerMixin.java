@@ -53,7 +53,6 @@ public abstract class ClientPlayerMixin {
             return;
         CommandManager.execute(message.substring(1), new ClientCommandSource(networkHandler, client));
         ci.cancel();
-
     }
 
 

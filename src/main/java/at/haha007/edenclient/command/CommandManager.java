@@ -3,42 +3,81 @@ package at.haha007.edenclient.command;
 import at.haha007.edenclient.utils.PlayerUtils;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.ArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
+import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.suggestion.Suggestions;
+import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.client.network.ClientCommandSource;
-import net.minecraft.text.LiteralText;
+import net.minecraft.text.*;
 import net.minecraft.util.Formatting;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 public class CommandManager {
-    private static final List<LiteralArgumentBuilder<ClientCommandSource>> cmds = new ArrayList<>();
+    private static final Map<LiteralArgumentBuilder<ClientCommandSource>, Text[]> cmds = new HashMap<>();
     private static final CommandDispatcher<ClientCommandSource> dispatcher = new CommandDispatcher<>();
 
     static {
-        register(literal("cmds").executes(a -> {
-            PlayerUtils.sendModMessage(
-                    new LiteralText(cmds.
-                            stream().
-                            map(LiteralArgumentBuilder::getLiteral).
-                            collect(Collectors.joining(", "))).
-                            formatted(Formatting.GOLD));
+        var cmd = literal("ecmd");
+        cmd.executes(a -> {
+            MutableText text = new LiteralText("");
+            cmds.keySet().
+                    stream().
+                    map(LiteralArgumentBuilder::getLiteral).
+                    map(LiteralText::new).
+                    map(t -> t.formatted(Formatting.GOLD)
+                            .styled(s -> s.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.of("Click for more info."))))
+                            .styled(s -> s.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/" + cmd.getLiteral() + " " + t.asString())))).
+                    sorted(Comparator.comparing(Object::toString)).
+                    forEach(t -> {
+                        text.append(t);
+                        text.append(new LiteralText(", ").formatted(Formatting.AQUA));
+                    });
+            PlayerUtils.sendModMessage(text);
             return 1;
-        }));
+        });
+        cmd.then(argument("cmd", StringArgumentType.word())
+                .suggests(CommandManager::suggestCommands)
+                .executes(CommandManager::sendCommandHelp));
+        register(cmd,
+                new LiteralText("Help for EdenClient commands").formatted(Formatting.GOLD),
+                new LiteralText("/ecmd <command>").formatted(Formatting.GOLD));
+    }
+
+    private static int sendCommandHelp(CommandContext<ClientCommandSource> c) {
+        String cmdName = c.getArgument("cmd", String.class);
+        cmds.entrySet().stream()
+                .filter(e -> cmdName.equalsIgnoreCase(e.getKey().getLiteral()))
+                .findFirst()
+                .map(Map.Entry::getValue)
+                .ifPresentOrElse(a -> Arrays.stream(a).forEach(PlayerUtils::sendModMessage),
+                        () -> PlayerUtils.sendModMessage("Could not find help for this command"));
+        return 0;
+    }
+
+    private static CompletableFuture<Suggestions> suggestCommands(CommandContext<ClientCommandSource> c, SuggestionsBuilder b) {
+        cmds.keySet().forEach(cmd -> b.suggest(cmd.getLiteral()));
+        return b.buildFuture();
     }
 
     public static void register(CommandDispatcher<ClientCommandSource> dispatcher) {
-        cmds.forEach(dispatcher::register);
+        cmds.keySet().forEach(dispatcher::register);
+    }
+
+    public static void register(LiteralArgumentBuilder<ClientCommandSource> command, Text... usage) {
+        cmds.put(command, usage);
+        dispatcher.register(command);
     }
 
     public static void register(LiteralArgumentBuilder<ClientCommandSource> command) {
-        cmds.add(command);
-        cmds.sort(Comparator.comparing(LiteralArgumentBuilder::getLiteral));
-        dispatcher.register(command);
+        register(command, (Text[]) null);
     }
 
     public static LiteralArgumentBuilder<ClientCommandSource> literal(String s) {
@@ -50,7 +89,7 @@ public class CommandManager {
     }
 
     public static boolean isClientSideCommand(String command) {
-        return cmds.stream().anyMatch(c -> c.getLiteral().equalsIgnoreCase(command));
+        return cmds.keySet().stream().anyMatch(c -> c.getLiteral().equalsIgnoreCase(command));
     }
 
 
