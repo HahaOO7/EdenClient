@@ -27,9 +27,10 @@ public class CommandManager {
         List<LiteralArgumentBuilder<ClientCommandSource>> list = Stream.of("ecmds", "ehelp").map(CommandManager::literal).collect(Collectors.toList());
 
         list.forEach(cmd -> cmd.executes(a -> {
-            PlayerUtils.sendModMessage("Click on the mod you need help for to receive help.");
+            PlayerUtils.sendModMessage("Click on the mod you need help for to receive help. To get all information for each feature use the github-wiki: https://github.com/HahaOO7/EdenClient/wiki");
+
             MutableText text = new LiteralText("");
-            cmds.keySet().
+            Iterator<MutableText> it = cmds.keySet().
                     stream().
                     map(LiteralArgumentBuilder::getLiteral).
                     map(LiteralText::new).
@@ -37,10 +38,15 @@ public class CommandManager {
                             .styled(s -> s.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.of("Click for more info."))))
                             .styled(s -> s.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/" + cmd.getLiteral() + " " + t.asString())))).
                     sorted(Comparator.comparing(Object::toString)).
-                    forEach(t -> {
-                        text.append(t);
-                        text.append(new LiteralText(", ").formatted(Formatting.AQUA));
-                    });
+                    collect(Collectors.toList()).iterator();
+
+            while (it.hasNext()) {
+                text.append(it.next().formatted(Formatting.GOLD));
+                if (it.hasNext()) {
+                    text.append(new LiteralText(", ").formatted(Formatting.AQUA));
+                }
+            }
+
             PlayerUtils.sendModMessage(text);
             return 1;
         }));
