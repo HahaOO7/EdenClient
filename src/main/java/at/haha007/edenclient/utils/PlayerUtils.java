@@ -67,6 +67,9 @@ public class PlayerUtils {
     }
 
     public static ClientPlayerEntity getPlayer() {
-        return MinecraftClient.getInstance().player;
+        ClientPlayerEntity player = MinecraftClient.getInstance().player;
+        if (player == null)
+            throw new NullPointerException("Player is null.");
+        return player;
     }
 }
