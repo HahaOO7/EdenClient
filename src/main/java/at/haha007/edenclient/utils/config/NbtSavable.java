@@ -1,4 +1,4 @@
-package at.haha007.edenclient.utils;
+package at.haha007.edenclient.utils.config;
 
 import net.minecraft.nbt.NbtCompound;
 

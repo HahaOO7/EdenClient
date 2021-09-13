@@ -1,14 +1,13 @@
 package at.haha007.edenclient.mods;
 
-import at.haha007.edenclient.callbacks.ConfigLoadCallback;
-import at.haha007.edenclient.callbacks.ConfigSaveCallback;
 import at.haha007.edenclient.utils.PlayerUtils;
+import at.haha007.edenclient.utils.config.ConfigSubscriber;
+import at.haha007.edenclient.utils.config.PerWorldConfig;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.client.network.ClientCommandSource;
 import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.nbt.NbtCompound;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.Formatting;
 
@@ -20,27 +19,12 @@ import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
 public class Rainbowifier {
     private final List<Character> simpleRainbowColors = List.of('c', '6', 'e', 'a', 'b', '3', 'd', '5', 'd', '3', 'b', 'a', 'e', '6');
+    @ConfigSubscriber("0.3")
     private double freq = 0.3;
 
     public Rainbowifier() {
         registerCommand();
-        ConfigSaveCallback.EVENT.register(this::onSave);
-        ConfigLoadCallback.EVENT.register(this::onLoad);
-    }
-
-    private void onLoad(NbtCompound nbtCompound) {
-        NbtCompound rainbowTag = nbtCompound.getCompound("rainbowify");
-        if (rainbowTag == null) return;
-        if (rainbowTag.contains("freq"))
-            this.freq = rainbowTag.getDouble("freq");
-        else
-            this.freq = 0.3;
-    }
-
-    private void onSave(NbtCompound nbtCompound) {
-        NbtCompound rainbowTag = new NbtCompound();
-        rainbowTag.putDouble("freq", this.freq);
-        nbtCompound.put("rainbowify", rainbowTag);
+        PerWorldConfig.get().register(this, "rainbowify");
     }
 
     private void registerCommand() {

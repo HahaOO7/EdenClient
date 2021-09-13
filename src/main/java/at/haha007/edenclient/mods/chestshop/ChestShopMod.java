@@ -1,11 +1,11 @@
 package at.haha007.edenclient.mods.chestshop;
 
 import at.haha007.edenclient.EdenClient;
-import at.haha007.edenclient.callbacks.ConfigLoadCallback;
-import at.haha007.edenclient.callbacks.ConfigSaveCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.mods.datafetcher.ChestShopItemNames;
 import at.haha007.edenclient.utils.PlayerUtils;
+import at.haha007.edenclient.utils.config.ConfigSubscriber;
+import at.haha007.edenclient.utils.config.PerWorldConfig;
 import at.haha007.edenclient.utils.tasks.RunnableTask;
 import at.haha007.edenclient.utils.tasks.TaskManager;
 import at.haha007.edenclient.utils.tasks.WaitForTicksTask;
@@ -17,8 +17,6 @@ import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.block.entity.SignBlockEntity;
 import net.minecraft.client.network.ClientCommandSource;
 import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtList;
 import net.minecraft.text.*;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.ChunkPos;
@@ -41,16 +39,20 @@ import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
 public class ChestShopMod {
 
-    private final Map<ChunkPos, Set<ChestShopEntry>> shops = new HashMap<>();
-    private int[] chunk = {0, 0};
+    @ConfigSubscriber
+    private ChestShopMap shops;
+    @ConfigSubscriber("false")
     private boolean searchEnabled = true;
+
+    private int[] chunk = {0, 0};
 
     public ChestShopMod() {
         registerCommand("chestshop");
         registerCommand("cs");
         PlayerTickCallback.EVENT.register(this::tick);
-        ConfigLoadCallback.EVENT.register(this::loadConfig);
-        ConfigSaveCallback.EVENT.register(this::saveConfig);
+        PerWorldConfig.get().register(this, "chestShop");
+        PerWorldConfig.get().register(new ChestShopLoader(), ChestShopMap.class);
+        PerWorldConfig.get().register(new ChestShopEntryLoader(), ChestShopEntry.class);
     }
 
     private void tick(ClientPlayerEntity player) {
@@ -66,9 +68,14 @@ public class ChestShopMod {
         WorldChunk c = cm.getWorldChunk(chunk.x, chunk.z, false);
         if (c == null) return;
 
-        shops.remove(c.getPos());
-        Set<ChestShopEntry> cs = c.getBlockEntities().values().stream().filter(t -> t instanceof SignBlockEntity).map(t -> (SignBlockEntity) t).
-                map(ChestShopEntry::new).filter(ChestShopEntry::isShop).collect(Collectors.toSet());
+        shops.remove(chunk);
+        ChestShopSet cs = new ChestShopSet();
+        c.getBlockEntities().values().stream()
+                .filter(t -> t instanceof SignBlockEntity)
+                .map(t -> (SignBlockEntity) t)
+                .map(ChestShopEntry::new)
+                .filter(ChestShopEntry::isShop)
+                .forEach(cs::add);
         shops.put(chunk, cs);
     }
 
@@ -288,17 +295,6 @@ public class ChestShopMod {
         register(node);
     }
 
-//    private Optional<String> getNearestPlayerWarp(Vec3i pos) {
-//        Vec3i pp = PlayerUtils.getPlayer().getBlockPos();
-//        return EdenClient.INSTANCE.getDataFetcher().getPlayerWarps().getAll().entrySet().stream()
-//                .min(Comparator.comparingDouble(e -> e.getValue().getSquaredDistance(pos)))
-//                .map(e -> dist(pos, pp) < dist(e.getValue(), pos) ? null : e.getKey());
-//    }
-//
-//    private double dist(Vec3i a, Vec3i b) {
-//        return a.getSquaredDistance(b);
-//    }
-
     private MutableText gold(String string) {
         return new LiteralText(string).formatted(Formatting.GOLD);
     }
@@ -389,28 +385,4 @@ public class ChestShopMod {
         shops.values().forEach(s -> s.stream().filter(ChestShopEntry::canBuy).map(entry -> itemNameMap.getLongName(entry.getItem())).filter(Objects::nonNull).forEach(suggestionsBuilder::suggest));
         return suggestionsBuilder.buildFuture();
     }
-
-    private void loadConfig(NbtCompound overTag) {
-        NbtCompound tag = overTag.getCompound("chestShop");
-        searchEnabled = !tag.contains("enabled") || tag.getBoolean("enabled");
-        NbtList list = tag.getList("entries", 10);
-        shops.clear();
-        list.stream().map(nbt -> (NbtCompound) nbt).map(ChestShopEntry::new).
-                forEach(entry -> {
-                    if (shops.containsKey(entry.getChunkPos()))
-                        shops.get(entry.getChunkPos()).add(entry);
-                    else
-                        shops.put(entry.getChunkPos(), new HashSet<>(Set.of(entry)));
-                });
-    }
-
-    private void saveConfig(NbtCompound overTag) {
-        NbtCompound tag = overTag.getCompound("chestShop");
-        tag.putBoolean("enabled", searchEnabled);
-        NbtList list = new NbtList();
-        shops.values().forEach(m -> m.forEach(cs -> list.add(cs.toTag())));
-        tag.put("entries", list);
-        overTag.put("chestShop", tag);
-    }
-
 }

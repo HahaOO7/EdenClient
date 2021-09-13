@@ -1,9 +1,10 @@
 package at.haha007.edenclient.mods.datafetcher;
 
 import at.haha007.edenclient.command.CommandManager;
-import at.haha007.edenclient.utils.NbtLoadable;
-import at.haha007.edenclient.utils.NbtSavable;
 import at.haha007.edenclient.utils.PlayerUtils;
+import at.haha007.edenclient.utils.config.ConfigSubscriber;
+import at.haha007.edenclient.utils.config.PerWorldConfig;
+import at.haha007.edenclient.utils.config.wrappers.StringVec3iMap;
 import at.haha007.edenclient.utils.tasks.*;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.client.MinecraftClient;
@@ -13,79 +14,37 @@ import net.minecraft.client.item.TooltipContext;
 import net.minecraft.client.network.ClientCommandSource;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtIntArray;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.Vec3i;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static at.haha007.edenclient.utils.MathUtils.integer;
 
-public class PlayerWarps implements NbtLoadable, NbtSavable {
+public class PlayerWarps {
 
-    private Map<String, Vec3i> shops = new HashMap<>();
-    private Map<String, Vec3i> builds = new HashMap<>();
-    private Map<String, Vec3i> farms = new HashMap<>();
-    private Map<String, Vec3i> other = new HashMap<>();
-    private Map<String, Vec3i> all = new HashMap<>();
-    private Map<String, Vec3i> hidden = new HashMap<>();
+    @ConfigSubscriber
+    private StringVec3iMap shops = new StringVec3iMap();
+    @ConfigSubscriber
+    private StringVec3iMap builds = new StringVec3iMap();
+    @ConfigSubscriber
+    private StringVec3iMap farms = new StringVec3iMap();
+    @ConfigSubscriber
+    private StringVec3iMap other = new StringVec3iMap();
+    @ConfigSubscriber
+    private StringVec3iMap all = new StringVec3iMap();
+    @ConfigSubscriber
+    private StringVec3iMap hidden = new StringVec3iMap();
 
     PlayerWarps() {
+        PerWorldConfig.get().register(this, "dataFetcher.playerWarps");
     }
-
-    public void load(NbtCompound tag) {
-        shops.clear();
-        builds.clear();
-        farms.clear();
-        other.clear();
-        all.clear();
-        hidden.clear();
-
-        shops = map(tag.getCompound("shops"));
-        builds = map(tag.getCompound("builds"));
-        farms = map(tag.getCompound("farms"));
-        other = map(tag.getCompound("other"));
-        all = map(tag.getCompound("all"));
-        hidden = map(tag.getCompound("all"));
-    }
-
-    public NbtCompound save() {
-        NbtCompound tag = new NbtCompound();
-        tag.put("shops", tag(shops));
-        tag.put("builds", tag(builds));
-        tag.put("farms", tag(farms));
-        tag.put("other", tag(other));
-        tag.put("all", tag(all));
-        tag.put("hidden", tag(hidden));
-        return tag;
-    }
-
-    private NbtCompound tag(Map<String, Vec3i> map) {
-        NbtCompound tag = new NbtCompound();
-        map.forEach((k, v) -> tag.put(k, new NbtIntArray(ints(v))));
-        return tag;
-    }
-
-    private Map<String, Vec3i> map(NbtCompound tag) {
-        Map<String, Vec3i> map = new HashMap<>();
-        for (String key : tag.getKeys()) {
-            map.put(key, vec(tag.getIntArray(key)));
-        }
-        return map;
-    }
-
-    private Vec3i vec(int[] ints) {
-        return new Vec3i(ints[0], ints[1], ints[2]);
-    }
-
-    private int[] ints(Vec3i vec) {
-        return new int[]{vec.getX(), vec.getY(), vec.getZ()};
-    }
-
 
     LiteralArgumentBuilder<ClientCommandSource> registerCommand() {
         LiteralArgumentBuilder<ClientCommandSource> cmd = CommandManager.literal("playerwarps");
@@ -101,12 +60,12 @@ public class PlayerWarps implements NbtLoadable, NbtSavable {
     }
 
     private int clearData() {
-        shops = new HashMap<>();
-        builds = new HashMap<>();
-        farms = new HashMap<>();
-        other = new HashMap<>();
-        all = new HashMap<>();
-        hidden = new HashMap<>();
+        shops = new StringVec3iMap();
+        builds = new StringVec3iMap();
+        farms = new StringVec3iMap();
+        other = new StringVec3iMap();
+        all = new StringVec3iMap();
+        hidden = new StringVec3iMap();
         PlayerUtils.sendModMessage("Cleared data!");
         return 1;
     }

@@ -6,6 +6,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawableHelper;
 import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.ChatHudLine;
+import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.text.OrderedText;
 import net.minecraft.text.Text;
 import org.spongepowered.asm.mixin.Final;
@@ -31,7 +32,9 @@ public abstract class ChatHudMixin extends DrawableHelper {
     @Inject(at = @At("HEAD"),
             method = "addMessage(Lnet/minecraft/text/Text;I)V", cancellable = true)
     private void onAddMessage(Text chatText, int chatLineId, CallbackInfo ci) {
-        AddChatMessageCallback.ChatAddEvent event = new AddChatMessageCallback.ChatAddEvent(PlayerUtils.getPlayer(), chatText, chatLineId, visibleMessages);
+        ClientPlayerEntity player = PlayerUtils.getPlayer();
+        if (player == null) return;
+        AddChatMessageCallback.ChatAddEvent event = new AddChatMessageCallback.ChatAddEvent(player, chatText, chatLineId, visibleMessages);
         AddChatMessageCallback.EVENT.invoker().interact(event);
         chatText = event.getChatText();
         ci.cancel();

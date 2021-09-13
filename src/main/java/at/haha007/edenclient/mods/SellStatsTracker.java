@@ -2,8 +2,9 @@ package at.haha007.edenclient.mods;
 
 import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.callbacks.AddChatMessageCallback;
-import at.haha007.edenclient.callbacks.ConfigLoadCallback;
-import at.haha007.edenclient.callbacks.ConfigSaveCallback;
+import at.haha007.edenclient.utils.config.ConfigSubscriber;
+import at.haha007.edenclient.utils.config.PerWorldConfig;
+import at.haha007.edenclient.utils.config.loaders.ConfigLoader;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -15,9 +16,7 @@ import net.minecraft.nbt.NbtCompound;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.Formatting;
 
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.regex.Matcher;
@@ -31,16 +30,21 @@ public class SellStatsTracker {
     private final Pattern messagePattern = Pattern.compile("Verkauft für \\$(?<money>[0-9]{1,5}\\.?[0-9]{0,2}) \\((?<amount>[0-9,]{1,5}) (?<item>[a-zA-z0-9_]{1,30}) Einheiten je \\$[0-9]{1,5}\\.?[0-9]{0,2}\\)");
     private double amountOfMoneyGainedInSession = 0.0;
     private int index = 0;
-    private final HashMap<String, SellStatsForItem> data = new HashMap<>();
+    @ConfigSubscriber
+    private final SellStatsForItemMap data = new SellStatsForItemMap();
+    @ConfigSubscriber
     private boolean simplifyMessages = false;
+    @ConfigSubscriber
     private int delayInSimplifiedMessages = 5;
 
     public SellStatsTracker() {
         registerCommand("sellstatstracker");
         registerCommand("statstracker");
         AddChatMessageCallback.EVENT.register(this::onChat);
-        ConfigSaveCallback.EVENT.register(this::onSave);
-        ConfigLoadCallback.EVENT.register(this::onLoad);
+        PerWorldConfig pwc = PerWorldConfig.get();
+        pwc.register(this, "sellStatsTracker");
+        pwc.register(new SellStatsForItemLoader(), SellStatsForItem.class);
+        pwc.register(new SellStatsForItemMapLoader(), SellStatsForItemMap.class);
     }
 
     private void onChat(AddChatMessageCallback.ChatAddEvent event) {
@@ -130,33 +134,48 @@ public class SellStatsTracker {
         return suggestionsBuilder.buildFuture();
     }
 
-    private void onLoad(NbtCompound nbtCompound) {
-        if (nbtCompound.contains("sellstatstracker")) {
-            NbtCompound tag = nbtCompound.getCompound("sellstatstracker");
-            if (tag.contains("data")) {
-                List<String[]> data = Arrays.stream(tag.getString("data").split("~")).map(string -> string.split(";")).collect(Collectors.toList());
-                for (String[] entry : data) {
-                    this.data.put(entry[0], new SellStatsForItem(Integer.parseInt(entry[1]), Double.parseDouble(entry[2])));
-                }
-            }
-            if (tag.contains("simplifiedmessages")) simplifyMessages = tag.getBoolean("simplifiedmessages");
-            if (tag.contains("delay")) delayInSimplifiedMessages = tag.getInt("delay");
-        }
-    }
-
-    private void onSave(NbtCompound nbtCompound) {
-        NbtCompound tag = new NbtCompound();
-        String dataString;
-        if (!data.values().isEmpty()) {
-            dataString = data.entrySet().stream().sorted((e1, e2) -> Integer.compare(e2.getValue().amountSold, e1.getValue().amountSold))
-                    .map(entry -> entry.getKey() + ";" + entry.getValue().amountSold + ";" + entry.getValue().money).collect(Collectors.joining("~"));
-            tag.putString("data", dataString);
-        }
-        tag.putInt("delay", delayInSimplifiedMessages);
-        tag.putBoolean("simplifiedmessages", simplifyMessages);
-        nbtCompound.put("sellstatstracker", tag);
-    }
-
     private static record SellStatsForItem(int amountSold, double money) {
+    }
+
+    private static class SellStatsForItemLoader implements ConfigLoader<NbtCompound, SellStatsForItem> {
+        public NbtCompound save(Object value) {
+            SellStatsForItem ss = cast(value);
+            NbtCompound tag = new NbtCompound();
+            tag.putInt("amountSold", ss.amountSold);
+            tag.putDouble("money", ss.money);
+            return tag;
+        }
+
+        public SellStatsForItem load(NbtCompound tag) {
+            return new SellStatsForItem(tag.getInt("amountSold"), tag.getDouble("money"));
+        }
+
+        public NbtCompound parse(String s) {
+            return new NbtCompound();
+        }
+    }
+
+    private static class SellStatsForItemMapLoader implements ConfigLoader<NbtCompound, SellStatsForItemMap> {
+        public NbtCompound save(Object value) {
+            SellStatsForItemMap map = cast(value);
+            NbtCompound tag = new NbtCompound();
+            map.forEach((k, v) -> tag.put(k, PerWorldConfig.get().toNbt(v)));
+            return tag;
+        }
+
+        public SellStatsForItemMap load(NbtCompound tag) {
+            SellStatsForItemMap map = new SellStatsForItemMap();
+            for (String key : tag.getKeys()) {
+                map.put(key, PerWorldConfig.get().toObject(tag.get(key), SellStatsForItem.class));
+            }
+            return map;
+        }
+
+        public NbtCompound parse(String s) {
+            return new NbtCompound();
+        }
+    }
+
+    private static class SellStatsForItemMap extends HashMap<String, SellStatsForItem> {
     }
 }

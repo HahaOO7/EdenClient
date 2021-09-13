@@ -1,10 +1,12 @@
 package at.haha007.edenclient.mods;
 
-import at.haha007.edenclient.callbacks.ConfigLoadCallback;
-import at.haha007.edenclient.callbacks.ConfigSaveCallback;
 import at.haha007.edenclient.callbacks.GameRenderCallback;
+import at.haha007.edenclient.callbacks.JoinWorldCallback;
+import at.haha007.edenclient.callbacks.LeaveWorldCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.utils.RenderUtils;
+import at.haha007.edenclient.utils.config.ConfigSubscriber;
+import at.haha007.edenclient.utils.config.PerWorldConfig;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -17,7 +19,6 @@ import net.minecraft.client.render.GameRenderer;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.ItemEntity;
-import net.minecraft.nbt.NbtCompound;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.Box;
@@ -29,8 +30,11 @@ import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
 public class ItemEsp {
+    @ConfigSubscriber("false")
     boolean enabled = false;
+    @ConfigSubscriber("1")
     float r, g, b;
+    @ConfigSubscriber("false")
     boolean solid;
     List<ItemEntity> items = new ArrayList<>();
     private VertexBuffer wireframeBox;
@@ -39,8 +43,9 @@ public class ItemEsp {
 
     public ItemEsp() {
         registerCommand();
-        ConfigSaveCallback.EVENT.register(this::onSave);
-        ConfigLoadCallback.EVENT.register(this::onLoad);
+        PerWorldConfig.get().register(this, "itemEsp");
+        LeaveWorldCallback.EVENT.register(this::destroy);
+        JoinWorldCallback.EVENT.register(this::build);
         GameRenderCallback.EVENT.register(this::render);
         PlayerTickCallback.EVENT.register(this::tick);
     }
@@ -48,7 +53,6 @@ public class ItemEsp {
     private void tick(ClientPlayerEntity player) {
         items = player.getEntityWorld().getEntitiesByClass(ItemEntity.class, player.getBoundingBox().expand(10000, 500, 10000), i -> true);
     }
-
 
     private void render(MatrixStack matrixStack, VertexConsumerProvider.Immediate vertexConsumerProvider, float tickDelta) {
         if (!enabled) return;
@@ -70,23 +74,7 @@ public class ItemEsp {
         }
     }
 
-    private void onLoad(NbtCompound compoundTag) {
-        NbtCompound tag = compoundTag.getCompound("itemesp");
-        if (tag.contains("enabled"))
-            enabled = tag.getBoolean("enabled");
-        else
-            enabled = false;
-        if (tag.contains("solid"))
-            solid = tag.getBoolean("solid");
-        else
-            solid = false;
-        if (tag.contains("r")) r = tag.getFloat("r");
-        else r = 1;
-        if (tag.contains("g")) g = tag.getFloat("g");
-        else g = 1;
-        if (tag.contains("b")) b = tag.getFloat("b");
-        else b = 1;
-
+    private void build() {
         wireframeBox = new VertexBuffer();
         Box bb = new Box(-0.25, -0.0, -0.25, 0.25, 0.5, 0.25);
         RenderUtils.drawOutlinedBox(bb, wireframeBox);
@@ -95,15 +83,7 @@ public class ItemEsp {
         RenderUtils.drawSolidBox(bb, solidBox);
     }
 
-    private void onSave(NbtCompound compoundTag) {
-        NbtCompound tag = new NbtCompound();
-        tag.putBoolean("enabled", enabled);
-        tag.putBoolean("solid", solid);
-        tag.putFloat("r", r);
-        tag.putFloat("g", g);
-        tag.putFloat("b", b);
-        compoundTag.put("itemesp", tag);
-
+    private void destroy() {
         items.clear();
         wireframeBox.close();
         solidBox.close();

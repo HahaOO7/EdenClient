@@ -5,8 +5,8 @@ import at.haha007.edenclient.mods.chestshop.ChestShopMod;
 import at.haha007.edenclient.mods.datafetcher.DataFetcher;
 import at.haha007.edenclient.render.CubeRenderer;
 import at.haha007.edenclient.render.TracerRenderer;
-import at.haha007.edenclient.utils.PerWorldConfig;
 import at.haha007.edenclient.utils.Scheduler;
+import at.haha007.edenclient.utils.config.PerWorldConfig;
 import net.fabricmc.api.ClientModInitializer;
 import net.minecraft.client.MinecraftClient;
 
@@ -22,7 +22,7 @@ public class EdenClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         INSTANCE = this;
-        PerWorldConfig.getInstance();
+        PerWorldConfig.get();
         Scheduler.get();
 
         dataFetcher = new DataFetcher();
@@ -49,6 +49,7 @@ public class EdenClient implements ClientModInitializer {
         new Nuker();
         new LifeSaver();
         new GetTo();
+        new AntiAfk();
 
         // Commands only | These Mods only actively interact with your gameplay when directly using its commands
         new Rainbowifier();

@@ -1,16 +1,14 @@
 package at.haha007.edenclient.mods;
 
-import at.haha007.edenclient.callbacks.ConfigLoadCallback;
-import at.haha007.edenclient.callbacks.ConfigSaveCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.Scheduler;
+import at.haha007.edenclient.utils.config.ConfigSubscriber;
+import at.haha007.edenclient.utils.config.PerWorldConfig;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientCommandSource;
 import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.nbt.NbtCompound;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.Formatting;
 
@@ -19,44 +17,18 @@ import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
 public class LifeSaver {
 
+    @ConfigSubscriber("1")
     int health;
+    @ConfigSubscriber("-10")
     int height;
+    @ConfigSubscriber("false")
     boolean enabled;
     boolean schedulerRunning;
 
     public LifeSaver() {
         registerCommand();
         PlayerTickCallback.EVENT.register(this::tick);
-        ConfigLoadCallback.EVENT.register(this::loadConfig);
-        ConfigSaveCallback.EVENT.register(this::saveConfig);
-    }
-
-    private void loadConfig(NbtCompound nbtCompound) {
-        if (!nbtCompound.contains("lifesaver"))
-            return;
-
-        NbtCompound tag = nbtCompound.getCompound("lifesaver");
-        if (tag.contains("health"))
-            this.health = tag.getInt("health");
-        else
-            this.health = 1;
-        if (tag.contains("height"))
-            this.height = tag.getInt("height");
-        else
-            this.height = -10;
-        if (tag.contains("enabled"))
-            this.enabled = tag.getBoolean("enabled");
-        else
-            this.enabled = false;
-
-    }
-
-    private void saveConfig(NbtCompound nbtCompound) {
-        NbtCompound tag = new NbtCompound();
-        tag.putInt("health", health);
-        tag.putInt("height", height);
-        tag.putBoolean("enabled", enabled);
-        nbtCompound.put("lifesaver", tag);
+        PerWorldConfig.get().register(this, "lifesaver");
     }
 
     private void registerCommand() {

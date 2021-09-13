@@ -2,18 +2,17 @@ package at.haha007.edenclient.mods.datafetcher;
 
 import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.callbacks.AddChatMessageCallback;
+import at.haha007.edenclient.callbacks.LeaveWorldCallback;
 import at.haha007.edenclient.mods.MessageIgnorer;
-import at.haha007.edenclient.utils.NbtLoadable;
-import at.haha007.edenclient.utils.NbtSavable;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.Scheduler;
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
+import at.haha007.edenclient.utils.config.ConfigSubscriber;
+import at.haha007.edenclient.utils.config.PerWorldConfig;
+import at.haha007.edenclient.utils.config.wrappers.BiStringStringMap;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.client.network.ClientCommandSource;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.item.Item;
-import net.minecraft.nbt.NbtCompound;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
@@ -28,26 +27,18 @@ import java.util.regex.Pattern;
 import static at.haha007.edenclient.command.CommandManager.literal;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
-public class ChestShopItemNames implements NbtLoadable, NbtSavable {
+public class ChestShopItemNames {
 
-    private final BiMap<String, String> itemNameMap = HashBiMap.create();
+    @ConfigSubscriber
+    private final BiStringStringMap itemNameMap = new BiStringStringMap();
+
     private String lastFullNameCached = null;
     private boolean nameLookupRunning = false;
 
     ChestShopItemNames() {
         AddChatMessageCallback.EVENT.register(this::onChat);
-    }
-
-    public void load(NbtCompound tag) {
-        itemNameMap.clear();
-        tag.getKeys().forEach(k -> itemNameMap.put(k, tag.getString(k)));
-        nameLookupRunning = false;
-    }
-
-    public NbtCompound save() {
-        NbtCompound mappedNamesCompound = new NbtCompound();
-        itemNameMap.forEach(mappedNamesCompound::putString);
-        return mappedNamesCompound;
+        PerWorldConfig.get().register(this, "dataFetcher.chestShopItemNames");
+        LeaveWorldCallback.EVENT.register(() -> nameLookupRunning = false);
     }
 
     private void onChat(AddChatMessageCallback.ChatAddEvent event) {
@@ -75,7 +66,7 @@ public class ChestShopItemNames implements NbtLoadable, NbtSavable {
     }
 
     public String getShortName(String longName) {
-        return itemNameMap.inverse().get(longName);
+        return itemNameMap.getKey(longName);
     }
 
     public LiteralArgumentBuilder<ClientCommandSource> registerCommand() {
@@ -140,6 +131,7 @@ public class ChestShopItemNames implements NbtLoadable, NbtSavable {
             }, 20, 0);
             return 1;
         }));
+
         mapItemNames.then(literal("reset").executes(c -> {
             sendModMessage("Mapped item names cleared.");
             itemNameMap.clear();

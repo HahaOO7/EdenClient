@@ -1,21 +1,16 @@
 package at.haha007.edenclient.mods;
 
 import at.haha007.edenclient.callbacks.AddChatMessageCallback;
-import at.haha007.edenclient.callbacks.ConfigLoadCallback;
-import at.haha007.edenclient.callbacks.ConfigSaveCallback;
+import at.haha007.edenclient.utils.config.ConfigSubscriber;
+import at.haha007.edenclient.utils.config.PerWorldConfig;
+import at.haha007.edenclient.utils.config.wrappers.StringList;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.client.network.ClientCommandSource;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.nbt.NbtList;
-import net.minecraft.nbt.NbtString;
 import net.minecraft.text.*;
 import net.minecraft.util.Formatting;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -23,7 +18,9 @@ import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
 public class MessageIgnorer {
-    private final List<String> regex = new ArrayList<>();
+    @ConfigSubscriber
+    private final StringList regex = new StringList();
+    @ConfigSubscriber("false")
     private boolean enabled;
 
     public enum Predefined {
@@ -80,8 +77,7 @@ public class MessageIgnorer {
         AddChatMessageCallback.EVENT.register(this::onChat);
         registerCommand("ignoremessage");
         registerCommand("im");
-        ConfigSaveCallback.EVENT.register(this::onSave);
-        ConfigLoadCallback.EVENT.register(this::onLoad);
+        PerWorldConfig.get().register(this, "MessageIgnorer");
     }
 
     public boolean isEnabled() {
@@ -195,34 +191,6 @@ public class MessageIgnorer {
             if (!regex.contains(s))
                 regex.add(s);
         }
-    }
-
-    private void onLoad(NbtCompound nbtCompound) {
-        regex.clear();
-        enabled = false;
-
-        if (!nbtCompound.contains("MessageIgnorer")) {
-            return;
-        }
-        NbtCompound tag = nbtCompound.getCompound("MessageIgnorer");
-        if (tag.contains("regex")) {
-            NbtList list = tag.getList("regex", 8);
-            for (NbtElement e : list) {
-                regex.add(e.asString());
-            }
-        }
-
-        if (tag.contains("enabled")) enabled = tag.getBoolean("enabled");
-
-    }
-
-    private void onSave(NbtCompound nbtCompound) {
-        NbtCompound tag = new NbtCompound();
-        tag.putBoolean("enabled", enabled);
-        NbtList list = new NbtList();
-        regex.forEach(s -> list.add(NbtString.of(s)));
-        tag.put("regex", list);
-        nbtCompound.put("MessageIgnorer", tag);
     }
 
     private void sendDebugMessage() {

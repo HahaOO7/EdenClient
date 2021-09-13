@@ -1,45 +1,29 @@
 package at.haha007.edenclient.mods;
 
-import at.haha007.edenclient.callbacks.ConfigLoadCallback;
-import at.haha007.edenclient.callbacks.ConfigSaveCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.command.CommandManager;
 import at.haha007.edenclient.utils.PlayerUtils;
+import at.haha007.edenclient.utils.config.ConfigSubscriber;
+import at.haha007.edenclient.utils.config.PerWorldConfig;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.network.ClientPlayerInteractionManager;
 import net.minecraft.entity.passive.SheepEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.Items;
-import net.minecraft.nbt.NbtCompound;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.Vec3d;
 
 public class AutoSheer {
+    @ConfigSubscriber("false")
     boolean enabled = false;
 
     public AutoSheer() {
         PlayerTickCallback.EVENT.register(this::onTick);
-        ConfigSaveCallback.EVENT.register(this::onSave);
-        ConfigLoadCallback.EVENT.register(this::onLoad);
+        PerWorldConfig.get().register(this, "autoShear");
         registerCommand();
-    }
-
-    private void onLoad(NbtCompound nbtCompound) {
-        if (!nbtCompound.contains("AutoShear")) {
-            enabled = false;
-            return;
-        }
-        NbtCompound tag = nbtCompound.getCompound("AutoShear");
-        enabled = tag.getBoolean("enabled");
-    }
-
-    private void onSave(NbtCompound nbtCompound) {
-        var tag = new NbtCompound();
-        tag.putBoolean("enabled", enabled);
-        nbtCompound.put("AutoShear", tag);
     }
 
     private void registerCommand() {

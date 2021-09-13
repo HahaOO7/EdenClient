@@ -1,24 +1,19 @@
 package at.haha007.edenclient.mods;
 
-import at.haha007.edenclient.callbacks.ConfigLoadCallback;
-import at.haha007.edenclient.callbacks.ConfigSaveCallback;
 import at.haha007.edenclient.callbacks.PlayerInvChangeCallback;
 import at.haha007.edenclient.utils.PlayerUtils;
+import at.haha007.edenclient.utils.config.ConfigSubscriber;
+import at.haha007.edenclient.utils.config.PerWorldConfig;
+import at.haha007.edenclient.utils.config.wrappers.ItemSet;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientCommandSource;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.Item;
-import net.minecraft.item.Items;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.nbt.NbtList;
-import net.minecraft.nbt.NbtString;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
@@ -27,19 +22,19 @@ import net.minecraft.util.registry.Registry;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
 public class AutoSell {
-    private final Set<Item> autoSellItems = new HashSet<>();
+    @ConfigSubscriber()
+    private final ItemSet autoSellItems = new ItemSet();
     private long lastSell = 0;
+    @ConfigSubscriber("false")
     private boolean enabled;
 
     public AutoSell() {
-        ConfigSaveCallback.EVENT.register(this::onSave);
-        ConfigLoadCallback.EVENT.register(this::onLoad);
+        PerWorldConfig.get().register(this, "autoSell");
         PlayerInvChangeCallback.EVENT.register(this::onInventoryChange);
         registerCommand("autosell");
         registerCommand("as");
@@ -75,8 +70,6 @@ public class AutoSell {
         }
 
         node.then(literal("remove").then(argument("item", StringArgumentType.greedyString()).suggests(this::suggestRemoveItems).executes(c -> {
-            ClientPlayerEntity player = PlayerUtils.getPlayer();
-
             Optional<Item> opt = Registry.ITEM.getOrEmpty(new Identifier(c.getArgument("item", String.class).replace(" ", "_")));
             if (opt.isEmpty()) {
                 sendModMessage("No item with this name exists.");
@@ -117,29 +110,6 @@ public class AutoSell {
                 .map(String::toLowerCase).toList().forEach(suggestionsBuilder::suggest);
         return suggestionsBuilder.buildFuture();
     }
-
-    private void onLoad(NbtCompound compoundTag) {
-        NbtCompound tag = compoundTag.getCompound("autoSell");
-        enabled = tag.getBoolean("enabled");
-        NbtList itemIdentifierList = tag.getList("items", 8);
-        autoSellItems.clear();
-        for (NbtElement key : itemIdentifierList) {
-            Item item = Registry.ITEM.get(new Identifier(key.asString()));
-            if (item == Items.AIR) continue;
-            autoSellItems.add(item);
-        }
-    }
-
-    private void onSave(NbtCompound compoundTag) {
-        NbtCompound tag = compoundTag.getCompound("autoSell");
-        List<NbtString> itemIds = autoSellItems.stream().map(item -> Registry.ITEM.getId(item).toString()).map(NbtString::of).collect(Collectors.toList());
-        NbtList itemsTag = new NbtList();
-        itemsTag.addAll(itemIds);
-        tag.put("items", itemsTag);
-        tag.putBoolean("enabled", enabled);
-        compoundTag.put("autoSell", tag);
-    }
-
 
     public void onInventoryChange(PlayerInventory inventory) {
         if (!enabled || !isFullInventory(inventory)) return;
