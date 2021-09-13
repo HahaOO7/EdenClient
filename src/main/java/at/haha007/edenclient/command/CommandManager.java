@@ -14,19 +14,20 @@ import net.minecraft.client.network.ClientCommandSource;
 import net.minecraft.text.*;
 import net.minecraft.util.Formatting;
 
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class CommandManager {
     private static final Map<LiteralArgumentBuilder<ClientCommandSource>, Text[]> cmds = new HashMap<>();
     private static final CommandDispatcher<ClientCommandSource> dispatcher = new CommandDispatcher<>();
 
     static {
-        var cmd = literal("ecmd");
-        cmd.executes(a -> {
+        List<LiteralArgumentBuilder<ClientCommandSource>> list = Stream.of("ecmds", "ehelp").map(CommandManager::literal).collect(Collectors.toList());
+
+        list.forEach(cmd -> cmd.executes(a -> {
+            PlayerUtils.sendModMessage("Click on the mod you need help for to receive help.");
             MutableText text = new LiteralText("");
             cmds.keySet().
                     stream().
@@ -42,13 +43,16 @@ public class CommandManager {
                     });
             PlayerUtils.sendModMessage(text);
             return 1;
-        });
-        cmd.then(argument("cmd", StringArgumentType.word())
+        }));
+
+        list.forEach(cmd -> cmd.then(argument("cmd", StringArgumentType.word())
                 .suggests(CommandManager::suggestCommands)
-                .executes(CommandManager::sendCommandHelp));
-        register(cmd,
-                new LiteralText("Help for EdenClient commands").formatted(Formatting.GOLD),
-                new LiteralText("/ecmd <command>").formatted(Formatting.GOLD));
+                .executes(CommandManager::sendCommandHelp)));
+
+        list.forEach(cmd ->
+                register(cmd,
+                        new LiteralText("Help for EdenClient commands").formatted(Formatting.GOLD),
+                        new LiteralText("/ecmds <command> or /ehelp <command>").formatted(Formatting.GOLD)));
     }
 
     private static int sendCommandHelp(CommandContext<ClientCommandSource> c) {
