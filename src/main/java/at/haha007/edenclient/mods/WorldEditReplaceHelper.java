@@ -45,7 +45,7 @@ public class WorldEditReplaceHelper {
     private final Stack<String[]> redoCommandStack = new Stack<>();
 
     public WorldEditReplaceHelper() {
-        registerCommand("ewe");
+        registerCommand("eworldedithelper");
         registerCommand("edenwe");
         PerWorldConfig.get().register(this, "worldEditHelper");
     }
@@ -113,7 +113,7 @@ public class WorldEditReplaceHelper {
 
             ClientPlayerEntity entityPlayer = PlayerUtils.getPlayer();
 
-            entityPlayer.sendChatMessage("/im predefined worldedit");
+            entityPlayer.sendChatMessage("/eignoremessage predefined worldedit");
 
             return 1;
         }));

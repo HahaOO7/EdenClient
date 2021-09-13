@@ -32,7 +32,7 @@ public class LifeSaver {
     }
 
     private void registerCommand() {
-        LiteralArgumentBuilder<ClientCommandSource> node = literal("lifesaver");
+        LiteralArgumentBuilder<ClientCommandSource> node = literal("elifesaver");
 
         node.then(literal("toggle").executes(c -> {
             enabled = !enabled;

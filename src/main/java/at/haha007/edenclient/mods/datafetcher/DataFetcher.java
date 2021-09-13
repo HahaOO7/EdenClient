@@ -8,8 +8,8 @@ public class DataFetcher {
     private final ChestShopItemNames chestShopItemNames = new ChestShopItemNames();
 
     public DataFetcher() {
-        register(literal("datafetcher").then(playerWarps.registerCommand()));
-        register(literal("datafetcher").then(chestShopItemNames.registerCommand()));
+        register(literal("edatafetcher").then(playerWarps.registerCommand()));
+        register(literal("edatafetcher").then(chestShopItemNames.registerCommand()));
     }
 
     public PlayerWarps getPlayerWarps() {

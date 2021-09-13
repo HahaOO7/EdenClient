@@ -90,7 +90,7 @@ public class ItemEsp {
     }
 
     private void registerCommand() {
-        LiteralArgumentBuilder<ClientCommandSource> node = literal("itemesp");
+        LiteralArgumentBuilder<ClientCommandSource> node = literal("eitemesp");
 
         node.then(literal("toggle").executes(c -> {
             enabled = !enabled;

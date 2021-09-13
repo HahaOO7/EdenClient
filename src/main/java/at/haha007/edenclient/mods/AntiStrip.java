@@ -39,7 +39,7 @@ public class AntiStrip {
     }
 
     private void registerCommand() {
-        CommandManager.register(CommandManager.literal("antistrip").executes(c -> {
+        CommandManager.register(CommandManager.literal("eantistrip").executes(c -> {
             enabled = !enabled;
             sendModMessage(new LiteralText(enabled ? "Enabled AntiStrip." : "Disabled AntiStrip.").formatted(Formatting.GOLD));
             return 1;

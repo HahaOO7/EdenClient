@@ -40,7 +40,7 @@ public class SignCopy {
     }
 
     private void registerCommand() {
-        CommandManager.register(CommandManager.literal("signcopy").executes(c -> {
+        CommandManager.register(CommandManager.literal("esigncopy").executes(c -> {
             enabled = !enabled;
             sendModMessage(new LiteralText(enabled ? "SignCopy enabled" : "SignCopy disabled"));
             return 1;

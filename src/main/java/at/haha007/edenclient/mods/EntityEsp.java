@@ -89,7 +89,7 @@ public class EntityEsp {
     }
 
     private void registerCommand() {
-        LiteralArgumentBuilder<ClientCommandSource> cmd = literal("entityesp");
+        LiteralArgumentBuilder<ClientCommandSource> cmd = literal("eentityesp");
         LiteralArgumentBuilder<ClientCommandSource> toggle = literal("toggle");
         toggle.executes(c -> {
             enabled = !enabled;

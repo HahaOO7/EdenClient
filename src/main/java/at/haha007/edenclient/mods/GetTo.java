@@ -78,7 +78,7 @@ public class GetTo {
     }
 
     private void registerCommand() {
-        LiteralArgumentBuilder<ClientCommandSource> cmd = literal("getto");
+        LiteralArgumentBuilder<ClientCommandSource> cmd = literal("egetto");
         cmd.then(argument("target", BlockPosArgumentType.blockPos()).executes(c -> {
             BlockPos pos = c.getArgument("target", PosArgument.class).toAbsoluteBlockPos(PlayerUtils.getPlayer().getCommandSource());
             getTo(pos, true, true, true);

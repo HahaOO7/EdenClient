@@ -41,7 +41,7 @@ public class BarrierDisplay {
     }
 
     private void registerCommand() {
-        register(literal("barrier").then(argument("count", IntegerArgumentType.integer(0, 10000)).executes(c -> {
+        register(literal("ebarrierdisplay").then(argument("count", IntegerArgumentType.integer(0, 10000)).executes(c -> {
             counter = c.getArgument("count", Integer.class);
             sendModMessage(new LiteralText("Barrier display counter is " + counter).formatted(Formatting.GOLD));
             return 1;

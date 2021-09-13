@@ -38,8 +38,7 @@ public class SellStatsTracker {
     private int delayInSimplifiedMessages = 5;
 
     public SellStatsTracker() {
-        registerCommand("sellstatstracker");
-        registerCommand("statstracker");
+        registerCommand("esellstatstracker");
         AddChatMessageCallback.EVENT.register(this::onChat);
         PerWorldConfig pwc = PerWorldConfig.get();
         pwc.register(this, "sellStatsTracker");

@@ -32,7 +32,7 @@ public class AntiSpam {
     }
 
     private void registerCommand() {
-        CommandManager.register(CommandManager.literal("antispam").executes(c -> {
+        CommandManager.register(CommandManager.literal("eantispam").executes(c -> {
             enabled = !enabled;
             sendModMessage(new LiteralText(enabled ? "Antispam enabled" : "Antispam disabled").formatted(Formatting.GOLD));
             return 1;

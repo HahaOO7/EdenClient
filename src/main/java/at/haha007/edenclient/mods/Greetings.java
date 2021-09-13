@@ -97,7 +97,7 @@ public class Greetings {
     }
 
     private void registerCommand() {
-        LiteralArgumentBuilder<ClientCommandSource> cmd = literal("greet");
+        LiteralArgumentBuilder<ClientCommandSource> cmd = literal("egreet");
 
         /*
         MESSAGES FOR NEW PLAYERS

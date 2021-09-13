@@ -93,7 +93,7 @@ public class TileEntityEsp {
     }
 
     private void registerCommand() {
-        LiteralArgumentBuilder<ClientCommandSource> cmd = literal("tileentityesp");
+        LiteralArgumentBuilder<ClientCommandSource> cmd = literal("etileentityesp");
         LiteralArgumentBuilder<ClientCommandSource> toggle = literal("toggle");
         toggle.executes(c -> {
             enabled = !enabled;

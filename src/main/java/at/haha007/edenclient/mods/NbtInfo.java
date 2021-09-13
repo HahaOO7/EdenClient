@@ -14,7 +14,7 @@ import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 public class NbtInfo {
 
     public NbtInfo() {
-        CommandManager.register(CommandManager.literal("nbt").executes(c -> {
+        CommandManager.register(CommandManager.literal("enbt").executes(c -> {
             ClientPlayerEntity player = PlayerUtils.getPlayer();
             PlayerInventory inv = player.getInventory();
             ItemStack stack = inv.getMainHandStack();

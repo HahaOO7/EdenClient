@@ -28,7 +28,7 @@ public class Rainbowifier {
     }
 
     private void registerCommand() {
-        LiteralArgumentBuilder<ClientCommandSource> node = literal("rainbowify");
+        LiteralArgumentBuilder<ClientCommandSource> node = literal("erainbowify");
 
         node.then(literal("fancy").then(argument("input", StringArgumentType.greedyString()).executes(c -> {
             String input = c.getArgument("input", String.class);

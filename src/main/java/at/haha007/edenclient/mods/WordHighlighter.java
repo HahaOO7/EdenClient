@@ -33,8 +33,7 @@ public class WordHighlighter {
     private Style style = Style.EMPTY;
 
     public WordHighlighter() {
-        registerCommand("highlight");
-        registerCommand("hl");
+        registerCommand("ehighlight");
         AddChatMessageCallback.EVENT.register(this::onChat);
         PerWorldConfig.get().register(this, "wordhighlighter");
     }

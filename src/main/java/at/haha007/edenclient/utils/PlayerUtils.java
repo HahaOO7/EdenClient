@@ -19,7 +19,10 @@ public class PlayerUtils {
 
     public static void messageC2S(String msg) {
         ClientPlayerEntity player = PlayerUtils.getPlayer();
-        if (player == null || msg.length() > 256) return;
+        if (msg.length() > 256) {
+            sendModMessage("Tried sending message longer than 256 characters: " + msg);
+            return;
+        }
         player.sendChatMessage(msg);
     }
 

@@ -55,7 +55,7 @@ public class Nuker {
     }
 
     private void registerCommand() {
-        LiteralArgumentBuilder<ClientCommandSource> cmd = literal("nuke");
+        LiteralArgumentBuilder<ClientCommandSource> cmd = literal("enuker");
         cmd.then(literal("distance").then(argument("distance", DoubleArgumentType.doubleArg(0, 20)).executes(c -> {
                     distance = c.getArgument("distance", Double.class);
                     PlayerUtils.sendModMessage("Nuker distance is " + distance);

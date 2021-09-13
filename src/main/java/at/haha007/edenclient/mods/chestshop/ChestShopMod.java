@@ -47,8 +47,7 @@ public class ChestShopMod {
     private int[] chunk = {0, 0};
 
     public ChestShopMod() {
-        registerCommand("chestshop");
-        registerCommand("cs");
+        registerCommand("echestshop");
         PlayerTickCallback.EVENT.register(this::tick);
         PerWorldConfig.get().register(this, "chestShop");
         PerWorldConfig.get().register(new ChestShopLoader(), ChestShopMap.class);
