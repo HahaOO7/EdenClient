@@ -15,21 +15,25 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientCommandSource;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.client.network.ClientPlayerInteractionManager;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.command.argument.BlockPosArgumentType;
 import net.minecraft.command.argument.PosArgument;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.network.packet.c2s.play.HandSwingC2SPacket;
 import net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.MutableText;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockBox;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
-import net.minecraft.world.World;
+import net.minecraft.util.math.Vec3d;
 
+import java.util.*;
 import java.util.stream.Stream;
 
 import static at.haha007.edenclient.command.CommandManager.*;
@@ -47,6 +51,7 @@ public class Nuker {
     private int limit = 20;
     @ConfigSubscriber("-1000000,1000000,-1000000,1000000,-1000000,1000000")
     private BlockBox area;
+    private BlockPos target = null;
 
     public Nuker() {
         registerCommand();
@@ -142,10 +147,60 @@ public class Nuker {
         if (!enabled) return;
         ClientPlayNetworkHandler nh = MinecraftClient.getInstance().getNetworkHandler();
         BlockState air = Blocks.AIR.getDefaultState();
-        World world = player.clientWorld;
+        ClientPlayerInteractionManager im = MinecraftClient.getInstance().interactionManager;
+        if (im == null) return;
         if (nh == null) return;
+        if (limit > 1) {
+            List<BlockPos> minableBlocks = getInstantMinableBlocksInRange(player);
+            if (!minableBlocks.isEmpty()) {
+                target = null;
+                minableBlocks.forEach(p -> {
+                    nh.sendPacket(new PlayerActionC2SPacket(PlayerActionC2SPacket.Action.START_DESTROY_BLOCK, p, getHitDirectionForBlock(player, p)));
+                    nh.sendPacket(new PlayerActionC2SPacket(PlayerActionC2SPacket.Action.STOP_DESTROY_BLOCK, p, getHitDirectionForBlock(player, p)));
+                    player.clientWorld.setBlockState(p, air);
+                });
+                nh.sendPacket(new HandSwingC2SPacket(Hand.MAIN_HAND));
+                return;
+            }
+        }
+
+        if (target == null || Vec3d.ofCenter(target).distanceTo(player.getEyePos()) > distance) findTarget(player);
+        if (target == null) return;
+        Direction dir = getHitDirectionForBlock(player, target);
+        if (im.updateBlockBreakingProgress(target, dir))
+            nh.sendPacket(new HandSwingC2SPacket(Hand.MAIN_HAND));
+        else
+            target = null;
+    }
+
+    private Direction getHitDirectionForBlock(ClientPlayerEntity player, BlockPos target) {
+        Vec3d playerPos = player.getEyePos();
+        Optional<Direction> direction = Arrays.stream(Direction.values())
+                .min(Comparator.comparingDouble(
+                        dir -> Vec3d.of(dir.getVector()).multiply(.5, .5, .5).add(Vec3d.of(target)).distanceTo(playerPos)));
+
+        return direction.orElse(null);
+    }
+
+
+    private void findTarget(ClientPlayerEntity player) {
+        ClientWorld world = player.clientWorld;
+        Vec3d playerPos = player.getEyePos();
         Stream<BlockPos> stream = getNearby(player);
-        stream = stream.filter(p -> p.isWithinDistance(player.getEyePos(), distance));
+        stream = stream.filter(p -> Vec3d.ofCenter(p).isInRange(playerPos, distance));
+        stream = stream.filter(p -> player.getBlockY() <= p.getY());
+        stream = stream.filter(area::contains);
+        stream = stream.filter(p -> !world.getBlockState(p).isAir());
+        if (filterEnabled) {
+            stream = stream.filter(p -> applyFilter(world.getBlockState(p).getBlock()));
+        }
+        target = stream.map(BlockPos::new).min(Comparator.comparingDouble(p -> Vec3d.ofCenter(p).distanceTo(playerPos))).orElse(null);
+    }
+
+    private List<BlockPos> getInstantMinableBlocksInRange(ClientPlayerEntity player) {
+        ClientWorld world = player.clientWorld;
+        Stream<BlockPos> stream = getNearby(player);
+        stream = stream.filter(p -> Vec3d.ofCenter(p).isInRange(player.getEyePos(), distance));
         stream = stream.filter(p -> player.getBlockY() <= p.getY());
         stream = stream.filter(area::contains);
         stream = stream.filter(p -> !world.getBlockState(p).isAir());
@@ -154,10 +209,7 @@ public class Nuker {
             stream = stream.filter(p -> applyFilter(world.getBlockState(p).getBlock()));
         }
         stream = stream.limit(limit);
-        stream.forEach(p -> {
-            nh.sendPacket(new PlayerActionC2SPacket(PlayerActionC2SPacket.Action.START_DESTROY_BLOCK, p, Direction.UP));
-            player.clientWorld.setBlockState(p, air);
-        });
+        return stream.map(BlockPos::new).toList();
     }
 
     private boolean applyFilter(Block block) {
