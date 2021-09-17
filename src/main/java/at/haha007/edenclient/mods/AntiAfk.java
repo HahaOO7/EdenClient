@@ -49,6 +49,7 @@ public class AntiAfk {
         Scheduler.get().scheduleSyncRepeating(() -> {
             Vec3d pos = player.getPos();
             Vec3d move = Vec3d.ofBottomCenter(finalTarget).subtract(pos);
+            move = move.multiply(1, 0, 1);
             if (move.length() > 3) return false;
             if (move.length() > .2)
                 player.move(MovementType.SELF, move.normalize().multiply(.2));
