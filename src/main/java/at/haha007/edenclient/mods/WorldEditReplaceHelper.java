@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
 
 import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
+import static at.haha007.edenclient.utils.TextUtils.createGoldText;
 
 
 public class WorldEditReplaceHelper {
@@ -118,7 +119,9 @@ public class WorldEditReplaceHelper {
             return 1;
         }));
 
-        register(node);
+        register(node,
+                createGoldText("The WorldEditReplaceHelper helps you replace blocks that have specific properties which normal WorldEdit doesn't take into consideration when replacing blocks."),
+                createGoldText("Blocks like stairs, slabs, panes, walls, trapdoors, etc. can be replaced by other blocks of their type with their properties (waterlogged, shape, direction, etc.) unaffected."));
     }
 
     private CompletableFuture<Suggestions> suggestValidBlocks(CommandContext<ClientCommandSource> clientCommandSourceCommandContext, SuggestionsBuilder suggestionsBuilder) {

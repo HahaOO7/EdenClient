@@ -1,11 +1,13 @@
 package at.haha007.edenclient.mods;
 
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
-import at.haha007.edenclient.command.CommandManager;
 import at.haha007.edenclient.utils.PlayerUtils;
+import at.haha007.edenclient.utils.TextUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ClientCommandSource;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.network.ClientPlayerInteractionManager;
 import net.minecraft.entity.passive.SheepEntity;
@@ -15,6 +17,10 @@ import net.minecraft.text.LiteralText;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.Vec3d;
+
+import static at.haha007.edenclient.command.CommandManager.literal;
+import static at.haha007.edenclient.command.CommandManager.register;
+import static at.haha007.edenclient.utils.TextUtils.*;
 
 public class AutoSheer {
     @ConfigSubscriber("false")
@@ -27,11 +33,14 @@ public class AutoSheer {
     }
 
     private void registerCommand() {
-        CommandManager.register(CommandManager.literal("eautoshear").executes(c -> {
+        LiteralArgumentBuilder<ClientCommandSource> node = literal("eautoshear");
+        node.then(literal("toggle").executes(c -> {
             enabled = !enabled;
             PlayerUtils.sendModMessage(new LiteralText(enabled ? "AutoShear enabled" : "AutoShear disabled").formatted(Formatting.GOLD));
             return 1;
         }));
+        register(node,
+                createGoldText("AutoShear automatically shears all sheep in normal reach distance."));
     }
 
     private void onTick(ClientPlayerEntity player) {

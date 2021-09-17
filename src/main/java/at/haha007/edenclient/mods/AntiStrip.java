@@ -17,6 +17,8 @@ import net.minecraft.util.hit.BlockHitResult;
 
 import java.util.Set;
 
+import static at.haha007.edenclient.command.CommandManager.*;
+import static at.haha007.edenclient.command.CommandManager.literal;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
 public class AntiStrip {
@@ -39,11 +41,15 @@ public class AntiStrip {
     }
 
     private void registerCommand() {
-        CommandManager.register(CommandManager.literal("eantistrip").executes(c -> {
+        var node = literal("eantistrip");
+        node.then(literal("toggle").executes(c -> {
             enabled = !enabled;
             sendModMessage(new LiteralText(enabled ? "Enabled AntiStrip." : "Disabled AntiStrip.").formatted(Formatting.GOLD));
             return 1;
         }));
+
+        register(node,
+                new LiteralText("AntiStrip disables stripping of wood with any axe.").formatted(Formatting.GOLD));
     }
 
     private ActionResult onInteractBlock(ClientPlayerEntity player, ClientWorld world, Hand hand, BlockHitResult blockHitResult) {

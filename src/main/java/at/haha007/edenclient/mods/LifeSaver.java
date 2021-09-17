@@ -14,6 +14,7 @@ import net.minecraft.util.Formatting;
 
 import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
+import static at.haha007.edenclient.utils.TextUtils.createGoldText;
 
 public class LifeSaver {
 
@@ -54,7 +55,8 @@ public class LifeSaver {
             return 1;
         })));
 
-        register(node);
+        register(node,
+                createGoldText("LifeSaver saves your life by teleporting you to a safe position when either your health or your y-coordinate reach below a certain value."));
     }
 
     private void tick(ClientPlayerEntity clientPlayerEntity) {

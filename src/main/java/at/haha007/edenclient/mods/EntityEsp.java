@@ -35,9 +35,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.command.CommandManager.argument;
 import static at.haha007.edenclient.command.CommandManager.literal;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
+import static at.haha007.edenclient.utils.TextUtils.createGoldText;
 
 public class EntityEsp {
     @ConfigSubscriber("false")
@@ -141,7 +143,9 @@ public class EntityEsp {
 
         cmd.then(literal("color").then(arg("r").then(arg("g").then(arg("b").executes(this::setColor)))));
         cmd.then(toggle);
-        CommandManager.register(cmd);
+        register(cmd,
+                createGoldText("EntityEsp allows for all entities of any specific type(s) to be surrounded by x-ray bounding boxes."),
+                createGoldText("It is also possible to enable tracers and to switch between solid/transparent rendering."));
     }
 
     RequiredArgumentBuilder<ClientCommandSource, Integer> arg(String key) {

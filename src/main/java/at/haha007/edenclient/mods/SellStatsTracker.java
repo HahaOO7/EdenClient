@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 
 import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
+import static at.haha007.edenclient.utils.TextUtils.createGoldText;
 
 public class SellStatsTracker {
     private final Pattern messagePattern = Pattern.compile("Verkauft für \\$(?<money>[0-9]{1,5}\\.?[0-9]{0,2}) \\((?<amount>[0-9,]{1,5}) (?<item>[a-zA-z0-9_]{1,30}) Einheiten je \\$[0-9]{1,5}\\.?[0-9]{0,2}\\)");
@@ -38,7 +39,7 @@ public class SellStatsTracker {
     private int delayInSimplifiedMessages = 5;
 
     public SellStatsTracker() {
-        registerCommand("esellstatstracker");
+        registerCommand();
         AddChatMessageCallback.EVENT.register(this::onChat);
         PerWorldConfig pwc = PerWorldConfig.get();
         pwc.register(this, "sellStatsTracker");
@@ -76,8 +77,8 @@ public class SellStatsTracker {
         }
     }
 
-    private void registerCommand(String literal) {
-        LiteralArgumentBuilder<ClientCommandSource> node = literal(literal);
+    private void registerCommand() {
+        LiteralArgumentBuilder<ClientCommandSource> node = literal("esellstatstracker");
 
         node.then(literal("global").executes(c -> {
             sendModMessage(new LiteralText("Stats: ").formatted(Formatting.GOLD));
@@ -125,7 +126,9 @@ public class SellStatsTracker {
         })));
         node.then(simplify);
 
-        register(node);
+        register(node,
+                createGoldText("SellStatsTracker tracks all your stats when selling in the AdminShop. You may see how much money you have earned from selling items as well as how often you have sold each specific item."),
+                createGoldText("The simplifymessages option replaces the cluttered messages with better stats."));
     }
 
     private CompletableFuture<Suggestions> suggestItems(CommandContext<ClientCommandSource> clientCommandSourceCommandContext, SuggestionsBuilder suggestionsBuilder) {

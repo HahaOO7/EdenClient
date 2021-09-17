@@ -2,7 +2,6 @@ package at.haha007.edenclient.mods;
 
 import at.haha007.edenclient.callbacks.PlayerAttackBlockCallback;
 import at.haha007.edenclient.callbacks.PlayerEditSignCallback;
-import at.haha007.edenclient.command.CommandManager;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
@@ -22,7 +21,10 @@ import net.minecraft.util.math.Direction;
 import java.util.Arrays;
 import java.util.Objects;
 
+import static at.haha007.edenclient.command.CommandManager.literal;
+import static at.haha007.edenclient.command.CommandManager.register;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
+import static at.haha007.edenclient.utils.TextUtils.createGoldText;
 
 public class SignCopy {
     @ConfigSubscriber("0;0;0;0")
@@ -40,11 +42,14 @@ public class SignCopy {
     }
 
     private void registerCommand() {
-        CommandManager.register(CommandManager.literal("esigncopy").executes(c -> {
+        var node = literal("esigncopy");
+        node.then(literal("toggle").executes(c -> {
             enabled = !enabled;
             sendModMessage(new LiteralText(enabled ? "SignCopy enabled" : "SignCopy disabled"));
             return 1;
         }));
+        register(node,
+                createGoldText("SignCopy lets you copy signs and place them again without opening the dialogue/having to type each line again."));
     }
 
     @SuppressWarnings("ConstantConditions")

@@ -97,7 +97,10 @@ public class AutoSell {
             sendModMessage("/autosell remove");
             return 1;
         });
-        register(node);
+
+        register(node,
+                new LiteralText("AutoSell allows for automatic selling of items in any kind of command-accessible public server shop.").formatted(Formatting.GOLD),
+                new LiteralText("It will always toggle when your inventory is full and execute the sell-command. You can select the items you want to sell yourself.").formatted(Formatting.GOLD));
     }
 
     private CompletableFuture<Suggestions> suggestRemoveItems(CommandContext<ClientCommandSource> clientCommandSourceCommandContext, SuggestionsBuilder suggestionsBuilder) {

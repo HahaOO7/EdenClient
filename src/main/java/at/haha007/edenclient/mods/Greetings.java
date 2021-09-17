@@ -23,6 +23,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import static at.haha007.edenclient.command.CommandManager.*;
+import static at.haha007.edenclient.utils.TextUtils.createGoldText;
 
 public class Greetings {
     @ConfigSubscriber("false")
@@ -365,7 +366,9 @@ public class Greetings {
             return 1;
         }))));
 
-        register(cmd);
+        register(cmd,
+                createGoldText("Greetings allows you to automatically greet all players joining the server."),
+                createGoldText("You can also set specific messages or each player as well as different messages for new players or players that have previously joined in this session already."));
     }
 
     private CompletableFuture<Suggestions> suggestWelcomeBackPlayerMessages

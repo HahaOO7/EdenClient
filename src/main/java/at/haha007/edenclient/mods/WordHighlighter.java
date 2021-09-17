@@ -22,10 +22,11 @@ import java.util.regex.Pattern;
 
 import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
+import static at.haha007.edenclient.utils.TextUtils.createGoldText;
 
 public class WordHighlighter {
     @ConfigSubscriber
-    private StringList words = new StringList();
+    private final StringList words = new StringList();
     @ConfigSubscriber("false")
     private boolean enabled;
 
@@ -33,7 +34,7 @@ public class WordHighlighter {
     private Style style = Style.EMPTY;
 
     public WordHighlighter() {
-        registerCommand("ehighlight");
+        registerCommand();
         AddChatMessageCallback.EVENT.register(this::onChat);
         PerWorldConfig.get().register(this, "wordhighlighter");
     }
@@ -45,8 +46,8 @@ public class WordHighlighter {
         }
     }
 
-    private void registerCommand(String cmd) {
-        LiteralArgumentBuilder<ClientCommandSource> node = literal(cmd);
+    private void registerCommand() {
+        LiteralArgumentBuilder<ClientCommandSource> node = literal("ehighlight");
         node.then(literal("toggle").executes(c -> {
             enabled = !enabled;
             sendModMessage(new LiteralText(enabled ? "Enabled WordHighlighter!" : "Disabled WordHighlighter!").formatted(Formatting.GOLD));
@@ -97,7 +98,10 @@ public class WordHighlighter {
             sendDebugMessage();
             return 0;
         });
-        register(node);
+
+        register(node,
+                createGoldText("WordHighlighter allows you to highlight specific words when they appear in chat."),
+                createGoldText("You are also able to set a specific style in which they should be displayed."));
     }
 
     private void setBold(boolean bold) {

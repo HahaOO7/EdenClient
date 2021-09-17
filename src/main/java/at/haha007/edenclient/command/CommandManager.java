@@ -27,7 +27,12 @@ public class CommandManager {
         List<LiteralArgumentBuilder<ClientCommandSource>> list = Stream.of("ecmds", "ehelp").map(CommandManager::literal).collect(Collectors.toList());
 
         list.forEach(cmd -> cmd.executes(a -> {
-            PlayerUtils.sendModMessage("Click on the mod you need help for to receive help. To get all information for each feature use the github-wiki: https://github.com/HahaOO7/EdenClient/wiki");
+            PlayerUtils.sendModMessage(new LiteralText("Click on the mod you need help for to receive help. To get all information for each feature use the github-wiki: ").formatted(Formatting.GOLD)
+                    .append(new LiteralText("https://github.com/HahaOO7/EdenClient/wiki")
+                            .setStyle(Style.EMPTY
+                                    .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.of("Click to copy the link to the wiki.")))
+                                    .withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, "https://github.com/HahaOO7/EdenClient/wiki"))
+                            ).formatted(Formatting.AQUA)));
 
             MutableText text = new LiteralText("");
             Iterator<MutableText> it = cmds.keySet().

@@ -291,7 +291,9 @@ public class ChestShopMod {
             sendModMessage("/chestshop list");
             return 1;
         });
-        register(node);
+        register(node,
+                new LiteralText("ChestShop item find/sell/buy helper.").formatted(Formatting.GOLD),
+                new LiteralText("Automatically stores all ChestShops in all chunks you load. You can search specific items to get their buy/sell options. Other features include automatic searching for shops which sell items cheaper than other shops buy them, writing all shops to a file and automatically updating all shops via their playerwarps.").formatted(Formatting.GOLD));
     }
 
     private MutableText gold(String string) {

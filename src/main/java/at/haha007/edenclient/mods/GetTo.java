@@ -23,6 +23,7 @@ import java.util.Comparator;
 import java.util.Optional;
 
 import static at.haha007.edenclient.command.CommandManager.*;
+import static at.haha007.edenclient.utils.TextUtils.createGoldText;
 
 public class GetTo {
     private Vec3i target;
@@ -109,7 +110,8 @@ public class GetTo {
             PlayerUtils.sendModMessage("Target disabled");
             return 1;
         }));
-        register(cmd);
+        register(cmd,
+                createGoldText("This mod is for internal use only."));
     }
 
     private void getTo(BlockPos pos, boolean tracer, boolean box, boolean tp) {

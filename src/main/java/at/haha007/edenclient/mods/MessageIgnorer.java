@@ -16,6 +16,7 @@ import java.util.regex.PatternSyntaxException;
 
 import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
+import static at.haha007.edenclient.utils.TextUtils.createGoldText;
 
 public class MessageIgnorer {
     @ConfigSubscriber
@@ -169,7 +170,10 @@ public class MessageIgnorer {
             sendDebugMessage();
             return 1;
         });
-        register(node);
+
+        register(node,
+                createGoldText("MessageIgnorer allows you to set specific Regular Expressions (also known as RegEX) which when matched are not displayed in your chat."),
+                createGoldText("The predefined values contain useful types of messages like all messages sent by the adminshop when selling items or vote-rewards of other players."));
     }
 
     private boolean isEnabled(Predefined pre) {

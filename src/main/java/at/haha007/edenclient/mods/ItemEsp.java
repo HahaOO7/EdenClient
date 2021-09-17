@@ -28,6 +28,7 @@ import java.util.List;
 
 import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
+import static at.haha007.edenclient.utils.TextUtils.createGoldText;
 
 public class ItemEsp {
     @ConfigSubscriber("false")
@@ -116,7 +117,8 @@ public class ItemEsp {
             sendModMessage(new LiteralText("/itemesp color <r> <g> <b>"));
             return 1;
         });
-        register(node);
+        register(node,
+                createGoldText("ItemESP allows for all items lying on the ground to be surrounded with their respective x-ray bounding boxes."));
     }
 
     RequiredArgumentBuilder<ClientCommandSource, Integer> arg(String key) {

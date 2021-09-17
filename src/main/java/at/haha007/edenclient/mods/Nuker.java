@@ -33,6 +33,7 @@ import net.minecraft.world.World;
 import java.util.stream.Stream;
 
 import static at.haha007.edenclient.command.CommandManager.*;
+import static at.haha007.edenclient.utils.TextUtils.createGoldText;
 
 public class Nuker {
     @ConfigSubscriber("5")
@@ -127,7 +128,9 @@ public class Nuker {
                     PlayerUtils.sendModMessage(text);
                     return 1;
                 }));
-        register(cmd);
+
+        register(cmd,
+                createGoldText("Nuker destroys all blocks in reach (above your feet) in minimal time."));
     }
 
     private Block getMainHandStack() {

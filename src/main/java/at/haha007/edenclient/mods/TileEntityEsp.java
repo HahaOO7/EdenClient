@@ -4,7 +4,6 @@ import at.haha007.edenclient.callbacks.GameRenderCallback;
 import at.haha007.edenclient.callbacks.JoinWorldCallback;
 import at.haha007.edenclient.callbacks.LeaveWorldCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
-import at.haha007.edenclient.command.CommandManager;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.RenderUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
@@ -31,9 +30,9 @@ import net.minecraft.world.chunk.WorldChunk;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static at.haha007.edenclient.command.CommandManager.argument;
-import static at.haha007.edenclient.command.CommandManager.literal;
+import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
+import static at.haha007.edenclient.utils.TextUtils.createGoldText;
 
 public class TileEntityEsp {
     @ConfigSubscriber("false")
@@ -170,7 +169,9 @@ public class TileEntityEsp {
         }));
 
         cmd.then(toggle);
-        CommandManager.register(cmd);
+        register(cmd,
+                createGoldText("TileEntityEsp allows for all tile-entities of any specific type(s) to be surrounded by x-ray bounding boxes."),
+                createGoldText("It is also possible to enable tracers and to switch between solid/transparent rendering."));
     }
 
     RequiredArgumentBuilder<ClientCommandSource, Integer> arg(String key) {

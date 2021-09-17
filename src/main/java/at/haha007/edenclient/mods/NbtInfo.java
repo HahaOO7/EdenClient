@@ -10,20 +10,22 @@ import net.minecraft.text.LiteralText;
 import net.minecraft.util.Formatting;
 
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
+import static at.haha007.edenclient.utils.TextUtils.createGoldText;
 
 public class NbtInfo {
 
     public NbtInfo() {
         CommandManager.register(CommandManager.literal("enbt").executes(c -> {
-            ClientPlayerEntity player = PlayerUtils.getPlayer();
-            PlayerInventory inv = player.getInventory();
-            ItemStack stack = inv.getMainHandStack();
-            if (stack.isEmpty()) {
-                sendModMessage(new LiteralText("Take an item in your hand!").formatted(Formatting.GOLD));
-            } else {
-                sendModMessage(new NbtTextFormatter("", 1).apply(stack.getNbt()));
-            }
-            return 1;
-        }));
+                    ClientPlayerEntity player = PlayerUtils.getPlayer();
+                    PlayerInventory inv = player.getInventory();
+                    ItemStack stack = inv.getMainHandStack();
+                    if (stack.isEmpty()) {
+                        sendModMessage(new LiteralText("Take an item in your hand!").formatted(Formatting.GOLD));
+                    } else {
+                        sendModMessage(new NbtTextFormatter("", 1).apply(stack.getNbt()));
+                    }
+                    return 1;
+                }),
+                createGoldText("E-NBT displays all the Nbt-Data of the item you are currently holding."));
     }
 }

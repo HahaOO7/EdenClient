@@ -15,6 +15,7 @@ import java.util.List;
 
 import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
+import static at.haha007.edenclient.utils.TextUtils.createGoldText;
 
 
 public class Rainbowifier {
@@ -96,7 +97,8 @@ public class Rainbowifier {
             return 1;
         });
 
-        register(node);
+        register(node,
+                createGoldText("Rainbowifier enables you to send rainbow-colored messages into either the global chat or directly as a private message."));
     }
 
     private String rainbowifyMessageFancy(String input) {
@@ -137,9 +139,9 @@ public class Rainbowifier {
     private int[] getFancyRainbowColorAtIndex(int index) {
         int[] color = new int[3];
 
-        color[0] = (int) (Math.sin(freq * index) * 127 + 128);
-        color[1] = (int) (Math.sin(freq * index + 2) * 127 + 128);
-        color[2] = (int) (Math.sin(freq * index + 4) * 127 + 128);
+        color[0] = (int) (Math.sin(freq * index + 4) * 127 + 128);
+        color[1] = (int) (Math.sin(freq * index + 6) * 127 + 128);
+        color[2] = (int) (Math.sin(freq * index + 8) * 127 + 128);
 
         return color;
     }

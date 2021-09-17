@@ -17,12 +17,15 @@ import java.util.Random;
 
 import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
+import static at.haha007.edenclient.utils.TextUtils.createGoldText;
 
 public class BarrierDisplay {
     private static final int dist = 5;
     private final Random rand = new Random();
     @ConfigSubscriber("0")
     private int counter = 20;
+    @ConfigSubscriber("false")
+    private boolean enabled;
 
     public BarrierDisplay() {
         registerCommand();
@@ -31,6 +34,7 @@ public class BarrierDisplay {
     }
 
     private void onTick(ClientPlayerEntity player) {
+        if (!enabled) return;
         if (player.getInventory().getMainHandStack().getItem() == Items.BARRIER) return;
         for (int i = 0; i < counter; i++) {
             BlockPos pos = player.getBlockPos().add(rand.nextGaussian() * dist, rand.nextGaussian() * dist, rand.nextGaussian() * dist);
@@ -41,13 +45,19 @@ public class BarrierDisplay {
     }
 
     private void registerCommand() {
-        register(literal("ebarrierdisplay").then(argument("count", IntegerArgumentType.integer(0, 10000)).executes(c -> {
+        var node = literal("ebarrierdisplay");
+        node.then(literal("count").then(argument("count", IntegerArgumentType.integer(0, 100000)).executes(c -> {
             counter = c.getArgument("count", Integer.class);
             sendModMessage(new LiteralText("Barrier display counter is " + counter).formatted(Formatting.GOLD));
             return 1;
-        })).executes(c -> {
-            sendModMessage(new LiteralText("/barrier <count>"));
+        })));
+        node.then(literal("toggle").executes(c -> {
+            enabled = !enabled;
+            sendModMessage(enabled ? "Enabled barrierdisplay." : "Disabled barrierdisplay");
             return 1;
         }));
+        register(node,
+                createGoldText("BarrierDisplay displays barriers without being in creative with a barrier in hand. It also works in creative."),
+                createGoldText("Use \"/ebarrierdisplay count <number>\" to set how many blocks the BarrierDisplay should check per tick. (max. of 10000 is advised)." ));
     }
 }
