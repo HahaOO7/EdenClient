@@ -4,7 +4,7 @@ import at.haha007.edenclient.callbacks.GameRenderCallback;
 import at.haha007.edenclient.callbacks.JoinWorldCallback;
 import at.haha007.edenclient.callbacks.LeaveWorldCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
-import at.haha007.edenclient.command.CommandManager;
+import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.RenderUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
@@ -22,8 +22,6 @@ import net.minecraft.client.render.*;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
-import net.minecraft.text.LiteralText;
-import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Matrix4f;
@@ -36,10 +34,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static at.haha007.edenclient.command.CommandManager.*;
-import static at.haha007.edenclient.command.CommandManager.argument;
-import static at.haha007.edenclient.command.CommandManager.literal;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
-import static at.haha007.edenclient.utils.TextUtils.createGoldText;
 
 public class EntityEsp {
     @ConfigSubscriber("false")
@@ -144,8 +139,8 @@ public class EntityEsp {
         cmd.then(literal("color").then(arg("r").then(arg("g").then(arg("b").executes(this::setColor)))));
         cmd.then(toggle);
         register(cmd,
-                createGoldText("EntityEsp allows for all entities of any specific type(s) to be surrounded by x-ray bounding boxes."),
-                createGoldText("It is also possible to enable tracers and to switch between solid/transparent rendering."));
+                "EntityEsp allows for all entities of any specific type(s) to be surrounded by x-ray bounding boxes.",
+                "It is also possible to enable tracers and to switch between solid/transparent rendering.");
     }
 
     RequiredArgumentBuilder<ClientCommandSource, Integer> arg(String key) {
@@ -156,7 +151,7 @@ public class EntityEsp {
         this.r = c.getArgument("r", Integer.class) / 256f;
         this.g = c.getArgument("g", Integer.class) / 256f;
         this.b = c.getArgument("b", Integer.class) / 256f;
-        sendModMessage(new LiteralText("Color updated.").formatted(Formatting.GOLD));
+        sendModMessage(ChatColor.GOLD + "Color updated.");
         return 1;
     }
 

@@ -53,7 +53,7 @@ public class PlayerUtils {
     }
 
     public static void sendModMessage(String text) {
-        sendModMessage(ChatColor.translateColors(text));
+        sendModMessage(ChatColor.translateColors("§6" + text));
     }
 
     public static void clickSlot(int slotId) {

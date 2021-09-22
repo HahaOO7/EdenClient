@@ -1,6 +1,7 @@
 package at.haha007.edenclient.mods;
 
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
+import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
@@ -9,15 +10,12 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.particle.ItemBillboardParticle;
 import net.minecraft.item.Items;
-import net.minecraft.text.LiteralText;
-import net.minecraft.util.Formatting;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.Random;
 
 import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
-import static at.haha007.edenclient.utils.TextUtils.createGoldText;
 
 public class BarrierDisplay {
     private static final int dist = 5;
@@ -48,7 +46,7 @@ public class BarrierDisplay {
         var node = literal("ebarrierdisplay");
         node.then(literal("count").then(argument("count", IntegerArgumentType.integer(0, 100000)).executes(c -> {
             counter = c.getArgument("count", Integer.class);
-            sendModMessage(new LiteralText("Barrier display counter is " + counter).formatted(Formatting.GOLD));
+            sendModMessage(ChatColor.GOLD + ("Barrier display counter is " + counter));
             return 1;
         })));
         node.then(literal("toggle").executes(c -> {
@@ -57,7 +55,7 @@ public class BarrierDisplay {
             return 1;
         }));
         register(node,
-                createGoldText("BarrierDisplay displays barriers without being in creative with a barrier in hand. It also works in creative."),
-                createGoldText("Use \"/ebarrierdisplay count <number>\" to set how many blocks the BarrierDisplay should check per tick. (max. of 10000 is advised)." ));
+                "BarrierDisplay displays barriers without being in creative with a barrier in hand. It also works in creative.",
+                "Use \"/ebarrierdisplay count <number>\" to set how many blocks the BarrierDisplay should check per tick. (max. of 10000 is advised).");
     }
 }

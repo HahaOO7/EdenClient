@@ -13,7 +13,6 @@ import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 
 import static at.haha007.edenclient.command.CommandManager.*;
-import static at.haha007.edenclient.utils.TextUtils.createGoldText;
 
 public class RenderShape {
 
@@ -42,6 +41,6 @@ public class RenderShape {
         cmd.then(tracerCmd);
 
         register(cmd,
-                createGoldText("RenderShape is only for internal use."));
+                "RenderShape is only for internal use.");
     }
 }

@@ -14,13 +14,13 @@ import net.minecraft.client.network.ClientCommandSource;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.Item;
-import net.minecraft.text.LiteralText;
-import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.DefaultedRegistry;
 import net.minecraft.util.registry.Registry;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import static at.haha007.edenclient.command.CommandManager.*;
@@ -99,8 +99,8 @@ public class AutoSell {
         });
 
         register(node,
-                new LiteralText("AutoSell allows for automatic selling of items in any kind of command-accessible public server shop.").formatted(Formatting.GOLD),
-                new LiteralText("It will always toggle when your inventory is full and execute the sell-command. You can select the items you want to sell yourself.").formatted(Formatting.GOLD));
+                "AutoSell allows for automatic selling of items in any kind of command-accessible public server shop.",
+                "It will always toggle when your inventory is full and execute the sell-command. You can select the items you want to sell yourself.");
     }
 
     private CompletableFuture<Suggestions> suggestRemoveItems(CommandContext<ClientCommandSource> clientCommandSourceCommandContext, SuggestionsBuilder suggestionsBuilder) {

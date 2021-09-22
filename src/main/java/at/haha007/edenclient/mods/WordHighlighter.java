@@ -1,6 +1,7 @@
 package at.haha007.edenclient.mods;
 
 import at.haha007.edenclient.callbacks.AddChatMessageCallback;
+import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import at.haha007.edenclient.utils.config.wrappers.StringList;
@@ -22,7 +23,6 @@ import java.util.regex.Pattern;
 
 import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
-import static at.haha007.edenclient.utils.TextUtils.createGoldText;
 
 public class WordHighlighter {
     @ConfigSubscriber
@@ -50,7 +50,7 @@ public class WordHighlighter {
         LiteralArgumentBuilder<ClientCommandSource> node = literal("ehighlight");
         node.then(literal("toggle").executes(c -> {
             enabled = !enabled;
-            sendModMessage(new LiteralText(enabled ? "Enabled WordHighlighter!" : "Disabled WordHighlighter!").formatted(Formatting.GOLD));
+            sendModMessage(ChatColor.GOLD + (enabled ? "Enabled WordHighlighter!" : "Disabled WordHighlighter!"));
             return 0;
         }));
         node.then(literal("add").then(argument("word", StringArgumentType.word()).executes(c -> {
@@ -100,39 +100,39 @@ public class WordHighlighter {
         });
 
         register(node,
-                createGoldText("WordHighlighter allows you to highlight specific words when they appear in chat."),
-                createGoldText("You are also able to set a specific style in which they should be displayed."));
+                "WordHighlighter allows you to highlight specific words when they appear in chat.",
+                "You are also able to set a specific style in which they should be displayed.");
     }
 
     private void setBold(boolean bold) {
         style = style.withBold(bold);
-        sendModMessage(new LiteralText(bold ? "Words are now bold!" : "Words are no longer bold!").formatted(Formatting.GOLD));
+        sendModMessage(ChatColor.GOLD + (bold ? "Words are now bold!" : "Words are no longer bold!"));
     }
 
     public void setItalic(boolean italic) {
         style = style.withItalic(italic);
-        sendModMessage(new LiteralText(italic ? "Words are now italic!" : "Words are no longer italic!").formatted(Formatting.GOLD));
+        sendModMessage(ChatColor.GOLD + (italic ? "Words are now italic!" : "Words are no longer italic!"));
     }
 
     public void setUnderlined(boolean underlined) {
         style = style.withUnderline(underlined);
-        sendModMessage(new LiteralText(underlined ? "Words are now underlined!" : "Words are no longer underlined!").formatted(Formatting.GOLD));
+        sendModMessage(ChatColor.GOLD + (underlined ? "Words are now underlined!" : "Words are no longer underlined!"));
     }
 
     private void setColor(int r, int g, int b) {
         style = style.withColor(new Color(r, g, b).getRGB());
-        sendModMessage(new LiteralText("New color set from RGB values!").formatted(Formatting.GOLD));
+        sendModMessage(ChatColor.GOLD + "New color set from RGB values!");
     }
 
     private void setStyle(String s) {
         s = s.toLowerCase();
         if (s.equals("reset")) {
             style = Style.EMPTY.withFormatting(Formatting.AQUA, Formatting.BOLD);
-            sendModMessage(new LiteralText("Style reset!").formatted(Formatting.GOLD));
+            sendModMessage(ChatColor.GOLD + "Style reset!");
             return;
         }
         style = getStyleFromFormattingCode(s);
-        sendModMessage(new LiteralText("Style set from FormattingCodes!").formatted(Formatting.GOLD));
+        sendModMessage(ChatColor.GOLD + "Style set from FormattingCodes!");
     }
 
     private Style getStyleFromFormattingCode(String input) {
@@ -143,40 +143,40 @@ public class WordHighlighter {
     }
 
     private void listWords() {
-        sendModMessage(new LiteralText("These words are currently highlighted:").formatted(Formatting.GOLD));
-        sendModMessage(new LiteralText(words.toString()).formatted(Formatting.GOLD));
+        sendModMessage(ChatColor.GOLD + "These words are currently highlighted:");
+        sendModMessage(ChatColor.GOLD + words);
     }
 
     private void clearWords() {
         words.clear();
-        sendModMessage(new LiteralText("Cleared all words!").formatted(Formatting.GOLD));
+        sendModMessage(ChatColor.GOLD + "Cleared all words!");
     }
 
     private void addWord(String word) {
         word = word.toLowerCase();
         if (words.contains(word)) {
-            sendModMessage(new LiteralText("Word is already highlighted!").formatted(Formatting.GOLD));
+            sendModMessage(ChatColor.GOLD + "Word is already highlighted!");
             return;
         }
-        sendModMessage(new LiteralText("Added words!").formatted(Formatting.GOLD));
+        sendModMessage(ChatColor.GOLD + "Added words!");
         words.add(word);
         words.sort(Comparator.comparingInt(String::length).reversed());
     }
 
     private void removeWord(String input) {
         if (words.remove(input))
-            sendModMessage(new LiteralText("Removed words").formatted(Formatting.GOLD));
+            sendModMessage(ChatColor.GOLD + "Removed words");
         else
-            sendModMessage(new LiteralText("Word was not highlighted").formatted(Formatting.GOLD));
+            sendModMessage(ChatColor.GOLD + "Word was not highlighted");
     }
 
     private void sendUsageDebugMessage() {
-        sendModMessage(new LiteralText("Command usage:").formatted(Formatting.GOLD));
-        sendModMessage(new LiteralText("/hl [add,remove,toggle,clear,list,bold,italic,underline,style,color]").formatted(Formatting.GOLD));
+        sendModMessage(ChatColor.GOLD + "Command usage:");
+        sendModMessage(ChatColor.GOLD + "/hl [add,remove,toggle,clear,list,bold,italic,underline,style,color]");
     }
 
     private void sendDebugMessage() {
-        sendModMessage(new LiteralText("Wrong use of command!").formatted(Formatting.GOLD));
+        sendModMessage(ChatColor.GOLD + "Wrong use of command!");
         sendUsageDebugMessage();
     }
 

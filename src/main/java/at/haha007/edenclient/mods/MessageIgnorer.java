@@ -1,6 +1,7 @@
 package at.haha007.edenclient.mods;
 
 import at.haha007.edenclient.callbacks.AddChatMessageCallback;
+import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import at.haha007.edenclient.utils.config.wrappers.StringList;
@@ -16,7 +17,6 @@ import java.util.regex.PatternSyntaxException;
 
 import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
-import static at.haha007.edenclient.utils.TextUtils.createGoldText;
 
 public class MessageIgnorer {
     @ConfigSubscriber
@@ -94,22 +94,22 @@ public class MessageIgnorer {
         node.then(literal("toggle").executes(c -> {
             enabled = !enabled;
             String msg = enabled ? "Message ignoring enabled" : "Message ignoring disabled";
-            sendModMessage(new LiteralText(msg).formatted(Formatting.GOLD));
+            sendModMessage(ChatColor.GOLD + msg);
             return 1;
         }));
 
         node.then(literal("add").then(argument("regex", StringArgumentType.greedyString()).executes(c -> {
             String im = c.getArgument("regex", String.class);
             if (!isValidRegex(im)) {
-                sendModMessage(new LiteralText("Invalid pattern syntax").formatted(Formatting.GOLD));
+                sendModMessage(ChatColor.GOLD + "Invalid pattern syntax");
                 return -1;
             }
             if (regex.contains(im)) {
-                sendModMessage(new LiteralText("Already ignoring this pattern").formatted(Formatting.GOLD));
+                sendModMessage(ChatColor.GOLD + "Already ignoring this pattern");
                 return -1;
             }
             regex.add(im);
-            sendModMessage(new LiteralText("Ignoring messages matching " + im).formatted(Formatting.GOLD));
+            sendModMessage(ChatColor.GOLD + "Ignoring messages matching ");
             return 1;
         })));
 
@@ -125,28 +125,25 @@ public class MessageIgnorer {
                 sendModMessage(prefix.append(suggestion).append(suffix));
                 return -1;
             }
-            sendModMessage(new LiteralText("Removed: ").formatted(Formatting.GOLD).
-                    append(new LiteralText(regex.remove(index)).formatted(Formatting.AQUA)));
+            sendModMessage(ChatColor.GOLD + "Removed " + ChatColor.AQUA + regex.remove(index));
             return 1;
         })));
 
         node.then(literal("list").executes(c -> {
             if (regex.isEmpty()) {
-                sendModMessage(new LiteralText("No regexes registered!").formatted(Formatting.GOLD));
+                sendModMessage(ChatColor.GOLD + "No regexes registered!");
                 return 1;
             }
-            sendModMessage(new LiteralText("List of ignored message-regexes:").formatted(Formatting.GOLD));
+            sendModMessage(ChatColor.GOLD + "List of ignored message-regexes:");
             for (int i = 0; i < regex.size(); i++) {
-                MutableText txt = new LiteralText(regex.get(i)).formatted(Formatting.AQUA);
-                MutableText prefix = new LiteralText("[" + (i + 1) + "] ").formatted(Formatting.GOLD);
-                sendModMessage(prefix.append(txt));
+                sendModMessage(ChatColor.GOLD + "[" + (i + 1) + "] " + ChatColor.AQUA + regex.get(i));
             }
             return 1;
         }));
 
         node.then(literal("clear").executes(c -> {
             regex.clear();
-            sendModMessage(new LiteralText("Cleared ignored messages").formatted(Formatting.GOLD));
+            sendModMessage(ChatColor.GOLD + "Cleared ignored messages");
             return 1;
         }));
 
@@ -172,8 +169,8 @@ public class MessageIgnorer {
         });
 
         register(node,
-                createGoldText("MessageIgnorer allows you to set specific Regular Expressions (also known as RegEX) which when matched are not displayed in your chat."),
-                createGoldText("The predefined values contain useful types of messages like all messages sent by the adminshop when selling items or vote-rewards of other players."));
+               "MessageIgnorer allows you to set specific Regular Expressions (also known as RegEX) which when matched are not displayed in your chat.",
+               "The predefined values contain useful types of messages like all messages sent by the adminshop when selling items or vote-rewards of other players.");
     }
 
     private boolean isEnabled(Predefined pre) {
@@ -197,7 +194,7 @@ public class MessageIgnorer {
     }
 
     private void sendDebugMessage() {
-        sendModMessage(new LiteralText("/ignoremessage [add,remove,clear,list,test,toggle]"));
+        sendModMessage(ChatColor.GOLD + "/ignoremessage [add,remove,clear,list,test,toggle]");
     }
 
     private boolean isValidRegex(String s) {

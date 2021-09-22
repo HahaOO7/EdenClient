@@ -4,6 +4,7 @@ import at.haha007.edenclient.callbacks.GameRenderCallback;
 import at.haha007.edenclient.callbacks.JoinWorldCallback;
 import at.haha007.edenclient.callbacks.LeaveWorldCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
+import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.RenderUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
@@ -19,8 +20,6 @@ import net.minecraft.client.render.GameRenderer;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.ItemEntity;
-import net.minecraft.text.LiteralText;
-import net.minecraft.util.Formatting;
 import net.minecraft.util.math.Box;
 
 import java.util.ArrayList;
@@ -28,7 +27,6 @@ import java.util.List;
 
 import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
-import static at.haha007.edenclient.utils.TextUtils.createGoldText;
 
 public class ItemEsp {
     @ConfigSubscriber("false")
@@ -95,13 +93,13 @@ public class ItemEsp {
 
         node.then(literal("toggle").executes(c -> {
             enabled = !enabled;
-            sendModMessage(new LiteralText("Item ESP " + (enabled ? "enabled" : "disabled")).formatted(Formatting.GOLD));
+            sendModMessage(ChatColor.GOLD + ("Item ESP " + (enabled ? "enabled" : "disabled")));
             return 1;
         }));
 
         node.then(literal("solid").executes(c -> {
             solid = !solid;
-            sendModMessage(new LiteralText("Item ESP " + (solid ? "solid" : "transparent")).formatted(Formatting.GOLD));
+            sendModMessage(ChatColor.GOLD + ("Item ESP " + (solid ? "solid" : "transparent")));
             return 1;
         }));
 
@@ -111,14 +109,15 @@ public class ItemEsp {
         })))));
 
         node.executes(c -> {
-            sendModMessage(new LiteralText("/itemesp toggle"));
-            sendModMessage(new LiteralText("/itemesp solid"));
-            sendModMessage(new LiteralText("/itemesp size <size>"));
-            sendModMessage(new LiteralText("/itemesp color <r> <g> <b>"));
+            sendModMessage(ChatColor.GOLD + "/itemesp toggle");
+            sendModMessage(ChatColor.GOLD + "/itemesp solid");
+            sendModMessage(ChatColor.GOLD + "/itemesp size <size>");
+            sendModMessage(ChatColor.GOLD + "/itemesp color <r> <g> <b>");
             return 1;
         });
+
         register(node,
-                createGoldText("ItemESP allows for all items lying on the ground to be surrounded with their respective x-ray bounding boxes."));
+                "ItemESP allows for all items lying on the ground to be surrounded with their respective x-ray bounding boxes.");
     }
 
     RequiredArgumentBuilder<ClientCommandSource, Integer> arg(String key) {
@@ -129,6 +128,6 @@ public class ItemEsp {
         this.r = c.getArgument("r", Integer.class) / 256f;
         this.g = c.getArgument("g", Integer.class) / 256f;
         this.b = c.getArgument("b", Integer.class) / 256f;
-        sendModMessage(new LiteralText("Color updated.").formatted(Formatting.GOLD));
+        sendModMessage(ChatColor.GOLD + "Color updated.");
     }
 }

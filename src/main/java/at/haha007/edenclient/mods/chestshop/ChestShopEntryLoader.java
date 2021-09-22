@@ -1,6 +1,5 @@
 package at.haha007.edenclient.mods.chestshop;
 
-import at.haha007.edenclient.utils.config.NbtLoadable;
 import at.haha007.edenclient.utils.config.loaders.ConfigLoader;
 import net.minecraft.nbt.NbtCompound;
 

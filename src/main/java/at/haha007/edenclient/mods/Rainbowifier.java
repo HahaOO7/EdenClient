@@ -1,5 +1,6 @@
 package at.haha007.edenclient.mods;
 
+import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
@@ -8,14 +9,11 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.client.network.ClientCommandSource;
 import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.text.LiteralText;
-import net.minecraft.util.Formatting;
 
 import java.util.List;
 
 import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
-import static at.haha007.edenclient.utils.TextUtils.createGoldText;
 
 
 public class Rainbowifier {
@@ -35,7 +33,7 @@ public class Rainbowifier {
             String input = c.getArgument("input", String.class);
             String message = rainbowifyMessageFancy(input);
             if (message.length() >= 256) {
-                sendModMessage(new LiteralText("Your message is too long.").formatted(Formatting.GOLD));
+                sendModMessage(ChatColor.GOLD + "Your message is too long.");
                 return 0;
             }
             ClientPlayerEntity entityPlayer = PlayerUtils.getPlayer();
@@ -47,7 +45,7 @@ public class Rainbowifier {
             String input = c.getArgument("input", String.class);
             String message = rainbowifyMessageSimple(input);
             if (message.length() >= 256) {
-                sendModMessage(new LiteralText("Your message is too long.").formatted(Formatting.GOLD));
+                sendModMessage(ChatColor.GOLD + "Your message is too long.");
                 return 0;
             }
             ClientPlayerEntity entityPlayer = PlayerUtils.getPlayer();
@@ -62,7 +60,7 @@ public class Rainbowifier {
             if (message.length() >= 256) {
                 message = "/msg " + player + " " + rainbowifyMessageSimple(originalMessage);
                 if (message.length() >= 256) {
-                    sendModMessage(new LiteralText("Your message is too long.").formatted(Formatting.GOLD));
+                    sendModMessage(ChatColor.GOLD + "Your message is too long.");
                     return 0;
                 }
             }
@@ -77,7 +75,7 @@ public class Rainbowifier {
             if (message.length() >= 256) {
                 message = rainbowifyMessageSimple(input);
                 if (message.length() >= 256) {
-                    sendModMessage(new LiteralText("Your message is too long.").formatted(Formatting.GOLD));
+                    sendModMessage(ChatColor.GOLD + "Your message is too long.");
                     return 0;
                 }
             }
@@ -88,7 +86,7 @@ public class Rainbowifier {
 
         node.then(literal("freq").then(argument("frequency", DoubleArgumentType.doubleArg(0.1, 1.0)).executes(c -> {
             this.freq = c.getArgument("frequency", Double.class);
-            sendModMessage(new LiteralText("Frequency updated to ").formatted(Formatting.GOLD).append(new LiteralText("" + freq).formatted(Formatting.AQUA)));
+            sendModMessage(ChatColor.GOLD + "Frequency updated to " + ChatColor.AQUA + freq);
             return 1;
         })));
 
@@ -98,7 +96,7 @@ public class Rainbowifier {
         });
 
         register(node,
-                createGoldText("Rainbowifier enables you to send rainbow-colored messages into either the global chat or directly as a private message."));
+                "Rainbowifier enables you to send rainbow-colored messages into either the global chat or directly as a private message.");
     }
 
     private String rainbowifyMessageFancy(String input) {
@@ -151,6 +149,6 @@ public class Rainbowifier {
     }
 
     private void sendDebugMessage() {
-        sendModMessage(new LiteralText("/rainbowify [simple, fancy, freq, auto, msg <recipient message>]").formatted(Formatting.GOLD));
+        sendModMessage(ChatColor.GOLD + "/rainbowify [simple, fancy, freq, auto, msg <recipient message>]");
     }
 }

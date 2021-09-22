@@ -1,5 +1,6 @@
 package at.haha007.edenclient.command;
 
+import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.PlayerUtils;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.ArgumentType;
@@ -27,12 +28,12 @@ public class CommandManager {
         List<LiteralArgumentBuilder<ClientCommandSource>> list = Stream.of("ecmds", "ehelp").map(CommandManager::literal).collect(Collectors.toList());
 
         list.forEach(cmd -> cmd.executes(a -> {
-            PlayerUtils.sendModMessage(new LiteralText("Click on the mod you need help for to receive help. To get all information for each feature use the github-wiki: ").formatted(Formatting.GOLD)
-                    .append(new LiteralText("https://github.com/HahaOO7/EdenClient/wiki")
+            PlayerUtils.sendModMessage(new LiteralText(ChatColor.GOLD + "Click on the mod you need help for to receive help. To get all information for each feature use the github-wiki: ")
+                    .append(new LiteralText(ChatColor.AQUA + "https://github.com/HahaOO7/EdenClient/wiki")
                             .setStyle(Style.EMPTY
                                     .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.of("Click to copy the link to the wiki.")))
                                     .withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, "https://github.com/HahaOO7/EdenClient/wiki"))
-                            ).formatted(Formatting.AQUA)));
+                            )));
 
             MutableText text = new LiteralText("");
             Iterator<MutableText> it = cmds.keySet().
@@ -62,8 +63,8 @@ public class CommandManager {
 
         list.forEach(cmd ->
                 register(cmd,
-                        new LiteralText("Help for EdenClient commands").formatted(Formatting.GOLD),
-                        new LiteralText("/ecmds <command> or /ehelp <command>").formatted(Formatting.GOLD)));
+                        "Help for EdenClient commands",
+                        "/ecmds <command> or /ehelp <command>"));
     }
 
     private static int sendCommandHelp(CommandContext<ClientCommandSource> c) {
@@ -86,13 +87,13 @@ public class CommandManager {
         cmds.keySet().forEach(dispatcher::register);
     }
 
-    public static void register(LiteralArgumentBuilder<ClientCommandSource> command, Text... usage) {
-        cmds.put(command, usage);
+    public static void register(LiteralArgumentBuilder<ClientCommandSource> command, String... usage) {
+        cmds.put(command, Arrays.stream(usage).map(ChatColor::translateColors).toArray(Text[]::new));
         dispatcher.register(command);
     }
 
     public static void register(LiteralArgumentBuilder<ClientCommandSource> command) {
-        register(command, (Text[]) null);
+        register(command, (String[]) null);
     }
 
     public static LiteralArgumentBuilder<ClientCommandSource> literal(String s) {
