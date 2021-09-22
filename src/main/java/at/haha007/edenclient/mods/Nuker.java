@@ -33,10 +33,12 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
 import java.util.stream.Stream;
 
 import static at.haha007.edenclient.command.CommandManager.*;
+import static at.haha007.edenclient.utils.PlayerUtils.getHitDirectionForBlock;
 import static at.haha007.edenclient.utils.TextUtils.createGoldText;
 
 public class Nuker {
@@ -175,16 +177,6 @@ public class Nuker {
         else
             target = null;
     }
-
-    private Direction getHitDirectionForBlock(ClientPlayerEntity player, BlockPos target) {
-        Vec3d playerPos = player.getEyePos();
-        Optional<Direction> direction = Arrays.stream(Direction.values())
-                .min(Comparator.comparingDouble(
-                        dir -> Vec3d.of(dir.getVector()).multiply(.5, .5, .5).add(Vec3d.of(target)).distanceTo(playerPos)));
-
-        return direction.orElse(null);
-    }
-
 
     private void findTarget(ClientPlayerEntity player) {
         ClientWorld world = player.clientWorld;

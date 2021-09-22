@@ -45,4 +45,9 @@ public class TaskManager implements Cloneable {
             throw new AssertionError();
         }
     }
+
+    public void cancel() {
+        tasks.clear();
+        maxIter = -1;
+    }
 }
