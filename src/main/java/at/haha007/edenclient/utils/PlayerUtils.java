@@ -10,8 +10,14 @@ import net.minecraft.text.LiteralText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
+
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Optional;
 
 public class PlayerUtils {
 
@@ -44,7 +50,7 @@ public class PlayerUtils {
     }
 
     public static void sendModMessage(String text) {
-        sendModMessage(new LiteralText(text).formatted(Formatting.GOLD));
+        sendModMessage(ChatColor.translateColors(text));
     }
 
     public static void clickSlot(int slotId) {
@@ -69,7 +75,16 @@ public class PlayerUtils {
     public static ClientPlayerEntity getPlayer() {
         ClientPlayerEntity player = MinecraftClient.getInstance().player;
         if (player == null)
-            throw new NullPointerException("Player is null.");
+            throw new IllegalStateException("Player is null.");
         return player;
+    }
+
+    public static Direction getHitDirectionForBlock(ClientPlayerEntity player, BlockPos target) {
+        Vec3d playerPos = player.getEyePos();
+        Optional<Direction> direction = Arrays.stream(Direction.values())
+                .min(Comparator.comparingDouble(
+                        dir -> Vec3d.of(dir.getVector()).multiply(.5, .5, .5).add(Vec3d.of(target)).distanceTo(playerPos)));
+
+        return direction.orElse(null);
     }
 }

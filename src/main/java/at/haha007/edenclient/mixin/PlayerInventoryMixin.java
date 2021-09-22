@@ -2,7 +2,6 @@ package at.haha007.edenclient.mixin;
 
 import at.haha007.edenclient.callbacks.PlayerInvChangeCallback;
 import at.haha007.edenclient.utils.PlayerUtils;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
