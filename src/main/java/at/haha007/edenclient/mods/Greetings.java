@@ -1,6 +1,7 @@
 package at.haha007.edenclient.mods;
 
 import at.haha007.edenclient.callbacks.AddChatMessageCallback;
+import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.Scheduler;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
@@ -15,15 +16,12 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.client.network.ClientCommandSource;
-import net.minecraft.text.LiteralText;
-import net.minecraft.util.Formatting;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import static at.haha007.edenclient.command.CommandManager.*;
-import static at.haha007.edenclient.utils.TextUtils.createGoldText;
 
 public class Greetings {
     @ConfigSubscriber("false")
@@ -65,9 +63,7 @@ public class Greetings {
         if (msg.startsWith("[-] ")) {
             String name = msg.substring(4);
             quitTimes.put(name, System.currentTimeMillis());
-            Scheduler.get().scheduleSyncDelayed(() -> {
-                quitTimes.remove(name);
-            }, wbMaxDelay);
+            Scheduler.get().scheduleSyncDelayed(() -> quitTimes.remove(name), wbMaxDelay);
         }
 
         if (msg.startsWith("[+] ")) {
@@ -125,8 +121,7 @@ public class Greetings {
             }
             PlayerUtils.sendModMessage("Messages for new players:");
             for (int i = 0; i < newMessages.size(); i++) {
-                PlayerUtils.sendModMessage(new LiteralText("[" + (i + 1) + "] ").formatted(Formatting.GOLD)
-                        .append(new LiteralText(newMessages.get(i)).formatted(Formatting.AQUA)));
+                PlayerUtils.sendModMessage(ChatColor.GOLD + "[" + (i + 1) + "] " + ChatColor.AQUA + newMessages.get(i));
             }
             return 1;
         })));
@@ -157,8 +152,7 @@ public class Greetings {
             }
             PlayerUtils.sendModMessage("Messages for old players:");
             for (int i = 0; i < oldMessages.size(); i++) {
-                PlayerUtils.sendModMessage(new LiteralText("[" + (i + 1) + "] ").formatted(Formatting.GOLD)
-                        .append(new LiteralText(oldMessages.get(i)).formatted(Formatting.AQUA)));
+                PlayerUtils.sendModMessage(ChatColor.GOLD + "[" + (i + 1) + "] " + ChatColor.AQUA + oldMessages.get(i));
             }
             return 1;
         })));
@@ -189,8 +183,7 @@ public class Greetings {
             }
             PlayerUtils.sendModMessage("Messages for welcome-back players:");
             for (int i = 0; i < wbMessages.size(); i++) {
-                PlayerUtils.sendModMessage(new LiteralText("[" + (i + 1) + "] ").formatted(Formatting.GOLD)
-                        .append(new LiteralText(wbMessages.get(i)).formatted(Formatting.AQUA)));
+                PlayerUtils.sendModMessage(ChatColor.GOLD + "[" + (i + 1) + "] " + ChatColor.AQUA + wbMessages.get(i));
             }
             return 1;
         })));
@@ -238,36 +231,31 @@ public class Greetings {
                 return 0;
             }
             ignoredPlayers.add(player.toLowerCase());
-            PlayerUtils.sendModMessage(new LiteralText("Added ").formatted(Formatting.GOLD)
-                    .append(new LiteralText(player).formatted(Formatting.AQUA))
-                    .append(new LiteralText(" to ignored players.").formatted(Formatting.GOLD)));
+            PlayerUtils.sendModMessage(ChatColor.GOLD + "Added " + ChatColor.AQUA + player + ChatColor.GOLD + " to ignored players.");
             return 1;
         }))));
 
         cmd.then(literal("ignore").then(literal("remove").then(argument("player", StringArgumentType.word()).suggests(this::suggestIgnoredPlayers).executes(c -> {
             String player = c.getArgument("player", String.class);
             if (ignoredPlayers.remove(player.toLowerCase())) {
-                PlayerUtils.sendModMessage(new LiteralText("Successfully removed ").formatted(Formatting.GOLD)
-                        .append(new LiteralText(player).formatted(Formatting.AQUA))
-                        .append(" from your ignored players.").formatted(Formatting.GOLD));
+                PlayerUtils.sendModMessage(ChatColor.GOLD + "Removed " + ChatColor.AQUA + player + ChatColor.GOLD + " from ignored players.");
                 return 1;
             } else {
-                PlayerUtils.sendModMessage("This player is not ignored and can therefore not be removed.");
+                PlayerUtils.sendModMessage(ChatColor.GOLD + "This player is not ignored and can therefore not be removed.");
                 return 0;
             }
         }))));
 
         cmd.then(literal("ignore").then(literal("list").executes(c -> {
             if (ignoredPlayers.size() == 0) {
-                PlayerUtils.sendModMessage("No players ignored for Greetings.");
+                PlayerUtils.sendModMessage(ChatColor.GOLD + "No players ignored for Greetings.");
                 return 0;
             }
 
             List<String> ignoredPlayersList = ignoredPlayers.stream().sorted().collect(Collectors.toList());
-            PlayerUtils.sendModMessage("Ignored players for Greetings:");
+            PlayerUtils.sendModMessage(ChatColor.GOLD + "Ignored players for Greetings:");
             for (int i = 0; i < ignoredPlayers.size(); i++) {
-                PlayerUtils.sendModMessage(new LiteralText("[" + (i + 1) + "] ").formatted(Formatting.GOLD)
-                        .append(new LiteralText(ignoredPlayersList.get(i)).formatted(Formatting.AQUA)));
+                PlayerUtils.sendModMessage(ChatColor.GOLD + "[" + (i + 1) + "] " + ChatColor.AQUA + ignoredPlayersList.get(i));
             }
             return 1;
         })));
@@ -296,10 +284,9 @@ public class Greetings {
             String player = c.getArgument("player", String.class);
 
             if (specificPlayerGreetMessages.remove(player.toLowerCase()) != null) {
-                PlayerUtils.sendModMessage(new LiteralText("Removed greet message for ").formatted(Formatting.GOLD)
-                        .append(new LiteralText(player)).formatted(Formatting.AQUA));
+                PlayerUtils.sendModMessage(ChatColor.GOLD + "Removed greet message for " + ChatColor.AQUA + player);
             } else {
-                PlayerUtils.sendModMessage("No message found for that player.");
+                PlayerUtils.sendModMessage(ChatColor.GOLD + "No message found for that player.");
             }
 
             return 1;
@@ -307,14 +294,13 @@ public class Greetings {
 
         cmd.then(literal("player").then(literal("greet").then(literal("list").executes(c -> {
             if (specificPlayerGreetMessages.entrySet().size() == 0) {
-                PlayerUtils.sendModMessage("No specific messages for any player registered.");
+                PlayerUtils.sendModMessage(ChatColor.GOLD + "No specific messages for any player registered.");
                 return 0;
             }
 
             List<Map.Entry<String, String>> list = specificPlayerGreetMessages.entrySet().stream().toList();
             for (int i = 0; i < list.size(); i++) {
-                PlayerUtils.sendModMessage(new LiteralText("[" + (i + 1) + "] ").formatted(Formatting.GOLD)
-                        .append(new LiteralText(String.format("%s - %s", list.get(i).getKey(), list.get(i).getValue())).formatted(Formatting.AQUA)));
+                PlayerUtils.sendModMessage(ChatColor.GOLD + "[" + (i + 1) + "] " + ChatColor.AQUA + String.format("%s - %s", list.get(i).getKey(), list.get(i).getValue()));
             }
             return 1;
         }))));
@@ -343,8 +329,7 @@ public class Greetings {
             String player = c.getArgument("player", String.class);
 
             if (specificPlayerWBMessages.remove(player.toLowerCase()) != null) {
-                PlayerUtils.sendModMessage(new LiteralText("Removed wb message for ").formatted(Formatting.GOLD)
-                        .append(new LiteralText(player)).formatted(Formatting.AQUA));
+                PlayerUtils.sendModMessage(ChatColor.GOLD + "Removed wb message for " + ChatColor.AQUA + player);
             } else {
                 PlayerUtils.sendModMessage("No wb-message found for that player.");
             }
@@ -360,15 +345,14 @@ public class Greetings {
 
             List<Map.Entry<String, String>> list = specificPlayerWBMessages.entrySet().stream().toList();
             for (int i = 0; i < list.size(); i++) {
-                PlayerUtils.sendModMessage(new LiteralText("[" + (i + 1) + "] ").formatted(Formatting.GOLD)
-                        .append(new LiteralText(String.format("%s - %s", list.get(i).getKey(), list.get(i).getValue())).formatted(Formatting.AQUA)));
+                PlayerUtils.sendModMessage(ChatColor.GOLD + "[" + (i + 1) + "] " + ChatColor.AQUA + String.format("%s - %s", list.get(i).getKey(), list.get(i).getValue()));
             }
             return 1;
         }))));
 
         register(cmd,
-                createGoldText("Greetings allows you to automatically greet all players joining the server."),
-                createGoldText("You can also set specific messages or each player as well as different messages for new players or players that have previously joined in this session already."));
+               "Greetings allows you to automatically greet all players joining the server.",
+               "You can also set specific messages or each player as well as different messages for new players or players that have previously joined in this session already.");
     }
 
     private CompletableFuture<Suggestions> suggestWelcomeBackPlayerMessages

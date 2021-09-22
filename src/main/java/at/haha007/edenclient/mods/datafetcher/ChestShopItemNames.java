@@ -4,6 +4,7 @@ import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.callbacks.AddChatMessageCallback;
 import at.haha007.edenclient.callbacks.LeaveWorldCallback;
 import at.haha007.edenclient.mods.MessageIgnorer;
+import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.Scheduler;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
@@ -13,8 +14,6 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.client.network.ClientCommandSource;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.item.Item;
-import net.minecraft.text.LiteralText;
-import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.DefaultedRegistry;
 import net.minecraft.util.registry.Registry;
@@ -100,9 +99,7 @@ public class ChestShopItemNames {
                     .map(String::toLowerCase)
                     .filter(Predicate.not(itemNameMap::containsValue))
                     .toList().toArray(new String[0]);
-            sendModMessage(new LiteralText("Startet Mapping. Mapping will take about ").formatted(Formatting.GOLD)
-                    .append(new LiteralText(Integer.toString(minecraftIDs.length / 60 + 1)).formatted(Formatting.AQUA))
-                    .append(new LiteralText(" minutes.").formatted(Formatting.GOLD)));
+            sendModMessage(ChatColor.GOLD + "Started Mapping. Mapping will take about " + ChatColor.AQUA + (minecraftIDs.length / 60 + 1) + " minutes");
 
             AtomicInteger index = new AtomicInteger();
             nameLookupRunning = true;
@@ -121,11 +118,7 @@ public class ChestShopItemNames {
                 System.out.println("Mapping item:" + item);
                 entityPlayer.sendChatMessage("/iteminfo " + item);
                 if (i % 60 == 0) {
-                    sendModMessage(new LiteralText("Mapped ").formatted(Formatting.GOLD)
-                            .append(new LiteralText("" + i).formatted(Formatting.AQUA))
-                            .append(new LiteralText(" items of ").formatted(Formatting.GOLD))
-                            .append(new LiteralText("" + minecraftIDs.length).formatted(Formatting.AQUA))
-                            .append(new LiteralText(" this far.").formatted(Formatting.GOLD)));
+                    sendModMessage(ChatColor.GOLD + "Mapped " + ChatColor.AQUA + i + ChatColor.GOLD + " items of " + ChatColor.AQUA + minecraftIDs.length + ChatColor.GOLD + " this far.");
                 }
                 return true;
             }, 20, 0);
@@ -139,8 +132,7 @@ public class ChestShopItemNames {
         }));
 
         mapItemNames.then(literal("check").executes(c -> {
-            sendModMessage(new LiteralText("Amount of items mapped: ").formatted(Formatting.GOLD)
-                    .append(new LiteralText("" + itemNameMap.size()).formatted(Formatting.AQUA)));
+            sendModMessage(ChatColor.GOLD + "Amount of items mapped: " + ChatColor.AQUA + itemNameMap.size());
             return 1;
         }));
         return mapItemNames;

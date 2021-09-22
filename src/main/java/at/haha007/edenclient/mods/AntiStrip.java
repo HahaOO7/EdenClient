@@ -1,7 +1,7 @@
 package at.haha007.edenclient.mods;
 
 import at.haha007.edenclient.callbacks.PlayerInteractBlockEvent;
-import at.haha007.edenclient.command.CommandManager;
+import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import net.minecraft.client.network.ClientPlayerEntity;
@@ -9,16 +9,14 @@ import net.minecraft.client.world.ClientWorld;
 import net.minecraft.item.Item;
 import net.minecraft.item.Items;
 import net.minecraft.tag.BlockTags;
-import net.minecraft.text.LiteralText;
 import net.minecraft.util.ActionResult;
-import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 
 import java.util.Set;
 
-import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.command.CommandManager.literal;
+import static at.haha007.edenclient.command.CommandManager.register;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
 public class AntiStrip {
@@ -44,12 +42,12 @@ public class AntiStrip {
         var node = literal("eantistrip");
         node.then(literal("toggle").executes(c -> {
             enabled = !enabled;
-            sendModMessage(new LiteralText(enabled ? "Enabled AntiStrip." : "Disabled AntiStrip.").formatted(Formatting.GOLD));
+            sendModMessage(ChatColor.GOLD + (enabled ? "Enabled AntiStrip." : "Disabled AntiStrip."));
             return 1;
         }));
 
         register(node,
-                new LiteralText("AntiStrip disables stripping of wood with any axe.").formatted(Formatting.GOLD));
+                "AntiStrip disables stripping of wood with any axe.");
     }
 
     private ActionResult onInteractBlock(ClientPlayerEntity player, ClientWorld world, Hand hand, BlockHitResult blockHitResult) {

@@ -4,8 +4,6 @@ import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.Scheduler;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.MovementType;
-import net.minecraft.text.LiteralText;
-import net.minecraft.util.Formatting;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3i;
@@ -31,7 +29,7 @@ public class AntiAfk {
         }));
 
         register(node,
-                new LiteralText("AntiAfk stops you from getting kicked for being afk. ").formatted(Formatting.GOLD));
+                "AntiAfk stops you from getting kicked for being afk. ");
     }
 
     private boolean moveAround() {
