@@ -24,9 +24,14 @@ public class CommandManager {
     private static final CommandDispatcher<ClientCommandSource> dispatcher = new CommandDispatcher<>();
 
     static {
-        List<LiteralArgumentBuilder<ClientCommandSource>> list = List.of(literal("ecmds"), literal("ehelp"));
+        registerCommand("ecmds");
+        registerCommand("ehelp");
+    }
 
-        list.forEach(cmd -> cmd.executes(a -> {
+    private static void registerCommand(String literal) {
+        LiteralArgumentBuilder<ClientCommandSource> node = literal(literal);
+
+        node.executes(a -> {
             PlayerUtils.sendModMessage(new LiteralText(ChatColor.GOLD + "Click on the mod you need help for to receive help. To get all information for each feature use the github-wiki: ")
                     .append(new LiteralText(ChatColor.AQUA + "https://github.com/HahaOO7/EdenClient/wiki")
                             .setStyle(Style.EMPTY
@@ -41,7 +46,7 @@ public class CommandManager {
                     map(LiteralText::new).
                     map(t -> t.formatted(Formatting.GOLD)
                             .styled(s -> s.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.of("Click for more info."))))
-                            .styled(s -> s.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/" + cmd.getLiteral() + " " + t.asString())))).
+                            .styled(s -> s.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/" + node.getLiteral() + " " + t.asString())))).
                     sorted(Comparator.comparing(Object::toString)).
                     collect(Collectors.toList()).iterator();
 
@@ -54,16 +59,15 @@ public class CommandManager {
 
             PlayerUtils.sendModMessage(text);
             return 1;
-        }));
+        });
 
-        list.forEach(cmd -> cmd.then(argument("cmd", StringArgumentType.word())
+        node.then(argument("cmd", StringArgumentType.word())
                 .suggests(CommandManager::suggestCommands)
-                .executes(CommandManager::sendCommandHelp)));
+                .executes(CommandManager::sendCommandHelp));
 
-        list.forEach(cmd ->
-                register(cmd,
-                        "Help for EdenClient commands",
-                        "/ecmds <command> or /ehelp <command>"));
+        register(node,
+                "Help for EdenClient command",
+                "/ecmds <command> or /ehelp <command>");
     }
 
     private static int sendCommandHelp(CommandContext<ClientCommandSource> c) {
