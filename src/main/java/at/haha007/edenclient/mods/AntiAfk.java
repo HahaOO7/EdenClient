@@ -19,12 +19,17 @@ public class AntiAfk {
     private final Random random = new Random();
 
     public AntiAfk() {
-        register(literal("antiafk").executes(c -> {
+        var node = literal("eantiafk");
+
+        node.then(literal("toggle").executes(c -> {
             startPos = PlayerUtils.getPlayer().getBlockPos();
             Scheduler.get().scheduleSyncRepeating(this::moveAround, 20 * 60 * 5, 0);
             PlayerUtils.sendModMessage("Start moving around randomly in a 3x3 area, walk away to cancel.");
             return 1;
         }));
+
+        register(node,
+                "AntiAfk stops you from getting kicked for being afk. ");
     }
 
     private boolean moveAround() {

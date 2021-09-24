@@ -1,6 +1,7 @@
 package at.haha007.edenclient.mods;
 
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
+import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.Scheduler;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
@@ -9,8 +10,6 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.client.network.ClientCommandSource;
 import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.text.LiteralText;
-import net.minecraft.util.Formatting;
 
 import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
@@ -32,29 +31,28 @@ public class LifeSaver {
     }
 
     private void registerCommand() {
-        LiteralArgumentBuilder<ClientCommandSource> node = literal("lifesaver");
+        LiteralArgumentBuilder<ClientCommandSource> node = literal("elifesaver");
 
         node.then(literal("toggle").executes(c -> {
             enabled = !enabled;
-            sendModMessage(new LiteralText(enabled ? "Enabled LifeSaver." : "Disabled LifeSaver.").formatted(Formatting.GOLD));
+            sendModMessage(ChatColor.GOLD + (enabled ? "Enabled LifeSaver." : "Disabled LifeSaver."));
             return 1;
         }));
 
         node.then(literal("health").then(argument("health", IntegerArgumentType.integer(0, 20)).executes(c -> {
             this.health = c.getArgument("health", Integer.class);
-            sendModMessage(new LiteralText("Set health at which LifeSaves activates to: ").formatted(Formatting.GOLD)
-                    .append(new LiteralText("" + health + " (" + (health % 2 == 0 ? health / 2 : health / 2 + ",5") + " full hearts)").formatted(Formatting.AQUA)));
+            sendModMessage(ChatColor.GOLD + "Set health at which LifeSaves activates to: " + ChatColor.AQUA + health + " (" + (health % 2 == 0 ? health / 2 : health / 2 + ",5") + " full hearts)");
             return 1;
         })));
 
         node.then(literal("height").then(argument("height", IntegerArgumentType.integer(Integer.MIN_VALUE, 256)).executes(c -> {
             this.height = c.getArgument("height", Integer.class);
-            sendModMessage(new LiteralText("Set height at which LifeSaver activates to: ").formatted(Formatting.GOLD)
-                    .append(new LiteralText("" + c.getArgument("height", Integer.class)).formatted(Formatting.AQUA)));
+            sendModMessage(ChatColor.GOLD  + "Set height at which LifeSaver activates to: " + ChatColor.AQUA + c.getArgument("height", Integer.class));
             return 1;
         })));
 
-        register(node);
+        register(node,
+               "LifeSaver saves your life by teleporting you to a safe position when either your health or your y-coordinate reach below a certain value.");
     }
 
     private void tick(ClientPlayerEntity clientPlayerEntity) {

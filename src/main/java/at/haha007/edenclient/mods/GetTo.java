@@ -78,7 +78,7 @@ public class GetTo {
     }
 
     private void registerCommand() {
-        LiteralArgumentBuilder<ClientCommandSource> cmd = literal("getto");
+        LiteralArgumentBuilder<ClientCommandSource> cmd = literal("egetto");
         cmd.then(argument("target", BlockPosArgumentType.blockPos()).executes(c -> {
             BlockPos pos = c.getArgument("target", PosArgument.class).toAbsoluteBlockPos(PlayerUtils.getPlayer().getCommandSource());
             getTo(pos, true, true, true);
@@ -109,7 +109,8 @@ public class GetTo {
             PlayerUtils.sendModMessage("Target disabled");
             return 1;
         }));
-        register(cmd);
+        register(cmd,
+                "This mod is for internal use only.");
     }
 
     private void getTo(BlockPos pos, boolean tracer, boolean box, boolean tp) {

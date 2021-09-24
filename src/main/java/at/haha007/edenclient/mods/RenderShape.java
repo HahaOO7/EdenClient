@@ -17,7 +17,7 @@ import static at.haha007.edenclient.command.CommandManager.*;
 public class RenderShape {
 
     public RenderShape() {
-        LiteralArgumentBuilder<ClientCommandSource> cmd = literal("rendershape");
+        LiteralArgumentBuilder<ClientCommandSource> cmd = literal("erendershape");
         LiteralArgumentBuilder<ClientCommandSource> boxCmd = literal("box");
         boxCmd.then(argument("pos1", new BlockPosArgumentType())
                 .then(argument("pos2", new BlockPosArgumentType()).then(argument("time", IntegerArgumentType.integer(1))
@@ -39,6 +39,8 @@ public class RenderShape {
 
         cmd.then(boxCmd);
         cmd.then(tracerCmd);
-        register(cmd);
+
+        register(cmd,
+                "RenderShape is only for internal use.");
     }
 }

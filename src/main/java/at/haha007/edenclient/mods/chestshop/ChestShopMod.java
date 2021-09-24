@@ -3,6 +3,7 @@ package at.haha007.edenclient.mods.chestshop;
 import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.mods.datafetcher.ChestShopItemNames;
+import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
@@ -47,8 +48,7 @@ public class ChestShopMod {
     private int[] chunk = {0, 0};
 
     public ChestShopMod() {
-        registerCommand("chestshop");
-        registerCommand("cs");
+        registerCommand("echestshop");
         PlayerTickCallback.EVENT.register(this::tick);
         PerWorldConfig.get().register(this, "chestShop");
         PerWorldConfig.get().register(new ChestShopLoader(), ChestShopMap.class);
@@ -100,21 +100,21 @@ public class ChestShopMod {
         node.then(literal("updateshops").executes(c -> {
             var shops = EdenClient.INSTANCE.getDataFetcher().getPlayerWarps().getShops();
             TaskManager tm = new TaskManager((shops.size() + 2) * 120);
-            sendModMessage(gold("Teleporting to all player warps, this will take about ")
-                    .append(aqua(Integer.toString(shops.size() * 6)))
-                    .append(gold(" seconds")));
+            sendModMessage(ChatColor.GOLD + "Teleporting to all player warps, this will take about " +
+                    ChatColor.AQUA + Integer.toString(shops.size() * 6) +
+                    ChatColor.GOLD + " seconds.");
             int count = shops.size();
             AtomicInteger i = new AtomicInteger(1);
             for (String shop : shops.keySet()) {
                 tm.then(new RunnableTask(() -> PlayerUtils.messageC2S("/pw " + shop)));
                 tm.then(new WaitForTicksTask(120)); //wait for chunks to load
-                tm.then(new RunnableTask(() -> sendModMessage(gold("Shop ")
-                        .append(aqua((i.getAndIncrement())))
-                        .append(gold("/"))
-                        .append(aqua(count))
-                        .append(gold(" | "))
-                        .append(aqua((count - i.get() + 1) * 5))
-                        .append(gold(" seconds left")))));
+                tm.then(new RunnableTask(() -> sendModMessage(ChatColor.GOLD + "Shop " +
+                        ChatColor.AQUA + i.getAndIncrement() +
+                        ChatColor.GOLD + "/" +
+                        ChatColor.AQUA + count +
+                        ChatColor.GOLD + " | " +
+                        ChatColor.AQUA + ((count - i.get() + 1) * 5) +
+                        ChatColor.GOLD + " seconds left")));
                 tm.then(new RunnableTask(() -> checkForShops(PlayerUtils.getPlayer(), 8)));
             }
             tm.start();
@@ -292,19 +292,9 @@ public class ChestShopMod {
             sendModMessage("/chestshop list");
             return 1;
         });
-        register(node);
-    }
-
-    private MutableText gold(String string) {
-        return new LiteralText(string).formatted(Formatting.GOLD);
-    }
-
-    private MutableText aqua(String string) {
-        return new LiteralText(string).formatted(Formatting.AQUA);
-    }
-
-    private MutableText aqua(int i) {
-        return aqua(Integer.toString(i));
+        register(node,
+                "ChestShop item find/sell/buy helper.",
+                "Automatically stores all ChestShops in all chunks you load. You can search specific items to get their buy/sell options. Other features include automatic searching for shops which sell items cheaper than other shops buy them, writing all shops to a file and automatically updating all shops via their playerwarps.");
     }
 
     private List<String> getExploitableShopsText() {

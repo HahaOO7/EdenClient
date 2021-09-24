@@ -1,5 +1,6 @@
 package at.haha007.edenclient.command;
 
+import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.PlayerUtils;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.ArgumentType;
@@ -14,41 +15,59 @@ import net.minecraft.client.network.ClientCommandSource;
 import net.minecraft.text.*;
 import net.minecraft.util.Formatting;
 
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 public class CommandManager {
     private static final Map<LiteralArgumentBuilder<ClientCommandSource>, Text[]> cmds = new HashMap<>();
     private static final CommandDispatcher<ClientCommandSource> dispatcher = new CommandDispatcher<>();
 
     static {
-        var cmd = literal("ecmd");
-        cmd.executes(a -> {
+        registerCommand("ecmds");
+        registerCommand("ehelp");
+    }
+
+    private static void registerCommand(String literal) {
+        LiteralArgumentBuilder<ClientCommandSource> node = literal(literal);
+
+        node.executes(a -> {
+            PlayerUtils.sendModMessage(new LiteralText(ChatColor.GOLD + "Click on the mod you need help for to receive help. To get all information for each feature use the github-wiki: ")
+                    .append(new LiteralText(ChatColor.AQUA + "https://github.com/HahaOO7/EdenClient/wiki")
+                            .setStyle(Style.EMPTY
+                                    .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.of("Click to copy the link to the wiki.")))
+                                    .withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, "https://github.com/HahaOO7/EdenClient/wiki"))
+                            )));
+
             MutableText text = new LiteralText("");
-            cmds.keySet().
+            Iterator<MutableText> it = cmds.keySet().
                     stream().
                     map(LiteralArgumentBuilder::getLiteral).
                     map(LiteralText::new).
                     map(t -> t.formatted(Formatting.GOLD)
                             .styled(s -> s.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.of("Click for more info."))))
-                            .styled(s -> s.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/" + cmd.getLiteral() + " " + t.asString())))).
+                            .styled(s -> s.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/" + node.getLiteral() + " " + t.asString())))).
                     sorted(Comparator.comparing(Object::toString)).
-                    forEach(t -> {
-                        text.append(t);
-                        text.append(new LiteralText(", ").formatted(Formatting.AQUA));
-                    });
+                    collect(Collectors.toList()).iterator();
+
+            while (it.hasNext()) {
+                text.append(it.next().formatted(Formatting.GOLD));
+                if (it.hasNext()) {
+                    text.append(new LiteralText(", ").formatted(Formatting.AQUA));
+                }
+            }
+
             PlayerUtils.sendModMessage(text);
             return 1;
         });
-        cmd.then(argument("cmd", StringArgumentType.word())
+
+        node.then(argument("cmd", StringArgumentType.word())
                 .suggests(CommandManager::suggestCommands)
                 .executes(CommandManager::sendCommandHelp));
-        register(cmd,
-                new LiteralText("Help for EdenClient commands").formatted(Formatting.GOLD),
-                new LiteralText("/ecmd <command>").formatted(Formatting.GOLD));
+
+        register(node,
+                "Help for EdenClient command",
+                "/ecmds <command> or /ehelp <command>");
     }
 
     private static int sendCommandHelp(CommandContext<ClientCommandSource> c) {
@@ -71,13 +90,13 @@ public class CommandManager {
         cmds.keySet().forEach(dispatcher::register);
     }
 
-    public static void register(LiteralArgumentBuilder<ClientCommandSource> command, Text... usage) {
-        cmds.put(command, usage);
+    public static void register(LiteralArgumentBuilder<ClientCommandSource> command, String... usage) {
+        cmds.put(command, Arrays.stream(usage).map(ChatColor::translateColors).toArray(Text[]::new));
         dispatcher.register(command);
     }
 
     public static void register(LiteralArgumentBuilder<ClientCommandSource> command) {
-        register(command, (Text[]) null);
+        register(command, (String[]) null);
     }
 
     public static LiteralArgumentBuilder<ClientCommandSource> literal(String s) {

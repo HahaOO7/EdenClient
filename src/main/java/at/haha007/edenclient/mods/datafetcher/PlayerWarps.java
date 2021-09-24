@@ -109,9 +109,9 @@ public class PlayerWarps {
             Pattern pattern = Pattern.compile(". PlayerWarps - Seite 1/(?<pages>[0-9]{1,2})");
             Screen screen = MinecraftClient.getInstance().currentScreen;
             if (screen == null) return;
-            Matcher macher = pattern.matcher(screen.getTitle().getString());
-            if (!macher.matches()) return;
-            int pages = Integer.parseInt(macher.group("pages"));
+            Matcher matcher = pattern.matcher(screen.getTitle().getString());
+            if (!matcher.matches()) return;
+            int pages = Integer.parseInt(matcher.group("pages"));
 
             tm.then(new WaitForTicksTask(5));
             tm.then(new RunnableTask(() -> scanWarps(map)));

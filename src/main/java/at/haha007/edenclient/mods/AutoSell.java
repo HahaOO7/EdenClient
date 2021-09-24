@@ -14,13 +14,13 @@ import net.minecraft.client.network.ClientCommandSource;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.Item;
-import net.minecraft.text.LiteralText;
-import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.DefaultedRegistry;
 import net.minecraft.util.registry.Registry;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import static at.haha007.edenclient.command.CommandManager.*;
@@ -36,8 +36,7 @@ public class AutoSell {
     public AutoSell() {
         PerWorldConfig.get().register(this, "autoSell");
         PlayerInvChangeCallback.EVENT.register(this::onInventoryChange);
-        registerCommand("autosell");
-        registerCommand("as");
+        registerCommand("eautosell");
     }
 
     private void registerCommand(String cmd) {
@@ -45,18 +44,18 @@ public class AutoSell {
 
         node.then(literal("toggle").executes(c -> {
             enabled = !enabled;
-            sendChatMessage(enabled ? "AutoSell enabled" : "AutoSell disabled");
+            sendModMessage(enabled ? "AutoSell enabled" : "AutoSell disabled");
             return 1;
         }));
 
         node.then(literal("clear").executes(c -> {
             autoSellItems.clear();
-            sendChatMessage("Removed all entries");
+            sendModMessage("Removed all entries");
             return 1;
         }));
 
         node.then(literal("list").executes(c -> {
-            sendChatMessage(autoSellItems.toString());
+            sendModMessage(autoSellItems.toString());
             return 1;
         }));
 
@@ -76,9 +75,9 @@ public class AutoSell {
                 return 1;
             }
             if (autoSellItems.remove(opt.get()))
-                sendChatMessage("Removed /sell " + opt.get().getName().getString());
+                sendModMessage("Removed /sell " + opt.get().getName().getString());
             else {
-                sendChatMessage("Couldn't remove /sell " + opt.get().getName().getString() + " because it wasn't in your sell list.");
+                sendModMessage("Couldn't remove /sell " + opt.get().getName().getString() + " because it wasn't in your sell list.");
             }
             return 1;
         })));
@@ -86,19 +85,22 @@ public class AutoSell {
 
         node.then(literal("stats").executes(c -> {
             ClientPlayerEntity entityPlayer = PlayerUtils.getPlayer();
-            entityPlayer.sendChatMessage("/statstracker global");
+            entityPlayer.sendChatMessage("/esellstatstracker global");
             return 1;
         }));
 
         node.executes(c -> {
-            sendChatMessage("/autosell clear");
-            sendChatMessage("/autosell list");
-            sendChatMessage("/autosell toggle");
-            sendChatMessage("/autosell add");
-            sendChatMessage("/autosell remove");
+            sendModMessage("/autosell clear");
+            sendModMessage("/autosell list");
+            sendModMessage("/autosell toggle");
+            sendModMessage("/autosell add");
+            sendModMessage("/autosell remove");
             return 1;
         });
-        register(node);
+
+        register(node,
+                "AutoSell allows for automatic selling of items in any kind of command-accessible public server shop.",
+                "It will always toggle when your inventory is full and execute the sell-command. You can select the items you want to sell yourself.");
     }
 
     private CompletableFuture<Suggestions> suggestRemoveItems(CommandContext<ClientCommandSource> clientCommandSourceCommandContext, SuggestionsBuilder suggestionsBuilder) {
@@ -129,10 +131,5 @@ public class AutoSell {
 
     private boolean isFullInventory(PlayerInventory inventory) {
         return inventory.getEmptySlot() == -1;
-    }
-
-
-    private void sendChatMessage(String text) {
-        sendModMessage(new LiteralText(text).formatted(Formatting.GOLD));
     }
 }
