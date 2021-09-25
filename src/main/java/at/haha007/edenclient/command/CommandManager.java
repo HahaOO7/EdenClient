@@ -90,13 +90,18 @@ public class CommandManager {
         cmds.keySet().forEach(dispatcher::register);
     }
 
-    public static void register(LiteralArgumentBuilder<ClientCommandSource> command, String... usage) {
-        cmds.put(command, Arrays.stream(usage).map(ChatColor::translateColors).toArray(Text[]::new));
+    public static void register(LiteralArgumentBuilder<ClientCommandSource> command, Text... usage) {
+        cmds.put(command, usage);
         dispatcher.register(command);
     }
 
+    public static void register(LiteralArgumentBuilder<ClientCommandSource> command, String... usage) {
+        Text[] usg = usage == null ? null : Arrays.stream(usage).map(ChatColor::translateColors).toArray(Text[]::new);
+        register(command, usg);
+    }
+
     public static void register(LiteralArgumentBuilder<ClientCommandSource> command) {
-        register(command, (String[]) null);
+        register(command, (Text[]) null);
     }
 
     public static LiteralArgumentBuilder<ClientCommandSource> literal(String s) {

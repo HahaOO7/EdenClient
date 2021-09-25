@@ -49,7 +49,7 @@ public class PlayerUtils {
     }
 
     public static void sendModMessage(Text text) {
-        sendMessage(prefix.copy().append(text));
+        sendMessage(prefix.copy().append(new LiteralText("").formatted(Formatting.GOLD).append(text)));
     }
 
     public static void sendModMessage(String text) {
