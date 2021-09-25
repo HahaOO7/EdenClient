@@ -1,6 +1,6 @@
 package at.haha007.edenclient.mods;
 
-import at.haha007.edenclient.callbacks.PlayerInteractBlockEvent;
+import at.haha007.edenclient.callbacks.PlayerInteractBlockCallback;
 import at.haha007.edenclient.command.CommandManager;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
@@ -33,7 +33,7 @@ public class AntiStrip {
     private boolean enabled = true;
 
     public AntiStrip() {
-        PlayerInteractBlockEvent.EVENT.register(this::onInteractBlock);
+        PlayerInteractBlockCallback.EVENT.register(this::onInteractBlock);
         PerWorldConfig.get().register(this, "antiStrip");
         registerCommand();
     }

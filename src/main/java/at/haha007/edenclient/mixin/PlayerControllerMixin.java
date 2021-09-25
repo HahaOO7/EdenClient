@@ -1,9 +1,8 @@
 package at.haha007.edenclient.mixin;
 
 import at.haha007.edenclient.callbacks.PlayerAttackBlockCallback;
-import at.haha007.edenclient.callbacks.PlayerInteractBlockEvent;
+import at.haha007.edenclient.callbacks.PlayerInteractBlockCallback;
 import at.haha007.edenclient.utils.PlayerUtils;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.network.ClientPlayerInteractionManager;
 import net.minecraft.client.world.ClientWorld;
@@ -24,7 +23,7 @@ public class PlayerControllerMixin {
             method = "interactBlock",
             cancellable = true)
     void interactBlock(ClientPlayerEntity player, ClientWorld world, Hand hand, BlockHitResult hitResult, CallbackInfoReturnable<ActionResult> ci) {
-        ActionResult result = PlayerInteractBlockEvent.EVENT.invoker().interact(player, world, hand, hitResult);
+        ActionResult result = PlayerInteractBlockCallback.EVENT.invoker().interact(player, world, hand, hitResult);
         if (result == ActionResult.FAIL) {
             ci.setReturnValue(ActionResult.FAIL);
             ci.cancel();

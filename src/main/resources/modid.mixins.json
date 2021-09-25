@@ -13,7 +13,8 @@
     "HandledScreenMixin",
     "MinecraftClientMixin",
     "PlayerControllerMixin",
-    "PlayerInventoryMixin"
+    "PlayerInventoryMixin",
+    "WorldRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -2,6 +2,7 @@ package at.haha007.edenclient.mixin;
 
 import at.haha007.edenclient.callbacks.PlayerEditSignCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
+import at.haha007.edenclient.callbacks.SendChatMessageCallback;
 import at.haha007.edenclient.command.CommandManager;
 import at.haha007.edenclient.utils.PlayerUtils;
 import net.minecraft.block.entity.SignBlockEntity;
@@ -48,6 +49,7 @@ public abstract class ClientPlayerMixin {
             method = "sendChatMessage",
             cancellable = true)
     void sendMessage(String message, CallbackInfo ci) {
+        SendChatMessageCallback.EVENT.invoker().sendMessage(message);
         if (message.length() < 2 || !message.startsWith("/")) return;
         if (!CommandManager.isClientSideCommand(message.substring(1).split(" ")[0]))
             return;

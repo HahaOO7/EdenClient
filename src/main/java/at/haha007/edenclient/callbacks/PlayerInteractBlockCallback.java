@@ -8,11 +8,11 @@ import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 
-public interface PlayerInteractBlockEvent {
-    Event<PlayerInteractBlockEvent> EVENT = EventFactory.createArrayBacked(PlayerInteractBlockEvent.class,
+public interface PlayerInteractBlockCallback {
+    Event<PlayerInteractBlockCallback> EVENT = EventFactory.createArrayBacked(PlayerInteractBlockCallback.class,
             listeners -> (player, world, hand, hitResult) -> {
                 ActionResult result = ActionResult.PASS;
-                for (PlayerInteractBlockEvent listener : listeners) {
+                for (PlayerInteractBlockCallback listener : listeners) {
                     ActionResult r = listener.interact(player, world, hand, hitResult);
                     if (r != ActionResult.PASS) {
                         result = r;
