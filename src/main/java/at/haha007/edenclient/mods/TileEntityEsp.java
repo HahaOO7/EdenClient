@@ -4,7 +4,7 @@ import at.haha007.edenclient.callbacks.GameRenderCallback;
 import at.haha007.edenclient.callbacks.JoinWorldCallback;
 import at.haha007.edenclient.callbacks.LeaveWorldCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
-import at.haha007.edenclient.command.CommandManager;
+import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.RenderUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
@@ -22,8 +22,6 @@ import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.render.*;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.client.world.ClientChunkManager;
-import net.minecraft.text.LiteralText;
-import net.minecraft.util.Formatting;
 import net.minecraft.util.math.*;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.chunk.WorldChunk;
@@ -31,8 +29,7 @@ import net.minecraft.world.chunk.WorldChunk;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static at.haha007.edenclient.command.CommandManager.argument;
-import static at.haha007.edenclient.command.CommandManager.literal;
+import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
 public class TileEntityEsp {
@@ -93,7 +90,7 @@ public class TileEntityEsp {
     }
 
     private void registerCommand() {
-        LiteralArgumentBuilder<ClientCommandSource> cmd = literal("tileentityesp");
+        LiteralArgumentBuilder<ClientCommandSource> cmd = literal("etileentityesp");
         LiteralArgumentBuilder<ClientCommandSource> toggle = literal("toggle");
         toggle.executes(c -> {
             enabled = !enabled;
@@ -124,24 +121,20 @@ public class TileEntityEsp {
         }));
 
         cmd.then(literal("distance").executes(c -> {
-            sendModMessage(new LiteralText("Distance: ").formatted(Formatting.GOLD)
-                    .append(new LiteralText(Integer.toString(distance)).formatted(Formatting.AQUA)));
+            sendModMessage(ChatColor.GOLD + "Distance: " + ChatColor.AQUA + distance);
             return 1;
         }).then(argument("dist", IntegerArgumentType.integer(1)).executes(c -> {
             distance = c.getArgument("dist", Integer.class);
-            sendModMessage(new LiteralText("Distance: ").formatted(Formatting.GOLD)
-                    .append(new LiteralText(Integer.toString(distance)).formatted(Formatting.AQUA)));
+            sendModMessage(ChatColor.GOLD + "Distance: " + ChatColor.AQUA + distance);
             return 1;
         })));
 
         cmd.then(literal("count").executes(c -> {
-            sendModMessage(new LiteralText("Max count: ").formatted(Formatting.GOLD)
-                    .append(new LiteralText(Integer.toString(maxCount)).formatted(Formatting.AQUA)));
+            sendModMessage(ChatColor.GOLD + "Max count: " + ChatColor.AQUA + maxCount);
             return 1;
         }).then(argument("count", IntegerArgumentType.integer(1)).executes(c -> {
             maxCount = c.getArgument("count", Integer.class);
-            sendModMessage(new LiteralText("Max count: ").formatted(Formatting.GOLD)
-                    .append(new LiteralText(Integer.toString(maxCount)).formatted(Formatting.AQUA)));
+            sendModMessage(ChatColor.GOLD + "Max count: " + ChatColor.AQUA + maxCount);
             return 1;
         })));
 
@@ -170,7 +163,9 @@ public class TileEntityEsp {
         }));
 
         cmd.then(toggle);
-        CommandManager.register(cmd);
+        register(cmd,
+                "TileEntityEsp allows for all tile-entities of any specific type(s) to be surrounded by x-ray bounding boxes.",
+                "It is also possible to enable tracers and to switch between solid/transparent rendering.");
     }
 
     RequiredArgumentBuilder<ClientCommandSource, Integer> arg(String key) {
@@ -181,7 +176,7 @@ public class TileEntityEsp {
         this.r = c.getArgument("r", Integer.class) / 256f;
         this.g = c.getArgument("g", Integer.class) / 256f;
         this.b = c.getArgument("b", Integer.class) / 256f;
-        sendModMessage(new LiteralText("Color updated.").formatted(Formatting.GOLD));
+        sendModMessage(ChatColor.GOLD + "Color updated.");
         return 1;
     }
 

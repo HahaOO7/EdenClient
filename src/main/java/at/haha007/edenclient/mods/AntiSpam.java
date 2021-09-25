@@ -1,7 +1,7 @@
 package at.haha007.edenclient.mods;
 
 import at.haha007.edenclient.callbacks.AddChatMessageCallback;
-import at.haha007.edenclient.command.CommandManager;
+import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.MathUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
@@ -13,11 +13,12 @@ import net.minecraft.text.CharacterVisitor;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.OrderedText;
 import net.minecraft.text.Style;
-import net.minecraft.util.Formatting;
 import net.minecraft.util.math.MathHelper;
 
 import java.util.List;
 
+import static at.haha007.edenclient.command.CommandManager.literal;
+import static at.haha007.edenclient.command.CommandManager.register;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
 public class AntiSpam {
@@ -32,11 +33,16 @@ public class AntiSpam {
     }
 
     private void registerCommand() {
-        CommandManager.register(CommandManager.literal("antispam").executes(c -> {
+        var node = literal("eantispam");
+        node.then(literal("toggle").executes(c -> {
             enabled = !enabled;
-            sendModMessage(new LiteralText(enabled ? "Antispam enabled" : "Antispam disabled").formatted(Formatting.GOLD));
+            sendModMessage(ChatColor.GOLD + (enabled ? "Antispam enabled" : "Antispam disabled"));
             return 1;
         }));
+
+        register(node,
+                "AntiSpam compresses the chat to eliminate all types of unnecessary spam.",
+                "The newest instance of the message will still be displayed, all older ones removed. The number in the square brackets shows how often a message was repeated.");
     }
 
     private void onChat(AddChatMessageCallback.ChatAddEvent event) {

@@ -1,5 +1,6 @@
 package at.haha007.edenclient.mods;
 
+import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
@@ -8,8 +9,6 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.client.network.ClientCommandSource;
 import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.text.LiteralText;
-import net.minecraft.util.Formatting;
 
 import java.util.List;
 
@@ -28,13 +27,13 @@ public class Rainbowifier {
     }
 
     private void registerCommand() {
-        LiteralArgumentBuilder<ClientCommandSource> node = literal("rainbowify");
+        LiteralArgumentBuilder<ClientCommandSource> node = literal("erainbowify");
 
         node.then(literal("fancy").then(argument("input", StringArgumentType.greedyString()).executes(c -> {
             String input = c.getArgument("input", String.class);
             String message = rainbowifyMessageFancy(input);
             if (message.length() >= 256) {
-                sendModMessage(new LiteralText("Your message is too long.").formatted(Formatting.GOLD));
+                sendModMessage(ChatColor.GOLD + "Your message is too long.");
                 return 0;
             }
             ClientPlayerEntity entityPlayer = PlayerUtils.getPlayer();
@@ -46,7 +45,7 @@ public class Rainbowifier {
             String input = c.getArgument("input", String.class);
             String message = rainbowifyMessageSimple(input);
             if (message.length() >= 256) {
-                sendModMessage(new LiteralText("Your message is too long.").formatted(Formatting.GOLD));
+                sendModMessage(ChatColor.GOLD + "Your message is too long.");
                 return 0;
             }
             ClientPlayerEntity entityPlayer = PlayerUtils.getPlayer();
@@ -61,7 +60,7 @@ public class Rainbowifier {
             if (message.length() >= 256) {
                 message = "/msg " + player + " " + rainbowifyMessageSimple(originalMessage);
                 if (message.length() >= 256) {
-                    sendModMessage(new LiteralText("Your message is too long.").formatted(Formatting.GOLD));
+                    sendModMessage(ChatColor.GOLD + "Your message is too long.");
                     return 0;
                 }
             }
@@ -76,7 +75,7 @@ public class Rainbowifier {
             if (message.length() >= 256) {
                 message = rainbowifyMessageSimple(input);
                 if (message.length() >= 256) {
-                    sendModMessage(new LiteralText("Your message is too long.").formatted(Formatting.GOLD));
+                    sendModMessage(ChatColor.GOLD + "Your message is too long.");
                     return 0;
                 }
             }
@@ -87,7 +86,7 @@ public class Rainbowifier {
 
         node.then(literal("freq").then(argument("frequency", DoubleArgumentType.doubleArg(0.1, 1.0)).executes(c -> {
             this.freq = c.getArgument("frequency", Double.class);
-            sendModMessage(new LiteralText("Frequency updated to ").formatted(Formatting.GOLD).append(new LiteralText("" + freq).formatted(Formatting.AQUA)));
+            sendModMessage(ChatColor.GOLD + "Frequency updated to " + ChatColor.AQUA + freq);
             return 1;
         })));
 
@@ -96,7 +95,8 @@ public class Rainbowifier {
             return 1;
         });
 
-        register(node);
+        register(node,
+                "Rainbowifier enables you to send rainbow-colored messages into either the global chat or directly as a private message.");
     }
 
     private String rainbowifyMessageFancy(String input) {
@@ -137,9 +137,9 @@ public class Rainbowifier {
     private int[] getFancyRainbowColorAtIndex(int index) {
         int[] color = new int[3];
 
-        color[0] = (int) (Math.sin(freq * index) * 127 + 128);
-        color[1] = (int) (Math.sin(freq * index + 2) * 127 + 128);
-        color[2] = (int) (Math.sin(freq * index + 4) * 127 + 128);
+        color[0] = (int) (Math.sin(freq * index + 4) * 127 + 128);
+        color[1] = (int) (Math.sin(freq * index + 6) * 127 + 128);
+        color[2] = (int) (Math.sin(freq * index + 8) * 127 + 128);
 
         return color;
     }
@@ -149,6 +149,6 @@ public class Rainbowifier {
     }
 
     private void sendDebugMessage() {
-        sendModMessage(new LiteralText("/rainbowify [simple, fancy, freq, auto, msg <recipient message>]").formatted(Formatting.GOLD));
+        sendModMessage(ChatColor.GOLD + "/rainbowify [simple, fancy, freq, auto, msg <recipient message>]");
     }
 }

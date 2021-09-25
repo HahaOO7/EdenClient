@@ -2,6 +2,7 @@ package at.haha007.edenclient.mods;
 
 import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.callbacks.AddChatMessageCallback;
+import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import at.haha007.edenclient.utils.config.loaders.ConfigLoader;
@@ -13,8 +14,6 @@ import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.client.network.ClientCommandSource;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.text.LiteralText;
-import net.minecraft.util.Formatting;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -38,8 +37,7 @@ public class SellStatsTracker {
     private int delayInSimplifiedMessages = 5;
 
     public SellStatsTracker() {
-        registerCommand("sellstatstracker");
-        registerCommand("statstracker");
+        registerCommand();
         AddChatMessageCallback.EVENT.register(this::onChat);
         PerWorldConfig pwc = PerWorldConfig.get();
         pwc.register(this, "sellStatsTracker");
@@ -73,37 +71,36 @@ public class SellStatsTracker {
 
     public void sendMessage(double amountOfMoneyGainedInSession, int index) {
         if (simplifyMessages && (index % delayInSimplifiedMessages == 0)) {
-            sendModMessage(new LiteralText("Items sold for a total amount of ").formatted(Formatting.GOLD).append(new LiteralText("$" + String.format("%1$,.2f", amountOfMoneyGainedInSession)).formatted(Formatting.AQUA)).append(new LiteralText(" in this session.").formatted(Formatting.GOLD)));
+            sendModMessage(ChatColor.GOLD + "Items sold for a total amount of " + ChatColor.AQUA + "$" + String.format("%1$,.2f", amountOfMoneyGainedInSession) + ChatColor.GOLD + " in this session.");
         }
     }
 
-    private void registerCommand(String literal) {
-        LiteralArgumentBuilder<ClientCommandSource> node = literal(literal);
+    private void registerCommand() {
+        LiteralArgumentBuilder<ClientCommandSource> node = literal("esellstatstracker");
 
         node.then(literal("global").executes(c -> {
-            sendModMessage(new LiteralText("Stats: ").formatted(Formatting.GOLD));
+            sendModMessage(ChatColor.GOLD + "Stats: ");
             data.entrySet().stream().sorted((e1, e2) -> Integer.compare(e2.getValue().amountSold, e1.getValue().amountSold)).collect(Collectors.toList()).forEach(entry -> sendModMessage(
-                    new LiteralText(entry.getKey().substring(0, 1).toUpperCase() + entry.getKey().substring(1)).formatted(Formatting.AQUA)
-                            .append(new LiteralText(" sold ").formatted(Formatting.GOLD))
-                            .append(new LiteralText("" + entry.getValue().amountSold).formatted(Formatting.AQUA))
-                            .append(new LiteralText(" times for a total amount of ").formatted(Formatting.GOLD))
-                            .append(new LiteralText("$" + String.format("%1$,.2f", entry.getValue().money + 0.002)).formatted(Formatting.AQUA))));
-            sendModMessage(new LiteralText("Total amount of money gained: ").formatted(Formatting.GOLD).append(new LiteralText("$" + String.format("%1$,.2f", data.values().stream().mapToDouble(v -> v.money).sum())).formatted(Formatting.AQUA)))
-            ;
+                    ChatColor.AQUA + (entry.getKey().substring(0, 1).toUpperCase() + entry.getKey().substring(1)) +
+                            ChatColor.GOLD + " sold " +
+                            ChatColor.AQUA + entry.getValue().amountSold +
+                            ChatColor.GOLD + " times for a total amount of " +
+                            ChatColor.AQUA + "$" + String.format("%1$,.2f", entry.getValue().money + 0.002)));
+            sendModMessage(ChatColor.GOLD + "Total amount of money gained: " + ChatColor.AQUA + "$" + String.format("%1$,.2f", data.values().stream().mapToDouble(v -> v.money).sum()));
             return 1;
         }));
 
         node.then(literal("item").then(argument("itemname", StringArgumentType.word()).suggests(this::suggestItems).executes(c -> {
             data.entrySet().stream().filter(e -> e.getKey().equals(c.getArgument("itemname", String.class)))
                     .forEach(entry -> sendModMessage(
-                            new LiteralText(entry.getKey().substring(0, 1).toUpperCase() + entry.getKey().substring(1)).formatted(Formatting.AQUA)
-                                    .append(new LiteralText(" sold ").formatted(Formatting.GOLD))
-                                    .append(new LiteralText("" + entry.getValue().amountSold).formatted(Formatting.AQUA))
-                                    .append(new LiteralText(" times for a total amount of ").formatted(Formatting.GOLD))
-                                    .append(new LiteralText("$" + String.format("%1$,.2f", entry.getValue().money + 0.002)).formatted(Formatting.AQUA))));
+                            ChatColor.AQUA + (entry.getKey().substring(0, 1).toUpperCase() + entry.getKey().substring(1)) +
+                                    ChatColor.GOLD + " sold " +
+                                    ChatColor.AQUA + entry.getValue().amountSold +
+                                    ChatColor.GOLD + " times for a total amount of " +
+                                    ChatColor.AQUA + "$" + String.format("%1$,.2f", entry.getValue().money + 0.002)));
 
             if (data.entrySet().stream().noneMatch(e -> e.getKey().equals(c.getArgument("itemname", String.class))))
-                sendModMessage(new LiteralText("No data found for this item. All allowed inputs will be tab-completed for you.").formatted(Formatting.GOLD));
+                sendModMessage(ChatColor.GOLD + "No data found for this item. All allowed inputs will be tab-completed for you.");
 
             return 1;
         })));
@@ -116,17 +113,19 @@ public class SellStatsTracker {
                 mi.enable(MessageIgnorer.Predefined.SELL);
             else
                 mi.disable(MessageIgnorer.Predefined.SELL);
-            sendModMessage(new LiteralText(simplifyMessages ? "Sell messages will be simplified" : "Sell messages will not be simplified").formatted(Formatting.GOLD));
+            sendModMessage(ChatColor.GOLD + (simplifyMessages ? "Sell messages will be simplified" : "Sell messages will not be simplified"));
             return 1;
         }));
         simplify.then(literal("delay").then(argument("messagedelay", IntegerArgumentType.integer(1, Integer.MAX_VALUE)).executes(c -> {
             delayInSimplifiedMessages = c.getArgument("messagedelay", Integer.class);
-            sendModMessage(new LiteralText("Set delay between automatic simplified messages to ").formatted(Formatting.GOLD).append("" + delayInSimplifiedMessages).formatted(Formatting.AQUA));
+            sendModMessage(ChatColor.GOLD + "Set delay between automatic simplified messages to " + ChatColor.AQUA + delayInSimplifiedMessages);
             return 1;
         })));
         node.then(simplify);
 
-        register(node);
+        register(node,
+                "SellStatsTracker tracks all your stats when selling in the AdminShop. You may see how much money you have earned from selling items as well as how often you have sold each specific item.",
+                "The simplifymessages option replaces the cluttered messages with better stats.");
     }
 
     private CompletableFuture<Suggestions> suggestItems(CommandContext<ClientCommandSource> clientCommandSourceCommandContext, SuggestionsBuilder suggestionsBuilder) {

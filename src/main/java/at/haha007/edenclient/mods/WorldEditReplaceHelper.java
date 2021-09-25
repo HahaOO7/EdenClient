@@ -1,5 +1,6 @@
 package at.haha007.edenclient.mods;
 
+import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.Scheduler;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
@@ -14,8 +15,6 @@ import net.minecraft.block.*;
 import net.minecraft.block.enums.*;
 import net.minecraft.client.network.ClientCommandSource;
 import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.text.LiteralText;
-import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.registry.DefaultedRegistry;
@@ -45,7 +44,7 @@ public class WorldEditReplaceHelper {
     private final Stack<String[]> redoCommandStack = new Stack<>();
 
     public WorldEditReplaceHelper() {
-        registerCommand("ewe");
+        registerCommand("eworldedithelper");
         registerCommand("edenwe");
         PerWorldConfig.get().register(this, "worldEditHelper");
     }
@@ -103,9 +102,7 @@ public class WorldEditReplaceHelper {
 
         node.then(literal("delay").then(argument("delay", IntegerArgumentType.integer(0, 40)).executes(c -> {
             this.delay = c.getArgument("delay", Integer.class);
-            sendModMessage(new LiteralText("Set delay to ").formatted(Formatting.GOLD)
-                    .append(new LiteralText(Integer.toString(delay)).formatted(Formatting.AQUA))
-                    .append(new LiteralText(" ticks.").formatted(Formatting.GOLD)));
+            sendModMessage(ChatColor.GOLD + "Set delay to " + ChatColor.AQUA + delay + ChatColor.GOLD + " ticks.");
             return 1;
         })));
 
@@ -113,12 +110,14 @@ public class WorldEditReplaceHelper {
 
             ClientPlayerEntity entityPlayer = PlayerUtils.getPlayer();
 
-            entityPlayer.sendChatMessage("/im predefined worldedit");
+            entityPlayer.sendChatMessage("/eignoremessage predefined worldedit");
 
             return 1;
         }));
 
-        register(node);
+        register(node,
+                "The WorldEditReplaceHelper helps you replace blocks that have specific properties which normal WorldEdit doesn't take into consideration when replacing blocks.",
+                "Blocks like stairs, slabs, panes, walls, trapdoors, etc. can be replaced by other blocks of their type with their properties (waterlogged, shape, direction, etc.) unaffected.");
     }
 
     private CompletableFuture<Suggestions> suggestValidBlocks(CommandContext<ClientCommandSource> clientCommandSourceCommandContext, SuggestionsBuilder suggestionsBuilder) {
@@ -165,22 +164,18 @@ public class WorldEditReplaceHelper {
             return 0;
         }
         if (sendMessage)
-            sendModMessage(new LiteralText("Replacing ").formatted(Formatting.GOLD).
-                    append(new LiteralText(getBlockIDFromBlock(fromBlock)).formatted(Formatting.AQUA)).
-                    append(new LiteralText(" with ").formatted(Formatting.GOLD)).
-                    append(new LiteralText(getBlockIDFromBlock(toBlock)).formatted(Formatting.AQUA)));
+            sendModMessage(ChatColor.GOLD + "Replacing " + ChatColor.AQUA + getBlockIDFromBlock(fromBlock) + ChatColor.GOLD + " with " + ChatColor.AQUA + getBlockIDFromBlock(toBlock));
         return 1;
     }
 
     private void replaceUndoRequest(Block fromBlock, Block toBlock, int delay) {
-        sendModMessage(new LiteralText("Undoing").formatted(Formatting.AQUA)
-                .append(new LiteralText(" last request.").formatted(Formatting.GOLD)));
+        sendModMessage(ChatColor.AQUA + "Undoing " + ChatColor.GOLD + " last request.");
         replaceCommandRequest(fromBlock, toBlock, delay, false);
     }
 
     private void replaceRedoRequest(Block fromBlock, Block toBlock, int delay) {
-        sendModMessage(new LiteralText("Redoing").formatted(Formatting.AQUA)
-                .append(new LiteralText(" last request.").formatted(Formatting.GOLD)));
+        sendModMessage(ChatColor.AQUA + "Redoing " + ChatColor.GOLD + " last request.");
+
         replaceCommandRequest(fromBlock, toBlock, delay, false);
     }
 

@@ -1,6 +1,7 @@
 package at.haha007.edenclient.mods;
 
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
+import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
@@ -9,8 +10,6 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.particle.ItemBillboardParticle;
 import net.minecraft.item.Items;
-import net.minecraft.text.LiteralText;
-import net.minecraft.util.Formatting;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.Random;
@@ -23,6 +22,8 @@ public class BarrierDisplay {
     private final Random rand = new Random();
     @ConfigSubscriber("0")
     private int counter = 20;
+    @ConfigSubscriber("false")
+    private boolean enabled;
 
     public BarrierDisplay() {
         registerCommand();
@@ -31,6 +32,7 @@ public class BarrierDisplay {
     }
 
     private void onTick(ClientPlayerEntity player) {
+        if (!enabled) return;
         if (player.getInventory().getMainHandStack().getItem() == Items.BARRIER) return;
         for (int i = 0; i < counter; i++) {
             BlockPos pos = player.getBlockPos().add(rand.nextGaussian() * dist, rand.nextGaussian() * dist, rand.nextGaussian() * dist);
@@ -41,13 +43,19 @@ public class BarrierDisplay {
     }
 
     private void registerCommand() {
-        register(literal("barrier").then(argument("count", IntegerArgumentType.integer(0, 10000)).executes(c -> {
+        var node = literal("ebarrierdisplay");
+        node.then(literal("count").then(argument("count", IntegerArgumentType.integer(0, 100000)).executes(c -> {
             counter = c.getArgument("count", Integer.class);
-            sendModMessage(new LiteralText("Barrier display counter is " + counter).formatted(Formatting.GOLD));
+            sendModMessage(ChatColor.GOLD + ("Barrier display counter is " + counter));
             return 1;
-        })).executes(c -> {
-            sendModMessage(new LiteralText("/barrier <count>"));
+        })));
+        node.then(literal("toggle").executes(c -> {
+            enabled = !enabled;
+            sendModMessage(enabled ? "Enabled barrierdisplay." : "Disabled barrierdisplay");
             return 1;
         }));
+        register(node,
+                "BarrierDisplay displays barriers without being in creative with a barrier in hand. It also works in creative.",
+                "Use \"/ebarrierdisplay count <number>\" to set how many blocks the BarrierDisplay should check per tick. (max. of 10000 is advised).");
     }
 }

@@ -9,8 +9,8 @@ public class DataFetcher {
     private final ContainerInfo containerInfo = new ContainerInfo();
 
     public DataFetcher() {
-        register(literal("datafetcher").then(playerWarps.registerCommand()));
-        register(literal("datafetcher").then(chestShopItemNames.registerCommand()));
+        register(literal("edatafetcher").then(playerWarps.registerCommand()).then(chestShopItemNames.registerCommand()),
+                "Enables fetching of playerwarp-data and abbreviated chestshop-itemnames.");
     }
 
     public ContainerInfo getContainerInfo() {

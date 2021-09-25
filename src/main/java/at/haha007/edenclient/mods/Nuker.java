@@ -1,6 +1,7 @@
 package at.haha007.edenclient.mods;
 
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
+import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
@@ -24,16 +25,14 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.network.packet.c2s.play.HandSwingC2SPacket;
 import net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket;
 import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.text.LiteralText;
-import net.minecraft.text.MutableText;
-import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockBox;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
 import java.util.stream.Stream;
 
 import static at.haha007.edenclient.command.CommandManager.*;
@@ -61,7 +60,7 @@ public class Nuker {
     }
 
     private void registerCommand() {
-        LiteralArgumentBuilder<ClientCommandSource> cmd = literal("nuke");
+        LiteralArgumentBuilder<ClientCommandSource> cmd = literal("enuker");
         cmd.then(literal("distance").then(argument("distance", DoubleArgumentType.doubleArg(0, 20)).executes(c -> {
                     distance = c.getArgument("distance", Double.class);
                     PlayerUtils.sendModMessage("Nuker distance is " + distance);
@@ -126,14 +125,16 @@ public class Nuker {
                     PlayerUtils.sendModMessage("List cleared.");
                     return 1;
                 })).executes(c -> {
-                    MutableText text = new LiteralText("Nuke blocks: ").formatted(Formatting.GOLD);
+                    StringBuilder text = new StringBuilder(ChatColor.GOLD + "Nuke blocks: " + ChatColor.AQUA);
                     for (Block block : filter) {
-                        text.append(block.getName().formatted(Formatting.AQUA)).append(" ");
+                        text.append(block.getName()).append(" ");
                     }
-                    PlayerUtils.sendModMessage(text);
+                    PlayerUtils.sendModMessage(text.toString());
                     return 1;
                 }));
-        register(cmd);
+
+        register(cmd,
+                "Nuker destroys all blocks in reach (above your feet) in minimal time.");
     }
 
     private Block getMainHandStack() {
