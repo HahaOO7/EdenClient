@@ -15,6 +15,7 @@ import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.text.Style;
 import net.minecraft.util.math.BlockBox;
+import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.Vec3i;
 
 import java.io.File;
@@ -68,6 +69,7 @@ public class PerWorldConfig {
 
         register(new ItemLoader(), Item.class);
         register(new ItemSetLoader(), ItemSet.class);
+        register(new ItemListLoader(), ItemList.class);
 
         register(new EntityTypeLoader(), EntityType.class);
         register(new EntityTypeSetLoader(), EntityTypeSet.class);
@@ -91,6 +93,8 @@ public class PerWorldConfig {
         register(new StringVec3iMapLoader(), StringVec3iMap.class);
 
         register(new BiStringStringMapLoader(), BiStringStringMap.class);
+
+        register(new ChunkPosLoader(), ChunkPos.class);
     }
 
     @SuppressWarnings("unchecked")

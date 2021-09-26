@@ -31,7 +31,7 @@ import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 public class ContainerDisplay {
     @ConfigSubscriber("false")
     private boolean enabled;
-    private Map<BlockPos, List<Item>> entries = new HashMap<>();
+    private Map<Vec3i, List<Item>> entries = new HashMap<>();
 
 
     public ContainerDisplay() {
