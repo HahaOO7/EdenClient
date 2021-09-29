@@ -79,6 +79,7 @@ public class MessageIgnorer {
     private MessageIgnorer() {
         AddChatMessageCallback.EVENT.register(this::onChat);
         registerCommand("eignoremessage");
+        registerCommand("eim");
         PerWorldConfig.get().register(this, "MessageIgnorer");
     }
 

@@ -22,6 +22,7 @@ public class TaskManager implements Cloneable {
 
     public void start() {
         if (started) return;
+        started = true;
         if (!tick()) return;
         Scheduler.get().scheduleSyncRepeating(this::tick, 1, 1);
     }

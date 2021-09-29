@@ -33,7 +33,6 @@ public abstract class ChatHudMixin extends DrawableHelper {
             method = "addMessage(Lnet/minecraft/text/Text;I)V", cancellable = true)
     private void onAddMessage(Text chatText, int chatLineId, CallbackInfo ci) {
         ClientPlayerEntity player = PlayerUtils.getPlayer();
-        if (player == null) return;
         AddChatMessageCallback.ChatAddEvent event = new AddChatMessageCallback.ChatAddEvent(player, chatText, chatLineId, visibleMessages);
         AddChatMessageCallback.EVENT.invoker().interact(event);
         chatText = event.getChatText();

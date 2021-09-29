@@ -10,7 +10,7 @@ public class BlockEntityTypeLoader implements ConfigLoader<NbtString, BlockEntit
     private static final Registry<BlockEntityType<?>> registry = Registry.BLOCK_ENTITY_TYPE;
 
     public NbtString save(Object value) {
-        return NbtString.of(registry.getId(cast(value)).toString());
+        return NbtString.of(String.valueOf(registry.getId(cast(value))));
     }
 
     public BlockEntityType<?> load(NbtString nbtElement) {

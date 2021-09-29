@@ -33,7 +33,7 @@ public class BiStringStringMap implements Map<String, String> {
     }
 
     public boolean containsValue(Object value) {
-        return b.containsKey(value);
+        return a.containsValue(value);
     }
 
     public String get(Object key) {
