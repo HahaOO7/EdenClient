@@ -5,6 +5,7 @@ import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import at.haha007.edenclient.utils.config.wrappers.StringList;
+import at.haha007.edenclient.utils.singleton.Singleton;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -24,6 +25,7 @@ import java.util.regex.Pattern;
 import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
+@Singleton(priority = 3)
 public class WordHighlighter {
     @ConfigSubscriber
     private final StringList words = new StringList();
@@ -33,7 +35,7 @@ public class WordHighlighter {
     @ConfigSubscriber
     private Style style = Style.EMPTY;
 
-    public WordHighlighter() {
+    private WordHighlighter() {
         registerCommand();
         AddChatMessageCallback.EVENT.register(this::onChat);
         PerWorldConfig.get().register(this, "wordhighlighter");

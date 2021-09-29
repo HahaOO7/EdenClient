@@ -5,6 +5,7 @@ import at.haha007.edenclient.callbacks.JoinWorldCallback;
 import at.haha007.edenclient.callbacks.LeaveWorldCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.utils.RenderUtils;
+import at.haha007.edenclient.utils.singleton.Singleton;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.gl.VertexBuffer;
 import net.minecraft.client.network.ClientPlayerEntity;
@@ -18,12 +19,13 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeMap;
 
+@Singleton
 public class CubeRenderer {
     private final TreeMap<Integer, Set<Box>> cubes = new TreeMap<>();
     private long tick = 0;
     private VertexBuffer box;
 
-    public CubeRenderer() {
+    private CubeRenderer() {
         JoinWorldCallback.EVENT.register(this::build);
         LeaveWorldCallback.EVENT.register(this::destroy);
         GameRenderCallback.EVENT.register(this::render);

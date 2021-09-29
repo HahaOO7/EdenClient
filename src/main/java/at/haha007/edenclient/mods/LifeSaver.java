@@ -6,6 +6,7 @@ import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.Scheduler;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
+import at.haha007.edenclient.utils.singleton.Singleton;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.client.network.ClientCommandSource;
@@ -14,6 +15,7 @@ import net.minecraft.client.network.ClientPlayerEntity;
 import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
+@Singleton
 public class LifeSaver {
 
     @ConfigSubscriber("1")
@@ -24,7 +26,7 @@ public class LifeSaver {
     boolean enabled;
     boolean schedulerRunning;
 
-    public LifeSaver() {
+    private LifeSaver() {
         registerCommand();
         PlayerTickCallback.EVENT.register(this::tick);
         PerWorldConfig.get().register(this, "lifesaver");

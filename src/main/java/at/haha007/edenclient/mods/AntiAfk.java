@@ -2,6 +2,7 @@ package at.haha007.edenclient.mods;
 
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.Scheduler;
+import at.haha007.edenclient.utils.singleton.Singleton;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.MovementType;
 import net.minecraft.util.math.BlockPos;
@@ -13,12 +14,13 @@ import java.util.Random;
 import static at.haha007.edenclient.command.CommandManager.literal;
 import static at.haha007.edenclient.command.CommandManager.register;
 
+@Singleton
 public class AntiAfk {
 
     private BlockPos startPos;
     private final Random random = new Random();
 
-    public AntiAfk() {
+    private AntiAfk() {
         var node = literal("eantiafk");
 
         node.then(literal("toggle").executes(c -> {

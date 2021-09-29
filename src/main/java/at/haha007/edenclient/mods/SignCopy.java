@@ -7,6 +7,7 @@ import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import at.haha007.edenclient.utils.config.wrappers.StringList;
+import at.haha007.edenclient.utils.singleton.Singleton;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.SignBlockEntity;
 import net.minecraft.client.MinecraftClient;
@@ -25,6 +26,8 @@ import static at.haha007.edenclient.command.CommandManager.literal;
 import static at.haha007.edenclient.command.CommandManager.register;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
+
+@Singleton
 public class SignCopy {
     @ConfigSubscriber("0;0;0;0")
     private StringList copy;
@@ -33,7 +36,7 @@ public class SignCopy {
     @ConfigSubscriber("false")
     private boolean enabled = false;
 
-    public SignCopy() {
+    private SignCopy() {
         PlayerEditSignCallback.EVENT.register(this::onEditSign);
         PlayerAttackBlockCallback.EVENT.register(this::onAttackBlock);
         registerCommand();
@@ -48,7 +51,7 @@ public class SignCopy {
             return 1;
         }));
         register(node,
-               "SignCopy lets you copy signs and place them again without opening the dialogue/having to type each line again.");
+                "SignCopy lets you copy signs and place them again without opening the dialogue/having to type each line again.");
     }
 
     @SuppressWarnings("ConstantConditions")

@@ -5,6 +5,7 @@ import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
+import at.haha007.edenclient.utils.singleton.Singleton;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientCommandSource;
@@ -19,11 +20,12 @@ import net.minecraft.util.math.Vec3d;
 import static at.haha007.edenclient.command.CommandManager.literal;
 import static at.haha007.edenclient.command.CommandManager.register;
 
+@Singleton
 public class AutoSheer {
     @ConfigSubscriber("false")
     boolean enabled = false;
 
-    public AutoSheer() {
+    private AutoSheer() {
         PlayerTickCallback.EVENT.register(this::onTick);
         PerWorldConfig.get().register(this, "autoShear");
         registerCommand();

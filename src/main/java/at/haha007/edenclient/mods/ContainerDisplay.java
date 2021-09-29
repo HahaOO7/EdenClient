@@ -1,12 +1,14 @@
 package at.haha007.edenclient.mods;
 
-import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.callbacks.WorldRenderCallback;
 import at.haha007.edenclient.command.CommandManager;
+import at.haha007.edenclient.mods.datafetcher.DataFetcher;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
+import at.haha007.edenclient.utils.singleton.Singleton;
+import at.haha007.edenclient.utils.singleton.SingletonLoader;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.client.MinecraftClient;
@@ -28,13 +30,14 @@ import static at.haha007.edenclient.command.CommandManager.literal;
 import static at.haha007.edenclient.utils.PlayerUtils.getPlayer;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
+@Singleton
 public class ContainerDisplay {
     @ConfigSubscriber("false")
     private boolean enabled;
     private Map<Vec3i, List<Item>> entries = new HashMap<>();
 
 
-    public ContainerDisplay() {
+    private ContainerDisplay() {
 //        GameRenderCallback.EVENT.register(this::renderGame);
         WorldRenderCallback.EVENT.register(this::renderWorld);
         PlayerTickCallback.EVENT.register(this::tick);
@@ -48,7 +51,7 @@ public class ContainerDisplay {
         }
         ChunkPos chunkPos = player.getChunkPos();
         entries = new HashMap<>();
-        ChunkPos.stream(chunkPos, 2).forEach(cp -> entries.putAll(EdenClient.INSTANCE.getDataFetcher().getContainerInfo().getContainerInfo(cp)));
+        ChunkPos.stream(chunkPos, 2).forEach(cp -> entries.putAll( SingletonLoader.get(DataFetcher.class).getContainerInfo().getContainerInfo(cp)));
     }
 
     private void registerCommand() {

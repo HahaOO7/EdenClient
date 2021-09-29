@@ -4,6 +4,7 @@ import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
+import at.haha007.edenclient.utils.singleton.Singleton;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -16,12 +17,13 @@ import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
 
+@Singleton
 public class Rainbowifier {
     private final List<Character> simpleRainbowColors = List.of('c', '6', 'e', 'a', 'b', '3', 'd', '5', 'd', '3', 'b', 'a', 'e', '6');
     @ConfigSubscriber("0.3")
     private double freq = 0.3;
 
-    public Rainbowifier() {
+    private Rainbowifier() {
         registerCommand();
         PerWorldConfig.get().register(this, "rainbowify");
     }
