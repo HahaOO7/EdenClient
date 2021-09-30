@@ -6,7 +6,6 @@ import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import at.haha007.edenclient.utils.config.wrappers.BlockSet;
-import at.haha007.edenclient.utils.singleton.Singleton;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -39,7 +38,6 @@ import java.util.stream.Stream;
 import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.getHitDirectionForBlock;
 
-@Singleton
 public class Nuker {
     @ConfigSubscriber("5")
     private double distance = 5;
@@ -55,7 +53,7 @@ public class Nuker {
     private BlockBox area;
     private BlockPos target = null;
 
-    private Nuker() {
+    public Nuker() {
         registerCommand();
         PlayerTickCallback.EVENT.register(this::onTick);
         PerWorldConfig.get().register(this, "nuker");

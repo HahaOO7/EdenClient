@@ -4,7 +4,6 @@ import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
-import at.haha007.edenclient.utils.singleton.Singleton;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.MinecraftClient;
@@ -18,7 +17,6 @@ import java.util.Random;
 import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
-@Singleton
 public class BarrierDisplay {
     private static final int dist = 5;
     private final Random rand = new Random();
@@ -27,7 +25,7 @@ public class BarrierDisplay {
     @ConfigSubscriber("false")
     private boolean enabled;
 
-    private BarrierDisplay() {
+    public BarrierDisplay() {
         registerCommand();
         PlayerTickCallback.EVENT.register(this::onTick);
         PerWorldConfig.get().register(this, "barrierDisplay");

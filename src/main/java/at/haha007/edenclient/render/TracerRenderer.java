@@ -5,7 +5,6 @@ import at.haha007.edenclient.callbacks.LeaveWorldCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.RenderUtils;
-import at.haha007.edenclient.utils.singleton.Singleton;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.render.*;
@@ -17,12 +16,11 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeMap;
 
-@Singleton
 public class TracerRenderer {
     private final TreeMap<Integer, Set<Vec3d>> tracers = new TreeMap<>();
     private long tick = 0;
 
-    private TracerRenderer() {
+    public TracerRenderer() {
         GameRenderCallback.EVENT.register(this::render);
         PlayerTickCallback.EVENT.register(this::tick);
         LeaveWorldCallback.EVENT.register(tracers::clear);

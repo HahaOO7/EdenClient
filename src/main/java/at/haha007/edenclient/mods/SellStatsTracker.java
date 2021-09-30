@@ -1,12 +1,11 @@
 package at.haha007.edenclient.mods;
 
+import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.callbacks.AddChatMessageCallback;
 import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import at.haha007.edenclient.utils.config.loaders.ConfigLoader;
-import at.haha007.edenclient.utils.singleton.Singleton;
-import at.haha007.edenclient.utils.singleton.SingletonLoader;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -26,7 +25,6 @@ import java.util.stream.Collectors;
 import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
-@Singleton(priority = 1)
 public class SellStatsTracker {
     private final Pattern messagePattern = Pattern.compile("Verkauft für \\$(?<money>[0-9]{1,5}\\.?[0-9]{0,2}) \\((?<amount>[0-9,]{1,5}) (?<item>[a-zA-z0-9_]{1,30}) Einheiten je \\$[0-9]{1,5}\\.?[0-9]{0,2}\\)");
     private double amountOfMoneyGainedInSession = 0.0;
@@ -38,7 +36,7 @@ public class SellStatsTracker {
     @ConfigSubscriber
     private int delayInSimplifiedMessages = 5;
 
-    private SellStatsTracker() {
+    public SellStatsTracker() {
         registerCommand();
         AddChatMessageCallback.EVENT.register(this::onChat);
         PerWorldConfig pwc = PerWorldConfig.get();
@@ -110,7 +108,7 @@ public class SellStatsTracker {
         LiteralArgumentBuilder<ClientCommandSource> simplify = literal("simplifymessages");
         simplify.then(literal("toggle").executes(c -> {
             simplifyMessages = !simplifyMessages;
-            MessageIgnorer mi = SingletonLoader.get(MessageIgnorer.class);
+            MessageIgnorer mi = EdenClient.INSTANCE.getMessageIgnorer();
             if (simplifyMessages)
                 mi.enable(MessageIgnorer.Predefined.SELL);
             else

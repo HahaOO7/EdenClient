@@ -5,7 +5,6 @@ import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import at.haha007.edenclient.utils.config.wrappers.ItemSet;
-import at.haha007.edenclient.utils.singleton.Singleton;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
@@ -27,7 +26,6 @@ import java.util.concurrent.CompletableFuture;
 import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
-@Singleton
 public class AutoSell {
     @ConfigSubscriber()
     private final ItemSet autoSellItems = new ItemSet();
@@ -35,11 +33,10 @@ public class AutoSell {
     @ConfigSubscriber("false")
     private boolean enabled;
 
-    private AutoSell() {
+    public AutoSell() {
         PerWorldConfig.get().register(this, "autoSell");
         PlayerInvChangeCallback.EVENT.register(this::onInventoryChange);
         registerCommand("eautosell");
-        registerCommand("eas");
     }
 
     private void registerCommand(String cmd) {

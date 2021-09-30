@@ -8,7 +8,6 @@ import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.RenderUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
-import at.haha007.edenclient.utils.singleton.Singleton;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -29,7 +28,6 @@ import java.util.List;
 import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
-@Singleton
 public class ItemEsp {
     @ConfigSubscriber("false")
     boolean enabled = false;
@@ -42,7 +40,7 @@ public class ItemEsp {
     private VertexBuffer solidBox;
 
 
-    private ItemEsp() {
+    public ItemEsp() {
         registerCommand();
         PerWorldConfig.get().register(this, "itemEsp");
         LeaveWorldCallback.EVENT.register(this::destroy);

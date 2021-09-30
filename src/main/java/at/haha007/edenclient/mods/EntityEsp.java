@@ -10,7 +10,6 @@ import at.haha007.edenclient.utils.RenderUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import at.haha007.edenclient.utils.config.wrappers.EntityTypeSet;
-import at.haha007.edenclient.utils.singleton.Singleton;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -37,7 +36,6 @@ import java.util.stream.Collectors;
 import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
-@Singleton
 public class EntityEsp {
     @ConfigSubscriber("false")
     private boolean enabled;
@@ -53,7 +51,7 @@ public class EntityEsp {
     private VertexBuffer wireframeBox;
     private VertexBuffer solidBox;
 
-    private EntityEsp() {
+    public EntityEsp() {
         GameRenderCallback.EVENT.register(this::render);
         PlayerTickCallback.EVENT.register(this::tick);
         JoinWorldCallback.EVENT.register(this::build);

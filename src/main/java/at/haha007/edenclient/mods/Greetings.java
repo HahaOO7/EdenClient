@@ -9,7 +9,6 @@ import at.haha007.edenclient.utils.config.PerWorldConfig;
 import at.haha007.edenclient.utils.config.wrappers.StringList;
 import at.haha007.edenclient.utils.config.wrappers.StringSet;
 import at.haha007.edenclient.utils.config.wrappers.StringStringMap;
-import at.haha007.edenclient.utils.singleton.Singleton;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -24,7 +23,6 @@ import java.util.stream.Collectors;
 
 import static at.haha007.edenclient.command.CommandManager.*;
 
-@Singleton(priority = 4)
 public class Greetings {
     @ConfigSubscriber("false")
     private boolean enabled;
@@ -51,7 +49,7 @@ public class Greetings {
     private final Map<String, Long> quitTimes = new HashMap<>();
     private final Random random = new Random();
 
-    private Greetings() {
+    public Greetings() {
         registerCommand();
         AddChatMessageCallback.EVENT.register(this::onChat);
         PerWorldConfig.get().register(this, "greeting");

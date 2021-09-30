@@ -6,8 +6,6 @@ import at.haha007.edenclient.callbacks.LeaveWorldCallback;
 import at.haha007.edenclient.utils.StringUtils;
 import at.haha007.edenclient.utils.config.loaders.*;
 import at.haha007.edenclient.utils.config.wrappers.*;
-import at.haha007.edenclient.utils.singleton.Singleton;
-import at.haha007.edenclient.utils.singleton.SingletonLoader;
 import net.minecraft.block.Block;
 import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.entity.EntityType;
@@ -27,11 +25,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-@Singleton(priority = Integer.MIN_VALUE)
 public class PerWorldConfig {
 
+    private static PerWorldConfig INSTANCE;
     private final Map<String, Object> registered = new HashMap<>();
     private final Map<Class<?>, ConfigLoader<NbtElement, ?>> loaders = new HashMap<>();
+    //    private NbtCompound tag = new NbtCompound();
     private String worldName = "null";
     private final File folder;
     private final Map<Class<?>, Class<?>> wrapperClasses = Map.of(
@@ -44,7 +43,10 @@ public class PerWorldConfig {
     );
 
     public static PerWorldConfig get() {
-        return SingletonLoader.get(PerWorldConfig.class);
+        if (INSTANCE == null) {
+            INSTANCE = new PerWorldConfig();
+        }
+        return INSTANCE;
     }
 
     public void register(Object obj, String path) {
@@ -119,11 +121,7 @@ public class PerWorldConfig {
 
     private void loadConfig() {
         File file = new File(folder, worldName + ".mca");
-        if (!folder.exists()) if (!folder.mkdirs()) {
-            System.err.println("[EC] Couldn't create config folder!");
-            Thread.dumpStack();
-            return;
-        }
+        if (!folder.exists()) folder.mkdirs();
         NbtCompound tag = new NbtCompound();
         try {
             tag = file.exists() ? NbtIo.readCompressed(file) : new NbtCompound();
@@ -141,11 +139,7 @@ public class PerWorldConfig {
             save(compound, obj);
         });
         File file = new File(folder, worldName + ".mca");
-        if (!folder.exists()) if (folder.mkdirs()) {
-            System.err.println("[EC] Couldn't create config file!");
-            Thread.dumpStack();
-            return;
-        }
+        if (!folder.exists()) folder.mkdirs();
         try {
             NbtIo.writeCompressed(tag, file);
         } catch (IOException e) {

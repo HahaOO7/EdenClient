@@ -5,7 +5,6 @@ import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.MathUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
-import at.haha007.edenclient.utils.singleton.Singleton;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.ChatHudLine;
@@ -22,13 +21,12 @@ import static at.haha007.edenclient.command.CommandManager.literal;
 import static at.haha007.edenclient.command.CommandManager.register;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
-@Singleton(priority = 5)
 public class AntiSpam {
     private final MinecraftClient MC = MinecraftClient.getInstance();
     @ConfigSubscriber("false")
     private boolean enabled;
 
-    private AntiSpam() {
+    public AntiSpam() {
         registerCommand();
         AddChatMessageCallback.EVENT.register(this::onChat);
         PerWorldConfig.get().register(this, "antiSpam");

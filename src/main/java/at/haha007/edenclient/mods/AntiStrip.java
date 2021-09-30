@@ -4,7 +4,6 @@ import at.haha007.edenclient.callbacks.PlayerInteractBlockCallback;
 import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
-import at.haha007.edenclient.utils.singleton.Singleton;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.item.Item;
@@ -20,7 +19,6 @@ import static at.haha007.edenclient.command.CommandManager.literal;
 import static at.haha007.edenclient.command.CommandManager.register;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
-@Singleton
 public class AntiStrip {
     private final Set<Item> axeItems = Set.of(
             Items.WOODEN_AXE,
@@ -34,7 +32,7 @@ public class AntiStrip {
     @ConfigSubscriber("false")
     private boolean enabled = true;
 
-    private AntiStrip() {
+    public AntiStrip() {
         PlayerInteractBlockCallback.EVENT.register(this::onInteractBlock);
         PerWorldConfig.get().register(this, "antiStrip");
         registerCommand();

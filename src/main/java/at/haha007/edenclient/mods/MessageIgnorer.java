@@ -5,7 +5,6 @@ import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import at.haha007.edenclient.utils.config.wrappers.StringList;
-import at.haha007.edenclient.utils.singleton.Singleton;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -19,7 +18,6 @@ import java.util.regex.PatternSyntaxException;
 import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
-@Singleton(priority = 2)
 public class MessageIgnorer {
     @ConfigSubscriber
     private final StringList regex = new StringList();
@@ -76,7 +74,7 @@ public class MessageIgnorer {
         }
     }
 
-    private MessageIgnorer() {
+    public MessageIgnorer() {
         AddChatMessageCallback.EVENT.register(this::onChat);
         registerCommand("eignoremessage");
         registerCommand("eim");

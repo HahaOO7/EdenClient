@@ -5,7 +5,6 @@ import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.Scheduler;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
-import at.haha007.edenclient.utils.singleton.Singleton;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -33,7 +32,6 @@ import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
 
-@Singleton
 public class WorldEditReplaceHelper {
 
     /*
@@ -45,7 +43,7 @@ public class WorldEditReplaceHelper {
     private final Stack<String[]> undoCommandStack = new Stack<>();
     private final Stack<String[]> redoCommandStack = new Stack<>();
 
-    private WorldEditReplaceHelper() {
+    public WorldEditReplaceHelper() {
         registerCommand("eworldedithelper");
         registerCommand("edenwe");
         PerWorldConfig.get().register(this, "worldEditHelper");

@@ -1,5 +1,6 @@
 package at.haha007.edenclient.mods.datafetcher;
 
+import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.callbacks.AddChatMessageCallback;
 import at.haha007.edenclient.callbacks.LeaveWorldCallback;
 import at.haha007.edenclient.mods.MessageIgnorer;
@@ -9,7 +10,6 @@ import at.haha007.edenclient.utils.Scheduler;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import at.haha007.edenclient.utils.config.wrappers.BiStringStringMap;
-import at.haha007.edenclient.utils.singleton.SingletonLoader;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.client.network.ClientCommandSource;
 import net.minecraft.client.network.ClientPlayerEntity;
@@ -83,7 +83,7 @@ public class ChestShopItemNames {
                 return -1;
             }
 
-            MessageIgnorer mi =  SingletonLoader.get(MessageIgnorer.class);
+            MessageIgnorer mi = EdenClient.INSTANCE.getMessageIgnorer();
             mi.enable(MessageIgnorer.Predefined.ITEM_INFO);
 
             boolean wasMessageIgnoringEnabled = mi.isEnabled();

@@ -3,7 +3,6 @@ package at.haha007.edenclient.utils;
 import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.callbacks.JoinWorldCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
-import at.haha007.edenclient.utils.singleton.Singleton;
 import net.minecraft.client.network.ClientPlayerEntity;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,10 +10,9 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
 
-@Singleton(priority = Integer.MIN_VALUE)
 public class Scheduler {
 
-    private static Scheduler instance;
+    private static final Scheduler instance = new Scheduler();
 
     private final Set<Runnable> sync = Collections.synchronizedSet(new HashSet<>());
     private final TreeMap<Long, Set<Runnable>> delayedSync = new TreeMap<>();
@@ -25,13 +23,13 @@ public class Scheduler {
         return instance;
     }
 
+
     private static record RepeatingRunnable(int delta, BooleanSupplier runnable) {
     }
 
     private Scheduler() {
         if (EdenClient.INSTANCE == null)
             throw new ExceptionInInitializerError("Scheduler cant be called before initializing EdenClient");
-        instance = this;
         JoinWorldCallback.EVENT.register(this::cleanup);
         PlayerTickCallback.EVENT.register(this::tick);
     }

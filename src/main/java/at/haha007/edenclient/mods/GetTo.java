@@ -1,14 +1,12 @@
 package at.haha007.edenclient.mods;
 
+import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.callbacks.GameRenderCallback;
 import at.haha007.edenclient.callbacks.JoinWorldCallback;
 import at.haha007.edenclient.callbacks.LeaveWorldCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
-import at.haha007.edenclient.mods.datafetcher.DataFetcher;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.RenderUtils;
-import at.haha007.edenclient.utils.singleton.Singleton;
-import at.haha007.edenclient.utils.singleton.SingletonLoader;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -26,13 +24,12 @@ import java.util.Optional;
 
 import static at.haha007.edenclient.command.CommandManager.*;
 
-@Singleton
 public class GetTo {
     private Vec3i target;
     private VertexBuffer vb;
     private boolean tracer, box;
 
-    private GetTo() {
+    public GetTo() {
         registerCommand();
         JoinWorldCallback.EVENT.register(this::build);
         LeaveWorldCallback.EVENT.register(this::destroy);
@@ -126,7 +123,7 @@ public class GetTo {
 
     private Optional<String> getNearestPlayerWarp(Vec3i pos) {
         Vec3i pp = PlayerUtils.getPlayer().getBlockPos();
-        return SingletonLoader.get(DataFetcher.class).getPlayerWarps().getAll().entrySet().stream()
+        return EdenClient.INSTANCE.getDataFetcher().getPlayerWarps().getAll().entrySet().stream()
                 .min(Comparator.comparingDouble(e -> e.getValue().getSquaredDistance(pos)))
                 .map(e -> dist(pos, pp) < dist(e.getValue(), pos) ? null : e.getKey());
     }
