@@ -2,6 +2,7 @@ package at.haha007.edenclient.mods.chestshop;
 
 import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
+import at.haha007.edenclient.mods.GetTo;
 import at.haha007.edenclient.mods.datafetcher.ChestShopItemNames;
 import at.haha007.edenclient.mods.datafetcher.DataFetcher;
 import at.haha007.edenclient.utils.ChatColor;
@@ -103,7 +104,7 @@ public class ChestShopMod {
             var shops = EdenClient.getMod(DataFetcher.class).getPlayerWarps().getShops();
             TaskManager tm = new TaskManager((shops.size() + 2) * 120);
             sendModMessage(ChatColor.GOLD + "Teleporting to all player warps, this will take about " +
-                    ChatColor.AQUA + Integer.toString(shops.size() * 6) +
+                    ChatColor.AQUA + (shops.size() * 6) +
                     ChatColor.GOLD + " seconds.");
             int count = shops.size();
             AtomicInteger i = new AtomicInteger(1);
@@ -151,8 +152,7 @@ public class ChestShopMod {
                         Style style = Style.EMPTY.withColor(Formatting.GOLD);
 
                         Vec3i pos = cs.getPos();
-                        String boxPosStr = pos.getX() + " " + pos.getY() + " " + pos.getZ();
-                        String cmd = "/egetto " + boxPosStr;
+                        String cmd = EdenClient.getMod(GetTo.class).getCommandTo(pos);
                         Text hoverText = new LiteralText(opw.isPresent() ? opw.get().getKey() : "click me!").formatted(Formatting.GOLD);
                         style = style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hoverText));
                         style = style.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, cmd));
@@ -173,8 +173,7 @@ public class ChestShopMod {
                         Optional<Map.Entry<String, Vec3i>> opw = getNearestPlayerWarp(cs.getPos());
                         Style style = Style.EMPTY.withColor(Formatting.GOLD);
                         Vec3i pos = cs.getPos();
-                        String boxPosStr = pos.getX() + " " + pos.getY() + " " + pos.getZ();
-                        String cmd = "/egetto " + boxPosStr;
+                        String cmd = EdenClient.getMod(GetTo.class).getCommandTo(pos);
                         Text hoverText = new LiteralText(opw.isPresent() ? opw.get().getKey() : "click me!").formatted(Formatting.GOLD);
                         style = style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hoverText));
                         style = style.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, cmd));

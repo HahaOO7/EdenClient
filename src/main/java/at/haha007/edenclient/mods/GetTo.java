@@ -29,6 +29,7 @@ public class GetTo {
     private Vec3i target;
     private VertexBuffer vb;
     private boolean tracer, box;
+    private final String commandName = "egetto";
 
     public GetTo() {
         registerCommand();
@@ -79,7 +80,7 @@ public class GetTo {
     }
 
     private void registerCommand() {
-        LiteralArgumentBuilder<ClientCommandSource> cmd = literal("egetto");
+        LiteralArgumentBuilder<ClientCommandSource> cmd = literal(commandName);
         cmd.then(argument("target", BlockPosArgumentType.blockPos()).executes(c -> {
             BlockPos pos = c.getArgument("target", PosArgument.class).toAbsoluteBlockPos(PlayerUtils.getPlayer().getCommandSource());
             getTo(pos, true, true, true);
@@ -112,6 +113,10 @@ public class GetTo {
         }));
         register(cmd,
                 "This mod is for internal use only.");
+    }
+
+    public String getCommandTo(Vec3i target) {
+        return String.format("/%s %d %d %d", commandName, target.getX(), target.getY(), target.getZ());
     }
 
     private void getTo(BlockPos pos, boolean tracer, boolean box, boolean tp) {
