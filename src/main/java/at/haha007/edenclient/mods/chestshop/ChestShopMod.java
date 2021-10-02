@@ -3,6 +3,7 @@ package at.haha007.edenclient.mods.chestshop;
 import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.mods.datafetcher.ChestShopItemNames;
+import at.haha007.edenclient.mods.datafetcher.DataFetcher;
 import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
@@ -49,6 +50,7 @@ public class ChestShopMod {
 
     public ChestShopMod() {
         registerCommand("echestshop");
+        registerCommand("ecs");
         PlayerTickCallback.EVENT.register(this::tick);
         PerWorldConfig.get().register(this, "chestShop");
         PerWorldConfig.get().register(new ChestShopLoader(), ChestShopMap.class);
@@ -98,7 +100,7 @@ public class ChestShopMod {
         }));
 
         node.then(literal("updateshops").executes(c -> {
-            var shops = EdenClient.INSTANCE.getDataFetcher().getPlayerWarps().getShops();
+            var shops = EdenClient.getMod(DataFetcher.class).getPlayerWarps().getShops();
             TaskManager tm = new TaskManager((shops.size() + 2) * 120);
             sendModMessage(ChatColor.GOLD + "Teleporting to all player warps, this will take about " +
                     ChatColor.AQUA + Integer.toString(shops.size() * 6) +
@@ -137,7 +139,7 @@ public class ChestShopMod {
 
         node.then(literal("sell").then(argument("item", StringArgumentType.greedyString()).suggests(this::suggestSell).executes(c -> {
             sendModMessage("Sell: ");
-            String item = EdenClient.INSTANCE.getDataFetcher().getChestShopItemNames().getShortName(c.getArgument("item", String.class));
+            String item = EdenClient.getMod(DataFetcher.class).getChestShopItemNames().getShortName(c.getArgument("item", String.class));
             List<ChestShopEntry> matching = new ArrayList<>();
 
             shops.values().forEach(m -> m.stream().filter(ChestShopEntry::canSell).
@@ -150,7 +152,7 @@ public class ChestShopMod {
 
                         Vec3i pos = cs.getPos();
                         String boxPosStr = pos.getX() + " " + pos.getY() + " " + pos.getZ();
-                        String cmd = "/getto " + boxPosStr;
+                        String cmd = "/egetto " + boxPosStr;
                         Text hoverText = new LiteralText(opw.isPresent() ? opw.get().getKey() : "click me!").formatted(Formatting.GOLD);
                         style = style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hoverText));
                         style = style.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, cmd));
@@ -160,7 +162,7 @@ public class ChestShopMod {
         })));
 
         node.then(literal("buy").then(argument("item", StringArgumentType.greedyString()).suggests(this::suggestBuy).executes(c -> {
-            String item = EdenClient.INSTANCE.getDataFetcher().getChestShopItemNames().getShortName(c.getArgument("item", String.class));
+            String item = EdenClient.getMod(DataFetcher.class).getChestShopItemNames().getShortName(c.getArgument("item", String.class));
             sendModMessage("Buy: ");
             List<ChestShopEntry> matching = new ArrayList<>();
             shops.values().forEach(m -> m.stream().filter(ChestShopEntry::canBuy).
@@ -172,7 +174,7 @@ public class ChestShopMod {
                         Style style = Style.EMPTY.withColor(Formatting.GOLD);
                         Vec3i pos = cs.getPos();
                         String boxPosStr = pos.getX() + " " + pos.getY() + " " + pos.getZ();
-                        String cmd = "/getto " + boxPosStr;
+                        String cmd = "/egetto " + boxPosStr;
                         Text hoverText = new LiteralText(opw.isPresent() ? opw.get().getKey() : "click me!").formatted(Formatting.GOLD);
                         style = style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hoverText));
                         style = style.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, cmd));
@@ -222,7 +224,7 @@ public class ChestShopMod {
             keys.addAll(buyEntries.keySet());
             keys.addAll(sellEntries.keySet());
             keys = keys.stream().sorted(Comparator.comparing(s -> s)).collect(Collectors.toList());
-            ChestShopItemNames itemNameMap = EdenClient.INSTANCE.getDataFetcher().getChestShopItemNames();
+            ChestShopItemNames itemNameMap = EdenClient.getMod(DataFetcher.class).getChestShopItemNames();
             for (String key : keys) {
                 List<ChestShopEntry> currentBuyEntries = buyEntries.get(key);
                 if (currentBuyEntries != null)
@@ -301,7 +303,7 @@ public class ChestShopMod {
         Map<String, List<ChestShopEntry>> buyEntries = getBuyShops();
         Map<String, List<ChestShopEntry>> sellEntries = getSellShops();
         List<String> exploitableShopsText = new ArrayList<>();
-        ChestShopItemNames itemNameMap = EdenClient.INSTANCE.getDataFetcher().getChestShopItemNames();
+        ChestShopItemNames itemNameMap = EdenClient.getMod(DataFetcher.class).getChestShopItemNames();
         for (Map.Entry<String, List<ChestShopEntry>> entry : buyEntries.entrySet().stream().sorted(Map.Entry.comparingByKey()).collect(Collectors.toList())) {
             if (!sellEntries.containsKey(entry.getKey())) continue;
             List<ChestShopEntry> currentSellEntries = sellEntries.get(entry.getKey()).stream().sorted(Comparator.comparingDouble(ChestShopEntry::getSellPricePerItem).reversed()).collect(Collectors.toList());
@@ -361,17 +363,17 @@ public class ChestShopMod {
     }
 
     private Optional<Map.Entry<String, Vec3i>> getNearestPlayerWarp(Vec3i pos) {
-        return EdenClient.INSTANCE.getDataFetcher().getPlayerWarps().getAll().entrySet().stream().min(Comparator.comparingDouble(e -> e.getValue().getSquaredDistance(pos)));
+        return EdenClient.getMod(DataFetcher.class).getPlayerWarps().getAll().entrySet().stream().min(Comparator.comparingDouble(e -> e.getValue().getSquaredDistance(pos)));
     }
 
     private CompletableFuture<Suggestions> suggestSell(CommandContext<ClientCommandSource> context, SuggestionsBuilder suggestionsBuilder) {
-        ChestShopItemNames itemNameMap = EdenClient.INSTANCE.getDataFetcher().getChestShopItemNames();
+        ChestShopItemNames itemNameMap = EdenClient.getMod(DataFetcher.class).getChestShopItemNames();
         shops.values().forEach(s -> s.stream().filter(ChestShopEntry::canSell).map(entry -> itemNameMap.getLongName(entry.getItem())).filter(Objects::nonNull).forEach(suggestionsBuilder::suggest));
         return suggestionsBuilder.buildFuture();
     }
 
     private CompletableFuture<Suggestions> suggestBuy(CommandContext<ClientCommandSource> context, SuggestionsBuilder suggestionsBuilder) {
-        ChestShopItemNames itemNameMap = EdenClient.INSTANCE.getDataFetcher().getChestShopItemNames();
+        ChestShopItemNames itemNameMap = EdenClient.getMod(DataFetcher.class).getChestShopItemNames();
         shops.values().forEach(s -> s.stream().filter(ChestShopEntry::canBuy).map(entry -> itemNameMap.getLongName(entry.getItem())).filter(Objects::nonNull).forEach(suggestionsBuilder::suggest));
         return suggestionsBuilder.buildFuture();
     }

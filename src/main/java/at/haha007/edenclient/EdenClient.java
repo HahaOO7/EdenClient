@@ -11,68 +11,70 @@ import net.fabricmc.api.ClientModInitializer;
 import net.minecraft.client.MinecraftClient;
 
 import java.io.File;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.util.HashMap;
+import java.util.Map;
 
 public class EdenClient implements ClientModInitializer {
     public static EdenClient INSTANCE;
-    private MessageIgnorer messageIgnorer;
-    private DataFetcher dataFetcher;
-    private CubeRenderer cubeRenderer;
-    private TracerRenderer tracerRenderer;
+    private static final Map<Class<?>, Object> registeredMods = new HashMap<>();
 
     @Override
     public void onInitializeClient() {
         INSTANCE = this;
+
         PerWorldConfig.get();
         Scheduler.get();
 
-        dataFetcher = new DataFetcher();
-        cubeRenderer = new CubeRenderer();
-        tracerRenderer = new TracerRenderer();
+        registerMod(DataFetcher.class);
+        registerMod(CubeRenderer.class);
+        registerMod(TracerRenderer.class);
 
         // Chat | These Mods interact with each message being sent to the client (in descending order)
-        new SellStatsTracker();
-        new ChestShopMod();
-        messageIgnorer = new MessageIgnorer();
-        new WordHighlighter();
-        new Greetings();
-        new AntiSpam();
+        registerMod(SellStatsTracker.class);
+        registerMod(ChestShopMod.class);
+        registerMod(MessageIgnorer.class);
+        registerMod(WordHighlighter.class);
+        registerMod(Greetings.class);
+        registerMod(AntiSpam.class);
 
         // Gameplay | These Mods interact with your gameplay passively
-        new AutoSell();
-        new BarrierDisplay();
-        new ItemEsp();
-        new EntityEsp();
-        new TileEntityEsp();
-        new AntiStrip();
-        new AutoSheer();
-        new SignCopy();
-        new Nuker();
-        new LifeSaver();
-        new GetTo();
-        new AntiAfk();
-        new ContainerDisplay();
+        registerMod(AutoSell.class);
+        registerMod(BarrierDisplay.class);
+        registerMod(ItemEsp.class);
+        registerMod(EntityEsp.class);
+        registerMod(TileEntityEsp.class);
+        registerMod(AntiStrip.class);
+        registerMod(AutoSheer.class);
+        registerMod(SignCopy.class);
+        registerMod(Nuker.class);
+        registerMod(LifeSaver.class);
+        registerMod(GetTo.class);
+        registerMod(AntiAfk.class);
+        registerMod(ContainerDisplay.class);
 
         // Commands only | These Mods only actively interact with your gameplay when directly using its commands
-        new Rainbowifier();
-        new NbtInfo();
-        new WorldEditReplaceHelper();
-        new RenderShape();
+        registerMod(Rainbowifier.class);
+        registerMod(NbtInfo.class);
+        registerMod(WorldEditReplaceHelper.class);
+        registerMod(RenderShape.class);
     }
 
-    public MessageIgnorer getMessageIgnorer() {
-        return messageIgnorer;
+    private void registerMod(Class<?> clazz) {
+        try {
+            Constructor<?> constructor = clazz.getConstructor();
+            constructor.setAccessible(true);
+            Object object = constructor.newInstance();
+            registeredMods.put(object.getClass(), object);
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+            e.printStackTrace();
+        }
     }
 
-    public DataFetcher getDataFetcher() {
-        return dataFetcher;
-    }
-
-    public CubeRenderer getCubeRenderer() {
-        return cubeRenderer;
-    }
-
-    public TracerRenderer getTracerRenderer() {
-        return tracerRenderer;
+    public static <T> T getMod(Class<T> clazz) {
+        //noinspection unchecked
+        return (T) registeredMods.get(clazz);
     }
 
     public static File getDataFolder() {

@@ -108,7 +108,7 @@ public class SellStatsTracker {
         LiteralArgumentBuilder<ClientCommandSource> simplify = literal("simplifymessages");
         simplify.then(literal("toggle").executes(c -> {
             simplifyMessages = !simplifyMessages;
-            MessageIgnorer mi = EdenClient.INSTANCE.getMessageIgnorer();
+            MessageIgnorer mi = EdenClient.getMod(MessageIgnorer.class);
             if (simplifyMessages)
                 mi.enable(MessageIgnorer.Predefined.SELL);
             else

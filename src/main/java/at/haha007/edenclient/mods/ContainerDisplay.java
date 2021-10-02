@@ -4,6 +4,7 @@ import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.callbacks.WorldRenderCallback;
 import at.haha007.edenclient.command.CommandManager;
+import at.haha007.edenclient.mods.datafetcher.DataFetcher;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
@@ -48,7 +49,7 @@ public class ContainerDisplay {
         }
         ChunkPos chunkPos = player.getChunkPos();
         entries = new HashMap<>();
-        ChunkPos.stream(chunkPos, 2).forEach(cp -> entries.putAll(EdenClient.INSTANCE.getDataFetcher().getContainerInfo().getContainerInfo(cp)));
+        ChunkPos.stream(chunkPos, 2).forEach(cp -> entries.putAll(EdenClient.getMod(DataFetcher.class).getContainerInfo().getContainerInfo(cp)));
     }
 
     private void registerCommand() {
@@ -67,7 +68,7 @@ public class ContainerDisplay {
         }));
 
         cmd.then(toggle);
-        CommandManager.register(cmd);
+        CommandManager.register(cmd, "Displays icons on top of containers.");
     }
 
     private void renderWorld(MatrixStack matrixStack, VertexConsumerProvider.Immediate vertexConsumerProvider, float v) {

@@ -34,7 +34,8 @@ public class WordHighlighter {
     private Style style = Style.EMPTY;
 
     public WordHighlighter() {
-        registerCommand();
+        registerCommand("ehighlight");
+        registerCommand("ehl");
         AddChatMessageCallback.EVENT.register(this::onChat);
         PerWorldConfig.get().register(this, "wordhighlighter");
     }
@@ -46,8 +47,8 @@ public class WordHighlighter {
         }
     }
 
-    private void registerCommand() {
-        LiteralArgumentBuilder<ClientCommandSource> node = literal("ehighlight");
+    private void registerCommand(String name) {
+        LiteralArgumentBuilder<ClientCommandSource> node = literal(name);
         node.then(literal("toggle").executes(c -> {
             enabled = !enabled;
             sendModMessage(ChatColor.GOLD + (enabled ? "Enabled WordHighlighter!" : "Disabled WordHighlighter!"));

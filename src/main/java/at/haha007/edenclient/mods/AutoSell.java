@@ -37,6 +37,7 @@ public class AutoSell {
         PerWorldConfig.get().register(this, "autoSell");
         PlayerInvChangeCallback.EVENT.register(this::onInventoryChange);
         registerCommand("eautosell");
+        registerCommand("eas");
     }
 
     private void registerCommand(String cmd) {

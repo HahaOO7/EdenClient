@@ -83,7 +83,7 @@ public class ChestShopItemNames {
                 return -1;
             }
 
-            MessageIgnorer mi = EdenClient.INSTANCE.getMessageIgnorer();
+            MessageIgnorer mi = EdenClient.getMod(MessageIgnorer.class);
             mi.enable(MessageIgnorer.Predefined.ITEM_INFO);
 
             boolean wasMessageIgnoringEnabled = mi.isEnabled();

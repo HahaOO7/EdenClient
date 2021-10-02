@@ -5,6 +5,7 @@ import at.haha007.edenclient.callbacks.GameRenderCallback;
 import at.haha007.edenclient.callbacks.JoinWorldCallback;
 import at.haha007.edenclient.callbacks.LeaveWorldCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
+import at.haha007.edenclient.mods.datafetcher.DataFetcher;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.RenderUtils;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -123,7 +124,7 @@ public class GetTo {
 
     private Optional<String> getNearestPlayerWarp(Vec3i pos) {
         Vec3i pp = PlayerUtils.getPlayer().getBlockPos();
-        return EdenClient.INSTANCE.getDataFetcher().getPlayerWarps().getAll().entrySet().stream()
+        return EdenClient.getMod(DataFetcher.class).getPlayerWarps().getAll().entrySet().stream()
                 .min(Comparator.comparingDouble(e -> e.getValue().getSquaredDistance(pos)))
                 .map(e -> dist(pos, pp) < dist(e.getValue(), pos) ? null : e.getKey());
     }
