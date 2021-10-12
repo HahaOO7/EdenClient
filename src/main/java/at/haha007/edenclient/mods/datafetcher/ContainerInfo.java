@@ -5,6 +5,7 @@ import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import at.haha007.edenclient.utils.config.loaders.ConfigLoader;
 import at.haha007.edenclient.utils.config.wrappers.ItemList;
+import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.ChestBlock;
 import net.minecraft.block.entity.BlockEntity;
@@ -19,22 +20,27 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
 import net.minecraft.screen.GenericContainerScreenHandler;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.ShulkerBoxScreenHandler;
+import net.minecraft.tag.BlockTags;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3i;
+import net.minecraft.util.registry.Registry;
 import net.minecraft.world.chunk.WorldChunk;
 
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class ContainerInfo {
 
@@ -73,8 +79,11 @@ public class ContainerInfo {
         //smallest only chests and shulkerboxes!
         if (itemStacks.size() < 27) return;
         ChunkPos cp = new ChunkPos(new BlockPos(lastInteractedBlock));
-
-        Map<Item, List<ItemStack>> items = itemStacks.stream().collect(Collectors.groupingBy(ItemStack::getItem));
+        Map<Item, List<ItemStack>> items = itemStacks.stream().
+                flatMap(stack ->
+                        BlockTags.SHULKER_BOXES.contains(Block.getBlockFromItem(stack.getItem())) ?
+                                mapShulkerBox(stack) :
+                                Stream.of(stack)).collect(Collectors.groupingBy(ItemStack::getItem));
         items.remove(Items.AIR);
 
         Map<Item, Integer> counts = new HashMap<>();
@@ -89,6 +98,21 @@ public class ContainerInfo {
             map.remove(lastInteractedBlock);
         else
             map.put(lastInteractedBlock, list);
+    }
+
+    private Stream<? extends ItemStack> mapShulkerBox(ItemStack stack) {
+        NbtCompound tag = stack.getOrCreateNbt();
+        NbtList list = tag.getCompound("BlockEntityTag").getList("Items", NbtElement.COMPOUND_TYPE);
+        if(list.isEmpty())
+            return Stream.of(stack);
+        return list.stream().map(nbt -> (NbtCompound) nbt).map(this::getStackFromCompound);
+    }
+
+    private ItemStack getStackFromCompound(NbtCompound tag) {
+        Item item = Registry.ITEM.get(new Identifier(tag.getString("id")));
+        ItemStack stack = item.getDefaultStack();
+        stack.setCount(tag.getByte("Count"));
+        return stack;
     }
 
     private ActionResult attackBlock(ClientPlayerEntity player, BlockPos blockPos, Direction direction) {
@@ -171,7 +195,7 @@ public class ContainerInfo {
         public NbtList save(Object value) {
             ChunkChestMap map = cast(value);
             NbtList list = new NbtList();
-            map.forEach((k,v) -> {
+            map.forEach((k, v) -> {
                 NbtCompound c = new NbtCompound();
                 c.put("pos", PerWorldConfig.get().toNbt(k));
                 c.put("map", PerWorldConfig.get().toNbt(v));
