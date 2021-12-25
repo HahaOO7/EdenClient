@@ -37,7 +37,7 @@ public class TracerRenderer {
     private void render(MatrixStack matrixStack, VertexConsumerProvider.Immediate vertexConsumerProvider, float delta) {
         RenderSystem.setShader(GameRenderer::getPositionShader);
         RenderSystem.disableDepthTest();
-        Matrix4f matrix = matrixStack.peek().getModel();
+        Matrix4f matrix = matrixStack.peek().getPositionMatrix();
         Vec3d start = RenderUtils.getCameraPos().add(PlayerUtils.getClientLookVec());
 
         BufferBuilder bb = Tessellator.getInstance().getBuffer();

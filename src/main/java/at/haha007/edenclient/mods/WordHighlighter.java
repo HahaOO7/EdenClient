@@ -228,7 +228,7 @@ public class WordHighlighter {
 
     private MutableText getStyled(String string, Style style) {
         if (style.isObfuscated()) {
-            final Style finalStyle = style.obfuscated(false);
+            final Style finalStyle = style.withObfuscated(false);
             MutableText text = new LiteralText("");
             AtomicInteger i = new AtomicInteger();
             string.chars()

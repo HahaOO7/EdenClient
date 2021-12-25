@@ -24,7 +24,7 @@ public class StyleLoader implements ConfigLoader<NbtCompound, Style> {
     public Style load(NbtCompound tag) {
         Style style = Style.EMPTY;
         style = style.withBold(tag.getBoolean("bold"));
-        style = style.obfuscated(tag.getBoolean("obfuscated"));
+        style = style.withObfuscated(tag.getBoolean("obfuscated"));
         style = style.withItalic(tag.getBoolean("italic"));
         style = style.withStrikethrough(tag.getBoolean("strikethrough"));
         style = style.withUnderline(tag.getBoolean("underlined"));

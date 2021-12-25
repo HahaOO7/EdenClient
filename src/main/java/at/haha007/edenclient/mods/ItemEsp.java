@@ -59,8 +59,8 @@ public class ItemEsp {
         RenderSystem.setShaderColor(r, g, b, 1);
         RenderSystem.disableDepthTest();
         Runnable drawBoxTask =
-                solid ? () -> solidBox.setShader(matrixStack.peek().getModel(), RenderSystem.getProjectionMatrix(), RenderSystem.getShader())
-                        : () -> wireframeBox.setShader(matrixStack.peek().getModel(), RenderSystem.getProjectionMatrix(), RenderSystem.getShader());
+                solid ? () -> solidBox.setShader(matrixStack.peek().getPositionMatrix(), RenderSystem.getProjectionMatrix(), RenderSystem.getShader())
+                        : () -> wireframeBox.setShader(matrixStack.peek().getPositionMatrix(), RenderSystem.getProjectionMatrix(), RenderSystem.getShader());
         for (ItemEntity target : items) {
             matrixStack.push();
             matrixStack.translate(

@@ -63,11 +63,11 @@ public class GetTo {
         if (box) {
             matrixStack.push();
             matrixStack.translate(target.getX(), target.getY(), target.getZ());
-            this.vb.setShader(matrixStack.peek().getModel(), RenderSystem.getProjectionMatrix(), RenderSystem.getShader());
+            this.vb.setShader(matrixStack.peek().getPositionMatrix(), RenderSystem.getProjectionMatrix(), RenderSystem.getShader());
             matrixStack.pop();
         }
         if (tracer) {
-            Matrix4f matrix = matrixStack.peek().getModel();
+            Matrix4f matrix = matrixStack.peek().getPositionMatrix();
             Vec3d start = RenderUtils.getCameraPos().add(PlayerUtils.getClientLookVec());
             BufferBuilder bb = Tessellator.getInstance().getBuffer();
             bb.begin(VertexFormat.DrawMode.DEBUG_LINES, VertexFormats.POSITION);

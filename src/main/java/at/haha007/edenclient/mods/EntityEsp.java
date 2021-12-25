@@ -170,7 +170,7 @@ public class EntityEsp {
         RenderSystem.disableDepthTest();
         if (tracer) {
             Vec3d start = RenderUtils.getCameraPos().add(PlayerUtils.getClientLookVec());
-            Matrix4f matrix = matrixStack.peek().getModel();
+            Matrix4f matrix = matrixStack.peek().getPositionMatrix();
             BufferBuilder bb = Tessellator.getInstance().getBuffer();
 
             bb.begin(VertexFormat.DrawMode.DEBUG_LINES, VertexFormats.POSITION);
@@ -187,8 +187,8 @@ public class EntityEsp {
             BufferRenderer.draw(bb);
         }
         Runnable drawBoxTask =
-                solid ? () -> solidBox.setShader(matrixStack.peek().getModel(), RenderSystem.getProjectionMatrix(), RenderSystem.getShader())
-                        : () -> wireframeBox.setShader(matrixStack.peek().getModel(), RenderSystem.getProjectionMatrix(), RenderSystem.getShader());
+                solid ? () -> solidBox.setShader(matrixStack.peek().getPositionMatrix(), RenderSystem.getProjectionMatrix(), RenderSystem.getShader())
+                        : () -> wireframeBox.setShader(matrixStack.peek().getPositionMatrix(), RenderSystem.getProjectionMatrix(), RenderSystem.getShader());
         for (Entity target : entities) {
             matrixStack.push();
             matrixStack.translate(
