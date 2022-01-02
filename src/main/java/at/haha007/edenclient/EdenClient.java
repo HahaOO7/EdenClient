@@ -38,6 +38,7 @@ public class EdenClient implements ClientModInitializer {
         registerMod(WordHighlighter.class);
         registerMod(Greetings.class);
         registerMod(AntiSpam.class);
+        registerMod(Translate.class);
 
         // Gameplay | These Mods interact with your gameplay passively
         registerMod(AutoSell.class);

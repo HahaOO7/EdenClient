@@ -11,12 +11,9 @@ import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.particle.BlockMarkerParticle;
 import net.minecraft.item.Items;
 import net.minecraft.particle.BlockStateParticleEffect;
-import net.minecraft.particle.ParticleType;
-import net.minecraft.util.Identifier;
+import net.minecraft.particle.ParticleTypes;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.registry.Registry;
 
-import java.util.Optional;
 import java.util.Random;
 
 import static at.haha007.edenclient.command.CommandManager.*;
@@ -25,7 +22,6 @@ import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 public class BarrierDisplay {
     private static final int dist = 5;
     private final Random rand = new Random();
-    private final ParticleType<?> particleType;
     @ConfigSubscriber("0")
     private int counter = 20;
     @ConfigSubscriber("false")
@@ -35,9 +31,6 @@ public class BarrierDisplay {
         registerCommand();
         PlayerTickCallback.EVENT.register(this::onTick);
         PerWorldConfig.get().register(this, "barrierDisplay");
-        Identifier id = Identifier.tryParse("minecraft:block_marker barrier");
-        Optional<ParticleType<?>> particleType = Registry.PARTICLE_TYPE.getOrEmpty(id);
-        this.particleType = particleType.orElseThrow();
     }
 
     private void onTick(ClientPlayerEntity player) {
@@ -46,7 +39,7 @@ public class BarrierDisplay {
         for (int i = 0; i < counter; i++) {
             BlockPos pos = player.getBlockPos().add(rand.nextGaussian() * dist, rand.nextGaussian() * dist, rand.nextGaussian() * dist);
             if (player.clientWorld.getBlockState(pos).getBlock() != Blocks.BARRIER) continue;
-            var effect = new BlockStateParticleEffect((ParticleType<BlockStateParticleEffect>) particleType, Blocks.BARRIER.getDefaultState());
+            var effect = new BlockStateParticleEffect(ParticleTypes.BLOCK_MARKER, Blocks.BARRIER.getDefaultState());
             MinecraftClient.getInstance().particleManager.addParticle(new BlockMarkerParticle.Factory().createParticle(effect,
                     player.clientWorld, pos.getX() + .5, pos.getY() + .5, pos.getZ() + .5, 0, 0, 0));
         }
