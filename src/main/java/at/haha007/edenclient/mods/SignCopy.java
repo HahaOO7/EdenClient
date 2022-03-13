@@ -11,12 +11,15 @@ import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.SignBlockEntity;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.item.Item;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.packet.c2s.play.UpdateSignC2SPacket;
 import net.minecraft.tag.ItemTags;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
+import net.minecraft.util.registry.Registry;
+import net.minecraft.util.registry.RegistryKey;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -48,14 +51,15 @@ public class SignCopy {
             return 1;
         }));
         register(node,
-               "SignCopy lets you copy signs and place them again without opening the dialogue/having to type each line again.");
+                "SignCopy lets you copy signs and place them again without opening the dialogue/having to type each line again.");
     }
 
     @SuppressWarnings("ConstantConditions")
     private ActionResult onAttackBlock(ClientPlayerEntity entity, BlockPos pos, Direction side) {
         if (!enabled) return ActionResult.PASS;
         BlockEntity b = MinecraftClient.getInstance().world.getBlockEntity(pos);
-        if (!ItemTags.SIGNS.contains(PlayerUtils.getPlayer().getInventory().getMainHandStack().getItem()))
+        Registry<Item> registry = entity.clientWorld.getRegistryManager().get(ItemTags.SIGNS.registry());
+        if (!registry.containsId(Registry.ITEM.getId(PlayerUtils.getPlayer().getInventory().getMainHandStack().getItem())))
             return ActionResult.PASS;
         if (!(b instanceof SignBlockEntity sign)) {
             shouldCopy = false;

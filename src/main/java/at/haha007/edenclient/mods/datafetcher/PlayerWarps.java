@@ -81,7 +81,7 @@ public class PlayerWarps {
         q.add(new RunnableTask(() -> {
             Screen screen = MinecraftClient.getInstance().currentScreen;
             if (screen == null) return;
-            screen.onClose();
+            screen.close();
         }));
         fetchData(tm, q, all, 4);
         tm.start();
@@ -93,7 +93,7 @@ public class PlayerWarps {
         fetchData(tm, new LinkedList<>(List.of(new RunnableTask(() -> {
             Screen screen = MinecraftClient.getInstance().currentScreen;
             if (screen == null) return;
-            screen.onClose();
+            screen.close();
         }))), map, slot);
         tm.start();
         return 1;

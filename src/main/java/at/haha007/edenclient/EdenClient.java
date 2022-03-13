@@ -50,6 +50,7 @@ public class EdenClient implements ClientModInitializer {
         registerMod(AutoSheer.class);
         registerMod(SignCopy.class);
         registerMod(Nuker.class);
+        registerMod(AutoHarvest.class);
         registerMod(LifeSaver.class);
         registerMod(GetTo.class);
         registerMod(AntiAfk.class);

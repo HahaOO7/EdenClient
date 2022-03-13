@@ -1,6 +1,7 @@
 package at.haha007.edenclient.mods.datafetcher;
 
 import at.haha007.edenclient.callbacks.*;
+import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import at.haha007.edenclient.utils.config.loaders.ConfigLoader;
@@ -35,6 +36,7 @@ import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3i;
 import net.minecraft.util.registry.Registry;
+import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.chunk.WorldChunk;
 
 import java.util.*;
@@ -79,11 +81,10 @@ public class ContainerInfo {
         //smallest only chests and shulkerboxes!
         if (itemStacks.size() < 27) return;
         ChunkPos cp = new ChunkPos(new BlockPos(lastInteractedBlock));
+        Registry<Block> registry = PlayerUtils.getPlayer().world.getRegistryManager().get(BlockTags.SHULKER_BOXES.registry());
         Map<Item, List<ItemStack>> items = itemStacks.stream().
-                flatMap(stack ->
-                        BlockTags.SHULKER_BOXES.contains(Block.getBlockFromItem(stack.getItem())) ?
-                                mapShulkerBox(stack) :
-                                Stream.of(stack)).collect(Collectors.groupingBy(ItemStack::getItem));
+                flatMap(stack -> registry.containsId(Registry.BLOCK.getId(Block.getBlockFromItem(stack.getItem()))) ?
+                        mapShulkerBox(stack) : Stream.of(stack)).collect(Collectors.groupingBy(ItemStack::getItem));
         items.remove(Items.AIR);
 
         Map<Item, Integer> counts = new HashMap<>();
@@ -103,7 +104,7 @@ public class ContainerInfo {
     private Stream<? extends ItemStack> mapShulkerBox(ItemStack stack) {
         NbtCompound tag = stack.getOrCreateNbt();
         NbtList list = tag.getCompound("BlockEntityTag").getList("Items", NbtElement.COMPOUND_TYPE);
-        if(list.isEmpty())
+        if (list.isEmpty())
             return Stream.of(stack);
         return list.stream().map(nbt -> (NbtCompound) nbt).map(this::getStackFromCompound);
     }
