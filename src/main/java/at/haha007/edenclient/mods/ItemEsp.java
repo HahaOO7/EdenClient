@@ -58,9 +58,7 @@ public class ItemEsp {
         RenderSystem.setShader(GameRenderer::getPositionShader);
         RenderSystem.setShaderColor(r, g, b, 1);
         RenderSystem.disableDepthTest();
-        Runnable drawBoxTask =
-                solid ? () -> solidBox.setShader(matrixStack.peek().getPositionMatrix(), RenderSystem.getProjectionMatrix(), RenderSystem.getShader())
-                        : () -> wireframeBox.setShader(matrixStack.peek().getPositionMatrix(), RenderSystem.getProjectionMatrix(), RenderSystem.getShader());
+        Runnable drawBoxTask = solid ? () -> draw(solidBox, matrixStack) : () -> draw(wireframeBox, matrixStack);
         for (ItemEntity target : items) {
             matrixStack.push();
             matrixStack.translate(
@@ -71,6 +69,12 @@ public class ItemEsp {
             drawBoxTask.run();
             matrixStack.pop();
         }
+    }
+
+    private void draw(VertexBuffer solidBox, MatrixStack matrixStack) {
+        solidBox.bind();
+        solidBox.draw(matrixStack.peek().getPositionMatrix(), RenderSystem.getProjectionMatrix(), RenderSystem.getShader());
+        VertexBuffer.unbind();
     }
 
     private void build() {

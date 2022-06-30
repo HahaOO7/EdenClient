@@ -181,13 +181,19 @@ public class WordHighlighter {
         sendUsageDebugMessage();
     }
 
-    private Text highlight(Text text, String string) {
-        if (text instanceof LiteralText t) {
-            String s = t.getRawString();
+    private Text highlight(Text txt, String string) {
+        if (!(txt instanceof MutableText text)) {
+            txt.getSiblings().replaceAll(y -> highlight(y, string));
+            return txt;
+        }
+
+
+        if (text.getContent() instanceof LiteralTextContent t) {
+            String s = t.string();
             Pattern pattern = Pattern.compile(string, Pattern.CASE_INSENSITIVE | Pattern.LITERAL);
             Matcher matcher = pattern.matcher(s);
             List<MutableText> subtext = new ArrayList<>();
-            Style baseStyle = t.getStyle();
+            Style baseStyle = txt.getStyle();
             Style style = this.style.withHoverEvent(baseStyle.getHoverEvent()).withClickEvent(baseStyle.getClickEvent());
             while (matcher.find()) {
                 int start = matcher.start();
@@ -195,7 +201,7 @@ public class WordHighlighter {
                 String pre = s.substring(0, start);
                 String match = s.substring(start, end);
                 if (!pre.isEmpty())
-                    subtext.add(new LiteralText(pre).setStyle(baseStyle));
+                    subtext.add(Text.literal(pre).setStyle(baseStyle));
                 subtext.add(getStyled(match, style));//replace with rainbow
                 s = s.substring(end);
                 matcher = pattern.matcher(s);
@@ -205,21 +211,21 @@ public class WordHighlighter {
                 return text;
             }
             if (!s.isEmpty())
-                subtext.add(new LiteralText(s).setStyle(baseStyle));
-            MutableText nextText = new LiteralText("");
+                subtext.add(Text.literal(s).setStyle(baseStyle));
+            MutableText nextText = Text.literal("");
             subtext.forEach(nextText::append);
-            t.getSiblings().stream().map(sibling -> highlight(sibling, string)).forEach(nextText::append);
+            txt.getSiblings().stream().map(sibling -> highlight(sibling, string)).forEach(nextText::append);
             return nextText;
-        } else if (text instanceof TranslatableText t) {
+        } else if (text.getContent() instanceof TranslatableTextContent t) {
             Object[] args = t.getArgs();
             for (int i = 0; i < args.length; i++) {
                 if (args[i] instanceof Text y)
                     args[i] = highlight(y, string);
                 else if (args[i] instanceof String y)
-                    args[i] = highlight(new LiteralText(y), string);
+                    args[i] = highlight(Text.literal(y), string);
             }
-            t.getSiblings().replaceAll(y -> highlight(y, string));
-            return t;
+            txt.getSiblings().replaceAll(y -> highlight(y, string));
+            return txt;
         } else {
             text.getSiblings().replaceAll(y -> highlight(y, string));
             return text;
@@ -229,16 +235,16 @@ public class WordHighlighter {
     private MutableText getStyled(String string, Style style) {
         if (style.isObfuscated()) {
             final Style finalStyle = style.withObfuscated(false);
-            MutableText text = new LiteralText("");
+            MutableText text = Text.literal("");
             AtomicInteger i = new AtomicInteger();
             string.chars()
                     .mapToObj(c -> new String(new int[]{c}, 0, 1))
-                    .map(LiteralText::new)
+                    .map(Text::literal)
                     .map(t -> t.setStyle(finalStyle.withColor(getFancyRainbowColorAtIndex(i.getAndIncrement()))))
                     .forEach(text::append);
             return text;
         }
-        return new LiteralText(string).setStyle(style);
+        return Text.literal(string).setStyle(style);
     }
 
 

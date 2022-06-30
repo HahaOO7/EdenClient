@@ -153,10 +153,10 @@ public class ChestShopMod {
 
                         Vec3i pos = cs.getPos();
                         String cmd = EdenClient.getMod(GetTo.class).getCommandTo(pos);
-                        Text hoverText = new LiteralText(opw.isPresent() ? opw.get().getKey() : "click me!").formatted(Formatting.GOLD);
+                        Text hoverText = Text.literal(opw.isPresent() ? opw.get().getKey() : "click me!").formatted(Formatting.GOLD);
                         style = style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hoverText));
                         style = style.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, cmd));
-                        return new LiteralText(cs.formattedString(false)).setStyle(style);
+                        return Text.literal(cs.formattedString(false)).setStyle(style);
                     }).forEach(PlayerUtils::sendModMessage);
             return 1;
         })));
@@ -174,10 +174,10 @@ public class ChestShopMod {
                         Style style = Style.EMPTY.withColor(Formatting.GOLD);
                         Vec3i pos = cs.getPos();
                         String cmd = EdenClient.getMod(GetTo.class).getCommandTo(pos);
-                        Text hoverText = new LiteralText(opw.isPresent() ? opw.get().getKey() : "click me!").formatted(Formatting.GOLD);
+                        Text hoverText = Text.literal(opw.isPresent() ? opw.get().getKey() : "click me!").formatted(Formatting.GOLD);
                         style = style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hoverText));
                         style = style.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, cmd));
-                        return new LiteralText(cs.formattedString(true)).setStyle(style);
+                        return Text.literal(cs.formattedString(true)).setStyle(style);
                     })
                     .forEach(PlayerUtils::sendModMessage);
             return 1;
@@ -203,9 +203,9 @@ public class ChestShopMod {
                     bw.write(foundDisparity);
                     bw.newLine();
                 }
-                sendModMessage(new LiteralText("Wrote file without errors. Saved at ").formatted(Formatting.GOLD).
-                        append(new LiteralText(file.getAbsolutePath()).setStyle(Style.EMPTY.withColor(Formatting.GOLD)
-                                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new LiteralText("Click to copy")))
+                sendModMessage(Text.literal("Wrote file without errors. Saved at ").formatted(Formatting.GOLD).
+                        append(Text.literal(file.getAbsolutePath()).setStyle(Style.EMPTY.withColor(Formatting.GOLD)
+                                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.literal("Click to copy")))
                                 .withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, file.getAbsolutePath())))));
             } catch (IOException e) {
                 sendModMessage("Error while writing file. See console for more info.");
@@ -274,9 +274,9 @@ public class ChestShopMod {
                     bw.write(line);
                     bw.newLine();
                 }
-                sendModMessage(new LiteralText("Wrote file without errors. Saved at ").formatted(Formatting.GOLD).
-                        append(new LiteralText(file.getAbsolutePath()).setStyle(Style.EMPTY.withColor(Formatting.GOLD)
-                                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new LiteralText("Click to copy path")))
+                sendModMessage(Text.literal("Wrote file without errors. Saved at ").formatted(Formatting.GOLD).
+                        append(Text.literal(file.getAbsolutePath()).setStyle(Style.EMPTY.withColor(Formatting.GOLD)
+                                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.literal("Click to copy path")))
                                 .withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, file.getAbsolutePath())))));
             } catch (IOException e) {
                 sendModMessage("Error while writing file. See console for more info.");

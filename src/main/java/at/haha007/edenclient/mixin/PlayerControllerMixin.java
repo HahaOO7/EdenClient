@@ -22,8 +22,8 @@ public class PlayerControllerMixin {
     @Inject(at = @At("HEAD"),
             method = "interactBlock",
             cancellable = true)
-    void interactBlock(ClientPlayerEntity player, ClientWorld world, Hand hand, BlockHitResult hitResult, CallbackInfoReturnable<ActionResult> ci) {
-        ActionResult result = PlayerInteractBlockCallback.EVENT.invoker().interact(player, world, hand, hitResult);
+    void interactBlock(ClientPlayerEntity player, Hand hand, BlockHitResult hitResult, CallbackInfoReturnable<ActionResult> ci) {
+        ActionResult result = PlayerInteractBlockCallback.EVENT.invoker().interact(player, player.clientWorld, hand, hitResult);
         if (result == ActionResult.FAIL) {
             ci.setReturnValue(ActionResult.FAIL);
             ci.cancel();
@@ -33,7 +33,7 @@ public class PlayerControllerMixin {
     @Inject(method = "attackBlock", at = @At("HEAD"), cancellable = true)
     private void onAttackBlock(BlockPos pos, Direction side, CallbackInfoReturnable<Boolean> cir) {
         ActionResult result = PlayerAttackBlockCallback.EVENT.invoker().interact(PlayerUtils.getPlayer(), pos, side);
-        if (result == ActionResult.FAIL) cir.cancel();
+        if (result == ActionResult.FAIL) cir.setReturnValue(false);
     }
 
 }

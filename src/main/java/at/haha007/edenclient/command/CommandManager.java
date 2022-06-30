@@ -17,10 +17,9 @@ import net.minecraft.util.Formatting;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 public class CommandManager {
-    private static final Map<LiteralArgumentBuilder<ClientCommandSource>, Text[]> cmds = new HashMap<>();
+    private static final Map<LiteralArgumentBuilder<ClientCommandSource>, MutableText[]> cmds = new HashMap<>();
     private static final CommandDispatcher<ClientCommandSource> dispatcher = new CommandDispatcher<>();
 
     static {
@@ -32,28 +31,28 @@ public class CommandManager {
         LiteralArgumentBuilder<ClientCommandSource> node = literal(literal);
 
         node.executes(a -> {
-            PlayerUtils.sendModMessage(new LiteralText(ChatColor.GOLD + "Click on the mod you need help for to receive help. To get all information for each feature use the github-wiki: ")
-                    .append(new LiteralText(ChatColor.AQUA + "https://github.com/HahaOO7/EdenClient/wiki")
+            PlayerUtils.sendModMessage(Text.literal(ChatColor.GOLD + "Click on the mod you need help for to receive help. To get all information for each feature use the github-wiki: ")
+                    .append(Text.literal(ChatColor.AQUA + "https://github.com/HahaOO7/EdenClient/wiki")
                             .setStyle(Style.EMPTY
                                     .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.of("Click to copy the link to the wiki.")))
                                     .withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, "https://github.com/HahaOO7/EdenClient/wiki"))
                             )));
 
-            MutableText text = new LiteralText("");
+            MutableText text = Text.literal("");
             Iterator<MutableText> it = cmds.keySet().
                     stream().
                     map(LiteralArgumentBuilder::getLiteral).
-                    map(LiteralText::new).
+                    map(Text::literal).
                     map(t -> t.formatted(Formatting.GOLD)
                             .styled(s -> s.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.of("Click for more info."))))
-                            .styled(s -> s.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/" + node.getLiteral() + " " + t.asString())))).
+                            .styled(s -> s.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/" + node.getLiteral() + " " + ((LiteralTextContent) t.getContent()).string())))).
                     sorted(Comparator.comparing(Object::toString)).
-                    collect(Collectors.toList()).iterator();
+                    toList().iterator();
 
             while (it.hasNext()) {
                 text.append(it.next().formatted(Formatting.GOLD));
                 if (it.hasNext()) {
-                    text.append(new LiteralText(", ").formatted(Formatting.AQUA));
+                    text.append(Text.literal(", ").formatted(Formatting.AQUA));
                 }
             }
 
@@ -90,18 +89,18 @@ public class CommandManager {
         cmds.keySet().forEach(dispatcher::register);
     }
 
-    public static void register(LiteralArgumentBuilder<ClientCommandSource> command, Text... usage) {
+    public static void register(LiteralArgumentBuilder<ClientCommandSource> command, MutableText... usage) {
         cmds.put(command, usage);
         dispatcher.register(command);
     }
 
     public static void register(LiteralArgumentBuilder<ClientCommandSource> command, String... usage) {
-        Text[] usg = usage == null ? null : Arrays.stream(usage).map(ChatColor::translateColors).toArray(Text[]::new);
+        MutableText[] usg = usage == null ? null : Arrays.stream(usage).map(ChatColor::translateColors).toArray(MutableText[]::new);
         register(command, usg);
     }
 
     public static void register(LiteralArgumentBuilder<ClientCommandSource> command) {
-        register(command, (Text[]) null);
+        register(command, (MutableText[]) null);
     }
 
     public static LiteralArgumentBuilder<ClientCommandSource> literal(String s) {

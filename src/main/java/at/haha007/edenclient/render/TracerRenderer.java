@@ -13,6 +13,7 @@ import net.minecraft.util.math.Matrix4f;
 import net.minecraft.util.math.Vec3d;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -46,9 +47,8 @@ public class TracerRenderer {
             bb.vertex(matrix, (float) target.x, (float) target.y, (float) target.z).next();
             bb.vertex(matrix, (float) start.x, (float) start.y, (float) start.z).next();
         }));
-        bb.end();
         RenderSystem.setShaderColor(1, 1, 1, 1);
-        BufferRenderer.draw(bb);
+        BufferRenderer.drawWithoutShader(bb.end());
     }
 
     public void add(Vec3d target, int ticks) {

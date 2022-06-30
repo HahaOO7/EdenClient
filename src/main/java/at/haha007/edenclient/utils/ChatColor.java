@@ -1,6 +1,6 @@
 package at.haha007.edenclient.utils;
 
-import net.minecraft.text.LiteralText;
+import net.minecraft.text.MutableText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.text.TextColor;
@@ -54,20 +54,20 @@ public class ChatColor {
         return String.format("§#%02X%02X%02X", r, g, b);
     }
 
-    public static Text translateColors(String string) {
+    public static MutableText translateColors(String string) {
         final Pattern hex = Pattern.compile("§#[0-9a-fA-F]{6}");
-        LiteralText text = new LiteralText("");
+        MutableText text = Text.literal("");
         Style style = Style.EMPTY;
         Matcher matcher = hex.matcher(string);
         while (matcher.find()) {
             int start = matcher.start();
             int end = matcher.end();
-            text.append(new LiteralText(string.substring(0, start)).setStyle(style));
+            text.append(Text.literal(string.substring(0, start)).setStyle(style));
             style = style.withColor(TextColor.parse(string.substring(start + 1, end)));
             string = string.substring(end);
             matcher = hex.matcher(string);
         }
-        text.append(new LiteralText(string).setStyle(style));
+        text.append(Text.literal(string).setStyle(style));
         return text;
     }
 }

@@ -56,10 +56,9 @@ public enum RenderUtils {
 
         bufferBuilder.vertex(bb.minX, bb.maxY, bb.maxZ).next();
         bufferBuilder.vertex(bb.minX, bb.maxY, bb.minZ).next();
-
-        bufferBuilder.end();
-
-        vertexBuffer.upload(bufferBuilder);
+        vertexBuffer.bind();
+        vertexBuffer.upload(bufferBuilder.end());
+        VertexBuffer.unbind();
     }
 
     public static void drawSolidBox(Box bb, VertexBuffer vertexBuffer) {
@@ -96,7 +95,8 @@ public enum RenderUtils {
         bufferBuilder.vertex(bb.minX, bb.maxY, bb.maxZ).next();
         bufferBuilder.vertex(bb.minX, bb.maxY, bb.minZ).next();
 
-        bufferBuilder.end();
-        vertexBuffer.upload(bufferBuilder);
+        vertexBuffer.bind();
+        vertexBuffer.upload(bufferBuilder.end());
+        VertexBuffer.unbind();
     }
 }

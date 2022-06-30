@@ -117,12 +117,12 @@ public class MessageIgnorer {
         node.then(literal("remove").then(argument("index", IntegerArgumentType.integer(1)).executes(c -> {
             int index = c.getArgument("index", Integer.class) - 1;
             if (index >= regex.size()) {
-                MutableText prefix = new LiteralText("Index out of bounds. Use ").formatted(Formatting.GOLD);
-                MutableText suggestion = new LiteralText("/" + cmd + " list").setStyle(Style.EMPTY.
+                MutableText prefix = Text.literal("Index out of bounds. Use ").formatted(Formatting.GOLD);
+                MutableText suggestion = Text.literal("/" + cmd + " list").setStyle(Style.EMPTY.
                         withColor(Formatting.AQUA).
-                        withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new LiteralText("click to execute"))).
+                        withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.literal("click to execute"))).
                         withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/" + cmd + " list")));
-                MutableText suffix = new LiteralText(" to see available indices.").formatted(Formatting.GOLD);
+                MutableText suffix = Text.literal(" to see available indices.").formatted(Formatting.GOLD);
                 sendModMessage(prefix.append(suggestion).append(suffix));
                 return -1;
             }

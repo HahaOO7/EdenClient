@@ -10,9 +10,9 @@ import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.ChatHudLine;
 import net.minecraft.client.util.ChatMessages;
 import net.minecraft.text.CharacterVisitor;
-import net.minecraft.text.LiteralText;
 import net.minecraft.text.OrderedText;
 import net.minecraft.text.Style;
+import net.minecraft.text.Text;
 import net.minecraft.util.math.MathHelper;
 
 import java.util.List;
@@ -151,7 +151,7 @@ public class AntiSpam {
         }
 
         if (spamCounter > 1) {
-            chatText = new LiteralText("").append(chatText).append(new LiteralText(" [x" + spamCounter + "]"));
+            chatText = Text.literal("").append(chatText).append(Text.literal(" [x" + spamCounter + "]"));
         }
 
         event.setChatText(chatText);

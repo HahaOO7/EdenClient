@@ -21,6 +21,7 @@ import net.minecraft.command.argument.PosArgument;
 import net.minecraft.util.math.*;
 
 import java.util.Comparator;
+import java.util.Objects;
 import java.util.Optional;
 
 import static at.haha007.edenclient.command.CommandManager.*;
@@ -63,7 +64,7 @@ public class GetTo {
         if (box) {
             matrixStack.push();
             matrixStack.translate(target.getX(), target.getY(), target.getZ());
-            this.vb.setShader(matrixStack.peek().getPositionMatrix(), RenderSystem.getProjectionMatrix(), RenderSystem.getShader());
+            this.vb.draw(matrixStack.peek().getPositionMatrix(), RenderSystem.getProjectionMatrix(), RenderSystem.getShader());
             matrixStack.pop();
         }
         if (tracer) {
@@ -75,7 +76,7 @@ public class GetTo {
             bb.vertex(matrix, (float) start.x, (float) start.y, (float) start.z).next();
             bb.end();
             RenderSystem.setShaderColor(1, 1, 1, 1);
-            BufferRenderer.draw(bb);
+            BufferRenderer.drawWithoutShader(Objects.requireNonNull(bb.endNullable()));
         }
     }
 

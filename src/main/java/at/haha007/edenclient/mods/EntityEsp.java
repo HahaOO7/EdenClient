@@ -31,6 +31,7 @@ import net.minecraft.util.registry.Registry;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static at.haha007.edenclient.command.CommandManager.*;
@@ -183,12 +184,9 @@ public class EntityEsp {
                 bb.vertex(matrix, (float) t.x, (float) t.y, (float) t.z).next();
                 bb.vertex(matrix, (float) start.x, (float) start.y, (float) start.z).next();
             }
-            bb.end();
-            BufferRenderer.draw(bb);
+            BufferRenderer.drawWithoutShader(Objects.requireNonNull(bb.end()));
         }
-        Runnable drawBoxTask =
-                solid ? () -> solidBox.setShader(matrixStack.peek().getPositionMatrix(), RenderSystem.getProjectionMatrix(), RenderSystem.getShader())
-                        : () -> wireframeBox.setShader(matrixStack.peek().getPositionMatrix(), RenderSystem.getProjectionMatrix(), RenderSystem.getShader());
+        Runnable drawBoxTask = solid ? () -> draw(solidBox, matrixStack) : () -> draw(wireframeBox, matrixStack);
         for (Entity target : entities) {
             matrixStack.push();
             matrixStack.translate(
@@ -201,4 +199,11 @@ public class EntityEsp {
             matrixStack.pop();
         }
     }
+
+    private void draw(VertexBuffer solidBox, MatrixStack matrixStack) {
+        solidBox.bind();
+        solidBox.draw(matrixStack.peek().getPositionMatrix(), RenderSystem.getProjectionMatrix(), RenderSystem.getShader());
+        VertexBuffer.unbind();
+    }
+
 }

@@ -2,6 +2,7 @@ package at.haha007.edenclient.mixin;
 
 import at.haha007.edenclient.callbacks.AddChatMessageCallback;
 import at.haha007.edenclient.utils.PlayerUtils;
+import com.mojang.logging.LogUtils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawableHelper;
 import net.minecraft.client.gui.hud.ChatHud;
@@ -9,6 +10,7 @@ import net.minecraft.client.gui.hud.ChatHudLine;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.text.OrderedText;
 import net.minecraft.text.Text;
+import org.spongepowered.asm.mixin.FabricUtil;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -45,7 +47,7 @@ public abstract class ChatHudMixin extends DrawableHelper {
             chatText = event.getChatText();
             if (chatText != null && !chatText.getString().isBlank()) {
                 addMessage(chatText, chatLineId, MinecraftClient.getInstance().inGameHud.getTicks(), false);
-                System.out.println("Chat: " + chatText.getString());
+                LogUtils.getLogger().info("Chat: " + chatText.getString());
             }
         });
     }

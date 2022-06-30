@@ -197,15 +197,16 @@ public class TileEntityEsp {
                 bb.vertex(matrix, t.getX(), t.getY(), t.getZ()).next();
                 bb.vertex(matrix, start.getX(), start.getY(), start.getZ()).next();
             }
-            bb.end();
-            BufferRenderer.draw(bb);
+            BufferRenderer.drawWithoutShader(Objects.requireNonNull(bb.end()));
             matrixStack.pop();
         }
 
         tileEntities.forEach(c -> {
             matrixStack.push();
             matrixStack.translate(c.getX(), c.getY(), c.getZ());
-            this.wireframeBox.setShader(matrixStack.peek().getPositionMatrix(), RenderSystem.getProjectionMatrix(), RenderSystem.getShader());
+            wireframeBox.bind();
+            wireframeBox.draw(matrixStack.peek().getPositionMatrix(), RenderSystem.getProjectionMatrix(), RenderSystem.getShader());
+            VertexBuffer.unbind();
             matrixStack.pop();
         });
     }

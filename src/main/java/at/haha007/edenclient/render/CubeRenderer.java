@@ -58,7 +58,9 @@ public class CubeRenderer {
             Vec3d c = box.getCenter();
             matrixStack.translate(c.x, c.y, c.z);
             matrixStack.scale((float) (box.maxX - box.minX), (float) (box.maxY - box.minY), (float) (box.maxZ - box.minZ));
-            this.box.setShader(matrixStack.peek().getPositionMatrix(), RenderSystem.getProjectionMatrix(), RenderSystem.getShader());
+            this.box.bind();
+            this.box.draw(matrixStack.peek().getPositionMatrix(), RenderSystem.getProjectionMatrix(), RenderSystem.getShader());
+            VertexBuffer.unbind();
             matrixStack.pop();
         }));
     }

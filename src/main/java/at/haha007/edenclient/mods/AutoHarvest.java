@@ -11,12 +11,11 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientCommandSource;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.world.ClientWorld;
+import net.minecraft.client.network.ClientPlayerInteractionManager;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.Items;
 import net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket;
-import net.minecraft.network.packet.c2s.play.PlayerInteractBlockC2SPacket;
 import net.minecraft.state.property.Properties;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
@@ -29,6 +28,7 @@ import net.minecraft.world.World;
 import java.util.Set;
 
 import static at.haha007.edenclient.utils.PlayerUtils.getHitDirectionForBlock;
+import static at.haha007.edenclient.utils.PlayerUtils.getPlayer;
 
 public class AutoHarvest {
 
@@ -171,9 +171,8 @@ public class AutoHarvest {
     private void clickPos(Vec3i target) {
         BlockPos bp = new BlockPos(target);
         Direction dir = Direction.UP;
-        PlayerInteractBlockC2SPacket packet = new PlayerInteractBlockC2SPacket(Hand.MAIN_HAND, new BlockHitResult(Vec3d.of(bp.offset(dir)), dir, bp, false));
-        ClientPlayNetworkHandler nh = MinecraftClient.getInstance().getNetworkHandler();
-        if (nh == null) return;
-        nh.sendPacket(packet);
+        ClientPlayerInteractionManager im = MinecraftClient.getInstance().interactionManager;
+        if (im == null) return;
+        im.interactBlock(getPlayer(), Hand.MAIN_HAND, new BlockHitResult(Vec3d.of(bp.offset(dir)), dir, bp, false));
     }
 }

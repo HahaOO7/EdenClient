@@ -6,7 +6,6 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.screen.slot.SlotActionType;
-import net.minecraft.text.LiteralText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
@@ -21,7 +20,7 @@ import java.util.Optional;
 
 public class PlayerUtils {
 
-    private static final Text prefix = new LiteralText("[EC] ").setStyle(Style.EMPTY.withFormatting(Formatting.LIGHT_PURPLE, Formatting.BOLD));
+    private static final Text prefix = Text.literal("[EC] ").setStyle(Style.EMPTY.withFormatting(Formatting.LIGHT_PURPLE, Formatting.BOLD));
 
     public static void messageC2S(String msg) {
         ClientPlayerEntity player = PlayerUtils.getPlayer();
@@ -49,11 +48,11 @@ public class PlayerUtils {
     }
 
     public static void sendModMessage(Text text) {
-        sendMessage(prefix.copy().append(new LiteralText("").formatted(Formatting.GOLD).append(text)));
+        sendMessage(Text.empty().append(prefix).append(Text.empty().append(text).formatted(Formatting.GOLD)));
     }
 
     public static void sendModMessage(String text) {
-        sendModMessage(ChatColor.translateColors("§6" + text));
+        sendModMessage(Text.literal(text));
     }
 
     public static void clickSlot(int slotId) {

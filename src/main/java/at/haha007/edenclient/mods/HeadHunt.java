@@ -18,24 +18,21 @@ import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.VertexBuffer;
 import net.minecraft.client.network.ClientCommandSource;
-import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.client.network.ClientPlayerInteractionManager;
 import net.minecraft.client.render.*;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.client.world.ClientChunkManager;
-import net.minecraft.network.packet.c2s.play.PlayerInteractBlockC2SPacket;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.*;
 import net.minecraft.world.chunk.WorldChunk;
 
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static at.haha007.edenclient.command.CommandManager.*;
+import static at.haha007.edenclient.utils.PlayerUtils.getPlayer;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
 public class HeadHunt {
@@ -86,10 +83,9 @@ public class HeadHunt {
     private void clickPos(Vec3i target) {
         BlockPos bp = new BlockPos(target);
         Direction dir = Direction.UP;
-        PlayerInteractBlockC2SPacket packet = new PlayerInteractBlockC2SPacket(Hand.MAIN_HAND, new BlockHitResult(Vec3d.of(bp.offset(dir)), dir, bp, false));
-        ClientPlayNetworkHandler nh = MinecraftClient.getInstance().getNetworkHandler();
-        if (nh == null) return;
-        nh.sendPacket(packet);
+        ClientPlayerInteractionManager im = MinecraftClient.getInstance().interactionManager;
+        if (im == null) return;
+        im.interactBlock(getPlayer(), Hand.MAIN_HAND, new BlockHitResult(Vec3d.of(bp.offset(dir)), dir, bp, false));
         foundHeads.add(target);
         System.out.println("Head clicked: " + target);
     }
@@ -164,15 +160,16 @@ public class HeadHunt {
                 bb.vertex(matrix, t.getX(), t.getY(), t.getZ()).next();
                 bb.vertex(matrix, start.getX(), start.getY(), start.getZ()).next();
             }
-            bb.end();
-            BufferRenderer.draw(bb);
+            BufferRenderer.drawWithoutShader(Objects.requireNonNull(bb.end()));
             matrixStack.pop();
         }
 
         heads.forEach(c -> {
             matrixStack.push();
             matrixStack.translate(c.getX(), c.getY(), c.getZ());
-            this.wireframeBox.setShader(matrixStack.peek().getPositionMatrix(), RenderSystem.getProjectionMatrix(), RenderSystem.getShader());
+            wireframeBox.bind();
+            wireframeBox.draw(matrixStack.peek().getPositionMatrix(), RenderSystem.getProjectionMatrix(), RenderSystem.getShader());
+            VertexBuffer.unbind();
             matrixStack.pop();
         });
     }
