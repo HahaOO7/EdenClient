@@ -48,7 +48,7 @@ public class TracerRenderer {
             bb.vertex(matrix, (float) start.x, (float) start.y, (float) start.z).next();
         }));
         RenderSystem.setShaderColor(1, 1, 1, 1);
-        BufferRenderer.drawWithoutShader(bb.end());
+        BufferRenderer.drawWithShader(bb.end());
     }
 
     public void add(Vec3d target, int ticks) {

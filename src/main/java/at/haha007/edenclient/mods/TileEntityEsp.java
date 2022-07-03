@@ -197,7 +197,7 @@ public class TileEntityEsp {
                 bb.vertex(matrix, t.getX(), t.getY(), t.getZ()).next();
                 bb.vertex(matrix, start.getX(), start.getY(), start.getZ()).next();
             }
-            BufferRenderer.drawWithoutShader(Objects.requireNonNull(bb.end()));
+            BufferRenderer.drawWithShader(Objects.requireNonNull(bb.end()));
             matrixStack.pop();
         }
 

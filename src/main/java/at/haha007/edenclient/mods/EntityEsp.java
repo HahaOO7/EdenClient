@@ -184,7 +184,7 @@ public class EntityEsp {
                 bb.vertex(matrix, (float) t.x, (float) t.y, (float) t.z).next();
                 bb.vertex(matrix, (float) start.x, (float) start.y, (float) start.z).next();
             }
-            BufferRenderer.drawWithoutShader(Objects.requireNonNull(bb.end()));
+            BufferRenderer.drawWithShader(Objects.requireNonNull(bb.end()));
         }
         Runnable drawBoxTask = solid ? () -> draw(solidBox, matrixStack) : () -> draw(wireframeBox, matrixStack);
         for (Entity target : entities) {

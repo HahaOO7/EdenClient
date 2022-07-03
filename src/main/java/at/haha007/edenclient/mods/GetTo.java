@@ -76,7 +76,7 @@ public class GetTo {
             bb.vertex(matrix, (float) start.x, (float) start.y, (float) start.z).next();
             bb.end();
             RenderSystem.setShaderColor(1, 1, 1, 1);
-            BufferRenderer.drawWithoutShader(Objects.requireNonNull(bb.endNullable()));
+            BufferRenderer.drawWithShader(Objects.requireNonNull(bb.endNullable()));
         }
     }
 
