@@ -4,7 +4,6 @@ import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.EventFactory;
 import net.minecraft.client.gui.hud.ChatHudLine;
 import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.text.OrderedText;
 import net.minecraft.text.Text;
 
 import java.util.List;
@@ -22,13 +21,11 @@ public interface AddChatMessageCallback {
     class ChatAddEvent {
         private final ClientPlayerEntity player;
         private Text chatText;
-        private final int chatLineId;
-        private final List<ChatHudLine<OrderedText>> chatLines;
+        private final List<ChatHudLine.Visible> chatLines;
 
-        public ChatAddEvent(ClientPlayerEntity player, Text chatText, int chatLineId, List<ChatHudLine<OrderedText>> chatLines) {
+        public ChatAddEvent(ClientPlayerEntity player, Text chatText, List<ChatHudLine.Visible> chatLines) {
             this.player = player;
             this.chatText = chatText;
-            this.chatLineId = chatLineId;
             this.chatLines = chatLines;
         }
 
@@ -36,12 +33,8 @@ public interface AddChatMessageCallback {
             return chatText;
         }
 
-        public List<ChatHudLine<OrderedText>> getChatLines() {
+        public List<ChatHudLine.Visible> getChatLines() {
             return chatLines;
-        }
-
-        public int getChatLineId() {
-            return chatLineId;
         }
 
         public ClientPlayerEntity getPlayer() {

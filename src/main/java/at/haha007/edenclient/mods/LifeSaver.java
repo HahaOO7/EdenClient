@@ -47,12 +47,12 @@ public class LifeSaver {
 
         node.then(literal("height").then(argument("height", IntegerArgumentType.integer(Integer.MIN_VALUE, 256)).executes(c -> {
             this.height = c.getArgument("height", Integer.class);
-            sendModMessage(ChatColor.GOLD  + "Set height at which LifeSaver activates to: " + ChatColor.AQUA + c.getArgument("height", Integer.class));
+            sendModMessage(ChatColor.GOLD + "Set height at which LifeSaver activates to: " + ChatColor.AQUA + c.getArgument("height", Integer.class));
             return 1;
         })));
 
         register(node,
-               "LifeSaver saves your life by teleporting you to a safe position when either your health or your y-coordinate reach below a certain value.");
+                "LifeSaver saves your life by teleporting you to a safe position when either your health or your y-coordinate reach below a certain value.");
     }
 
     private void tick(ClientPlayerEntity clientPlayerEntity) {
@@ -71,7 +71,7 @@ public class LifeSaver {
                     schedulerRunning = false;
                     return false;
                 }
-                entityPlayer.sendChatMessage("/farmwelt");
+                entityPlayer.sendChatMessage("/farmwelt", null);
                 return true;
             }, 20, 0);
         }

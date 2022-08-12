@@ -37,7 +37,7 @@ public class Rainbowifier {
                 return 0;
             }
             ClientPlayerEntity entityPlayer = PlayerUtils.getPlayer();
-            entityPlayer.sendChatMessage(rainbowifyMessageFancy(input));
+            entityPlayer.sendChatMessage(rainbowifyMessageFancy(input), null);
             return 1;
         })));
 
@@ -49,7 +49,7 @@ public class Rainbowifier {
                 return 0;
             }
             ClientPlayerEntity entityPlayer = PlayerUtils.getPlayer();
-            entityPlayer.sendChatMessage(rainbowifyMessageSimple(input));
+            entityPlayer.sendChatMessage(rainbowifyMessageSimple(input), null);
             return 1;
         })));
 
@@ -65,7 +65,7 @@ public class Rainbowifier {
                 }
             }
             ClientPlayerEntity entityPlayer = PlayerUtils.getPlayer();
-            entityPlayer.sendChatMessage(message);
+            entityPlayer.sendChatMessage(message, null);
             return 1;
         }))));
 
@@ -80,7 +80,7 @@ public class Rainbowifier {
                 }
             }
             ClientPlayerEntity entityPlayer = PlayerUtils.getPlayer();
-            entityPlayer.sendChatMessage(message);
+            entityPlayer.sendChatMessage(message, null);
             return 1;
         })));
 

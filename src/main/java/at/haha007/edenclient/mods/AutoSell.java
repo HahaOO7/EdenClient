@@ -86,7 +86,7 @@ public class AutoSell {
 
         node.then(literal("stats").executes(c -> {
             ClientPlayerEntity entityPlayer = PlayerUtils.getPlayer();
-            entityPlayer.sendChatMessage("/esellstatstracker global");
+            entityPlayer.sendChatMessage("/esellstatstracker global", null);
             return 1;
         }));
 
@@ -126,7 +126,7 @@ public class AutoSell {
         autoSellItems
                 .stream()
                 .filter(item -> player.getInventory().containsAny(Collections.singleton(item)))
-                .forEach(item -> player.sendChatMessage("/sell " + item.getName().getString().replace(' ', '_')));
+                .forEach(item -> player.sendChatMessage("/sell " + item.getName().getString().replace(' ', '_'), null));
         lastSell = time;
     }
 

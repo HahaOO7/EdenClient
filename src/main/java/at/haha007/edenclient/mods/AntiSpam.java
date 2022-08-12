@@ -5,9 +5,11 @@ import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.MathUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.ChatHudLine;
+import net.minecraft.client.network.ClientCommandSource;
 import net.minecraft.client.util.ChatMessages;
 import net.minecraft.text.CharacterVisitor;
 import net.minecraft.text.OrderedText;
@@ -22,7 +24,6 @@ import static at.haha007.edenclient.command.CommandManager.register;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
 public class AntiSpam {
-    private final MinecraftClient MC = MinecraftClient.getInstance();
     @ConfigSubscriber("false")
     private boolean enabled;
 
@@ -33,7 +34,7 @@ public class AntiSpam {
     }
 
     private void registerCommand() {
-        var node = literal("eantispam");
+        LiteralArgumentBuilder<ClientCommandSource> node = literal("eantispam");
         node.then(literal("toggle").executes(c -> {
             enabled = !enabled;
             sendModMessage(ChatColor.GOLD + (enabled ? "Antispam enabled" : "Antispam disabled"));
@@ -47,8 +48,8 @@ public class AntiSpam {
 
     private void onChat(AddChatMessageCallback.ChatAddEvent event) {
         if (!enabled) return;
-        List<ChatHudLine<OrderedText>> chatLines = event.getChatLines();
-        var chatText = event.getChatText();
+        List<ChatHudLine.Visible> chatLines = event.getChatLines();
+        Text chatText = event.getChatText();
         if (chatText == null) return;
         if (chatLines.isEmpty())
             return;
@@ -68,11 +69,11 @@ public class AntiSpam {
             }
         }
 
-        ChatHud chat = MC.inGameHud.getChatHud();
+        ChatHud chat = MinecraftClient.getInstance().inGameHud.getChatHud();
         int maxTextLength =
                 MathHelper.floor(chat.getWidth() / chat.getChatScale());
         List<OrderedText> newLines = ChatMessages.breakRenderedChatMessageLines(
-                chatText, maxTextLength, MC.textRenderer);
+                chatText, maxTextLength, MinecraftClient.getInstance().textRenderer);
 
         int spamCounter = 1;
         int matchingLines = 0;
@@ -80,7 +81,7 @@ public class AntiSpam {
         for (int i = chatLines.size() - 1; i >= 0; i--) {
             JustGiveMeTheStringVisitor oldLineVS =
                     new JustGiveMeTheStringVisitor();
-            chatLines.get(i).getText().accept(oldLineVS);
+            chatLines.get(i).content().accept(oldLineVS);
             String oldLine = oldLineVS.toString();
 
             if (matchingLines <= newLines.size() - 1) {
@@ -106,7 +107,7 @@ public class AntiSpam {
                 if (i > 0 && matchingLines == newLines.size() - 1) {
                     JustGiveMeTheStringVisitor nextOldLineVS =
                             new JustGiveMeTheStringVisitor();
-                    chatLines.get(i - 1).getText().accept(nextOldLineVS);
+                    chatLines.get(i - 1).content().accept(nextOldLineVS);
                     String nextOldLine = nextOldLineVS.toString();
 
                     String twoLines = oldLine + nextOldLine;

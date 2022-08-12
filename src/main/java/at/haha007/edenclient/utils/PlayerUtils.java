@@ -28,12 +28,11 @@ public class PlayerUtils {
             sendModMessage("Tried sending message longer than 256 characters: " + msg);
             return;
         }
-        player.sendChatMessage(msg);
+        player.sendChatMessage(msg, null);
     }
 
     public static void sendMessage(Text text) {
         MinecraftClient.getInstance().inGameHud.getChatHud().addMessage(text);
-        System.out.println(text.getString());
     }
 
     public static void sendTitle(Text title, Text subtitle, int in, int keep, int out) {
@@ -44,7 +43,6 @@ public class PlayerUtils {
 
     public static void sendActionBar(Text text) {
         MinecraftClient.getInstance().inGameHud.setOverlayMessage(text, false);
-        System.out.println(text.getString());
     }
 
     public static void sendModMessage(Text text) {

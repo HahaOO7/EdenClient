@@ -116,7 +116,7 @@ public class ChestShopItemNames {
                 }
                 String item = minecraftIDs[i];
                 System.out.println("Mapping item:" + item);
-                entityPlayer.sendChatMessage("/iteminfo " + item);
+                entityPlayer.sendChatMessage("/iteminfo " + item, null);
                 if (i % 60 == 0) {
                     sendModMessage(ChatColor.GOLD + "Mapped " + ChatColor.AQUA + i + ChatColor.GOLD + " items of " + ChatColor.AQUA + minecraftIDs.length + ChatColor.GOLD + " this far.");
                 }

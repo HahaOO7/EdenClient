@@ -110,7 +110,7 @@ public class WorldEditReplaceHelper {
 
             ClientPlayerEntity entityPlayer = PlayerUtils.getPlayer();
 
-            entityPlayer.sendChatMessage("/eignoremessage predefined worldedit");
+            entityPlayer.sendChatMessage("/eignoremessage predefined worldedit", null);
 
             return 1;
         }));
@@ -180,10 +180,10 @@ public class WorldEditReplaceHelper {
     }
 
     private void sendReplaceStairCommand(StairsBlock fromBlock, StairsBlock toBlock, int delay) {
-        List<String> half = StairsBlock.HALF.getValues().stream().map(BlockHalf::toString).collect(Collectors.toList());
-        List<String> shape = StairsBlock.SHAPE.getValues().stream().map(StairShape::toString).collect(Collectors.toList());
-        List<String> facing = StairsBlock.FACING.getValues().stream().map(Direction::getName).collect(Collectors.toList());
-        List<String> waterlogged = StairsBlock.WATERLOGGED.getValues().stream().map(Object::toString).collect(Collectors.toList());
+        List<String> half = StairsBlock.HALF.getValues().stream().map(BlockHalf::toString).toList();
+        List<String> shape = StairsBlock.SHAPE.getValues().stream().map(StairShape::toString).toList();
+        List<String> facing = StairsBlock.FACING.getValues().stream().map(Direction::getName).toList();
+        List<String> waterlogged = StairsBlock.WATERLOGGED.getValues().stream().map(Object::toString).toList();
 
         List<List<String>> inputs = List.of(half, shape, facing, waterlogged);
         List<String> names = List.of("half", "shape", "facing", "waterlogged");
@@ -192,8 +192,8 @@ public class WorldEditReplaceHelper {
     }
 
     private void sendReplaceSlabCommand(SlabBlock fromBlock, SlabBlock toBlock, int delay) {
-        List<String> type = SlabBlock.TYPE.getValues().stream().map(SlabType::toString).collect(Collectors.toList());
-        List<String> waterlogged = SlabBlock.WATERLOGGED.getValues().stream().map(Object::toString).collect(Collectors.toList());
+        List<String> type = SlabBlock.TYPE.getValues().stream().map(SlabType::toString).toList();
+        List<String> waterlogged = SlabBlock.WATERLOGGED.getValues().stream().map(Object::toString).toList();
 
         List<List<String>> inputs = List.of(type, waterlogged);
         List<String> names = List.of("type", "waterlogged");
@@ -202,11 +202,11 @@ public class WorldEditReplaceHelper {
     }
 
     private void sendReplaceTrapdoorBlockCommand(TrapdoorBlock fromBlock, TrapdoorBlock toBlock, int delay) {
-        List<String> open = TrapdoorBlock.OPEN.getValues().stream().map(Object::toString).collect(Collectors.toList());
-        List<String> powered = TrapdoorBlock.POWERED.getValues().stream().map(Object::toString).collect(Collectors.toList());
-        List<String> half = TrapdoorBlock.HALF.getValues().stream().map(BlockHalf::toString).collect(Collectors.toList());
-        List<String> facing = TrapdoorBlock.FACING.getValues().stream().map(Direction::getName).collect(Collectors.toList());
-        List<String> waterlogged = TrapdoorBlock.WATERLOGGED.getValues().stream().map(Object::toString).collect(Collectors.toList());
+        List<String> open = TrapdoorBlock.OPEN.getValues().stream().map(Object::toString).toList();
+        List<String> powered = TrapdoorBlock.POWERED.getValues().stream().map(Object::toString).toList();
+        List<String> half = TrapdoorBlock.HALF.getValues().stream().map(BlockHalf::toString).toList();
+        List<String> facing = TrapdoorBlock.FACING.getValues().stream().map(Direction::getName).toList();
+        List<String> waterlogged = TrapdoorBlock.WATERLOGGED.getValues().stream().map(Object::toString).toList();
 
         List<List<String>> inputs = List.of(open, powered, half, facing, waterlogged);
         List<String> names = List.of("open", "powered", "half", "facing", "waterlogged");
@@ -215,11 +215,11 @@ public class WorldEditReplaceHelper {
     }
 
     private void sendReplaceDoorBlockCommand(DoorBlock fromBlock, DoorBlock toBlock, int delay) {
-        List<String> open = DoorBlock.OPEN.getValues().stream().map(Object::toString).collect(Collectors.toList());
-        List<String> powered = DoorBlock.POWERED.getValues().stream().map(Object::toString).collect(Collectors.toList());
-        List<String> half = DoorBlock.HALF.getValues().stream().map(DoubleBlockHalf::toString).collect(Collectors.toList());
-        List<String> facing = DoorBlock.FACING.getValues().stream().map(Direction::getName).collect(Collectors.toList());
-        List<String> hinge = DoorBlock.HINGE.getValues().stream().map(DoorHinge::toString).collect(Collectors.toList());
+        List<String> open = DoorBlock.OPEN.getValues().stream().map(Object::toString).toList();
+        List<String> powered = DoorBlock.POWERED.getValues().stream().map(Object::toString).toList();
+        List<String> half = DoorBlock.HALF.getValues().stream().map(DoubleBlockHalf::toString).toList();
+        List<String> facing = DoorBlock.FACING.getValues().stream().map(Direction::getName).toList();
+        List<String> hinge = DoorBlock.HINGE.getValues().stream().map(DoorHinge::toString).toList();
 
         List<List<String>> inputs = List.of(open, powered, half, facing, hinge);
         List<String> names = List.of("open", "powered", "half", "facing", "hinge");
@@ -228,8 +228,8 @@ public class WorldEditReplaceHelper {
     }
 
     public void sendReplaceSignBlockCommand(SignBlock fromBlock, SignBlock toBlock, int delay) {
-        List<String> rotation = SignBlock.ROTATION.getValues().stream().map(v -> Integer.toString(v)).collect(Collectors.toList());
-        List<String> waterlogged = SignBlock.WATERLOGGED.getValues().stream().map(Object::toString).collect(Collectors.toList());
+        List<String> rotation = SignBlock.ROTATION.getValues().stream().map(v -> Integer.toString(v)).toList();
+        List<String> waterlogged = SignBlock.WATERLOGGED.getValues().stream().map(Object::toString).toList();
 
         List<List<String>> inputs = List.of(rotation, waterlogged);
         List<String> names = List.of("rotation", "waterlogged");
@@ -238,8 +238,8 @@ public class WorldEditReplaceHelper {
     }
 
     public void sendReplaceWallSignBlockCommand(WallSignBlock fromBlock, WallSignBlock toBlock, int delay) {
-        List<String> facing = WallSignBlock.FACING.getValues().stream().map(Direction::getName).collect(Collectors.toList());
-        List<String> waterlogged = WallSignBlock.WATERLOGGED.getValues().stream().map(Object::toString).collect(Collectors.toList());
+        List<String> facing = WallSignBlock.FACING.getValues().stream().map(Direction::getName).toList();
+        List<String> waterlogged = WallSignBlock.WATERLOGGED.getValues().stream().map(Object::toString).toList();
 
         List<List<String>> inputs = List.of(facing, waterlogged);
         List<String> names = List.of("facing", "waterlogged");
@@ -248,11 +248,11 @@ public class WorldEditReplaceHelper {
     }
 
     private void sendReplaceFenceBlockCommand(FenceBlock fromBlock, FenceBlock toBlock, int delay) {
-        List<String> north = FenceBlock.NORTH.getValues().stream().map(Object::toString).collect(Collectors.toList());
-        List<String> east = FenceBlock.EAST.getValues().stream().map(Object::toString).collect(Collectors.toList());
-        List<String> south = FenceBlock.SOUTH.getValues().stream().map(Object::toString).collect(Collectors.toList());
-        List<String> west = FenceBlock.WEST.getValues().stream().map(Object::toString).collect(Collectors.toList());
-        List<String> waterlogged = FenceBlock.WATERLOGGED.getValues().stream().map(Object::toString).collect(Collectors.toList());
+        List<String> north = FenceBlock.NORTH.getValues().stream().map(Object::toString).toList();
+        List<String> east = FenceBlock.EAST.getValues().stream().map(Object::toString).toList();
+        List<String> south = FenceBlock.SOUTH.getValues().stream().map(Object::toString).toList();
+        List<String> west = FenceBlock.WEST.getValues().stream().map(Object::toString).toList();
+        List<String> waterlogged = FenceBlock.WATERLOGGED.getValues().stream().map(Object::toString).toList();
 
         List<List<String>> inputs = List.of(north, east, south, west, waterlogged);
         List<String> names = List.of("north", "east", "south", "west", "waterlogged");
@@ -261,10 +261,10 @@ public class WorldEditReplaceHelper {
     }
 
     private void sendReplaceFenceGateBlockCommand(FenceGateBlock fromBlock, FenceGateBlock toBlock, int delay) {
-        List<String> facing = FenceGateBlock.FACING.getValues().stream().map(Direction::getName).collect(Collectors.toList());
-        List<String> in_wall = FenceGateBlock.IN_WALL.getValues().stream().map(Object::toString).collect(Collectors.toList());
-        List<String> open = FenceGateBlock.OPEN.getValues().stream().map(Object::toString).collect(Collectors.toList());
-        List<String> powered = FenceGateBlock.POWERED.getValues().stream().map(Object::toString).collect(Collectors.toList());
+        List<String> facing = FenceGateBlock.FACING.getValues().stream().map(Direction::getName).toList();
+        List<String> in_wall = FenceGateBlock.IN_WALL.getValues().stream().map(Object::toString).toList();
+        List<String> open = FenceGateBlock.OPEN.getValues().stream().map(Object::toString).toList();
+        List<String> powered = FenceGateBlock.POWERED.getValues().stream().map(Object::toString).toList();
 
         List<List<String>> inputs = List.of(facing, in_wall, open, powered);
         List<String> names = List.of("facing", "in_wall", "open", "powered");
@@ -273,12 +273,12 @@ public class WorldEditReplaceHelper {
     }
 
     private void sendReplaceWallBlockCommand(WallBlock fromBlock, WallBlock toBlock, int delay) {
-        List<String> north = WallBlock.NORTH_SHAPE.getValues().stream().map(WallShape::asString).collect(Collectors.toList());
-        List<String> east = WallBlock.EAST_SHAPE.getValues().stream().map(WallShape::asString).collect(Collectors.toList());
-        List<String> south = WallBlock.SOUTH_SHAPE.getValues().stream().map(WallShape::asString).collect(Collectors.toList());
-        List<String> west = WallBlock.WEST_SHAPE.getValues().stream().map(WallShape::asString).collect(Collectors.toList());
-        List<String> waterlogged = WallBlock.WATERLOGGED.getValues().stream().map(Object::toString).collect(Collectors.toList());
-        List<String> up = WallBlock.UP.getValues().stream().map(Object::toString).collect(Collectors.toList());
+        List<String> north = WallBlock.NORTH_SHAPE.getValues().stream().map(WallShape::asString).toList();
+        List<String> east = WallBlock.EAST_SHAPE.getValues().stream().map(WallShape::asString).toList();
+        List<String> south = WallBlock.SOUTH_SHAPE.getValues().stream().map(WallShape::asString).toList();
+        List<String> west = WallBlock.WEST_SHAPE.getValues().stream().map(WallShape::asString).toList();
+        List<String> waterlogged = WallBlock.WATERLOGGED.getValues().stream().map(Object::toString).toList();
+        List<String> up = WallBlock.UP.getValues().stream().map(Object::toString).toList();
 
         List<List<String>> inputs = List.of(north, east, south, west, waterlogged, up);
         List<String> names = List.of("north", "east", "south", "west", "waterlogged", "up");
@@ -287,7 +287,7 @@ public class WorldEditReplaceHelper {
     }
 
     private void sendReplacePillarBlockCommand(PillarBlock fromBlock, PillarBlock toBlock, int delay) {
-        List<String> axes = PillarBlock.AXIS.getValues().stream().map(Direction.Axis::toString).collect(Collectors.toList());
+        List<String> axes = PillarBlock.AXIS.getValues().stream().map(Direction.Axis::toString).toList();
 
         List<List<String>> inputs = List.of(axes);
         List<String> names = new ArrayList<>(List.of("axis"));
@@ -297,8 +297,8 @@ public class WorldEditReplaceHelper {
 
 
     private void sendReplaceLanternBlockCommand(LanternBlock fromBlock, LanternBlock toBlock, int delay) {
-        List<String> hanging = LanternBlock.HANGING.getValues().stream().map(Object::toString).collect(Collectors.toList());
-        List<String> waterlogged = LanternBlock.WATERLOGGED.getValues().stream().map(Object::toString).collect(Collectors.toList());
+        List<String> hanging = LanternBlock.HANGING.getValues().stream().map(Object::toString).toList();
+        List<String> waterlogged = LanternBlock.WATERLOGGED.getValues().stream().map(Object::toString).toList();
 
         List<List<String>> inputs = List.of(hanging, waterlogged);
         List<String> names = new ArrayList<>(List.of("hanging", "waterlogged"));
@@ -307,7 +307,7 @@ public class WorldEditReplaceHelper {
     }
 
     private void sendReplaceHorizontalFacingBlockCommand(HorizontalFacingBlock fromBlock, HorizontalFacingBlock toBlock, int delay) {
-        List<String> facing = HorizontalFacingBlock.FACING.getValues().stream().map(Direction::getName).collect(Collectors.toList());
+        List<String> facing = HorizontalFacingBlock.FACING.getValues().stream().map(Direction::getName).toList();
 
         List<List<String>> inputs = List.of(facing);
         List<String> names = List.of("facing");
@@ -356,7 +356,7 @@ public class WorldEditReplaceHelper {
         String message = "//replace " + getBlockIDFromBlock(fromBlock) + appendix + " " + getBlockIDFromBlock(toBlock) + appendix;
         if (message.length() > 256)
             sendModMessage("Cannot execute: " + message + " because this command too long.");
-        entityPlayer.sendChatMessage(message);
+        entityPlayer.sendChatMessage(message, null);
         System.out.println("[EC] Sent command: " + message);
     }
 
