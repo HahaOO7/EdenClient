@@ -15,10 +15,13 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class EdenClient implements ClientModInitializer {
     public static EdenClient INSTANCE;
     private static final Map<Class<?>, Object> registeredMods = new HashMap<>();
+    public static ExecutorService chatThread = Executors.newSingleThreadExecutor();;
 
     @Override
     public void onInitializeClient() {
@@ -56,6 +59,7 @@ public class EdenClient implements ClientModInitializer {
         registerMod(ContainerDisplay.class);
         registerMod(HeadHunt.class);
         registerMod(AutoMoss.class);
+        registerMod(DoubleDoor.class);
 
         // Commands only | These Mods only actively interact with your gameplay when directly using its commands
         registerMod(Rainbowifier.class);

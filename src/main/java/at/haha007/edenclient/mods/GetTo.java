@@ -74,9 +74,8 @@ public class GetTo {
             bb.begin(VertexFormat.DrawMode.DEBUG_LINES, VertexFormats.POSITION);
             bb.vertex(matrix, target.getX() + .5f, target.getY() + .5f, target.getZ() + .5f).next();
             bb.vertex(matrix, (float) start.x, (float) start.y, (float) start.z).next();
-            bb.end();
             RenderSystem.setShaderColor(1, 1, 1, 1);
-            BufferRenderer.drawWithShader(Objects.requireNonNull(bb.endNullable()));
+            BufferRenderer.drawWithShader(bb.end());
         }
     }
 
