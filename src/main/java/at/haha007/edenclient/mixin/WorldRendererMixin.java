@@ -5,8 +5,8 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.*;
 import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.util.math.Matrix4f;
 import net.minecraft.util.math.Vec3d;
+import org.joml.Matrix4f;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -22,16 +22,17 @@ public class WorldRendererMixin {
     private BufferBuilderStorage bufferBuilders;
 
     @Inject(method = "render", at = @At("HEAD"))
-    private void renderWorld(MatrixStack matrix, float tickDelta, long limitTime, boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer, LightmapTextureManager lightmapTextureManager, Matrix4f matrix4f, CallbackInfo ci) {
+    private void renderWorld(MatrixStack matrix, float tickDelta, long limitTime, boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer, LightmapTextureManager lightmapTextureManager, Matrix4f positionMatrix, CallbackInfo ci) {
         if (MinecraftClient.getInstance().getBlockEntityRenderDispatcher().camera == null)
             MinecraftClient.getInstance().getBlockEntityRenderDispatcher().camera = camera;
         matrix.push();
         Vec3d cameraPos = camera.getPos();
         matrix.translate(-cameraPos.x, -cameraPos.y, -cameraPos.z);
-
+        float[] color = RenderSystem.getShaderColor();
         RenderSystem.disableDepthTest();
         WorldRenderCallback.EVENT.invoker().render(matrix, bufferBuilders.getEntityVertexConsumers(), tickDelta);
         RenderSystem.enableDepthTest();
+        RenderSystem.setShaderColor(1,1,1,1);
 
         matrix.pop();
     }

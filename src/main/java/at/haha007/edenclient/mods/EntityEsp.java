@@ -22,12 +22,12 @@ import net.minecraft.client.render.*;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
+import net.minecraft.registry.DefaultedRegistry;
+import net.minecraft.registry.Registries;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Box;
-import net.minecraft.util.math.Matrix4f;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.registry.DefaultedRegistry;
-import net.minecraft.util.registry.Registry;
+import org.joml.Matrix4f;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -95,7 +95,7 @@ public class EntityEsp {
             return 1;
         });
 
-        DefaultedRegistry<EntityType<?>> registry = Registry.ENTITY_TYPE;
+        DefaultedRegistry<EntityType<?>> registry = Registries.ENTITY_TYPE;
         for (EntityType<?> type : registry) {
             toggle.then(literal(registry.getId(type).toString().replace("minecraft:", "")).executes(c -> {
                 if (!entityTypes.contains(type)) {
@@ -117,7 +117,7 @@ public class EntityEsp {
 
         cmd.then(literal("list").executes(c -> {
             String str = entityTypes.stream()
-                    .map(Registry.ENTITY_TYPE::getId)
+                    .map(Registries.ENTITY_TYPE::getId)
                     .map(Identifier::toString)
                     .map(s -> s.substring(10))
                     .collect(Collectors.joining(", "));
@@ -166,7 +166,7 @@ public class EntityEsp {
 
     private void render(MatrixStack matrixStack, VertexConsumerProvider.Immediate vertexConsumerProvider, float tickDelta) {
         if (!enabled) return;
-        RenderSystem.setShader(GameRenderer::getPositionShader);
+        RenderSystem.setShader(GameRenderer::getPositionProgram);
         RenderSystem.setShaderColor(r, g, b, 1);
         RenderSystem.disableDepthTest();
         if (tracer) {
@@ -184,7 +184,7 @@ public class EntityEsp {
                 bb.vertex(matrix, (float) t.x, (float) t.y, (float) t.z).next();
                 bb.vertex(matrix, (float) start.x, (float) start.y, (float) start.z).next();
             }
-            BufferRenderer.drawWithShader(Objects.requireNonNull(bb.end()));
+            BufferRenderer.drawWithGlobalProgram(Objects.requireNonNull(bb.end()));
         }
         Runnable drawBoxTask = solid ? () -> draw(solidBox, matrixStack) : () -> draw(wireframeBox, matrixStack);
         for (Entity target : entities) {

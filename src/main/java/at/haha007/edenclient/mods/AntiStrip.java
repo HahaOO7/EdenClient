@@ -9,14 +9,15 @@ import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.item.Item;
 import net.minecraft.item.Items;
-import net.minecraft.tag.BlockTags;
+import net.minecraft.registry.DynamicRegistryManager;
+import net.minecraft.registry.Registries;
+import net.minecraft.registry.Registry;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.registry.DynamicRegistryManager;
-import net.minecraft.util.registry.Registry;
-import net.minecraft.util.registry.RegistryKey;
 
 import java.util.Set;
 
@@ -59,7 +60,7 @@ public class AntiStrip {
         if (!enabled) return ActionResult.PASS;
         if (!axeItems.contains((hand == Hand.MAIN_HAND ? player.getMainHandStack() : player.getOffHandStack()).getItem()))
             return ActionResult.PASS;
-        Identifier id = Registry.BLOCK.getId(world.getBlockState(blockHitResult.getBlockPos()).getBlock());
+        Identifier id = Registries.BLOCK.getId(world.getBlockState(blockHitResult.getBlockPos()).getBlock());
         RegistryKey<? extends Registry<Block>> registry = BlockTags.LOGS.registry();
         DynamicRegistryManager registryManager = world.getRegistryManager();
         return registryManager.get(registry).containsId(id) ? ActionResult.FAIL : ActionResult.PASS;

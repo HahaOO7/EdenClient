@@ -24,11 +24,11 @@ import net.minecraft.command.argument.BlockPosArgumentType;
 import net.minecraft.command.argument.PosArgument;
 import net.minecraft.network.packet.c2s.play.HandSwingC2SPacket;
 import net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket;
+import net.minecraft.registry.Registries;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.*;
-import net.minecraft.util.registry.Registry;
 
 import java.util.Comparator;
 import java.util.List;
@@ -118,8 +118,8 @@ public class Nuker {
 
     private ArgumentBuilder<ClientCommandSource, ?> addCommand() {
         LiteralArgumentBuilder<ClientCommandSource> cmd = literal("add");
-        Registry.BLOCK.forEach(block -> {
-            String name = Registry.BLOCK.getId(block).getPath();
+        Registries.BLOCK.forEach(block -> {
+            String name = Registries.BLOCK.getId(block).getPath();
             cmd.then(literal(name).executes(context -> {
                 filter.add(block);
                 PlayerUtils.sendModMessage("Added " + name);
@@ -133,13 +133,13 @@ public class Nuker {
         LiteralArgumentBuilder<ClientCommandSource> cmd = literal("remove");
         cmd.then(argument("type", StringArgumentType.word()).suggests((context, builder) -> {
             for (Block block : filter) {
-                builder.suggest(Registry.BLOCK.getId(block).getPath());
+                builder.suggest(Registries.BLOCK.getId(block).getPath());
             }
             return builder.buildFuture();
         }).executes(context -> {
             String name = context.getArgument("type", String.class);
             Identifier identifier = new Identifier(name);
-            filter.remove(Registry.BLOCK.get(identifier));
+            filter.remove(Registries.BLOCK.get(identifier));
             PlayerUtils.sendModMessage("Removed " + name);
             return 1;
         }));

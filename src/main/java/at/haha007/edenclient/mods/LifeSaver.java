@@ -71,7 +71,7 @@ public class LifeSaver {
                     schedulerRunning = false;
                     return false;
                 }
-                entityPlayer.sendChatMessage("/farmwelt", null);
+                entityPlayer.networkHandler.sendChatMessage("/farmwelt");
                 return true;
             }, 20, 0);
         }

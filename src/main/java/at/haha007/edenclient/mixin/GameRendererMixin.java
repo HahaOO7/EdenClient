@@ -30,11 +30,11 @@ public class GameRendererMixin {
         matrix.push();
         Vec3d cameraPos = camera.getPos();
         matrix.translate(-cameraPos.x, -cameraPos.y, -cameraPos.z);
-
+        float[] color = RenderSystem.getShaderColor();
         RenderSystem.disableDepthTest();
         GameRenderCallback.EVENT.invoker().render(matrix, buffers.getEntityVertexConsumers(), tickDelta);
         RenderSystem.enableDepthTest();
-
+        RenderSystem.setShaderColor(1,1,1,1);
         matrix.pop();
     }
 }

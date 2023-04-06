@@ -14,12 +14,12 @@ import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.packet.c2s.play.UpdateSignC2SPacket;
-import net.minecraft.tag.ItemTags;
+import net.minecraft.registry.Registries;
+import net.minecraft.registry.Registry;
+import net.minecraft.registry.tag.ItemTags;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
-import net.minecraft.util.registry.Registry;
-import net.minecraft.util.registry.RegistryKey;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -59,7 +59,7 @@ public class SignCopy {
         if (!enabled) return ActionResult.PASS;
         BlockEntity b = MinecraftClient.getInstance().world.getBlockEntity(pos);
         Registry<Item> registry = entity.clientWorld.getRegistryManager().get(ItemTags.SIGNS.registry());
-        if (!registry.containsId(Registry.ITEM.getId(PlayerUtils.getPlayer().getInventory().getMainHandStack().getItem())))
+        if (!registry.containsId(Registries.ITEM.getId(PlayerUtils.getPlayer().getInventory().getMainHandStack().getItem())))
             return ActionResult.PASS;
         if (!(b instanceof SignBlockEntity sign)) {
             shouldCopy = false;

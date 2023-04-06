@@ -37,7 +37,7 @@ public class BarrierDisplay {
         if (!enabled) return;
         if (player.getInventory().getMainHandStack().getItem() == Items.BARRIER) return;
         for (int i = 0; i < counter; i++) {
-            BlockPos pos = player.getBlockPos().add(rand.nextGaussian() * dist, rand.nextGaussian() * dist, rand.nextGaussian() * dist);
+            BlockPos pos = player.getBlockPos().add((int) (rand.nextGaussian() * dist), (int) (rand.nextGaussian() * dist), (int) (rand.nextGaussian() * dist));
             if (player.clientWorld.getBlockState(pos).getBlock() != Blocks.BARRIER) continue;
             var effect = new BlockStateParticleEffect(ParticleTypes.BLOCK_MARKER, Blocks.BARRIER.getDefaultState());
             MinecraftClient.getInstance().particleManager.addParticle(new BlockMarkerParticle.Factory().createParticle(effect,

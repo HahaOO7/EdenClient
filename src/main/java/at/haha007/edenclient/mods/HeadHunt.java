@@ -27,6 +27,8 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.*;
 import net.minecraft.world.chunk.WorldChunk;
+import org.joml.Matrix4f;
+import org.joml.Vector3f;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -146,21 +148,21 @@ public class HeadHunt {
 
     private void render(MatrixStack matrixStack, VertexConsumerProvider.Immediate vertexConsumerProvider, float v) {
         if (!enabled) return;
-        RenderSystem.setShader(GameRenderer::getPositionShader);
+        RenderSystem.setShader(GameRenderer::getPositionProgram);
         RenderSystem.setShaderColor(r, g, b, 1);
         if (tracer) {
             matrixStack.push();
             matrixStack.translate(.5, .5, .5);
-            Vec3f start = new Vec3f(RenderUtils.getCameraPos().add(PlayerUtils.getClientLookVec()).add(-.5, -.5, -.5));
+            Vector3f start = new Vector3f(RenderUtils.getCameraPos().add(PlayerUtils.getClientLookVec()).add(-.5, -.5, -.5).toVector3f());
             Matrix4f matrix = matrixStack.peek().getPositionMatrix();
             BufferBuilder bb = Tessellator.getInstance().getBuffer();
 
             bb.begin(VertexFormat.DrawMode.DEBUG_LINES, VertexFormats.POSITION);
             for (Vec3i t : heads) {
                 bb.vertex(matrix, t.getX(), t.getY(), t.getZ()).next();
-                bb.vertex(matrix, start.getX(), start.getY(), start.getZ()).next();
+                bb.vertex(matrix, start.x(), start.y(), start.z()).next();
             }
-            BufferRenderer.drawWithShader(Objects.requireNonNull(bb.end()));
+            BufferRenderer.drawWithGlobalProgram(Objects.requireNonNull(bb.end()));
             matrixStack.pop();
         }
 

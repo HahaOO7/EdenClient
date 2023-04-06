@@ -4,6 +4,7 @@ import at.haha007.edenclient.mixinterface.IHandledScreen;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
+import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.text.Style;
@@ -28,7 +29,7 @@ public class PlayerUtils {
             sendModMessage("Tried sending message longer than 256 characters: " + msg);
             return;
         }
-        player.sendChatMessage(msg, null);
+        player.networkHandler.sendChatMessage(msg);
     }
 
     public static void sendMessage(Text text) {
@@ -86,5 +87,9 @@ public class PlayerUtils {
                         dir -> Vec3d.of(dir.getVector()).multiply(.5, .5, .5).add(Vec3d.of(target)).distanceTo(playerPos)));
 
         return direction.orElse(null);
+    }
+
+    public static ClientPlayNetworkHandler networkHandler() {
+        return getPlayer().networkHandler;
     }
 }

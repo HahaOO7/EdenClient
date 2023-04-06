@@ -11,12 +11,11 @@ import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.ChatHudLine;
 import net.minecraft.client.network.ClientCommandSource;
 import net.minecraft.client.util.ChatMessages;
-import net.minecraft.text.CharacterVisitor;
-import net.minecraft.text.OrderedText;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
+import net.minecraft.text.*;
 import net.minecraft.util.math.MathHelper;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 
 import static at.haha007.edenclient.command.CommandManager.literal;
@@ -151,9 +150,8 @@ public class AntiSpam {
             matchingLines = 0;
         }
 
-        if (spamCounter > 1) {
-            chatText = Text.literal("").append(chatText).append(Text.literal(" [x" + spamCounter + "]"));
-        }
+        chatText = Text.literal("").append(chatText).append(Text.literal(" [x" + spamCounter + "]")
+                .setStyle(Style.EMPTY.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.literal(new SimpleDateFormat("hh:mm:ss").format(new Date()))))));
 
         event.setChatText(chatText);
     }

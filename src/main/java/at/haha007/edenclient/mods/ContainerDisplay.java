@@ -4,8 +4,8 @@ import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.callbacks.WorldRenderCallback;
 import at.haha007.edenclient.command.CommandManager;
+import at.haha007.edenclient.mods.datafetcher.ContainerInfo;
 import at.haha007.edenclient.mods.datafetcher.DataFetcher;
-import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -16,10 +16,11 @@ import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.render.OverlayTexture;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.item.ItemRenderer;
-import net.minecraft.client.render.model.json.ModelTransformation;
+import net.minecraft.client.render.model.json.ModelTransformationMode;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.item.Item;
 import net.minecraft.util.math.*;
+import org.joml.Quaternionf;
 
 import java.util.HashMap;
 import java.util.List;
@@ -32,7 +33,7 @@ import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 public class ContainerDisplay {
     @ConfigSubscriber("false")
     private boolean enabled;
-    private Map<Vec3i, List<Item>> entries = new HashMap<>();
+    private Map<Vec3i, ContainerInfo.ChestInfo> entries = new HashMap<>();
 
 
     public ContainerDisplay() {
@@ -74,32 +75,35 @@ public class ContainerDisplay {
         if (!enabled)
             return;
 
-        //calculate looking direction, rendering offset and rendering angle
-        final Direction direction = Direction.getEntityFacingOrder(PlayerUtils.getPlayer())[5];
-        final Vec3d offset = Vec3d.of(direction.getVector().add(1, 1, 1)).multiply(.5);
-        final Quaternion rotation = direction.getRotationQuaternion();
-        if (direction.getAxis() == Direction.Axis.Y) {
-            Quaternion horizontal = getPlayer().getHorizontalFacing().getRotationQuaternion();
-            horizontal.hamiltonProduct(Direction.NORTH.getRotationQuaternion());
-            rotation.hamiltonProduct(horizontal);
-        }
-        rotation.hamiltonProduct(Direction.NORTH.getRotationQuaternion());
-
         RenderSystem.enableDepthTest();
 
         //get the item renderer
         ItemRenderer itemRenderer = MinecraftClient.getInstance().getItemRenderer();
 
         //rendering
-        entries.forEach((pos, items) -> {
+        entries.forEach((pos, chestInfo) -> {
             matrixStack.push();
+
+            //calculate looking direction, rendering offset and rendering angle
+            final Direction direction = chestInfo.face();
+            final Vec3d offset = Vec3d.of(direction.getVector().add(1, 1, 1)).multiply(.5);
+            final Quaternionf rotation = direction.getRotationQuaternion();
+            if (direction.getAxis() == Direction.Axis.Y) {
+                Quaternionf horizontal = getPlayer().getHorizontalFacing().getRotationQuaternion();
+                horizontal.mul(Direction.NORTH.getRotationQuaternion());
+                rotation.mul(horizontal);
+                rotation.mul(Direction.NORTH.getRotationQuaternion());
+            } else {
+                rotation.mul(Direction.EAST.getRotationQuaternion());
+                rotation.rotateZ(-MathHelper.HALF_PI);
+            }
 
             //move matrix to rendering position
             matrixStack.translate(pos.getX() + offset.getX(), pos.getY() + offset.getY(), pos.getZ() + offset.getZ());
             //rotate to look outwards
             matrixStack.multiply(rotation);
             //scale item down
-
+            List<Item> items = chestInfo.items();
             int loopCount = Math.min(items.size(), 9);
 
             if (loopCount > 1) {
@@ -116,7 +120,7 @@ public class ContainerDisplay {
                     matrixStack.scale(.8f, .8f, .8f);
                     itemRenderer.renderItem(
                             item.getDefaultStack(),
-                            ModelTransformation.Mode.NONE,
+                            ModelTransformationMode.NONE,
                             false,
                             matrixStack,
                             vertexConsumerProvider,
@@ -132,7 +136,7 @@ public class ContainerDisplay {
 
                 itemRenderer.renderItem(
                         item.getDefaultStack(),
-                        ModelTransformation.Mode.NONE,
+                        ModelTransformationMode.NONE,
                         false,
                         matrixStack,
                         vertexConsumerProvider,

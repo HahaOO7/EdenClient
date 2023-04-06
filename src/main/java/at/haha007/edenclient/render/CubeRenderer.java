@@ -50,7 +50,7 @@ public class CubeRenderer {
     }
 
     private void render(MatrixStack matrixStack, VertexConsumerProvider.Immediate vertexConsumerProvider, float v) {
-        RenderSystem.setShader(GameRenderer::getPositionShader);
+        RenderSystem.setShader(GameRenderer::getPositionProgram);
         RenderSystem.setShaderColor(1, 1, 1, 1);
 
         cubes.values().forEach(s -> s.forEach(box -> {

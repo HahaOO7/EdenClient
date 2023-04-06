@@ -60,6 +60,7 @@ public class EdenClient implements ClientModInitializer {
         registerMod(HeadHunt.class);
         registerMod(AutoMoss.class);
         registerMod(DoubleDoor.class);
+        registerMod(StepHeight.class);
 
         // Commands only | These Mods only actively interact with your gameplay when directly using its commands
         registerMod(Rainbowifier.class);

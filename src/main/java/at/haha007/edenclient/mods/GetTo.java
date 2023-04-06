@@ -18,10 +18,13 @@ import net.minecraft.client.render.*;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.command.argument.BlockPosArgumentType;
 import net.minecraft.command.argument.PosArgument;
-import net.minecraft.util.math.*;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Box;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.Vec3i;
+import org.joml.Matrix4f;
 
 import java.util.Comparator;
-import java.util.Objects;
 import java.util.Optional;
 
 import static at.haha007.edenclient.command.CommandManager.*;
@@ -57,7 +60,7 @@ public class GetTo {
 
     private void render(MatrixStack matrixStack, VertexConsumerProvider.Immediate vertexConsumerProvider, float deltaTick) {
         if (target == null) return;
-        RenderSystem.setShader(GameRenderer::getPositionShader);
+        RenderSystem.setShader(GameRenderer::getPositionProgram);
         RenderSystem.setShaderColor(1, 1, 1, 1);
         RenderSystem.disableDepthTest();
 
@@ -75,7 +78,7 @@ public class GetTo {
             bb.vertex(matrix, target.getX() + .5f, target.getY() + .5f, target.getZ() + .5f).next();
             bb.vertex(matrix, (float) start.x, (float) start.y, (float) start.z).next();
             RenderSystem.setShaderColor(1, 1, 1, 1);
-            BufferRenderer.drawWithShader(bb.end());
+            BufferRenderer.drawWithGlobalProgram(bb.end());
         }
     }
 

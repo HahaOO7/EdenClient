@@ -135,7 +135,7 @@ public class PlayerWarps {
             ItemStack item = inventory.getStack(i);
             if (item == null) continue;
             String name = item.getName().getString();
-            item.getTooltip(null, TooltipContext.Default.NORMAL)
+            item.getTooltip(null, TooltipContext.Default.BASIC)
                     .stream().map(Text::getString)
                     .filter(s -> s.startsWith("Ort: world, "))
                     .findAny().ifPresent(s -> map.put(name, getPos(s)));

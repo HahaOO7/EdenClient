@@ -3,7 +3,6 @@ package at.haha007.edenclient.mods;
 import at.haha007.edenclient.callbacks.JoinWorldCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import net.minecraft.block.AirBlock;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.MinecraftClient;
@@ -12,7 +11,11 @@ import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.network.ClientPlayerInteractionManager;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.item.Items;
-import net.minecraft.tag.BlockTags;
+import net.minecraft.registry.DynamicRegistryManager;
+import net.minecraft.registry.Registries;
+import net.minecraft.registry.Registry;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.hit.BlockHitResult;
@@ -20,9 +23,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3i;
-import net.minecraft.util.registry.DynamicRegistryManager;
-import net.minecraft.util.registry.Registry;
-import net.minecraft.util.registry.RegistryKey;
 
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -63,7 +63,7 @@ public class AutoMoss {
         RegistryKey<? extends Registry<Block>> registry = BlockTags.MOSS_REPLACEABLE.registry();
         DynamicRegistryManager manager = world.getRegistryManager();
         for (BlockPos pos : BlockPos.iterate(blockPos.add(-1, -1, -1), blockPos.add(1, 1, 1))) {
-            Identifier id = Registry.BLOCK.getId(world.getBlockState(pos).getBlock());
+            Identifier id = Registries.BLOCK.getId(world.getBlockState(pos).getBlock());
             if (manager.get(registry).containsId(id) && world.getBlockState(pos.add(0, 1, 0)).getBlock() == Blocks.AIR)
                 return true;
         }

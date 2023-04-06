@@ -22,9 +22,15 @@ import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.render.*;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.client.world.ClientChunkManager;
-import net.minecraft.util.math.*;
-import net.minecraft.util.registry.Registry;
+import net.minecraft.registry.Registries;
+import net.minecraft.registry.Registry;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Box;
+import net.minecraft.util.math.ChunkPos;
+import net.minecraft.util.math.Vec3i;
 import net.minecraft.world.chunk.WorldChunk;
+import org.joml.Matrix4f;
+import org.joml.Vector3f;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -98,7 +104,7 @@ public class TileEntityEsp {
             return 1;
         });
 
-        Registry<BlockEntityType<?>> registry = Registry.BLOCK_ENTITY_TYPE;
+        Registry<BlockEntityType<?>> registry = Registries.BLOCK_ENTITY_TYPE;
 
         for (BlockEntityType<?> type : registry) {
             toggle.then(literal(Objects.requireNonNull(registry.getId(type)).toString().replace("minecraft:", ""))
@@ -140,7 +146,7 @@ public class TileEntityEsp {
 
         cmd.then(literal("list").executes(c -> {
             String str = types.stream()
-                    .map(Registry.BLOCK_ENTITY_TYPE::getId)
+                    .map(Registries.BLOCK_ENTITY_TYPE::getId)
                     .map(String::valueOf)
                     .map(s -> s.substring(10))
                     .collect(Collectors.joining(", "));
@@ -183,21 +189,21 @@ public class TileEntityEsp {
 
     private void render(MatrixStack matrixStack, VertexConsumerProvider.Immediate vertexConsumerProvider, float v) {
         if (!enabled) return;
-        RenderSystem.setShader(GameRenderer::getPositionShader);
+        RenderSystem.setShader(GameRenderer::getPositionProgram);
         RenderSystem.setShaderColor(r, g, b, 1);
         if (tracer) {
             matrixStack.push();
             matrixStack.translate(.5, .5, .5);
-            Vec3f start = new Vec3f(RenderUtils.getCameraPos().add(PlayerUtils.getClientLookVec()).add(-.5, -.5, -.5));
+            Vector3f start = new Vector3f(RenderUtils.getCameraPos().add(PlayerUtils.getClientLookVec()).add(-.5, -.5, -.5).toVector3f());
             Matrix4f matrix = matrixStack.peek().getPositionMatrix();
             BufferBuilder bb = Tessellator.getInstance().getBuffer();
 
             bb.begin(VertexFormat.DrawMode.DEBUG_LINES, VertexFormats.POSITION);
             for (Vec3i t : tileEntities) {
                 bb.vertex(matrix, t.getX(), t.getY(), t.getZ()).next();
-                bb.vertex(matrix, start.getX(), start.getY(), start.getZ()).next();
+                bb.vertex(matrix, start.x(), start.y(), start.z()).next();
             }
-            BufferRenderer.drawWithShader(Objects.requireNonNull(bb.end()));
+            BufferRenderer.drawWithGlobalProgram(Objects.requireNonNull(bb.end()));
             matrixStack.pop();
         }
 

@@ -6,12 +6,14 @@ import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import net.minecraft.block.Block;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.network.ClientPlayerInteractionManager;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.network.packet.c2s.play.PlayerInteractBlockC2SPacket;
-import net.minecraft.tag.BlockTags;
+import net.minecraft.registry.DynamicRegistryManager;
+import net.minecraft.registry.Registries;
+import net.minecraft.registry.Registry;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
@@ -19,13 +21,9 @@ import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.registry.DynamicRegistryManager;
-import net.minecraft.util.registry.Registry;
-import net.minecraft.util.registry.RegistryKey;
 
 import static at.haha007.edenclient.command.CommandManager.literal;
 import static at.haha007.edenclient.command.CommandManager.register;
-import static at.haha007.edenclient.utils.PlayerUtils.getPlayer;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
 public class DoubleDoor {
@@ -73,7 +71,7 @@ public class DoubleDoor {
     }
 
     private boolean noDoor(BlockPos bp, Registry<?> registry, ClientWorld world) {
-        Identifier id = Registry.BLOCK.getId(world.getBlockState(bp).getBlock());
+        Identifier id = Registries.BLOCK.getId(world.getBlockState(bp).getBlock());
         return !registry.containsId(id);
     }
 

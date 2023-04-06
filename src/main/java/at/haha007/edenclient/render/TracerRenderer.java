@@ -9,11 +9,10 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.render.*;
 import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.util.math.Matrix4f;
 import net.minecraft.util.math.Vec3d;
+import org.joml.Matrix4f;
 
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -36,7 +35,7 @@ public class TracerRenderer {
     }
 
     private void render(MatrixStack matrixStack, VertexConsumerProvider.Immediate vertexConsumerProvider, float delta) {
-        RenderSystem.setShader(GameRenderer::getPositionShader);
+        RenderSystem.setShader(GameRenderer::getPositionProgram);
         RenderSystem.disableDepthTest();
         Matrix4f matrix = matrixStack.peek().getPositionMatrix();
         Vec3d start = RenderUtils.getCameraPos().add(PlayerUtils.getClientLookVec());
@@ -48,7 +47,7 @@ public class TracerRenderer {
             bb.vertex(matrix, (float) start.x, (float) start.y, (float) start.z).next();
         }));
         RenderSystem.setShaderColor(1, 1, 1, 1);
-        BufferRenderer.drawWithShader(bb.end());
+        BufferRenderer.drawWithGlobalProgram(bb.end());
     }
 
     public void add(Vec3d target, int ticks) {

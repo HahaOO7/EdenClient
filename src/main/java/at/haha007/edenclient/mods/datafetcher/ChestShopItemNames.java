@@ -14,9 +14,9 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.client.network.ClientCommandSource;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.item.Item;
+import net.minecraft.registry.DefaultedRegistry;
+import net.minecraft.registry.Registries;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.registry.DefaultedRegistry;
-import net.minecraft.util.registry.Registry;
 
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
@@ -90,7 +90,7 @@ public class ChestShopItemNames {
             mi.setEnabled(true);
 
 
-            DefaultedRegistry<Item> itemRegistry = Registry.ITEM;
+            DefaultedRegistry<Item> itemRegistry = Registries.ITEM;
             String[] minecraftIDs = itemRegistry.stream()
                     .map(itemRegistry::getId)
                     .map(Identifier::toString)
@@ -116,7 +116,7 @@ public class ChestShopItemNames {
                 }
                 String item = minecraftIDs[i];
                 System.out.println("Mapping item:" + item);
-                entityPlayer.sendChatMessage("/iteminfo " + item, null);
+                entityPlayer.networkHandler.sendChatMessage("/iteminfo " + item);
                 if (i % 60 == 0) {
                     sendModMessage(ChatColor.GOLD + "Mapped " + ChatColor.AQUA + i + ChatColor.GOLD + " items of " + ChatColor.AQUA + minecraftIDs.length + ChatColor.GOLD + " this far.");
                 }

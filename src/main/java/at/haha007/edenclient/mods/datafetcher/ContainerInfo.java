@@ -23,10 +23,12 @@ import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
+import net.minecraft.registry.Registries;
+import net.minecraft.registry.Registry;
+import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.screen.GenericContainerScreenHandler;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.ShulkerBoxScreenHandler;
-import net.minecraft.tag.BlockTags;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
@@ -35,8 +37,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3i;
-import net.minecraft.util.registry.Registry;
-import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.chunk.WorldChunk;
 
 import java.util.*;
@@ -45,10 +45,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class ContainerInfo {
-
     @ConfigSubscriber()
     private final ChunkChestMap chunkMap;
     private Vec3i lastInteractedBlock = null;
+    private Direction lastClickedDirection = null;
 
 
     ContainerInfo() {
@@ -60,6 +60,7 @@ public class ContainerInfo {
         PlayerInvChangeCallback.EVENT.register(this::onInventoryChange);
         PerWorldConfig.get().register(new ContainerConfigLoader(), ChunkChestMap.class);
         PerWorldConfig.get().register(new ChestMapLoader(), ChestMap.class);
+        PerWorldConfig.get().register(new ChestInfoLoader(), ChestInfo.class);
         PerWorldConfig.get().register(this, "ContainerInfo");
     }
 
@@ -83,22 +84,23 @@ public class ContainerInfo {
         ChunkPos cp = new ChunkPos(new BlockPos(lastInteractedBlock));
         Registry<Block> registry = PlayerUtils.getPlayer().world.getRegistryManager().get(BlockTags.SHULKER_BOXES.registry());
         Map<Item, List<ItemStack>> items = itemStacks.stream().
-                flatMap(stack -> registry.containsId(Registry.BLOCK.getId(Block.getBlockFromItem(stack.getItem()))) ?
+                flatMap(stack -> registry.containsId(Registries.BLOCK.getId(Block.getBlockFromItem(stack.getItem()))) ?
                         mapShulkerBox(stack) : Stream.of(stack)).collect(Collectors.groupingBy(ItemStack::getItem));
         items.remove(Items.AIR);
 
         Map<Item, Integer> counts = new HashMap<>();
         items.forEach((item, stacks) -> counts.put(item, stacks.stream().mapToInt(ItemStack::getCount).sum()));
 
-        ItemList list = new ItemList();
-        list.addAll(counts.keySet());
-        list.sort(Comparator.comparingInt(i -> -counts.get(i)));
+        ChestInfo chestInfo = new ChestInfo();
+        chestInfo.items.addAll(counts.keySet());
+        chestInfo.items.sort(Comparator.comparingInt(i -> -counts.get(i)));
+        chestInfo.face = lastClickedDirection == null ? Direction.UP : lastClickedDirection;
 
         ChestMap map = chunkMap.computeIfAbsent(cp, chunkPos -> new ChestMap());
-        if (list.isEmpty())
+        if (chestInfo.items.isEmpty())
             map.remove(lastInteractedBlock);
         else
-            map.put(lastInteractedBlock, list);
+            map.put(lastInteractedBlock, chestInfo);
     }
 
     private Stream<? extends ItemStack> mapShulkerBox(ItemStack stack) {
@@ -110,7 +112,7 @@ public class ContainerInfo {
     }
 
     private ItemStack getStackFromCompound(NbtCompound tag) {
-        Item item = Registry.ITEM.get(new Identifier(tag.getString("id")));
+        Item item = Registries.ITEM.get(new Identifier(tag.getString("id")));
         ItemStack stack = item.getDefaultStack();
         stack.setCount(tag.getByte("Count"));
         return stack;
@@ -130,6 +132,7 @@ public class ContainerInfo {
         }
         if (be instanceof Inventory && !isLeftChest) {
             lastInteractedBlock = blockHitResult.getBlockPos();
+            lastClickedDirection = blockHitResult.getSide();
         } else {
             lastInteractedBlock = null;
         }
@@ -157,7 +160,45 @@ public class ContainerInfo {
         return chunkMap.containsKey(chunkPos) ? chunkMap.get(chunkPos) : new ChestMap();
     }
 
-    private static class ChestMap extends HashMap<Vec3i, ItemList> {
+    private static class ChestMap extends HashMap<Vec3i, ChestInfo> {
+    }
+
+    public static class ChestInfo {
+        private ItemList items = new ItemList();
+        private Direction face = Direction.NORTH;
+
+        public List<Item> items() {
+            return items;
+        }
+
+        public Direction face() {
+            return face;
+        }
+    }
+
+    private static class ChestInfoLoader implements ConfigLoader<NbtCompound, ChestInfo> {
+        @Override
+        public NbtCompound save(Object value) {
+            ChestInfo chestInfo = cast(value);
+            NbtCompound compound = new NbtCompound();
+            compound.put("items", PerWorldConfig.get().toNbt(chestInfo.items));
+            compound.putString("direction", chestInfo.face.getName());
+            return compound;
+        }
+
+        @Override
+        public ChestInfo load(NbtCompound tag) {
+            ChestInfo chestInfo = new ChestInfo();
+            NbtCompound itemsCompound = tag.getCompound("items");
+            chestInfo.items = PerWorldConfig.get().toObject(itemsCompound, ItemList.class);
+            chestInfo.face = Direction.byName(tag.getString("direction"));
+            return chestInfo;
+        }
+
+        @Override
+        public NbtCompound parse(String s) {
+            return new NbtCompound();
+        }
     }
 
     private static class ChestMapLoader implements ConfigLoader<NbtList, ChestMap> {
@@ -167,7 +208,7 @@ public class ContainerInfo {
             map.forEach((k, v) -> {
                 NbtCompound c = new NbtCompound();
                 c.put("pos", PerWorldConfig.get().toNbt(k));
-                c.put("items", PerWorldConfig.get().toNbt(v));
+                c.put("info", PerWorldConfig.get().toNbt(v));
                 tag.add(c);
             });
             return tag;
@@ -178,7 +219,7 @@ public class ContainerInfo {
             tag.forEach(e -> {
                 NbtCompound c = (NbtCompound) e;
                 Vec3i bp = PerWorldConfig.get().toObject(c.get("pos"), Vec3i.class);
-                ItemList itemList = PerWorldConfig.get().toObject(c.get("items"), ItemList.class);
+                ChestInfo itemList = PerWorldConfig.get().toObject(c.get("info"), ChestInfo.class);
                 map.put(bp, itemList);
             });
             return map;

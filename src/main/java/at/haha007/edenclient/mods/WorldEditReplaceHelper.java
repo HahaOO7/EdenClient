@@ -15,10 +15,10 @@ import net.minecraft.block.*;
 import net.minecraft.block.enums.*;
 import net.minecraft.client.network.ClientCommandSource;
 import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.registry.DefaultedRegistry;
+import net.minecraft.registry.Registries;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Direction;
-import net.minecraft.util.registry.DefaultedRegistry;
-import net.minecraft.util.registry.Registry;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +26,6 @@ import java.util.Optional;
 import java.util.Stack;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
@@ -54,8 +53,8 @@ public class WorldEditReplaceHelper {
 
         node.then(literal("replace").then(argument("from", StringArgumentType.word()).suggests(this::suggestValidBlocks).then(argument("to", StringArgumentType.word()).suggests(this::suggestValidBlocks)
                 .executes(c -> {
-                    Optional<Block> fromBlockOpt = Registry.BLOCK.getOrEmpty(new Identifier(c.getArgument("from", String.class)));
-                    Optional<Block> toBlockOpt = Registry.BLOCK.getOrEmpty(new Identifier(c.getArgument("to", String.class)));
+                    Optional<Block> fromBlockOpt = Registries.BLOCK.getOrEmpty(new Identifier(c.getArgument("from", String.class)));
+                    Optional<Block> toBlockOpt = Registries.BLOCK.getOrEmpty(new Identifier(c.getArgument("to", String.class)));
 
                     if (fromBlockOpt.isEmpty() || toBlockOpt.isEmpty()) {
                         sendModMessage("One of your block-inputs doesn't exist.");
@@ -82,7 +81,7 @@ public class WorldEditReplaceHelper {
                 return 0;
             }
 
-            replaceUndoRequest(Registry.BLOCK.get(new Identifier(undoCommandStack.peek()[0])), Registry.BLOCK.get(new Identifier(undoCommandStack.peek()[1])), delay);
+            replaceUndoRequest(Registries.BLOCK.get(new Identifier(undoCommandStack.peek()[0])), Registries.BLOCK.get(new Identifier(undoCommandStack.peek()[1])), delay);
             redoCommandStack.add(new String[]{undoCommandStack.peek()[1], undoCommandStack.peek()[0]});
             undoCommandStack.pop();
             return 1;
@@ -94,7 +93,7 @@ public class WorldEditReplaceHelper {
                 return 0;
             }
 
-            replaceRedoRequest(Registry.BLOCK.get(new Identifier(redoCommandStack.peek()[0])), Registry.BLOCK.get(new Identifier(redoCommandStack.peek()[1])), delay);
+            replaceRedoRequest(Registries.BLOCK.get(new Identifier(redoCommandStack.peek()[0])), Registries.BLOCK.get(new Identifier(redoCommandStack.peek()[1])), delay);
             undoCommandStack.add(new String[]{redoCommandStack.peek()[1], redoCommandStack.peek()[0]});
             redoCommandStack.pop();
             return 1;
@@ -110,7 +109,7 @@ public class WorldEditReplaceHelper {
 
             ClientPlayerEntity entityPlayer = PlayerUtils.getPlayer();
 
-            entityPlayer.sendChatMessage("/eignoremessage predefined worldedit", null);
+            entityPlayer.networkHandler.sendChatMessage("/eignoremessage predefined worldedit");
 
             return 1;
         }));
@@ -121,7 +120,7 @@ public class WorldEditReplaceHelper {
     }
 
     private CompletableFuture<Suggestions> suggestValidBlocks(CommandContext<ClientCommandSource> clientCommandSourceCommandContext, SuggestionsBuilder suggestionsBuilder) {
-        DefaultedRegistry<Block> blockRegistry = Registry.BLOCK;
+        DefaultedRegistry<Block> blockRegistry = Registries.BLOCK;
         blockRegistry.stream()
                 .map(blockRegistry::getId)
                 .map(Identifier::toString)
@@ -356,7 +355,7 @@ public class WorldEditReplaceHelper {
         String message = "//replace " + getBlockIDFromBlock(fromBlock) + appendix + " " + getBlockIDFromBlock(toBlock) + appendix;
         if (message.length() > 256)
             sendModMessage("Cannot execute: " + message + " because this command too long.");
-        entityPlayer.sendChatMessage(message, null);
+        entityPlayer.networkHandler.sendChatMessage(message);
         System.out.println("[EC] Sent command: " + message);
     }
 

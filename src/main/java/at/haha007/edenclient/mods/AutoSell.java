@@ -10,13 +10,15 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientCommandSource;
+import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.Item;
+import net.minecraft.registry.DefaultedRegistry;
+import net.minecraft.registry.Registries;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.registry.DefaultedRegistry;
-import net.minecraft.util.registry.Registry;
 
 import java.util.Collections;
 import java.util.Comparator;
@@ -60,7 +62,7 @@ public class AutoSell {
             return 1;
         }));
 
-        DefaultedRegistry<Item> registry = Registry.ITEM;
+        DefaultedRegistry<Item> registry = Registries.ITEM;
         for (Item item : registry) {
             node.then(literal("add").then(literal(registry.getId(item).toString().replace("minecraft:", "")).executes(c -> {
                 autoSellItems.add(item);
@@ -70,7 +72,7 @@ public class AutoSell {
         }
 
         node.then(literal("remove").then(argument("item", StringArgumentType.greedyString()).suggests(this::suggestRemoveItems).executes(c -> {
-            Optional<Item> opt = Registry.ITEM.getOrEmpty(new Identifier(c.getArgument("item", String.class).replace(" ", "_")));
+            Optional<Item> opt = Registries.ITEM.getOrEmpty(new Identifier(c.getArgument("item", String.class).replace(" ", "_")));
             if (opt.isEmpty()) {
                 sendModMessage("No item with this name exists.");
                 return 1;
@@ -85,8 +87,9 @@ public class AutoSell {
 
 
         node.then(literal("stats").executes(c -> {
-            ClientPlayerEntity entityPlayer = PlayerUtils.getPlayer();
-            entityPlayer.sendChatMessage("/esellstatstracker global", null);
+            ClientPlayNetworkHandler networkHandler = MinecraftClient.getInstance().getNetworkHandler();
+            if (networkHandler == null) return -1;
+            networkHandler.sendChatMessage("/esellstatstracker global");
             return 1;
         }));
 
@@ -105,7 +108,7 @@ public class AutoSell {
     }
 
     private CompletableFuture<Suggestions> suggestRemoveItems(CommandContext<ClientCommandSource> clientCommandSourceCommandContext, SuggestionsBuilder suggestionsBuilder) {
-        DefaultedRegistry<Item> itemRegistry = Registry.ITEM;
+        DefaultedRegistry<Item> itemRegistry = Registries.ITEM;
         autoSellItems.stream().sorted(Comparator.comparing(s -> s.getName().getString()))
                 .map(itemRegistry::getId)
                 .map(Identifier::toString)
@@ -121,12 +124,14 @@ public class AutoSell {
 
     private void executeAutoSell() {
         ClientPlayerEntity player = PlayerUtils.getPlayer();
+        ClientPlayNetworkHandler networkHandler = MinecraftClient.getInstance().getNetworkHandler();
+        if(networkHandler == null) return;
         long time = System.currentTimeMillis();
         if (time - 200 < lastSell) return;
         autoSellItems
                 .stream()
                 .filter(item -> player.getInventory().containsAny(Collections.singleton(item)))
-                .forEach(item -> player.sendChatMessage("/sell " + item.getName().getString().replace(' ', '_'), null));
+                .forEach(item -> networkHandler.sendChatMessage("/sell " + item.getName().getString().replace(' ', '_')));
         lastSell = time;
     }
 

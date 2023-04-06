@@ -2,13 +2,13 @@ package at.haha007.edenclient.utils.config.loaders;
 
 import net.minecraft.block.Block;
 import net.minecraft.nbt.NbtString;
+import net.minecraft.registry.DefaultedRegistry;
+import net.minecraft.registry.Registries;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.registry.DefaultedRegistry;
-import net.minecraft.util.registry.Registry;
 
 public class BlockLoader implements ConfigLoader<NbtString, Block> {
 
-    private static final DefaultedRegistry<Block> registry = Registry.BLOCK;
+    private static final DefaultedRegistry<Block> registry = Registries.BLOCK;
 
     public NbtString save(Object value) {
         return NbtString.of(registry.getId(cast(value)).toString());

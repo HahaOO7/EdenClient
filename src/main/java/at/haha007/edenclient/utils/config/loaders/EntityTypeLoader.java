@@ -2,13 +2,13 @@ package at.haha007.edenclient.utils.config.loaders;
 
 import net.minecraft.entity.EntityType;
 import net.minecraft.nbt.NbtString;
+import net.minecraft.registry.DefaultedRegistry;
+import net.minecraft.registry.Registries;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.registry.DefaultedRegistry;
-import net.minecraft.util.registry.Registry;
 
 public class EntityTypeLoader implements ConfigLoader<NbtString, EntityType<?>> {
 
-    private static final DefaultedRegistry<EntityType<?>> registry = Registry.ENTITY_TYPE;
+    private static final DefaultedRegistry<EntityType<?>> registry = Registries.ENTITY_TYPE;
 
     public NbtString save(Object value) {
         return NbtString.of(registry.getId(cast(value)).toString());
