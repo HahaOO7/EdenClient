@@ -167,6 +167,7 @@ public class PerWorldConfig {
                     value = loader.load(nbt);
                 } catch (ClassCastException e) {
                     System.err.println("Error while loading " + field.getName() + " in class " + obj.getClass().getSimpleName());
+                    e.printStackTrace();
                     value = loader.load(loader.parse(annotation.value()));
                 }
                 field.set(obj, value);

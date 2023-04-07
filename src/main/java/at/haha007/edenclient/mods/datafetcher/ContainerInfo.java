@@ -189,7 +189,7 @@ public class ContainerInfo {
         @Override
         public ChestInfo load(NbtCompound tag) {
             ChestInfo chestInfo = new ChestInfo();
-            NbtCompound itemsCompound = tag.getCompound("items");
+            NbtElement itemsCompound = tag.get("items");
             chestInfo.items = PerWorldConfig.get().toObject(itemsCompound, ItemList.class);
             chestInfo.face = Direction.byName(tag.getString("direction"));
             return chestInfo;

@@ -6,7 +6,6 @@ public class StringUtils {
 
     public static String getWorldOrServerName() {
         net.minecraft.client.MinecraftClient mc = net.minecraft.client.MinecraftClient.getInstance();
-
         if (mc.isIntegratedServerRunning()) {
             net.minecraft.server.integrated.IntegratedServer server = mc.getServer();
 

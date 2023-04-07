@@ -58,11 +58,12 @@ public class AntiStrip {
 
     private ActionResult onInteractBlock(ClientPlayerEntity player, ClientWorld world, Hand hand, BlockHitResult blockHitResult) {
         if (!enabled) return ActionResult.PASS;
+        if (player.isCreative()) return ActionResult.PASS;
         if (!axeItems.contains((hand == Hand.MAIN_HAND ? player.getMainHandStack() : player.getOffHandStack()).getItem()))
             return ActionResult.PASS;
         Identifier id = Registries.BLOCK.getId(world.getBlockState(blockHitResult.getBlockPos()).getBlock());
-        RegistryKey<? extends Registry<Block>> registry = BlockTags.LOGS.registry();
         DynamicRegistryManager registryManager = world.getRegistryManager();
-        return registryManager.get(registry).containsId(id) ? ActionResult.FAIL : ActionResult.PASS;
+        RegistryKey<? extends Registry<Block>> logsRegistry = BlockTags.LOGS.registry();
+        return registryManager.get(logsRegistry).containsId(id) ? ActionResult.FAIL : ActionResult.PASS;
     }
 }
