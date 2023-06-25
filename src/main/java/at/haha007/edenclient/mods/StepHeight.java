@@ -8,7 +8,7 @@ import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import com.mojang.brigadier.arguments.FloatArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import net.minecraft.client.network.ClientCommandSource;
+import net.minecraft.client.multiplayer.ClientSuggestionProvider;
 
 import static at.haha007.edenclient.command.CommandManager.*;
 
@@ -27,7 +27,7 @@ public class StepHeight {
     }
 
     private void registerCommand() {
-        LiteralArgumentBuilder<ClientCommandSource> node = literal("estepheight");
+        LiteralArgumentBuilder<ClientSuggestionProvider> node = literal("estepheight");
         node.then(argument("height", FloatArgumentType.floatArg(0))
                         .executes(c -> {
                             stepHeight = c.getArgument("height", Float.class);
@@ -45,6 +45,6 @@ public class StepHeight {
     }
 
     private void update() {
-        PlayerUtils.getPlayer().setStepHeight(stepHeight);
+        PlayerUtils.getPlayer().setMaxUpStep(stepHeight);
     }
 }

@@ -1,18 +1,18 @@
 package at.haha007.edenclient.utils.config.loaders;
 
-import net.minecraft.nbt.NbtByte;
+import net.minecraft.nbt.ByteTag;
 
-public class BooleanLoader implements ConfigLoader<NbtByte, Boolean> {
-    public NbtByte save(Object value) {
-        return NbtByte.of(cast(value));
+public class BooleanLoader implements ConfigLoader<ByteTag, Boolean> {
+    public ByteTag save(Object value) {
+        return ByteTag.valueOf(cast(value));
     }
 
-    public Boolean load(NbtByte value) {
-        return value.byteValue() != 0;
+    public Boolean load(ByteTag value) {
+        return value.getAsByte() != 0;
     }
 
-    public NbtByte parse(String s) {
-        if (s.isEmpty()) return NbtByte.of(false);
-        return NbtByte.of(Boolean.parseBoolean(s));
+    public ByteTag parse(String s) {
+        if (s.isEmpty()) return ByteTag.valueOf(false);
+        return ByteTag.valueOf(Boolean.parseBoolean(s));
     }
 }

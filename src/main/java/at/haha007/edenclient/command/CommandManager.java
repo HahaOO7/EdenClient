@@ -11,16 +11,17 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import net.minecraft.client.network.ClientCommandSource;
-import net.minecraft.text.*;
-import net.minecraft.util.Formatting;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.multiplayer.ClientSuggestionProvider;
+import net.minecraft.network.chat.*;
+import net.minecraft.network.chat.contents.LiteralContents;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 public class CommandManager {
-    private static final Map<LiteralArgumentBuilder<ClientCommandSource>, MutableText[]> cmds = new HashMap<>();
-    private static final CommandDispatcher<ClientCommandSource> dispatcher = new CommandDispatcher<>();
+    private static final Map<LiteralArgumentBuilder<ClientSuggestionProvider>, MutableComponent[]> cmds = new HashMap<>();
+    private static final CommandDispatcher<ClientSuggestionProvider> dispatcher = new CommandDispatcher<>();
 
     static {
         registerCommand("ecmds");
@@ -28,31 +29,31 @@ public class CommandManager {
     }
 
     private static void registerCommand(String literal) {
-        LiteralArgumentBuilder<ClientCommandSource> node = literal(literal);
+        LiteralArgumentBuilder<ClientSuggestionProvider> node = literal(literal);
 
         node.executes(a -> {
-            PlayerUtils.sendModMessage(Text.literal(ChatColor.GOLD + "Click on the mod you need help for to receive help. To get all information for each feature use the github-wiki: ")
-                    .append(Text.literal(ChatColor.AQUA + "https://github.com/HahaOO7/EdenClient/wiki")
+            PlayerUtils.sendModMessage(Component.literal(ChatColor.GOLD + "Click on the mod you need help for to receive help. To get all information for each feature use the github-wiki: ")
+                    .append(Component.literal(ChatColor.AQUA + "https://github.com/HahaOO7/EdenClient/wiki")
                             .setStyle(Style.EMPTY
-                                    .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.of("Click to copy the link to the wiki.")))
+                                    .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.nullToEmpty("Click to copy the link to the wiki.")))
                                     .withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, "https://github.com/HahaOO7/EdenClient/wiki"))
                             )));
 
-            MutableText text = Text.literal("");
-            Iterator<MutableText> it = cmds.keySet().
+            MutableComponent text = Component.literal("");
+            Iterator<MutableComponent> it = cmds.keySet().
                     stream().
                     map(LiteralArgumentBuilder::getLiteral).
-                    map(Text::literal).
-                    map(t -> t.formatted(Formatting.GOLD)
-                            .styled(s -> s.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.of("Click for more info."))))
-                            .styled(s -> s.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/" + node.getLiteral() + " " + ((LiteralTextContent) t.getContent()).string())))).
+                    map(Component::literal).
+                    map(t -> t.withStyle(ChatFormatting.GOLD)
+                            .withStyle(s -> s.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.nullToEmpty("Click for more info."))))
+                            .withStyle(s -> s.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/" + node.getLiteral() + " " + ((LiteralContents) t.getContents()).text())))).
                     sorted(Comparator.comparing(Object::toString)).
                     toList().iterator();
 
             while (it.hasNext()) {
-                text.append(it.next().formatted(Formatting.GOLD));
+                text.append(it.next().withStyle(ChatFormatting.GOLD));
                 if (it.hasNext()) {
-                    text.append(Text.literal(", ").formatted(Formatting.AQUA));
+                    text.append(Component.literal(", ").withStyle(ChatFormatting.AQUA));
                 }
             }
 
@@ -69,7 +70,7 @@ public class CommandManager {
                 "/ecmds <command> or /ehelp <command>");
     }
 
-    private static int sendCommandHelp(CommandContext<ClientCommandSource> c) {
+    private static int sendCommandHelp(CommandContext<ClientSuggestionProvider> c) {
         String cmdName = c.getArgument("cmd", String.class);
         cmds.entrySet().stream()
                 .filter(e -> cmdName.equalsIgnoreCase(e.getKey().getLiteral()))
@@ -80,34 +81,34 @@ public class CommandManager {
         return 0;
     }
 
-    private static CompletableFuture<Suggestions> suggestCommands(CommandContext<ClientCommandSource> c, SuggestionsBuilder b) {
+    private static CompletableFuture<Suggestions> suggestCommands(CommandContext<ClientSuggestionProvider> c, SuggestionsBuilder b) {
         cmds.keySet().forEach(cmd -> b.suggest(cmd.getLiteral()));
         return b.buildFuture();
     }
 
-    public static void register(CommandDispatcher<ClientCommandSource> dispatcher) {
+    public static void register(CommandDispatcher<ClientSuggestionProvider> dispatcher) {
         cmds.keySet().forEach(dispatcher::register);
     }
 
-    public static void register(LiteralArgumentBuilder<ClientCommandSource> command, MutableText... usage) {
+    public static void register(LiteralArgumentBuilder<ClientSuggestionProvider> command, MutableComponent... usage) {
         cmds.put(command, usage);
         dispatcher.register(command);
     }
 
-    public static void register(LiteralArgumentBuilder<ClientCommandSource> command, String... usage) {
-        MutableText[] usg = usage == null ? null : Arrays.stream(usage).map(ChatColor::translateColors).toArray(MutableText[]::new);
+    public static void register(LiteralArgumentBuilder<ClientSuggestionProvider> command, String... usage) {
+        MutableComponent[] usg = usage == null ? null : Arrays.stream(usage).map(ChatColor::translateColors).toArray(MutableComponent[]::new);
         register(command, usg);
     }
 
-    public static void register(LiteralArgumentBuilder<ClientCommandSource> command) {
-        register(command, (MutableText[]) null);
+    public static void register(LiteralArgumentBuilder<ClientSuggestionProvider> command) {
+        register(command, (MutableComponent[]) null);
     }
 
-    public static LiteralArgumentBuilder<ClientCommandSource> literal(String s) {
+    public static LiteralArgumentBuilder<ClientSuggestionProvider> literal(String s) {
         return LiteralArgumentBuilder.literal(s);
     }
 
-    public static <T> RequiredArgumentBuilder<ClientCommandSource, T> argument(String name, ArgumentType<T> type) {
+    public static <T> RequiredArgumentBuilder<ClientSuggestionProvider, T> argument(String name, ArgumentType<T> type) {
         return RequiredArgumentBuilder.argument(name, type);
     }
 
@@ -116,7 +117,7 @@ public class CommandManager {
     }
 
 
-    public static void execute(String command, ClientCommandSource clientCommandSource) {
+    public static void execute(String command, ClientSuggestionProvider clientCommandSource) {
         try {
             dispatcher.execute(command, clientCommandSource);
         } catch (CommandSyntaxException e) {

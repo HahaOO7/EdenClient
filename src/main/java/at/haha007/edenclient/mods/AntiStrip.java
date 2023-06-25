@@ -4,22 +4,22 @@ import at.haha007.edenclient.callbacks.PlayerInteractBlockCallback;
 import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
-import net.minecraft.block.Block;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.item.Item;
-import net.minecraft.item.Items;
-import net.minecraft.registry.DynamicRegistryManager;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.tag.BlockTags;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.hit.BlockHitResult;
-
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import java.util.Set;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.Registry;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.phys.BlockHitResult;
 
 import static at.haha007.edenclient.command.CommandManager.literal;
 import static at.haha007.edenclient.command.CommandManager.register;
@@ -56,14 +56,14 @@ public class AntiStrip {
                 "AntiStrip disables stripping of wood with any axe.");
     }
 
-    private ActionResult onInteractBlock(ClientPlayerEntity player, ClientWorld world, Hand hand, BlockHitResult blockHitResult) {
-        if (!enabled) return ActionResult.PASS;
-        if (player.isCreative()) return ActionResult.PASS;
-        if (!axeItems.contains((hand == Hand.MAIN_HAND ? player.getMainHandStack() : player.getOffHandStack()).getItem()))
-            return ActionResult.PASS;
-        Identifier id = Registries.BLOCK.getId(world.getBlockState(blockHitResult.getBlockPos()).getBlock());
-        DynamicRegistryManager registryManager = world.getRegistryManager();
-        RegistryKey<? extends Registry<Block>> logsRegistry = BlockTags.LOGS.registry();
-        return registryManager.get(logsRegistry).containsId(id) ? ActionResult.FAIL : ActionResult.PASS;
+    private InteractionResult onInteractBlock(LocalPlayer player, ClientLevel world, InteractionHand hand, BlockHitResult blockHitResult) {
+        if (!enabled) return InteractionResult.PASS;
+        if (player.isCreative()) return InteractionResult.PASS;
+        if (!axeItems.contains((hand == InteractionHand.MAIN_HAND ? player.getMainHandItem() : player.getOffhandItem()).getItem()))
+            return InteractionResult.PASS;
+        ResourceLocation id = BuiltInRegistries.BLOCK.getKey(world.getBlockState(blockHitResult.getBlockPos()).getBlock());
+        RegistryAccess registryManager = world.registryAccess();
+        ResourceKey<? extends Registry<Block>> logsRegistry = BlockTags.LOGS.registry();
+        return registryManager.registryOrThrow(logsRegistry).containsKey(id) ? InteractionResult.FAIL : InteractionResult.PASS;
     }
 }

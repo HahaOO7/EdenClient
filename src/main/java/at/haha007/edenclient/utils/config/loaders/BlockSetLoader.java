@@ -2,35 +2,35 @@ package at.haha007.edenclient.utils.config.loaders;
 
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import at.haha007.edenclient.utils.config.wrappers.BlockSet;
-import net.minecraft.block.Block;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.nbt.NbtList;
-import net.minecraft.nbt.NbtString;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.StringTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.world.level.block.Block;
 
-public class BlockSetLoader implements ConfigLoader<NbtList, BlockSet> {
+public class BlockSetLoader implements ConfigLoader<ListTag, BlockSet> {
 
-    public NbtList save(Object value) {
+    public ListTag save(Object value) {
         BlockSet list = cast(value);
-        NbtList nbt = new NbtList();
+        ListTag nbt = new ListTag();
         for (Block item : list) {
             nbt.add(PerWorldConfig.get().toNbt(item));
         }
         return nbt;
     }
 
-    public BlockSet load(NbtList nbtElement) {
+    public BlockSet load(ListTag nbtElement) {
         BlockSet list = new BlockSet();
-        for (NbtElement nbt : nbtElement) {
+        for (Tag nbt : nbtElement) {
             list.add(PerWorldConfig.get().toObject(nbt, Block.class));
         }
         return list;
     }
 
-    public NbtList parse(String s) {
-        NbtList list = new NbtList();
+    public ListTag parse(String s) {
+        ListTag list = new ListTag();
         if (s.isEmpty()) return list;
         for (String it : s.split(",")) {
-            list.add(NbtString.of("minecraft:" + it));
+            list.add(StringTag.valueOf("minecraft:" + it));
         }
         return list;
     }

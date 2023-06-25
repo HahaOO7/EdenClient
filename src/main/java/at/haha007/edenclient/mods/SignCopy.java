@@ -7,22 +7,22 @@ import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import at.haha007.edenclient.utils.config.wrappers.StringList;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.SignBlockEntity;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.network.packet.c2s.play.UpdateSignC2SPacket;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.registry.tag.ItemTags;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import java.util.Arrays;
 import java.util.Objects;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.protocol.game.ServerboundSignUpdatePacket;
+import net.minecraft.tags.ItemTags;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.SignBlockEntity;
 
 import static at.haha007.edenclient.command.CommandManager.literal;
 import static at.haha007.edenclient.command.CommandManager.register;
@@ -55,19 +55,19 @@ public class SignCopy {
     }
 
     @SuppressWarnings("ConstantConditions")
-    private ActionResult onAttackBlock(ClientPlayerEntity entity, BlockPos pos, Direction side) {
-        if (!enabled) return ActionResult.PASS;
-        BlockEntity b = MinecraftClient.getInstance().world.getBlockEntity(pos);
-        Registry<Item> registry = entity.clientWorld.getRegistryManager().get(ItemTags.SIGNS.registry());
-        if (!registry.containsId(Registries.ITEM.getId(PlayerUtils.getPlayer().getInventory().getMainHandStack().getItem())))
-            return ActionResult.PASS;
+    private InteractionResult onAttackBlock(LocalPlayer entity, BlockPos pos, Direction side) {
+        if (!enabled) return InteractionResult.PASS;
+        BlockEntity b = Minecraft.getInstance().level.getBlockEntity(pos);
+        Registry<Item> registry = entity.clientLevel.registryAccess().registryOrThrow(ItemTags.SIGNS.registry());
+        if (!registry.containsKey(BuiltInRegistries.ITEM.getKey(PlayerUtils.getPlayer().getInventory().getSelected().getItem())))
+            return InteractionResult.PASS;
         if (!(b instanceof SignBlockEntity sign)) {
             shouldCopy = false;
-            return ActionResult.PASS;
+            return InteractionResult.PASS;
         }
         shouldCopy = true;
-        NbtCompound tag = new NbtCompound();
-        sign.readNbt(tag);
+        CompoundTag tag = new CompoundTag();
+        sign.load(tag);
         String[] copy = new String[4];
         copy[0] = getString(tag.getString("Text1"));
         copy[1] = getString(tag.getString("Text2"));
@@ -75,19 +75,20 @@ public class SignCopy {
         copy[3] = getString(tag.getString("Text4"));
         this.copy = new StringList();
         this.copy.addAll(Arrays.asList(copy));
-        return ActionResult.FAIL;
+        return InteractionResult.FAIL;
     }
 
-    private ActionResult onEditSign(ClientPlayerEntity player, SignBlockEntity sign) {
-        if (!enabled) return ActionResult.PASS;
-        if (!shouldCopy) return ActionResult.PASS;
-        UpdateSignC2SPacket packet = new UpdateSignC2SPacket(sign.getPos(),
+    private InteractionResult onEditSign(LocalPlayer player, SignBlockEntity sign, boolean front) {
+        if (!enabled) return InteractionResult.PASS;
+        if (!shouldCopy) return InteractionResult.PASS;
+        ServerboundSignUpdatePacket packet = new ServerboundSignUpdatePacket(sign.getBlockPos(),
+                true,
                 copy.get(0).substring(0, copy.get(0).length() - 2),
                 copy.get(1).substring(0, copy.get(1).length() - 2),
                 copy.get(2).substring(0, copy.get(2).length() - 2),
                 copy.get(3).substring(0, copy.get(3).length() - 2));
-        Objects.requireNonNull(MinecraftClient.getInstance().getNetworkHandler()).sendPacket(packet);
-        return ActionResult.FAIL;
+        Objects.requireNonNull(Minecraft.getInstance().getConnection()).send(packet);
+        return InteractionResult.FAIL;
     }
 
 

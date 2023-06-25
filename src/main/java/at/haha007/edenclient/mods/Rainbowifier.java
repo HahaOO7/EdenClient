@@ -7,10 +7,9 @@ import at.haha007.edenclient.utils.config.PerWorldConfig;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import net.minecraft.client.network.ClientCommandSource;
-import net.minecraft.client.network.ClientPlayerEntity;
-
 import java.util.List;
+import net.minecraft.client.multiplayer.ClientSuggestionProvider;
+import net.minecraft.client.player.LocalPlayer;
 
 import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
@@ -27,7 +26,7 @@ public class Rainbowifier {
     }
 
     private void registerCommand() {
-        LiteralArgumentBuilder<ClientCommandSource> node = literal("erainbowify");
+        LiteralArgumentBuilder<ClientSuggestionProvider> node = literal("erainbowify");
 
         node.then(literal("fancy").then(argument("input", StringArgumentType.greedyString()).executes(c -> {
             String input = c.getArgument("input", String.class);
@@ -36,8 +35,8 @@ public class Rainbowifier {
                 sendModMessage(ChatColor.GOLD + "Your message is too long.");
                 return 0;
             }
-            ClientPlayerEntity entityPlayer = PlayerUtils.getPlayer();
-            entityPlayer.networkHandler.sendChatMessage(rainbowifyMessageFancy(input));
+            LocalPlayer entityPlayer = PlayerUtils.getPlayer();
+            entityPlayer.connection.sendChat(rainbowifyMessageFancy(input));
             return 1;
         })));
 
@@ -48,8 +47,8 @@ public class Rainbowifier {
                 sendModMessage(ChatColor.GOLD + "Your message is too long.");
                 return 0;
             }
-            ClientPlayerEntity entityPlayer = PlayerUtils.getPlayer();
-            entityPlayer.networkHandler.sendChatMessage(rainbowifyMessageSimple(input));
+            LocalPlayer entityPlayer = PlayerUtils.getPlayer();
+            entityPlayer.connection.sendChat(rainbowifyMessageSimple(input));
             return 1;
         })));
 
@@ -64,8 +63,8 @@ public class Rainbowifier {
                     return 0;
                 }
             }
-            ClientPlayerEntity entityPlayer = PlayerUtils.getPlayer();
-            entityPlayer.networkHandler.sendChatMessage(message);
+            LocalPlayer entityPlayer = PlayerUtils.getPlayer();
+            entityPlayer.connection.sendChat(message);
             return 1;
         }))));
 
@@ -79,8 +78,8 @@ public class Rainbowifier {
                     return 0;
                 }
             }
-            ClientPlayerEntity entityPlayer = PlayerUtils.getPlayer();
-            entityPlayer.networkHandler.sendChatMessage(message);
+            LocalPlayer entityPlayer = PlayerUtils.getPlayer();
+            entityPlayer.connection.sendChat(message);
             return 1;
         })));
 

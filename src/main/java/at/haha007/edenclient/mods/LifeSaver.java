@@ -8,8 +8,8 @@ import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import net.minecraft.client.network.ClientCommandSource;
-import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.client.multiplayer.ClientSuggestionProvider;
+import net.minecraft.client.player.LocalPlayer;
 
 import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
@@ -31,7 +31,7 @@ public class LifeSaver {
     }
 
     private void registerCommand() {
-        LiteralArgumentBuilder<ClientCommandSource> node = literal("elifesaver");
+        LiteralArgumentBuilder<ClientSuggestionProvider> node = literal("elifesaver");
 
         node.then(literal("toggle").executes(c -> {
             enabled = !enabled;
@@ -55,23 +55,23 @@ public class LifeSaver {
                 "LifeSaver saves your life by teleporting you to a safe position when either your health or your y-coordinate reach below a certain value.");
     }
 
-    private void tick(ClientPlayerEntity clientPlayerEntity) {
+    private void tick(LocalPlayer clientPlayerEntity) {
         if (!enabled || schedulerRunning) return;
 
         if (clientPlayerEntity.getY() < height || clientPlayerEntity.getHealth() < health) {
-            ClientPlayerEntity entityPlayer = PlayerUtils.getPlayer();
+            LocalPlayer entityPlayer = PlayerUtils.getPlayer();
 
             sendModMessage("Trying to save your life!");
 
             schedulerRunning = true;
             Scheduler.get().scheduleSyncRepeating(() -> {
-                ClientPlayerEntity entity = PlayerUtils.getPlayer();
+                LocalPlayer entity = PlayerUtils.getPlayer();
                 if (entity.getY() > height && entity.getHealth() > health) {
                     sendModMessage("I hope I saved your life!");
                     schedulerRunning = false;
                     return false;
                 }
-                entityPlayer.networkHandler.sendChatMessage("/farmwelt");
+                entityPlayer.connection.sendChat("/farmwelt");
                 return true;
             }, 20, 0);
         }

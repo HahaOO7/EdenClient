@@ -7,15 +7,15 @@ import at.haha007.edenclient.utils.config.PerWorldConfig;
 import at.haha007.edenclient.utils.config.wrappers.StringVec3iMap;
 import at.haha007.edenclient.utils.tasks.*;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
-import net.minecraft.client.item.TooltipContext;
-import net.minecraft.client.network.ClientCommandSource;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.Vec3i;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.ContainerScreen;
+import net.minecraft.client.multiplayer.ClientSuggestionProvider;
+import net.minecraft.core.Vec3i;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.Container;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedList;
@@ -46,8 +46,8 @@ public class PlayerWarps {
         PerWorldConfig.get().register(this, "dataFetcher.playerWarps");
     }
 
-    LiteralArgumentBuilder<ClientCommandSource> registerCommand() {
-        LiteralArgumentBuilder<ClientCommandSource> cmd = CommandManager.literal("playerwarps");
+    LiteralArgumentBuilder<ClientSuggestionProvider> registerCommand() {
+        LiteralArgumentBuilder<ClientSuggestionProvider> cmd = CommandManager.literal("playerwarps");
         cmd.then(CommandManager.literal("shops").executes(c -> fetchData(shops, 10)));
         cmd.then(CommandManager.literal("builds").executes(c -> fetchData(builds, 12)));
         cmd.then(CommandManager.literal("farms").executes(c -> fetchData(farms, 14)));
@@ -79,9 +79,9 @@ public class PlayerWarps {
         q.add(new RunnableTask(() -> fetchData(tm, q, other, 16)));
         q.add(new RunnableTask(() -> fetchData(tm, q, hidden, 22)));
         q.add(new RunnableTask(() -> {
-            Screen screen = MinecraftClient.getInstance().currentScreen;
+            Screen screen = Minecraft.getInstance().screen;
             if (screen == null) return;
-            screen.close();
+            screen.onClose();
         }));
         fetchData(tm, q, all, 4);
         tm.start();
@@ -91,9 +91,9 @@ public class PlayerWarps {
     private int fetchData(Map<String, Vec3i> map, int slot) {
         TaskManager tm = new TaskManager(1000);
         fetchData(tm, new LinkedList<>(List.of(new RunnableTask(() -> {
-            Screen screen = MinecraftClient.getInstance().currentScreen;
+            Screen screen = Minecraft.getInstance().screen;
             if (screen == null) return;
-            screen.close();
+            screen.onClose();
         }))), map, slot);
         tm.start();
         return 1;
@@ -107,7 +107,7 @@ public class PlayerWarps {
         tm.then(new WaitForInventoryNameTask(Pattern.compile(". PlayerWarps - Seite 1/[0-9]{1,2}")));
         tm.then(new RunnableTask(() -> {
             Pattern pattern = Pattern.compile(". PlayerWarps - Seite 1/(?<pages>[0-9]{1,2})");
-            Screen screen = MinecraftClient.getInstance().currentScreen;
+            Screen screen = Minecraft.getInstance().screen;
             if (screen == null) return;
             Matcher matcher = pattern.matcher(screen.getTitle().getString());
             if (!matcher.matches()) return;
@@ -127,16 +127,16 @@ public class PlayerWarps {
 
 
     private void scanWarps(Map<String, Vec3i> map) {
-        Screen sc = MinecraftClient.getInstance().currentScreen;
+        Screen sc = Minecraft.getInstance().screen;
         if (sc == null) return;
-        if (!(sc instanceof GenericContainerScreen containerScreen)) return;
-        Inventory inventory = containerScreen.getScreenHandler().getInventory();
+        if (!(sc instanceof ContainerScreen containerScreen)) return;
+        Container inventory = containerScreen.getMenu().getContainer();
         for (int i = 0; i < 45; i++) {
-            ItemStack item = inventory.getStack(i);
+            ItemStack item = inventory.getItem(i);
             if (item == null) continue;
-            String name = item.getName().getString();
-            item.getTooltip(null, TooltipContext.Default.BASIC)
-                    .stream().map(Text::getString)
+            String name = item.getHoverName().getString();
+            item.getTooltipLines(null, TooltipFlag.Default.NORMAL)
+                    .stream().map(Component::getString)
                     .filter(s -> s.startsWith("Ort: world, "))
                     .findAny().ifPresent(s -> map.put(name, getPos(s)));
         }

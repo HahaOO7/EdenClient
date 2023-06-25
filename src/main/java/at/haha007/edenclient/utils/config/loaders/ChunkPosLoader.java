@@ -1,19 +1,19 @@
 package at.haha007.edenclient.utils.config.loaders;
 
-import net.minecraft.nbt.NbtIntArray;
-import net.minecraft.util.math.ChunkPos;
+import net.minecraft.nbt.IntArrayTag;
+import net.minecraft.world.level.ChunkPos;
 
-public class ChunkPosLoader implements ConfigLoader<NbtIntArray, ChunkPos> {
-    public NbtIntArray save(Object value) {
+public class ChunkPosLoader implements ConfigLoader<IntArrayTag, ChunkPos> {
+    public IntArrayTag save(Object value) {
         ChunkPos cp = cast(value);
-        return new NbtIntArray(new int[]{cp.x, cp.z});
+        return new IntArrayTag(new int[]{cp.x, cp.z});
     }
 
-    public ChunkPos load(NbtIntArray tag) {
-        return new ChunkPos(tag.get(0).intValue(), tag.get(1).intValue());
+    public ChunkPos load(IntArrayTag tag) {
+        return new ChunkPos(tag.get(0).getAsInt(), tag.get(1).getAsInt());
     }
 
-    public NbtIntArray parse(String s) {
-        return new NbtIntArray(new int[]{0, 0});
+    public IntArrayTag parse(String s) {
+        return new IntArrayTag(new int[]{0, 0});
     }
 }

@@ -1,24 +1,24 @@
 package at.haha007.edenclient.utils.config.loaders;
 
-import net.minecraft.entity.EntityType;
-import net.minecraft.nbt.NbtString;
-import net.minecraft.registry.DefaultedRegistry;
-import net.minecraft.registry.Registries;
-import net.minecraft.util.Identifier;
+import net.minecraft.core.DefaultedRegistry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.StringTag;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.EntityType;
 
-public class EntityTypeLoader implements ConfigLoader<NbtString, EntityType<?>> {
+public class EntityTypeLoader implements ConfigLoader<StringTag, EntityType<?>> {
 
-    private static final DefaultedRegistry<EntityType<?>> registry = Registries.ENTITY_TYPE;
+    private static final DefaultedRegistry<EntityType<?>> registry = BuiltInRegistries.ENTITY_TYPE;
 
-    public NbtString save(Object value) {
-        return NbtString.of(registry.getId(cast(value)).toString());
+    public StringTag save(Object value) {
+        return StringTag.valueOf(registry.getKey(cast(value)).toString());
     }
 
-    public EntityType<?> load(NbtString nbtElement) {
-        return registry.get(new Identifier(nbtElement.asString()));
+    public EntityType<?> load(StringTag nbtElement) {
+        return registry.get(new ResourceLocation(nbtElement.getAsString()));
     }
 
-    public NbtString parse(String s) {
-        return NbtString.of("minecraft:" + s);
+    public StringTag parse(String s) {
+        return StringTag.valueOf("minecraft:" + s);
     }
 }

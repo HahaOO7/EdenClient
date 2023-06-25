@@ -9,17 +9,21 @@ import at.haha007.edenclient.mods.datafetcher.DataFetcher;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientCommandSource;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.render.OverlayTexture;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.item.ItemRenderer;
-import net.minecraft.client.render.model.json.ModelTransformationMode;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.item.Item;
-import net.minecraft.util.math.*;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientSuggestionProvider;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.entity.ItemRenderer;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.core.Direction;
+import net.minecraft.core.Vec3i;
+import net.minecraft.util.Mth;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Quaternionf;
 
 import java.util.HashMap;
@@ -43,18 +47,18 @@ public class ContainerDisplay {
         registerCommand();
     }
 
-    private void tick(ClientPlayerEntity player) {
+    private void tick(LocalPlayer player) {
         if (!enabled) {
             return;
         }
-        ChunkPos chunkPos = player.getChunkPos();
+        ChunkPos chunkPos = player.chunkPosition();
         entries = new HashMap<>();
-        ChunkPos.stream(chunkPos, 2).forEach(cp -> entries.putAll(EdenClient.getMod(DataFetcher.class).getContainerInfo().getContainerInfo(cp)));
+        ChunkPos.rangeClosed(chunkPos, 2).forEach(cp -> entries.putAll(EdenClient.getMod(DataFetcher.class).getContainerInfo().getContainerInfo(cp)));
     }
 
     private void registerCommand() {
-        LiteralArgumentBuilder<ClientCommandSource> cmd = literal("econtainerdisplay");
-        LiteralArgumentBuilder<ClientCommandSource> toggle = literal("toggle");
+        LiteralArgumentBuilder<ClientSuggestionProvider> cmd = literal("econtainerdisplay");
+        LiteralArgumentBuilder<ClientSuggestionProvider> toggle = literal("toggle");
         toggle.executes(c -> {
             enabled = !enabled;
             sendModMessage(enabled ? "TileEntityEsp enabled" : "TileEntityEsp disabled");
@@ -71,37 +75,37 @@ public class ContainerDisplay {
         CommandManager.register(cmd, "Displays icons on top of containers.");
     }
 
-    private void renderWorld(MatrixStack matrixStack, VertexConsumerProvider.Immediate vertexConsumerProvider, float v) {
+    private void renderWorld(PoseStack matrixStack, MultiBufferSource.BufferSource vertexConsumerProvider, float v) {
         if (!enabled)
             return;
 
         RenderSystem.enableDepthTest();
 
         //get the item renderer
-        ItemRenderer itemRenderer = MinecraftClient.getInstance().getItemRenderer();
+        ItemRenderer itemRenderer = Minecraft.getInstance().getItemRenderer();
 
         //rendering
         entries.forEach((pos, chestInfo) -> {
-            matrixStack.push();
+            matrixStack.pushPose();
 
             //calculate looking direction, rendering offset and rendering angle
             final Direction direction = chestInfo.face();
-            final Vec3d offset = Vec3d.of(direction.getVector().add(1, 1, 1)).multiply(.5);
-            final Quaternionf rotation = direction.getRotationQuaternion();
+            final Vec3 offset = Vec3.atLowerCornerOf(direction.getNormal().offset(1, 1, 1)).scale(.5);
+            final Quaternionf rotation = direction.getRotation();
             if (direction.getAxis() == Direction.Axis.Y) {
-                Quaternionf horizontal = getPlayer().getHorizontalFacing().getRotationQuaternion();
-                horizontal.mul(Direction.NORTH.getRotationQuaternion());
+                Quaternionf horizontal = getPlayer().getDirection().getRotation();
+                horizontal.mul(Direction.NORTH.getRotation());
                 rotation.mul(horizontal);
-                rotation.mul(Direction.NORTH.getRotationQuaternion());
+                rotation.mul(Direction.NORTH.getRotation());
             } else {
-                rotation.mul(Direction.EAST.getRotationQuaternion());
-                rotation.rotateZ(-MathHelper.HALF_PI);
+                rotation.mul(Direction.EAST.getRotation());
+                rotation.rotateZ(-Mth.HALF_PI);
             }
 
             //move matrix to rendering position
-            matrixStack.translate(pos.getX() + offset.getX(), pos.getY() + offset.getY(), pos.getZ() + offset.getZ());
+            matrixStack.translate(pos.getX() + offset.x(), pos.getY() + offset.y(), pos.getZ() + offset.z());
             //rotate to look outwards
-            matrixStack.multiply(rotation);
+            matrixStack.mulPose(rotation);
             //scale item down
             List<Item> items = chestInfo.items();
             int loopCount = Math.min(items.size(), 9);
@@ -115,36 +119,36 @@ public class ContainerDisplay {
                     Item item = items.get(i);
                     int x = i / 3;
                     int y = i % 3;
-                    matrixStack.push();
+                    matrixStack.pushPose();
                     matrixStack.translate(1 - y, 1 - x, 0);
                     matrixStack.scale(.8f, .8f, .8f);
-                    itemRenderer.renderItem(
-                            item.getDefaultStack(),
-                            ModelTransformationMode.NONE,
+                    itemRenderer.render(
+                            item.getDefaultInstance(),
+                            ItemDisplayContext.NONE,
                             false,
                             matrixStack,
                             vertexConsumerProvider,
                             255,
-                            OverlayTexture.DEFAULT_UV,
-                            itemRenderer.getModels().getModel(item));
-                    matrixStack.pop();
+                            OverlayTexture.NO_OVERLAY,
+                            itemRenderer.getItemModelShaper().getItemModel(item));
+                    matrixStack.popPose();
                 }
             } else {
                 //one item -> render it BIG!
                 matrixStack.scale(.6f, .6f, .6f);
                 Item item = items.get(0);
 
-                itemRenderer.renderItem(
-                        item.getDefaultStack(),
-                        ModelTransformationMode.NONE,
+                itemRenderer.render(
+                        item.getDefaultInstance(),
+                        ItemDisplayContext.NONE,
                         false,
                         matrixStack,
                         vertexConsumerProvider,
                         255,
-                        OverlayTexture.DEFAULT_UV,
-                        itemRenderer.getModels().getModel(item));
+                        OverlayTexture.NO_OVERLAY,
+                        itemRenderer.getItemModelShaper().getItemModel(item));
             }
-            matrixStack.pop();
+            matrixStack.popPose();
         });
     }
 }

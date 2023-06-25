@@ -15,11 +15,10 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import net.minecraft.client.network.ClientCommandSource;
-
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
+import net.minecraft.client.multiplayer.ClientSuggestionProvider;
 
 import static at.haha007.edenclient.command.CommandManager.*;
 
@@ -94,7 +93,7 @@ public class Greetings {
     }
 
     private void registerCommand() {
-        LiteralArgumentBuilder<ClientCommandSource> cmd = literal("egreet");
+        LiteralArgumentBuilder<ClientSuggestionProvider> cmd = literal("egreet");
 
         /*
         MESSAGES FOR NEW PLAYERS
@@ -356,37 +355,37 @@ public class Greetings {
     }
 
     private CompletableFuture<Suggestions> suggestWelcomeBackPlayerMessages
-            (CommandContext<ClientCommandSource> clientCommandSourceCommandContext, SuggestionsBuilder suggestionsBuilder) {
+            (CommandContext<ClientSuggestionProvider> clientCommandSourceCommandContext, SuggestionsBuilder suggestionsBuilder) {
         welcomeBackPlayerMessages.forEach(suggestionsBuilder::suggest);
         return suggestionsBuilder.buildFuture();
     }
 
     private CompletableFuture<Suggestions> suggestWelcomeOldPlayerMessages
-            (CommandContext<ClientCommandSource> clientCommandSourceCommandContext, SuggestionsBuilder suggestionsBuilder) {
+            (CommandContext<ClientSuggestionProvider> clientCommandSourceCommandContext, SuggestionsBuilder suggestionsBuilder) {
         greetOldPlayerMessages.forEach(suggestionsBuilder::suggest);
         return suggestionsBuilder.buildFuture();
     }
 
     private CompletableFuture<Suggestions> suggestWelcomeNewPlayerMessages
-            (CommandContext<ClientCommandSource> clientCommandSourceCommandContext, SuggestionsBuilder suggestionsBuilder) {
+            (CommandContext<ClientSuggestionProvider> clientCommandSourceCommandContext, SuggestionsBuilder suggestionsBuilder) {
         welcomeNewPlayerMessages.forEach(suggestionsBuilder::suggest);
         return suggestionsBuilder.buildFuture();
     }
 
     private CompletableFuture<Suggestions> suggestIgnoredPlayers
-            (CommandContext<ClientCommandSource> clientCommandSourceCommandContext, SuggestionsBuilder suggestionsBuilder) {
+            (CommandContext<ClientSuggestionProvider> clientCommandSourceCommandContext, SuggestionsBuilder suggestionsBuilder) {
         ignoredPlayers.forEach(suggestionsBuilder::suggest);
         return suggestionsBuilder.buildFuture();
     }
 
     private CompletableFuture<Suggestions> suggestSpecificGreetMessagePlayers
-            (CommandContext<ClientCommandSource> clientCommandSourceCommandContext, SuggestionsBuilder suggestionsBuilder) {
+            (CommandContext<ClientSuggestionProvider> clientCommandSourceCommandContext, SuggestionsBuilder suggestionsBuilder) {
         specificPlayerGreetMessages.keySet().forEach(suggestionsBuilder::suggest);
         return suggestionsBuilder.buildFuture();
     }
 
     private CompletableFuture<Suggestions> suggestSpecificWBMessagePlayers
-            (CommandContext<ClientCommandSource> clientCommandSourceCommandContext, SuggestionsBuilder suggestionsBuilder) {
+            (CommandContext<ClientSuggestionProvider> clientCommandSourceCommandContext, SuggestionsBuilder suggestionsBuilder) {
         specificPlayerWBMessages.keySet().forEach(suggestionsBuilder::suggest);
         return suggestionsBuilder.buildFuture();
     }

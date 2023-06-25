@@ -2,10 +2,9 @@ package at.haha007.edenclient.callbacks;
 
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.EventFactory;
-import net.minecraft.client.gui.hud.ChatHudLine;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.text.Text;
-
+import net.minecraft.client.GuiMessage;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.network.chat.Component;
 import java.util.List;
 
 public interface AddChatMessageCallback {
@@ -19,29 +18,29 @@ public interface AddChatMessageCallback {
     void interact(ChatAddEvent event);
 
     class ChatAddEvent {
-        private final ClientPlayerEntity player;
-        private Text chatText;
-        private final List<ChatHudLine.Visible> chatLines;
+        private final LocalPlayer player;
+        private Component chatText;
+        private final List<GuiMessage.Line> chatLines;
 
-        public ChatAddEvent(ClientPlayerEntity player, Text chatText, List<ChatHudLine.Visible> chatLines) {
+        public ChatAddEvent(LocalPlayer player, Component chatText, List<GuiMessage.Line> chatLines) {
             this.player = player;
             this.chatText = chatText;
             this.chatLines = chatLines;
         }
 
-        public Text getChatText() {
+        public Component getChatText() {
             return chatText;
         }
 
-        public List<ChatHudLine.Visible> getChatLines() {
+        public List<GuiMessage.Line> getChatLines() {
             return chatLines;
         }
 
-        public ClientPlayerEntity getPlayer() {
+        public LocalPlayer getPlayer() {
             return player;
         }
 
-        public void setChatText(Text chatText) {
+        public void setChatText(Component chatText) {
             this.chatText = chatText;
         }
     }

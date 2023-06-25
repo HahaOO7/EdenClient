@@ -1,8 +1,7 @@
 package at.haha007.edenclient.utils.config.wrappers;
 
-import net.minecraft.entity.EntityType;
-
 import java.util.HashSet;
+import net.minecraft.world.entity.EntityType;
 
 public class EntityTypeSet extends HashSet<EntityType<?>> {
 }

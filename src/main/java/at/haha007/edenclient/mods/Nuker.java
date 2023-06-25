@@ -11,24 +11,28 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientCommandSource;
-import net.minecraft.client.network.ClientPlayNetworkHandler;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.network.ClientPlayerInteractionManager;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.command.argument.BlockPosArgumentType;
-import net.minecraft.command.argument.PosArgument;
-import net.minecraft.network.packet.c2s.play.HandSwingC2SPacket;
-import net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket;
-import net.minecraft.registry.Registries;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.util.Hand;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.*;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.client.multiplayer.ClientSuggestionProvider;
+import net.minecraft.client.multiplayer.MultiPlayerGameMode;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
+import net.minecraft.commands.arguments.coordinates.Coordinates;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.Vec3i;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
+import net.minecraft.network.protocol.game.ServerboundSwingPacket;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.Comparator;
 import java.util.List;
@@ -49,7 +53,7 @@ public class Nuker {
     @ConfigSubscriber("20")
     private int limit = 20;
     @ConfigSubscriber("-1000000,1000000,-1000000,1000000,-1000000,1000000")
-    private BlockBox area;
+    private BoundingBox area;
     private BlockPos target = null;
 
     public Nuker() {
@@ -59,7 +63,7 @@ public class Nuker {
     }
 
     private void registerCommand() {
-        LiteralArgumentBuilder<ClientCommandSource> cmd = literal("enuker");
+        LiteralArgumentBuilder<ClientSuggestionProvider> cmd = literal("enuker");
         cmd.then(literal("distance").then(argument("distance", DoubleArgumentType.doubleArg(0, 20)).executes(c -> {
                     distance = c.getArgument("distance", Double.class);
                     PlayerUtils.sendModMessage("Nuker distance is " + distance);
@@ -78,16 +82,16 @@ public class Nuker {
         })));
         cmd.then(literal("area")
                 .then(literal("max").executes(c -> {
-                    area = BlockBox.create(new Vec3i(-1000000,1000000,-1000000),new Vec3i(1000000,-1000000,1000000));
+                    area = BoundingBox.fromCorners(new Vec3i(-1000000,1000000,-1000000),new Vec3i(1000000,-1000000,1000000));
                     PlayerUtils.sendModMessage("Nuke area updated.");
                     return 1;
                 }))
-                .then(argument("min", BlockPosArgumentType.blockPos()).then(argument("max", BlockPosArgumentType.blockPos()).executes(c -> {
-                    ClientPlayerEntity player = PlayerUtils.getPlayer();
-                    ServerCommandSource cs = player.getCommandSource();
-                    BlockPos min = c.getArgument("min", PosArgument.class).toAbsoluteBlockPos(cs);
-                    BlockPos max = c.getArgument("max", PosArgument.class).toAbsoluteBlockPos(cs);
-                    area = BlockBox.create(min, max);
+                .then(argument("min", BlockPosArgument.blockPos()).then(argument("max", BlockPosArgument.blockPos()).executes(c -> {
+                    LocalPlayer player = PlayerUtils.getPlayer();
+                    CommandSourceStack cs = player.createCommandSourceStack();
+                    BlockPos min = c.getArgument("min", Coordinates.class).getBlockPos(cs);
+                    BlockPos max = c.getArgument("max", Coordinates.class).getBlockPos(cs);
+                    area = BoundingBox.fromCorners(min, max);
                     PlayerUtils.sendModMessage("Nuke area updated.");
                     return 1;
                 }))));
@@ -116,10 +120,10 @@ public class Nuker {
                 "Nuker destroys all blocks in reach (above your feet) in minimal time.");
     }
 
-    private ArgumentBuilder<ClientCommandSource, ?> addCommand() {
-        LiteralArgumentBuilder<ClientCommandSource> cmd = literal("add");
-        Registries.BLOCK.forEach(block -> {
-            String name = Registries.BLOCK.getId(block).getPath();
+    private ArgumentBuilder<ClientSuggestionProvider, ?> addCommand() {
+        LiteralArgumentBuilder<ClientSuggestionProvider> cmd = literal("add");
+        BuiltInRegistries.BLOCK.forEach(block -> {
+            String name = BuiltInRegistries.BLOCK.getKey(block).getPath();
             cmd.then(literal(name).executes(context -> {
                 filter.add(block);
                 PlayerUtils.sendModMessage("Added " + name);
@@ -129,28 +133,28 @@ public class Nuker {
         return cmd;
     }
 
-    private ArgumentBuilder<ClientCommandSource, ?> removeCommand() {
-        LiteralArgumentBuilder<ClientCommandSource> cmd = literal("remove");
+    private ArgumentBuilder<ClientSuggestionProvider, ?> removeCommand() {
+        LiteralArgumentBuilder<ClientSuggestionProvider> cmd = literal("remove");
         cmd.then(argument("type", StringArgumentType.word()).suggests((context, builder) -> {
             for (Block block : filter) {
-                builder.suggest(Registries.BLOCK.getId(block).getPath());
+                builder.suggest(BuiltInRegistries.BLOCK.getKey(block).getPath());
             }
             return builder.buildFuture();
         }).executes(context -> {
             String name = context.getArgument("type", String.class);
-            Identifier identifier = new Identifier(name);
-            filter.remove(Registries.BLOCK.get(identifier));
+            ResourceLocation identifier = new ResourceLocation(name);
+            filter.remove(BuiltInRegistries.BLOCK.get(identifier));
             PlayerUtils.sendModMessage("Removed " + name);
             return 1;
         }));
         return cmd;
     }
 
-    private void onTick(ClientPlayerEntity player) {
+    private void onTick(LocalPlayer player) {
         if (!enabled) return;
-        ClientPlayNetworkHandler nh = MinecraftClient.getInstance().getNetworkHandler();
-        BlockState air = Blocks.AIR.getDefaultState();
-        ClientPlayerInteractionManager im = MinecraftClient.getInstance().interactionManager;
+        ClientPacketListener nh = Minecraft.getInstance().getConnection();
+        BlockState air = Blocks.AIR.defaultBlockState();
+        MultiPlayerGameMode im = Minecraft.getInstance().gameMode;
         if (im == null) return;
         if (nh == null) return;
         if (limit > 1) {
@@ -158,44 +162,44 @@ public class Nuker {
             if (!minableBlocks.isEmpty()) {
                 target = null;
                 minableBlocks.forEach(p -> {
-                    nh.sendPacket(new PlayerActionC2SPacket(PlayerActionC2SPacket.Action.START_DESTROY_BLOCK, p, getHitDirectionForBlock(player, p)));
-                    nh.sendPacket(new PlayerActionC2SPacket(PlayerActionC2SPacket.Action.STOP_DESTROY_BLOCK, p, getHitDirectionForBlock(player, p)));
-                    player.clientWorld.setBlockState(p, air);
+                    nh.send(new ServerboundPlayerActionPacket(ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK, p, getHitDirectionForBlock(player, p)));
+                    nh.send(new ServerboundPlayerActionPacket(ServerboundPlayerActionPacket.Action.STOP_DESTROY_BLOCK, p, getHitDirectionForBlock(player, p)));
+                    player.clientLevel.setBlockAndUpdate(p, air);
                 });
-                nh.sendPacket(new HandSwingC2SPacket(Hand.MAIN_HAND));
+                nh.send(new ServerboundSwingPacket(InteractionHand.MAIN_HAND));
                 return;
             }
         }
 
-        if (target == null || Vec3d.ofCenter(target).distanceTo(player.getEyePos()) > distance) findTarget(player);
+        if (target == null || Vec3.atCenterOf(target).distanceTo(player.getEyePosition()) > distance) findTarget(player);
         if (target == null) return;
         Direction dir = getHitDirectionForBlock(player, target);
-        if (im.updateBlockBreakingProgress(target, dir))
-            nh.sendPacket(new HandSwingC2SPacket(Hand.MAIN_HAND));
+        if (im.continueDestroyBlock(target, dir))
+            nh.send(new ServerboundSwingPacket(InteractionHand.MAIN_HAND));
         else
             target = null;
     }
 
-    private void findTarget(ClientPlayerEntity player) {
-        ClientWorld world = player.clientWorld;
-        Vec3d playerPos = player.getEyePos();
+    private void findTarget(LocalPlayer player) {
+        ClientLevel world = player.clientLevel;
+        Vec3 playerPos = player.getEyePosition();
         Stream<BlockPos> stream = getNearby(player);
-        stream = stream.filter(p -> Vec3d.ofCenter(p).isInRange(playerPos, distance));
+        stream = stream.filter(p -> Vec3.atCenterOf(p).closerThan(playerPos, distance));
         stream = stream.filter(p -> player.getBlockY() <= p.getY());
-        stream = stream.filter(area::contains);
+        stream = stream.filter(area::isInside);
         stream = stream.filter(p -> !world.getBlockState(p).isAir());
         if (filterEnabled) {
             stream = stream.filter(p -> applyFilter(world.getBlockState(p).getBlock()));
         }
-        target = stream.map(BlockPos::new).min(Comparator.comparingDouble(p -> Vec3d.ofCenter(p).distanceTo(playerPos))).orElse(null);
+        target = stream.map(BlockPos::new).min(Comparator.comparingDouble(p -> Vec3.atCenterOf(p).distanceTo(playerPos))).orElse(null);
     }
 
-    private List<BlockPos> getInstantMinableBlocksInRange(ClientPlayerEntity player) {
-        ClientWorld world = player.clientWorld;
+    private List<BlockPos> getInstantMinableBlocksInRange(LocalPlayer player) {
+        ClientLevel world = player.clientLevel;
         Stream<BlockPos> stream = getNearby(player);
-        stream = stream.filter(p -> Vec3d.ofCenter(p).isInRange(player.getEyePos(), distance));
+        stream = stream.filter(p -> Vec3.atCenterOf(p).closerThan(player.getEyePosition(), distance));
         stream = stream.filter(p -> player.getBlockY() <= p.getY());
-        stream = stream.filter(area::contains);
+        stream = stream.filter(area::isInside);
         stream = stream.filter(p -> !world.getBlockState(p).isAir());
         stream = stream.filter(p -> instantMinable(p, player));
         if (filterEnabled) {
@@ -209,16 +213,16 @@ public class Nuker {
         return filter.contains(block);
     }
 
-    private boolean instantMinable(BlockPos pos, ClientPlayerEntity player) {
-        ClientWorld world = player.clientWorld;
+    private boolean instantMinable(BlockPos pos, LocalPlayer player) {
+        ClientLevel world = player.clientLevel;
         BlockState state = world.getBlockState(pos);
-        float delta = state.calcBlockBreakingDelta(player, world, pos);
+        float delta = state.getDestroyProgress(player, world, pos);
         return delta >= 1;
     }
 
-    private Stream<BlockPos> getNearby(ClientPlayerEntity player) {
-        BlockPos pos = player.getBlockPos();
+    private Stream<BlockPos> getNearby(LocalPlayer player) {
+        BlockPos pos = player.blockPosition();
         int dist = (int) (distance + 1);
-        return BlockPos.streamOutwards(pos, dist, dist, dist);
+        return BlockPos.withinManhattanStream(pos, dist, dist, dist);
     }
 }

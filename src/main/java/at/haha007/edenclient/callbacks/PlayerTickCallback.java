@@ -2,7 +2,7 @@ package at.haha007.edenclient.callbacks;
 
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.EventFactory;
-import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.client.player.LocalPlayer;
 
 public interface PlayerTickCallback {
     Event<PlayerTickCallback> EVENT = EventFactory.createArrayBacked(PlayerTickCallback.class,
@@ -12,5 +12,5 @@ public interface PlayerTickCallback {
                 }
             });
 
-    void interact(ClientPlayerEntity player);
+    void interact(LocalPlayer player);
 }

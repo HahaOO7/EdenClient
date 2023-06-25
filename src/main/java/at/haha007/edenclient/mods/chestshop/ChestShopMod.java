@@ -17,15 +17,18 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import net.minecraft.block.entity.SignBlockEntity;
-import net.minecraft.client.network.ClientCommandSource;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.text.*;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.util.math.Vec3i;
-import net.minecraft.world.chunk.ChunkManager;
-import net.minecraft.world.chunk.WorldChunk;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.multiplayer.ClientSuggestionProvider;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.Vec3i;
+import net.minecraft.network.chat.ClickEvent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.HoverEvent;
+import net.minecraft.network.chat.Style;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.block.entity.SignBlockEntity;
+import net.minecraft.world.level.chunk.ChunkSource;
+import net.minecraft.world.level.chunk.LevelChunk;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -58,17 +61,17 @@ public class ChestShopMod {
         PerWorldConfig.get().register(new ChestShopEntryLoader(), ChestShopEntry.class);
     }
 
-    private void tick(ClientPlayerEntity player) {
-        int[] chunk = {player.getChunkPos().x, player.getChunkPos().z};
+    private void tick(LocalPlayer player) {
+        int[] chunk = {player.chunkPosition().x, player.chunkPosition().z};
         if (Arrays.equals(this.chunk, chunk)) return;
         if (!searchEnabled) return;
         this.chunk = chunk;
         checkForShops(player);
     }
 
-    private void checkForShops(ChunkManager cm, ChunkPos chunk) {
-        if (!cm.isChunkLoaded(chunk.x, chunk.z)) return;
-        WorldChunk c = cm.getWorldChunk(chunk.x, chunk.z, false);
+    private void checkForShops(ChunkSource cm, ChunkPos chunk) {
+        if (!cm.hasChunk(chunk.x, chunk.z)) return;
+        LevelChunk c = cm.getChunk(chunk.x, chunk.z, false);
         if (c == null) return;
 
         shops.remove(chunk);
@@ -82,17 +85,17 @@ public class ChestShopMod {
         shops.put(chunk, cs);
     }
 
-    private void checkForShops(ClientPlayerEntity player, int radius) {
-        ChunkManager cm = player.clientWorld.getChunkManager();
-        ChunkPos.stream(player.getChunkPos(), radius).forEach(cp -> checkForShops(cm, cp));
+    private void checkForShops(LocalPlayer player, int radius) {
+        ChunkSource cm = player.clientLevel.getChunkSource();
+        ChunkPos.rangeClosed(player.chunkPosition(), radius).forEach(cp -> checkForShops(cm, cp));
     }
 
-    private void checkForShops(ClientPlayerEntity player) {
+    private void checkForShops(LocalPlayer player) {
         checkForShops(player, 5);
     }
 
     private void registerCommand(String name) {
-        LiteralArgumentBuilder<ClientCommandSource> node = literal(name);
+        LiteralArgumentBuilder<ClientSuggestionProvider> node = literal(name);
 
         node.then(literal("clear").executes(c -> {
             shops.clear();
@@ -149,14 +152,14 @@ public class ChestShopMod {
                     .limit(10)
                     .map(cs -> {
                         Optional<Map.Entry<String, Vec3i>> opw = getNearestPlayerWarp(cs.getPos());
-                        Style style = Style.EMPTY.withColor(Formatting.GOLD);
+                        Style style = Style.EMPTY.withColor(ChatFormatting.GOLD);
 
                         Vec3i pos = cs.getPos();
                         String cmd = EdenClient.getMod(GetTo.class).getCommandTo(pos);
-                        Text hoverText = Text.literal(opw.isPresent() ? opw.get().getKey() : "click me!").formatted(Formatting.GOLD);
+                        Component hoverText = Component.literal(opw.isPresent() ? opw.get().getKey() : "click me!").withStyle(ChatFormatting.GOLD);
                         style = style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hoverText));
                         style = style.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, cmd));
-                        return Text.literal(cs.formattedString(false)).setStyle(style);
+                        return Component.literal(cs.formattedString(false)).setStyle(style);
                     }).forEach(PlayerUtils::sendModMessage);
             return 1;
         })));
@@ -171,13 +174,13 @@ public class ChestShopMod {
                     .limit(10)
                     .map(cs -> {
                         Optional<Map.Entry<String, Vec3i>> opw = getNearestPlayerWarp(cs.getPos());
-                        Style style = Style.EMPTY.withColor(Formatting.GOLD);
+                        Style style = Style.EMPTY.withColor(ChatFormatting.GOLD);
                         Vec3i pos = cs.getPos();
                         String cmd = EdenClient.getMod(GetTo.class).getCommandTo(pos);
-                        Text hoverText = Text.literal(opw.isPresent() ? opw.get().getKey() : "click me!").formatted(Formatting.GOLD);
+                        Component hoverText = Component.literal(opw.isPresent() ? opw.get().getKey() : "click me!").withStyle(ChatFormatting.GOLD);
                         style = style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hoverText));
                         style = style.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, cmd));
-                        return Text.literal(cs.formattedString(true)).setStyle(style);
+                        return Component.literal(cs.formattedString(true)).setStyle(style);
                     })
                     .forEach(PlayerUtils::sendModMessage);
             return 1;
@@ -203,9 +206,9 @@ public class ChestShopMod {
                     bw.write(foundDisparity);
                     bw.newLine();
                 }
-                sendModMessage(Text.literal("Wrote file without errors. Saved at ").formatted(Formatting.GOLD).
-                        append(Text.literal(file.getAbsolutePath()).setStyle(Style.EMPTY.withColor(Formatting.GOLD)
-                                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.literal("Click to copy")))
+                sendModMessage(Component.literal("Wrote file without errors. Saved at ").withStyle(ChatFormatting.GOLD).
+                        append(Component.literal(file.getAbsolutePath()).setStyle(Style.EMPTY.withColor(ChatFormatting.GOLD)
+                                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("Click to copy")))
                                 .withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, file.getAbsolutePath())))));
             } catch (IOException e) {
                 sendModMessage("Error while writing file. See console for more info.");
@@ -274,9 +277,9 @@ public class ChestShopMod {
                     bw.write(line);
                     bw.newLine();
                 }
-                sendModMessage(Text.literal("Wrote file without errors. Saved at ").formatted(Formatting.GOLD).
-                        append(Text.literal(file.getAbsolutePath()).setStyle(Style.EMPTY.withColor(Formatting.GOLD)
-                                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.literal("Click to copy path")))
+                sendModMessage(Component.literal("Wrote file without errors. Saved at ").withStyle(ChatFormatting.GOLD).
+                        append(Component.literal(file.getAbsolutePath()).setStyle(Style.EMPTY.withColor(ChatFormatting.GOLD)
+                                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("Click to copy path")))
                                 .withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, file.getAbsolutePath())))));
             } catch (IOException e) {
                 sendModMessage("Error while writing file. See console for more info.");
@@ -362,16 +365,16 @@ public class ChestShopMod {
     }
 
     private Optional<Map.Entry<String, Vec3i>> getNearestPlayerWarp(Vec3i pos) {
-        return EdenClient.getMod(DataFetcher.class).getPlayerWarps().getAll().entrySet().stream().min(Comparator.comparingDouble(e -> e.getValue().getSquaredDistance(pos)));
+        return EdenClient.getMod(DataFetcher.class).getPlayerWarps().getAll().entrySet().stream().min(Comparator.comparingDouble(e -> e.getValue().distSqr(pos)));
     }
 
-    private CompletableFuture<Suggestions> suggestSell(CommandContext<ClientCommandSource> context, SuggestionsBuilder suggestionsBuilder) {
+    private CompletableFuture<Suggestions> suggestSell(CommandContext<ClientSuggestionProvider> context, SuggestionsBuilder suggestionsBuilder) {
         ChestShopItemNames itemNameMap = EdenClient.getMod(DataFetcher.class).getChestShopItemNames();
         shops.values().forEach(s -> s.stream().filter(ChestShopEntry::canSell).map(entry -> itemNameMap.getLongName(entry.getItem())).filter(Objects::nonNull).forEach(suggestionsBuilder::suggest));
         return suggestionsBuilder.buildFuture();
     }
 
-    private CompletableFuture<Suggestions> suggestBuy(CommandContext<ClientCommandSource> context, SuggestionsBuilder suggestionsBuilder) {
+    private CompletableFuture<Suggestions> suggestBuy(CommandContext<ClientSuggestionProvider> context, SuggestionsBuilder suggestionsBuilder) {
         ChestShopItemNames itemNameMap = EdenClient.getMod(DataFetcher.class).getChestShopItemNames();
         shops.values().forEach(s -> s.stream().filter(ChestShopEntry::canBuy).map(entry -> itemNameMap.getLongName(entry.getItem())).filter(Objects::nonNull).forEach(suggestionsBuilder::suggest));
         return suggestionsBuilder.buildFuture();

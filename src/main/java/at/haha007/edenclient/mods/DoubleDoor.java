@@ -4,23 +4,25 @@ import at.haha007.edenclient.callbacks.PlayerInteractBlockCallback;
 import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
-import net.minecraft.block.Block;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.network.packet.c2s.play.PlayerInteractBlockC2SPacket;
-import net.minecraft.registry.DynamicRegistryManager;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.tag.BlockTags;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec3d;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.Registry;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.protocol.game.ServerboundUseItemOnPacket;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 
 import static at.haha007.edenclient.command.CommandManager.literal;
 import static at.haha007.edenclient.command.CommandManager.register;
@@ -49,17 +51,17 @@ public class DoubleDoor {
                 "DoubleDoor opens multiple doors with one click.");
     }
 
-    private ActionResult onInteractBlock(ClientPlayerEntity player, ClientWorld world, Hand hand, BlockHitResult blockHitResult) {
-        if (!enabled) return ActionResult.PASS;
-        if (player.isSneaking()) return ActionResult.PASS;
-        if (hand != Hand.MAIN_HAND) return ActionResult.PASS;
+    private InteractionResult onInteractBlock(LocalPlayer player, ClientLevel world, InteractionHand hand, BlockHitResult blockHitResult) {
+        if (!enabled) return InteractionResult.PASS;
+        if (player.isShiftKeyDown()) return InteractionResult.PASS;
+        if (hand != InteractionHand.MAIN_HAND) return InteractionResult.PASS;
         BlockPos bp = blockHitResult.getBlockPos();
 
-        RegistryKey<? extends Registry<Block>> registryKey = BlockTags.DOORS.registry();
-        DynamicRegistryManager registryManager = world.getRegistryManager();
-        Registry<?> registry = registryManager.get(registryKey);
+        ResourceKey<? extends Registry<Block>> registryKey = BlockTags.DOORS.registry();
+        RegistryAccess registryManager = world.registryAccess();
+        Registry<?> registry = registryManager.registryOrThrow(registryKey);
 
-        if (noDoor(bp, registry, world)) return ActionResult.PASS;
+        if (noDoor(bp, registry, world)) return InteractionResult.PASS;
 
 
         clickPos(bp.north(), registry, world);
@@ -67,20 +69,20 @@ public class DoubleDoor {
         clickPos(bp.west(), registry, world);
         clickPos(bp.east(), registry, world);
 
-        return ActionResult.PASS;
+        return InteractionResult.PASS;
     }
 
-    private boolean noDoor(BlockPos bp, Registry<?> registry, ClientWorld world) {
-        Identifier id = Registries.BLOCK.getId(world.getBlockState(bp).getBlock());
-        return !registry.containsId(id);
+    private boolean noDoor(BlockPos bp, Registry<?> registry, ClientLevel world) {
+        ResourceLocation id = BuiltInRegistries.BLOCK.getKey(world.getBlockState(bp).getBlock());
+        return !registry.containsKey(id);
     }
 
-    private void clickPos(BlockPos target, Registry<?> registry, ClientWorld world) {
+    private void clickPos(BlockPos target, Registry<?> registry, ClientLevel world) {
         if (noDoor(target, registry, world)) return;
         BlockPos bp = new BlockPos(target);
         Direction dir = Direction.UP;
-        var nh = MinecraftClient.getInstance().getNetworkHandler();
+        var nh = Minecraft.getInstance().getConnection();
         if (nh == null) return;
-        nh.sendPacket(new PlayerInteractBlockC2SPacket(Hand.MAIN_HAND, new BlockHitResult(Vec3d.of(bp.offset(dir)), dir, bp, false),1));
+        nh.send(new ServerboundUseItemOnPacket(InteractionHand.MAIN_HAND, new BlockHitResult(Vec3.atLowerCornerOf(bp.relative(dir)), dir, bp, false),1));
     }
 }

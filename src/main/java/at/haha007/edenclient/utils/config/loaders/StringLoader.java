@@ -1,18 +1,18 @@
 package at.haha007.edenclient.utils.config.loaders;
 
-import net.minecraft.nbt.NbtString;
+import net.minecraft.nbt.StringTag;
 
-public class StringLoader implements ConfigLoader<NbtString, String> {
+public class StringLoader implements ConfigLoader<StringTag, String> {
 
-    public NbtString save(Object value) {
-        return NbtString.of(cast(value));
+    public StringTag save(Object value) {
+        return StringTag.valueOf(cast(value));
     }
 
-    public String load(NbtString nbtElement) {
-        return nbtElement.asString();
+    public String load(StringTag nbtElement) {
+        return nbtElement.getAsString();
     }
 
-    public NbtString parse(String s) {
-        return NbtString.of(s);
+    public StringTag parse(String s) {
+        return StringTag.valueOf(s);
     }
 }

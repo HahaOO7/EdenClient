@@ -1,17 +1,16 @@
 package at.haha007.edenclient.mods.chestshop;
 
 import at.haha007.edenclient.utils.config.loaders.ConfigLoader;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.nbt.NbtList;
-
 import java.util.Collection;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 
-public class ChestShopLoader implements ConfigLoader<NbtList, ChestShopMap> {
+public class ChestShopLoader implements ConfigLoader<ListTag, ChestShopMap> {
 
-    public NbtList save(Object value) {
+    public ListTag save(Object value) {
         ChestShopMap map = cast(value);
-        NbtList list = new NbtList();
+        ListTag list = new ListTag();
         map.values().stream()
                 .flatMap(Collection::stream)
                 .map(ChestShopEntry::toTag)
@@ -19,17 +18,17 @@ public class ChestShopLoader implements ConfigLoader<NbtList, ChestShopMap> {
         return list;
     }
 
-    public ChestShopMap load(NbtList tag) {
+    public ChestShopMap load(ListTag tag) {
         ChestShopMap map = new ChestShopMap();
-        for (NbtElement element : tag) {
-            ChestShopEntry entry = new ChestShopEntry((NbtCompound) element);
+        for (Tag element : tag) {
+            ChestShopEntry entry = new ChestShopEntry((CompoundTag) element);
             ChestShopSet set = map.computeIfAbsent(entry.getChunkPos(), k -> new ChestShopSet());
             set.add(entry);
         }
         return map;
     }
 
-    public NbtList parse(String s) {
-        return new NbtList();
+    public ListTag parse(String s) {
+        return new ListTag();
     }
 }

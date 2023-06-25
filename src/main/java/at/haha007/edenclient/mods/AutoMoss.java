@@ -3,29 +3,28 @@ package at.haha007.edenclient.mods;
 import at.haha007.edenclient.callbacks.JoinWorldCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import net.minecraft.block.Block;
-import net.minecraft.block.Blocks;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientCommandSource;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.network.ClientPlayerInteractionManager;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.item.Items;
-import net.minecraft.registry.DynamicRegistryManager;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.tag.BlockTags;
-import net.minecraft.util.Hand;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.Vec3i;
-
 import java.util.Optional;
 import java.util.stream.Stream;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.multiplayer.ClientSuggestionProvider;
+import net.minecraft.client.multiplayer.MultiPlayerGameMode;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.Registry;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.Vec3i;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 
 import static at.haha007.edenclient.command.CommandManager.literal;
 import static at.haha007.edenclient.command.CommandManager.register;
@@ -42,16 +41,16 @@ public class AutoMoss {
         registerCommand();
     }
 
-    private void tick(ClientPlayerEntity player) {
+    private void tick(LocalPlayer player) {
         if (!enabled || ((tick++) % 3 != 0)) {
             return;
         }
-        if (player.getInventory().getMainHandStack().getItem() != Items.BONE_MEAL)
+        if (player.getInventory().getSelected().getItem() != Items.BONE_MEAL)
             return;
-        ClientWorld world = player.clientWorld;
+        ClientLevel world = player.clientLevel;
         Optional<BlockPos> moss = getNearby(player)
                 .filter(bp -> world.getBlockState(bp).getBlock() == Blocks.MOSS_BLOCK)
-                .filter(bp -> world.getBlockState(bp.add(0, 1, 0)).getBlock() == Blocks.AIR)
+                .filter(bp -> world.getBlockState(bp.offset(0, 1, 0)).getBlock() == Blocks.AIR)
                 .filter(this::hasStoneNeighbor)
                 .findAny();
 
@@ -59,29 +58,29 @@ public class AutoMoss {
     }
 
     private boolean hasStoneNeighbor(BlockPos blockPos) {
-        ClientWorld world = getPlayer().clientWorld;
-        RegistryKey<? extends Registry<Block>> registry = BlockTags.MOSS_REPLACEABLE.registry();
-        DynamicRegistryManager manager = world.getRegistryManager();
-        for (BlockPos pos : BlockPos.iterate(blockPos.add(-1, -1, -1), blockPos.add(1, 1, 1))) {
-            Identifier id = Registries.BLOCK.getId(world.getBlockState(pos).getBlock());
-            if (manager.get(registry).containsId(id) && world.getBlockState(pos.add(0, 1, 0)).getBlock() == Blocks.AIR)
+        ClientLevel world = getPlayer().clientLevel;
+        ResourceKey<? extends Registry<Block>> registry = BlockTags.MOSS_REPLACEABLE.registry();
+        RegistryAccess manager = world.registryAccess();
+        for (BlockPos pos : BlockPos.betweenClosed(blockPos.offset(-1, -1, -1), blockPos.offset(1, 1, 1))) {
+            ResourceLocation id = BuiltInRegistries.BLOCK.getKey(world.getBlockState(pos).getBlock());
+            if (manager.registryOrThrow(registry).containsKey(id) && world.getBlockState(pos.offset(0, 1, 0)).getBlock() == Blocks.AIR)
                 return true;
         }
         return false;
     }
 
-    private Stream<BlockPos> getNearby(ClientPlayerEntity player) {
-        BlockPos pos = player.getBlockPos();
+    private Stream<BlockPos> getNearby(LocalPlayer player) {
+        BlockPos pos = player.blockPosition();
         int dist = 5;
-        return BlockPos.streamOutwards(pos, dist, dist, dist);
+        return BlockPos.withinManhattanStream(pos, dist, dist, dist);
     }
 
     private void clickPos(Vec3i target) {
         BlockPos bp = new BlockPos(target);
         Direction dir = Direction.UP;
-        ClientPlayerInteractionManager im = MinecraftClient.getInstance().interactionManager;
+        MultiPlayerGameMode im = Minecraft.getInstance().gameMode;
         if (im == null) return;
-        im.interactBlock(getPlayer(), Hand.MAIN_HAND, new BlockHitResult(Vec3d.of(bp.offset(dir)), dir, bp, false));
+        im.useItemOn(getPlayer(), InteractionHand.MAIN_HAND, new BlockHitResult(Vec3.atLowerCornerOf(bp.relative(dir)), dir, bp, false));
     }
 
     private void build() {
@@ -89,7 +88,7 @@ public class AutoMoss {
     }
 
     private void registerCommand() {
-        LiteralArgumentBuilder<ClientCommandSource> cmd = literal("eautomoss");
+        LiteralArgumentBuilder<ClientSuggestionProvider> cmd = literal("eautomoss");
         cmd.executes(c -> {
             enabled = !enabled;
             sendModMessage(enabled ? "AutoMoss enabled" : "AutoMoss disabled");

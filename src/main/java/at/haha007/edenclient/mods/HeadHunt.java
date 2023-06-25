@@ -10,23 +10,28 @@ import at.haha007.edenclient.utils.RenderUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.*;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
-import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gl.VertexBuffer;
-import net.minecraft.client.network.ClientCommandSource;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.network.ClientPlayerInteractionManager;
-import net.minecraft.client.render.*;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.client.world.ClientChunkManager;
-import net.minecraft.util.Hand;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.*;
-import net.minecraft.world.chunk.WorldChunk;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientChunkCache;
+import net.minecraft.client.multiplayer.ClientSuggestionProvider;
+import net.minecraft.client.multiplayer.MultiPlayerGameMode;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.Vec3i;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
@@ -56,28 +61,28 @@ public class HeadHunt {
         registerCommand();
     }
 
-    private void tick(ClientPlayerEntity player) {
+    private void tick(LocalPlayer player) {
         if (!enabled) {
             heads = new HashSet<>();
             foundHeads = new HashSet<>();
             return;
         }
-        ChunkPos chunkPos = player.getChunkPos();
-        ClientChunkManager cm = player.clientWorld.getChunkManager();
-        BlockPos pp = player.getBlockPos();
-        heads = ChunkPos.stream(chunkPos, 20)
+        ChunkPos chunkPos = player.chunkPosition();
+        ClientChunkCache cm = player.clientLevel.getChunkSource();
+        BlockPos pp = player.blockPosition();
+        heads = ChunkPos.rangeClosed(chunkPos, 20)
                 .flatMap(cp -> {
-                    WorldChunk wc = cm.getWorldChunk(cp.x, cp.z, false);
+                    LevelChunk wc = cm.getChunk(cp.x, cp.z, false);
                     if (wc == null) return null;
                     return wc.getBlockEntities().entrySet().stream();
                 })
                 .filter(e -> e.getValue().getType() == BlockEntityType.SKULL)
                 .map(Map.Entry::getKey)
-                .sorted(Comparator.comparingDouble(pos -> pos.getSquaredDistance(pp)))
+                .sorted(Comparator.comparingDouble(pos -> pos.distSqr(pp)))
                 .limit(1000)
                 .map(v -> (Vec3i) v).collect(Collectors.toSet());
         heads.removeAll(foundHeads);
-        heads.stream().filter(bp -> player.getPos().squaredDistanceTo(Vec3d.ofCenter(bp)) < 20).forEach(this::clickPos);
+        heads.stream().filter(bp -> player.position().distanceToSqr(Vec3.atCenterOf(bp)) < 20).forEach(this::clickPos);
 
         System.out.println("Heads found: " + heads.size());
     }
@@ -85,9 +90,9 @@ public class HeadHunt {
     private void clickPos(Vec3i target) {
         BlockPos bp = new BlockPos(target);
         Direction dir = Direction.UP;
-        ClientPlayerInteractionManager im = MinecraftClient.getInstance().interactionManager;
+        MultiPlayerGameMode im = Minecraft.getInstance().gameMode;
         if (im == null) return;
-        im.interactBlock(getPlayer(), Hand.MAIN_HAND, new BlockHitResult(Vec3d.of(bp.offset(dir)), dir, bp, false));
+        im.useItemOn(getPlayer(), InteractionHand.MAIN_HAND, new BlockHitResult(Vec3.atLowerCornerOf(bp.relative(dir)), dir, bp, false));
         foundHeads.add(target);
         System.out.println("Head clicked: " + target);
     }
@@ -95,8 +100,8 @@ public class HeadHunt {
     private void build() {
         foundHeads.clear();
         enabled = false;
-        wireframeBox = new VertexBuffer();
-        Box bb = new Box(0, 0, 0, 1, 1, 1);
+        wireframeBox = new VertexBuffer(VertexBuffer.Usage.STATIC);
+        AABB bb = new AABB(0, 0, 0, 1, 1, 1);
         RenderUtils.drawOutlinedBox(bb, wireframeBox);
     }
 
@@ -107,8 +112,8 @@ public class HeadHunt {
     }
 
     private void registerCommand() {
-        LiteralArgumentBuilder<ClientCommandSource> cmd = literal("eheadhunt");
-        LiteralArgumentBuilder<ClientCommandSource> toggle = literal("toggle");
+        LiteralArgumentBuilder<ClientSuggestionProvider> cmd = literal("eheadhunt");
+        LiteralArgumentBuilder<ClientSuggestionProvider> toggle = literal("toggle");
         toggle.executes(c -> {
             enabled = !enabled;
             sendModMessage(enabled ? "HeadHunt enabled" : "HeadHunt disabled");
@@ -133,11 +138,11 @@ public class HeadHunt {
         register(cmd, "HeadHunt is a hack for head searching games.");
     }
 
-    RequiredArgumentBuilder<ClientCommandSource, Integer> arg(String key) {
+    RequiredArgumentBuilder<ClientSuggestionProvider, Integer> arg(String key) {
         return argument(key, IntegerArgumentType.integer(0, 255));
     }
 
-    private int setColor(CommandContext<ClientCommandSource> c) {
+    private int setColor(CommandContext<ClientSuggestionProvider> c) {
         this.r = c.getArgument("r", Integer.class) / 256f;
         this.g = c.getArgument("g", Integer.class) / 256f;
         this.b = c.getArgument("b", Integer.class) / 256f;
@@ -146,33 +151,33 @@ public class HeadHunt {
     }
 
 
-    private void render(MatrixStack matrixStack, VertexConsumerProvider.Immediate vertexConsumerProvider, float v) {
+    private void render(PoseStack matrixStack, MultiBufferSource.BufferSource vertexConsumerProvider, float v) {
         if (!enabled) return;
-        RenderSystem.setShader(GameRenderer::getPositionProgram);
+        RenderSystem.setShader(GameRenderer::getPositionShader);
         RenderSystem.setShaderColor(r, g, b, 1);
         if (tracer) {
-            matrixStack.push();
+            matrixStack.pushPose();
             matrixStack.translate(.5, .5, .5);
             Vector3f start = new Vector3f(RenderUtils.getCameraPos().add(PlayerUtils.getClientLookVec()).add(-.5, -.5, -.5).toVector3f());
-            Matrix4f matrix = matrixStack.peek().getPositionMatrix();
-            BufferBuilder bb = Tessellator.getInstance().getBuffer();
+            Matrix4f matrix = matrixStack.last().pose();
+            BufferBuilder bb = Tesselator.getInstance().getBuilder();
 
-            bb.begin(VertexFormat.DrawMode.DEBUG_LINES, VertexFormats.POSITION);
+            bb.begin(VertexFormat.Mode.DEBUG_LINES, DefaultVertexFormat.POSITION);
             for (Vec3i t : heads) {
-                bb.vertex(matrix, t.getX(), t.getY(), t.getZ()).next();
-                bb.vertex(matrix, start.x(), start.y(), start.z()).next();
+                bb.vertex(matrix, t.getX(), t.getY(), t.getZ()).endVertex();
+                bb.vertex(matrix, start.x(), start.y(), start.z()).endVertex();
             }
-            BufferRenderer.drawWithGlobalProgram(Objects.requireNonNull(bb.end()));
-            matrixStack.pop();
+            BufferUploader.drawWithShader(Objects.requireNonNull(bb.end()));
+            matrixStack.popPose();
         }
 
         heads.forEach(c -> {
-            matrixStack.push();
+            matrixStack.pushPose();
             matrixStack.translate(c.getX(), c.getY(), c.getZ());
             wireframeBox.bind();
-            wireframeBox.draw(matrixStack.peek().getPositionMatrix(), RenderSystem.getProjectionMatrix(), RenderSystem.getShader());
+            wireframeBox.drawWithShader(matrixStack.last().pose(), RenderSystem.getProjectionMatrix(), RenderSystem.getShader());
             VertexBuffer.unbind();
-            matrixStack.pop();
+            matrixStack.popPose();
         });
     }
 }

@@ -1,14 +1,14 @@
 package at.haha007.edenclient.utils.config.loaders;
 
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.text.Style;
-import net.minecraft.text.TextColor;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.TextColor;
 
-public class StyleLoader implements ConfigLoader<NbtCompound, Style> {
+public class StyleLoader implements ConfigLoader<CompoundTag, Style> {
     @Override
-    public NbtCompound save(Object value) {
+    public CompoundTag save(Object value) {
         Style s = cast(value);
-        NbtCompound tag = new NbtCompound();
+        CompoundTag tag = new CompoundTag();
         tag.putBoolean("bold", s.isBold());
         tag.putBoolean("obfuscated", s.isObfuscated());
         tag.putBoolean("italic", s.isItalic());
@@ -16,25 +16,25 @@ public class StyleLoader implements ConfigLoader<NbtCompound, Style> {
         tag.putBoolean("underlined", s.isUnderlined());
         TextColor rgb = s.getColor();
         if (rgb != null)
-            tag.putInt("rgb", rgb.getRgb());
+            tag.putInt("rgb", rgb.getValue());
         return tag;
     }
 
     @Override
-    public Style load(NbtCompound tag) {
+    public Style load(CompoundTag tag) {
         Style style = Style.EMPTY;
         style = style.withBold(tag.getBoolean("bold"));
         style = style.withObfuscated(tag.getBoolean("obfuscated"));
         style = style.withItalic(tag.getBoolean("italic"));
         style = style.withStrikethrough(tag.getBoolean("strikethrough"));
-        style = style.withUnderline(tag.getBoolean("underlined"));
+        style = style.withUnderlined(tag.getBoolean("underlined"));
         if (tag.contains("rgb"))
             style = style.withColor(tag.getInt("rgb"));
         return style;
     }
 
     @Override
-    public NbtCompound parse(String s) {
-        return new NbtCompound();
+    public CompoundTag parse(String s) {
+        return new CompoundTag();
     }
 }

@@ -9,21 +9,20 @@ import at.haha007.edenclient.utils.RenderUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexBuffer;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
-import net.minecraft.client.gl.VertexBuffer;
-import net.minecraft.client.network.ClientCommandSource;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.render.GameRenderer;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.entity.ItemEntity;
-import net.minecraft.util.math.Box;
-
 import java.util.ArrayList;
 import java.util.List;
+import net.minecraft.client.multiplayer.ClientSuggestionProvider;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.phys.AABB;
 
 import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
@@ -49,40 +48,40 @@ public class ItemEsp {
         PlayerTickCallback.EVENT.register(this::tick);
     }
 
-    private void tick(ClientPlayerEntity player) {
-        items = player.getEntityWorld().getEntitiesByClass(ItemEntity.class, player.getBoundingBox().expand(10000, 500, 10000), i -> true);
+    private void tick(LocalPlayer player) {
+        items = player.getCommandSenderWorld().getEntitiesOfClass(ItemEntity.class, player.getBoundingBox().inflate(10000, 500, 10000), i -> true);
     }
 
-    private void render(MatrixStack matrixStack, VertexConsumerProvider.Immediate vertexConsumerProvider, float tickDelta) {
+    private void render(PoseStack matrixStack, MultiBufferSource.BufferSource vertexConsumerProvider, float tickDelta) {
         if (!enabled) return;
-        RenderSystem.setShader(GameRenderer::getPositionProgram);
+        RenderSystem.setShader(GameRenderer::getPositionShader);
         RenderSystem.setShaderColor(r, g, b, 1);
         RenderSystem.disableDepthTest();
         Runnable drawBoxTask = solid ? () -> draw(solidBox, matrixStack) : () -> draw(wireframeBox, matrixStack);
         for (ItemEntity target : items) {
-            matrixStack.push();
+            matrixStack.pushPose();
             matrixStack.translate(
-                    target.prevX + (target.getX() - target.prevX) * tickDelta,
-                    target.prevY + (target.getY() - target.prevY) * tickDelta,
-                    target.prevZ + (target.getZ() - target.prevZ) * tickDelta
+                    target.xo + (target.getX() - target.xo) * tickDelta,
+                    target.yo + (target.getY() - target.yo) * tickDelta,
+                    target.zo + (target.getZ() - target.zo) * tickDelta
             );
             drawBoxTask.run();
-            matrixStack.pop();
+            matrixStack.popPose();
         }
     }
 
-    private void draw(VertexBuffer solidBox, MatrixStack matrixStack) {
+    private void draw(VertexBuffer solidBox, PoseStack matrixStack) {
         solidBox.bind();
-        solidBox.draw(matrixStack.peek().getPositionMatrix(), RenderSystem.getProjectionMatrix(), RenderSystem.getShader());
+        solidBox.drawWithShader(matrixStack.last().pose(), RenderSystem.getProjectionMatrix(), RenderSystem.getShader());
         VertexBuffer.unbind();
     }
 
     private void build() {
-        wireframeBox = new VertexBuffer();
-        Box bb = new Box(-0.25, -0.0, -0.25, 0.25, 0.5, 0.25);
+        wireframeBox = new VertexBuffer(VertexBuffer.Usage.STATIC);
+        AABB bb = new AABB(-0.25, -0.0, -0.25, 0.25, 0.5, 0.25);
         RenderUtils.drawOutlinedBox(bb, wireframeBox);
 
-        solidBox = new VertexBuffer();
+        solidBox = new VertexBuffer(VertexBuffer.Usage.STATIC);
         RenderUtils.drawSolidBox(bb, solidBox);
     }
 
@@ -93,7 +92,7 @@ public class ItemEsp {
     }
 
     private void registerCommand() {
-        LiteralArgumentBuilder<ClientCommandSource> node = literal("eitemesp");
+        LiteralArgumentBuilder<ClientSuggestionProvider> node = literal("eitemesp");
 
         node.then(literal("toggle").executes(c -> {
             enabled = !enabled;
@@ -124,11 +123,11 @@ public class ItemEsp {
                 "ItemESP allows for all items lying on the ground to be surrounded with their respective x-ray bounding boxes.");
     }
 
-    RequiredArgumentBuilder<ClientCommandSource, Integer> arg(String key) {
+    RequiredArgumentBuilder<ClientSuggestionProvider, Integer> arg(String key) {
         return argument(key, IntegerArgumentType.integer(0, 256));
     }
 
-    private void setColor(CommandContext<ClientCommandSource> c) {
+    private void setColor(CommandContext<ClientSuggestionProvider> c) {
         this.r = c.getArgument("r", Integer.class) / 256f;
         this.g = c.getArgument("g", Integer.class) / 256f;
         this.b = c.getArgument("b", Integer.class) / 256f;

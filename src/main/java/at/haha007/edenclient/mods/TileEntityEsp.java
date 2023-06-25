@@ -11,24 +11,24 @@ import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import at.haha007.edenclient.utils.config.wrappers.BlockEntityTypeSet;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.*;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
-import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.client.gl.VertexBuffer;
-import net.minecraft.client.network.ClientCommandSource;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.render.*;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.client.world.ClientChunkManager;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.util.math.Vec3i;
-import net.minecraft.world.chunk.WorldChunk;
+import net.minecraft.client.multiplayer.ClientChunkCache;
+import net.minecraft.client.multiplayer.ClientSuggestionProvider;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Registry;
+import net.minecraft.core.Vec3i;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.phys.AABB;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
@@ -63,30 +63,30 @@ public class TileEntityEsp {
         registerCommand();
     }
 
-    private void tick(ClientPlayerEntity player) {
+    private void tick(LocalPlayer player) {
         if (!enabled) {
             tileEntities = new ArrayList<>();
             return;
         }
-        ChunkPos chunkPos = player.getChunkPos();
-        ClientChunkManager cm = player.clientWorld.getChunkManager();
-        BlockPos pp = player.getBlockPos();
-        tileEntities = ChunkPos.stream(chunkPos, distance)
+        ChunkPos chunkPos = player.chunkPosition();
+        ClientChunkCache cm = player.clientLevel.getChunkSource();
+        BlockPos pp = player.blockPosition();
+        tileEntities = ChunkPos.rangeClosed(chunkPos, distance)
                 .flatMap(cp -> {
-                    WorldChunk wc = cm.getWorldChunk(cp.x, cp.z, false);
+                    LevelChunk wc = cm.getChunk(cp.x, cp.z, false);
                     if (wc == null) return null;
                     return wc.getBlockEntities().entrySet().stream();
                 })
                 .filter(e -> types.contains(e.getValue().getType()))
                 .map(Map.Entry::getKey)
-                .sorted(Comparator.comparingDouble(pos -> pos.getSquaredDistance(pp)))
+                .sorted(Comparator.comparingDouble(pos -> pos.distSqr(pp)))
                 .limit(maxCount)
                 .map(v -> (Vec3i) v).toList();
     }
 
     private void build() {
-        wireframeBox = new VertexBuffer();
-        Box bb = new Box(0, 0, 0, 1, 1, 1);
+        wireframeBox = new VertexBuffer(VertexBuffer.Usage.STATIC);
+        AABB bb = new AABB(0, 0, 0, 1, 1, 1);
         RenderUtils.drawOutlinedBox(bb, wireframeBox);
     }
 
@@ -96,18 +96,18 @@ public class TileEntityEsp {
     }
 
     private void registerCommand() {
-        LiteralArgumentBuilder<ClientCommandSource> cmd = literal("etileentityesp");
-        LiteralArgumentBuilder<ClientCommandSource> toggle = literal("toggle");
+        LiteralArgumentBuilder<ClientSuggestionProvider> cmd = literal("etileentityesp");
+        LiteralArgumentBuilder<ClientSuggestionProvider> toggle = literal("toggle");
         toggle.executes(c -> {
             enabled = !enabled;
             sendModMessage(enabled ? "TileEntityEsp enabled" : "TileEntityEsp disabled");
             return 1;
         });
 
-        Registry<BlockEntityType<?>> registry = Registries.BLOCK_ENTITY_TYPE;
+        Registry<BlockEntityType<?>> registry = BuiltInRegistries.BLOCK_ENTITY_TYPE;
 
         for (BlockEntityType<?> type : registry) {
-            toggle.then(literal(Objects.requireNonNull(registry.getId(type)).toString().replace("minecraft:", ""))
+            toggle.then(literal(Objects.requireNonNull(registry.getKey(type)).toString().replace("minecraft:", ""))
                     .executes(c -> {
                         if (types.contains(type)) {
                             types.remove(type);
@@ -146,7 +146,7 @@ public class TileEntityEsp {
 
         cmd.then(literal("list").executes(c -> {
             String str = types.stream()
-                    .map(Registries.BLOCK_ENTITY_TYPE::getId)
+                    .map(BuiltInRegistries.BLOCK_ENTITY_TYPE::getKey)
                     .map(String::valueOf)
                     .map(s -> s.substring(10))
                     .collect(Collectors.joining(", "));
@@ -174,11 +174,11 @@ public class TileEntityEsp {
                 "It is also possible to enable tracers and to switch between solid/transparent rendering.");
     }
 
-    RequiredArgumentBuilder<ClientCommandSource, Integer> arg(String key) {
+    RequiredArgumentBuilder<ClientSuggestionProvider, Integer> arg(String key) {
         return argument(key, IntegerArgumentType.integer(0, 255));
     }
 
-    private int setColor(CommandContext<ClientCommandSource> c) {
+    private int setColor(CommandContext<ClientSuggestionProvider> c) {
         this.r = c.getArgument("r", Integer.class) / 256f;
         this.g = c.getArgument("g", Integer.class) / 256f;
         this.b = c.getArgument("b", Integer.class) / 256f;
@@ -187,33 +187,33 @@ public class TileEntityEsp {
     }
 
 
-    private void render(MatrixStack matrixStack, VertexConsumerProvider.Immediate vertexConsumerProvider, float v) {
+    private void render(PoseStack matrixStack, MultiBufferSource.BufferSource vertexConsumerProvider, float v) {
         if (!enabled) return;
-        RenderSystem.setShader(GameRenderer::getPositionProgram);
+        RenderSystem.setShader(GameRenderer::getPositionShader);
         RenderSystem.setShaderColor(r, g, b, 1);
         if (tracer) {
-            matrixStack.push();
+            matrixStack.pushPose();
             matrixStack.translate(.5, .5, .5);
             Vector3f start = new Vector3f(RenderUtils.getCameraPos().add(PlayerUtils.getClientLookVec()).add(-.5, -.5, -.5).toVector3f());
-            Matrix4f matrix = matrixStack.peek().getPositionMatrix();
-            BufferBuilder bb = Tessellator.getInstance().getBuffer();
+            Matrix4f matrix = matrixStack.last().pose();
+            BufferBuilder bb = Tesselator.getInstance().getBuilder();
 
-            bb.begin(VertexFormat.DrawMode.DEBUG_LINES, VertexFormats.POSITION);
+            bb.begin(VertexFormat.Mode.DEBUG_LINES, DefaultVertexFormat.POSITION);
             for (Vec3i t : tileEntities) {
-                bb.vertex(matrix, t.getX(), t.getY(), t.getZ()).next();
-                bb.vertex(matrix, start.x(), start.y(), start.z()).next();
+                bb.vertex(matrix, t.getX(), t.getY(), t.getZ()).endVertex();
+                bb.vertex(matrix, start.x(), start.y(), start.z()).endVertex();
             }
-            BufferRenderer.drawWithGlobalProgram(Objects.requireNonNull(bb.end()));
-            matrixStack.pop();
+            BufferUploader.drawWithShader(Objects.requireNonNull(bb.end()));
+            matrixStack.popPose();
         }
 
         tileEntities.forEach(c -> {
-            matrixStack.push();
+            matrixStack.pushPose();
             matrixStack.translate(c.getX(), c.getY(), c.getZ());
             wireframeBox.bind();
-            wireframeBox.draw(matrixStack.peek().getPositionMatrix(), RenderSystem.getProjectionMatrix(), RenderSystem.getShader());
+            wireframeBox.drawWithShader(matrixStack.last().pose(), RenderSystem.getProjectionMatrix(), RenderSystem.getShader());
             VertexBuffer.unbind();
-            matrixStack.pop();
+            matrixStack.popPose();
         });
     }
 }

@@ -3,11 +3,11 @@ package at.haha007.edenclient.mixin;
 import at.haha007.edenclient.callbacks.PlayerEditSignCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.utils.PlayerUtils;
-import net.minecraft.block.entity.SignBlockEntity;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayNetworkHandler;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.util.ActionResult;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.level.block.entity.SignBlockEntity;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -16,21 +16,21 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 
-@Mixin(ClientPlayerEntity.class)
+@Mixin(LocalPlayer.class)
 public abstract class ClientPlayerMixin {
 
     @Shadow
     @Final
-    public ClientPlayNetworkHandler networkHandler;
+    public ClientPacketListener connection;
 
     @Shadow
     @Final
-    protected MinecraftClient client;
+    protected Minecraft minecraft;
 
-    @Inject(at = @At("HEAD"), method = "openEditSignScreen", cancellable = true)
-    private void onEditSign(SignBlockEntity sign, CallbackInfo info) {
-        ActionResult result = PlayerEditSignCallback.EVENT.invoker().interact(PlayerUtils.getPlayer(), sign);
-        if (result == ActionResult.FAIL) info.cancel();
+    @Inject(at = @At("HEAD"), method = "openTextEdit", cancellable = true)
+    private void onEditSign(SignBlockEntity sign, boolean front, CallbackInfo info) {
+        InteractionResult result = PlayerEditSignCallback.EVENT.invoker().interact(PlayerUtils.getPlayer(), sign, front);
+        if (result == InteractionResult.FAIL) info.cancel();
     }
 
     @Inject(at = @At("HEAD"), method = "tick")

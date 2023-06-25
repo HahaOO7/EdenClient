@@ -1,11 +1,11 @@
 package at.haha007.edenclient.mods.chestshop;
 
 import at.haha007.edenclient.utils.MathUtils;
-import net.minecraft.block.entity.SignBlockEntity;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.util.math.Vec3i;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Vec3i;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.block.entity.SignBlockEntity;
 
 public class ChestShopEntry {
     private Vec3i pos;
@@ -16,21 +16,21 @@ public class ChestShopEntry {
     private String item;
 
     public ChestShopEntry(SignBlockEntity sign) {
-        String[] lines = new String[4];
-        for (int i = 0; i < lines.length; i++) {
-            lines[i] = sign.getTextOnRow(i, false).getString().trim();
+        String[] linesFront = new String[4];
+        for (int i = 0; i < linesFront.length; i++) {
+            linesFront[i] = sign.getFrontText().getMessage(i, false).getString().trim();
         }
 
-        String player = lines[0];
+        String player = linesFront[0];
         if (player.isEmpty()) return;
 
-        if (!MathUtils.isInteger(lines[1])) return;
-        int amount = Integer.parseInt(lines[1]);
+        if (!MathUtils.isInteger(linesFront[1])) return;
+        int amount = Integer.parseInt(linesFront[1]);
 
-        String item = lines[3];
+        String item = linesFront[3];
         if (item.isEmpty()) return;
 
-        String[] prices = lines[2].toLowerCase().replaceAll("\\s", "").split(":");
+        String[] prices = linesFront[2].toLowerCase().replaceAll("\\s", "").split(":");
         for (String priceString : prices) {
             if (priceString.contains("b")) {
                 priceString = priceString.replace("b", "");
@@ -44,14 +44,14 @@ public class ChestShopEntry {
                 return;
             }
         }
-        pos = sign.getPos();
+        pos = sign.getBlockPos();
         this.amount = amount;
         this.isShop = canBuy() || canSell();
         this.owner = player;
         this.item = item.toLowerCase();
     }
 
-    public ChestShopEntry(NbtCompound tag) {
+    public ChestShopEntry(CompoundTag tag) {
         isShop = true;
         amount = tag.getInt("amount");
         int[] ints = tag.getIntArray("pos");
@@ -64,8 +64,8 @@ public class ChestShopEntry {
             sellPrice = tag.getInt("sellPrice");
     }
 
-    public NbtCompound toTag() {
-        NbtCompound tag = new NbtCompound();
+    public CompoundTag toTag() {
+        CompoundTag tag = new CompoundTag();
         tag.putIntArray("pos", new int[]{pos.getX(), pos.getY(), pos.getZ()});
         tag.putString("owner", owner);
         tag.putString("item", item);

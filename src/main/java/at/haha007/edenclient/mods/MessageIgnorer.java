@@ -8,9 +8,9 @@ import at.haha007.edenclient.utils.config.wrappers.StringList;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import net.minecraft.client.network.ClientCommandSource;
-import net.minecraft.text.*;
-import net.minecraft.util.Formatting;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.multiplayer.ClientSuggestionProvider;
+import net.minecraft.network.chat.*;
 
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -90,7 +90,7 @@ public class MessageIgnorer {
     }
 
     private void registerCommand(String cmd) {
-        LiteralArgumentBuilder<ClientCommandSource> node = literal(cmd);
+        LiteralArgumentBuilder<ClientSuggestionProvider> node = literal(cmd);
 
         node.then(literal("toggle").executes(c -> {
             enabled = !enabled;
@@ -117,12 +117,12 @@ public class MessageIgnorer {
         node.then(literal("remove").then(argument("index", IntegerArgumentType.integer(1)).executes(c -> {
             int index = c.getArgument("index", Integer.class) - 1;
             if (index >= regex.size()) {
-                MutableText prefix = Text.literal("Index out of bounds. Use ").formatted(Formatting.GOLD);
-                MutableText suggestion = Text.literal("/" + cmd + " list").setStyle(Style.EMPTY.
-                        withColor(Formatting.AQUA).
-                        withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.literal("click to execute"))).
+                MutableComponent prefix = Component.literal("Index out of bounds. Use ").withStyle(ChatFormatting.GOLD);
+                MutableComponent suggestion = Component.literal("/" + cmd + " list").setStyle(Style.EMPTY.
+                        withColor(ChatFormatting.AQUA).
+                        withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("click to execute"))).
                         withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/" + cmd + " list")));
-                MutableText suffix = Text.literal(" to see available indices.").formatted(Formatting.GOLD);
+                MutableComponent suffix = Component.literal(" to see available indices.").withStyle(ChatFormatting.GOLD);
                 sendModMessage(prefix.append(suggestion).append(suffix));
                 return -1;
             }
@@ -148,7 +148,7 @@ public class MessageIgnorer {
             return 1;
         }));
 
-        LiteralArgumentBuilder<ClientCommandSource> predefined = literal("predefined");
+        LiteralArgumentBuilder<ClientSuggestionProvider> predefined = literal("predefined");
         for (Predefined pre : Predefined.values()) {
             predefined.then(literal(pre.getKey()).executes(c -> {
                 boolean disable = isEnabled(pre);

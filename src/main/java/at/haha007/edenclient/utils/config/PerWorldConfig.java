@@ -6,18 +6,17 @@ import at.haha007.edenclient.callbacks.LeaveWorldCallback;
 import at.haha007.edenclient.utils.StringUtils;
 import at.haha007.edenclient.utils.config.loaders.*;
 import at.haha007.edenclient.utils.config.wrappers.*;
-import net.minecraft.block.Block;
-import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.entity.EntityType;
-import net.minecraft.item.Item;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
+import net.minecraft.core.Vec3i;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtIo;
-import net.minecraft.text.Style;
-import net.minecraft.util.math.BlockBox;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.util.math.Vec3i;
-
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Style;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -29,7 +28,7 @@ public class PerWorldConfig {
 
     private static PerWorldConfig INSTANCE;
     private final Map<String, Object> registered = new HashMap<>();
-    private final Map<Class<?>, ConfigLoader<NbtElement, ?>> loaders = new HashMap<>();
+    private final Map<Class<?>, ConfigLoader<Tag, ?>> loaders = new HashMap<>();
     //    private NbtCompound tag = new NbtCompound();
     private String worldName = "null";
     private final File folder;
@@ -53,7 +52,7 @@ public class PerWorldConfig {
         registered.put(path, obj);
     }
 
-    public void register(ConfigLoader<? extends NbtElement, ?> loader, Class<?> loadableType) {
+    public void register(ConfigLoader<? extends Tag, ?> loader, Class<?> loadableType) {
         loaders.put(loadableType, castLoader(loader));
     }
 
@@ -79,7 +78,7 @@ public class PerWorldConfig {
         register(new StringSetLoader(), StringSet.class);
         register(new StringStringMapLoader(), StringStringMap.class);
 
-        register(new BlockBoxLoader(), BlockBox.class);
+        register(new BlockBoxLoader(), BoundingBox.class);
 
         register(new BlockLoader(), Block.class);
         register(new BlockSetLoader(), BlockSet.class);
@@ -98,8 +97,8 @@ public class PerWorldConfig {
     }
 
     @SuppressWarnings("unchecked")
-    private ConfigLoader<NbtElement, ?> castLoader(Object object) {
-        return (ConfigLoader<NbtElement, ?>) object;
+    private ConfigLoader<Tag, ?> castLoader(Object object) {
+        return (ConfigLoader<Tag, ?>) object;
     }
 
     private void onLeave() {
@@ -122,20 +121,20 @@ public class PerWorldConfig {
     private void loadConfig() {
         File file = new File(folder, worldName + ".mca");
         if (!folder.exists()) folder.mkdirs();
-        NbtCompound tag = new NbtCompound();
+        CompoundTag tag = new CompoundTag();
         try {
-            tag = file.exists() ? NbtIo.readCompressed(file) : new NbtCompound();
+            tag = file.exists() ? NbtIo.readCompressed(file) : new CompoundTag();
         } catch (IOException e) {
             System.err.println("Error while loading PerWorldConfig: " + worldName);
         }
-        NbtCompound finalTag = tag;
+        CompoundTag finalTag = tag;
         registered.forEach((key, obj) -> load(getCompound(finalTag, key), obj));
     }
 
     private void saveConfig() {
-        NbtCompound tag = new NbtCompound();
+        CompoundTag tag = new CompoundTag();
         registered.forEach((key, obj) -> {
-            NbtCompound compound = getCompound(tag, key);
+            CompoundTag compound = getCompound(tag, key);
             save(compound, obj);
         });
         File file = new File(folder, worldName + ".mca");
@@ -148,12 +147,12 @@ public class PerWorldConfig {
     }
 
 
-    private void load(NbtCompound tag, Object obj) {
+    private void load(CompoundTag tag, Object obj) {
         for (Field field : obj.getClass().getDeclaredFields()) {
             var annotation = field.getDeclaredAnnotation(ConfigSubscriber.class);
             if (annotation == null) continue;
             Class<?> c = getClass(field);
-            ConfigLoader<NbtElement, ?> loader = getLoader(c);
+            ConfigLoader<Tag, ?> loader = getLoader(c);
             if (loader == null) {
                 System.err.println("Error loading config: No loader found for class: " + c.getCanonicalName());
                 continue;
@@ -161,7 +160,7 @@ public class PerWorldConfig {
             try {
                 field.setAccessible(true);
                 String fieldName = field.getName();
-                NbtElement nbt = tag.contains(fieldName) ? tag.get(fieldName) : loader.parse(annotation.value());
+                Tag nbt = tag.contains(fieldName) ? tag.get(fieldName) : loader.parse(annotation.value());
                 Object value;
                 try {
                     value = loader.load(nbt);
@@ -177,11 +176,11 @@ public class PerWorldConfig {
         }
     }
 
-    private void save(NbtCompound tag, Object obj) {
+    private void save(CompoundTag tag, Object obj) {
         for (Field field : obj.getClass().getDeclaredFields()) {
             if (!field.isAnnotationPresent(ConfigSubscriber.class)) continue;
             Class<?> c = getClass(field);
-            ConfigLoader<NbtElement, ?> loader = getLoader(c);
+            ConfigLoader<Tag, ?> loader = getLoader(c);
             if (loader == null) {
                 System.err.println("Error loading config: No loader found for class: " + c.getCanonicalName());
                 continue;
@@ -204,26 +203,26 @@ public class PerWorldConfig {
         return wrapperClasses.getOrDefault(clazz, clazz);
     }
 
-    private ConfigLoader<NbtElement, ?> getLoader(Class<?> clazz) {
+    private ConfigLoader<Tag, ?> getLoader(Class<?> clazz) {
         if (null == clazz) return null;
-        ConfigLoader<NbtElement, ?> loader = loaders.get(getClass(clazz));
+        ConfigLoader<Tag, ?> loader = loaders.get(getClass(clazz));
         if (loader == null) return getLoader(clazz.getSuperclass());
         return loader;
     }
 
-    private NbtCompound getCompound(NbtCompound root, String path) {
+    private CompoundTag getCompound(CompoundTag root, String path) {
         if (path.isEmpty()) return root;
         String[] a = path.split("\\.");
         for (String s : a) {
-            NbtCompound tag = root.getCompound(s);
+            CompoundTag tag = root.getCompound(s);
             root.put(s, tag);
             root = tag;
         }
         return root;
     }
 
-    public NbtElement toNbt(Object object) {
-        ConfigLoader<NbtElement, ?> loader = getLoader(object.getClass());
+    public Tag toNbt(Object object) {
+        ConfigLoader<Tag, ?> loader = getLoader(object.getClass());
         if (loader == null) {
             System.err.println("Error loading config: No loader found for class: " + object.getClass().getCanonicalName());
             return null;
@@ -231,8 +230,8 @@ public class PerWorldConfig {
         return loader.save(object);
     }
 
-    public <T> T toObject(NbtElement nbt, Class<T> type) {
-        ConfigLoader<NbtElement, ?> loader = getLoader(type);
+    public <T> T toObject(Tag nbt, Class<T> type) {
+        ConfigLoader<Tag, ?> loader = getLoader(type);
         if (loader == null) {
             System.err.println("Error loading config: No loader found for class: " + type.getCanonicalName());
             return null;

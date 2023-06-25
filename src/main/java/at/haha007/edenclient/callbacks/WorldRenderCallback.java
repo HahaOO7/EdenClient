@@ -1,10 +1,10 @@
 package at.haha007.edenclient.callbacks;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.EventFactory;
-import net.minecraft.client.render.Camera;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.client.Camera;
+import net.minecraft.client.renderer.MultiBufferSource;
 
 public interface WorldRenderCallback {
     Event<GameRenderCallback> EVENT = EventFactory.createArrayBacked(GameRenderCallback.class,
@@ -15,5 +15,5 @@ public interface WorldRenderCallback {
                 }
             });
 
-    void render(MatrixStack matrixStack, Camera camera, VertexConsumerProvider.Immediate vertexConsumerProvider, float tickDelta);
+    void render(PoseStack matrixStack, Camera camera, MultiBufferSource.BufferSource vertexConsumerProvider, float tickDelta);
 }

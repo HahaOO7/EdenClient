@@ -4,19 +4,18 @@ import at.haha007.edenclient.callbacks.InventoryOpenCallback;
 import at.haha007.edenclient.command.CommandManager;
 import com.mojang.authlib.GameProfile;
 import com.mojang.brigadier.CommandDispatcher;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.network.ClientCommandSource;
-import net.minecraft.client.network.ClientPlayNetworkHandler;
-import net.minecraft.client.network.ServerInfo;
-import net.minecraft.client.util.telemetry.WorldSession;
-import net.minecraft.command.CommandSource;
-import net.minecraft.item.ItemStack;
-import net.minecraft.network.ClientConnection;
-import net.minecraft.network.packet.s2c.play.ChatMessageS2CPacket;
-import net.minecraft.network.packet.s2c.play.CommandTreeS2CPacket;
-import net.minecraft.network.packet.s2c.play.GameMessageS2CPacket;
-import net.minecraft.network.packet.s2c.play.InventoryS2CPacket;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.client.multiplayer.ClientSuggestionProvider;
+import net.minecraft.client.multiplayer.ServerData;
+import net.minecraft.client.telemetry.WorldSessionTelemetryManager;
+import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.network.Connection;
+import net.minecraft.network.protocol.game.ClientboundCommandsPacket;
+import net.minecraft.network.protocol.game.ClientboundContainerSetContentPacket;
+import net.minecraft.network.protocol.game.ClientboundSystemChatPacket;
+import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -27,57 +26,51 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.List;
 
-@Mixin(ClientPlayNetworkHandler.class)
+@Mixin(ClientPacketListener.class)
 public class ClientPlayNetworkHandlerMixin {
     @Shadow
-    private CommandDispatcher<CommandSource> commandDispatcher;
+    private CommandDispatcher<SharedSuggestionProvider> commands;
     @Shadow
     @Final
-    private MinecraftClient client;
+    private Minecraft minecraft;
 
-    @Inject(method = "sendChatCommand", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "sendCommand", at = @At("HEAD"), cancellable = true)
     private void onSendCommand(String message, CallbackInfo ci) {
         if (!CommandManager.isClientSideCommand(message.split(" ")[0]))
             return;
-        CommandManager.execute(message, new ClientCommandSource(MinecraftClient.getInstance().getNetworkHandler(), client));
+        CommandManager.execute(message, new ClientSuggestionProvider(Minecraft.getInstance().getConnection(), minecraft));
         ci.cancel();
     }
 
 
-    @Inject(method = "onCommandTree", at = @At("RETURN"))
-    private void onCommandTree(CommandTreeS2CPacket packet, CallbackInfo info) {
+    @Inject(method = "handleCommands", at = @At("RETURN"))
+    private void onCommandTree(ClientboundCommandsPacket packet, CallbackInfo info) {
         addCommands();
     }
 
     @SuppressWarnings("unchecked")
     @Inject(method = "<init>", at = @At("RETURN"))
-    private void onConstruct(MinecraftClient client, Screen screen, ClientConnection connection, ServerInfo serverInfo, GameProfile profile, WorldSession worldSession, CallbackInfo ci) {
+    private void onConstruct(Minecraft client, Screen screen, Connection connection, ServerData serverInfo, GameProfile profile, WorldSessionTelemetryManager worldSession, CallbackInfo ci) {
         addCommands();
-        CommandManager.register((CommandDispatcher<ClientCommandSource>) (Object) commandDispatcher);
+        CommandManager.register((CommandDispatcher<ClientSuggestionProvider>) (Object) commands);
     }
 
-    @Inject(method = "onInventory", at = @At("HEAD"))
-    private void onInventory(InventoryS2CPacket packet, CallbackInfo ci) {
-        List<ItemStack> items = packet.getContents();
+    @Inject(method = "handleContainerContent", at = @At("HEAD"))
+    private void onInventory(ClientboundContainerSetContentPacket packet, CallbackInfo ci) {
+        List<ItemStack> items = packet.getItems();
         items = items.subList(0, items.size() - 36);
         InventoryOpenCallback.EVENT.invoker().open(items);
     }
 
-    @Inject(method = "onGameMessage", at = @At("HEAD"), cancellable = true)
-    void onGameMessage(GameMessageS2CPacket packet, CallbackInfo ci) {
+    @Inject(method = "handleSystemChat", at = @At("HEAD"), cancellable = true)
+    void onGameMessage(ClientboundSystemChatPacket packet, CallbackInfo ci) {
         ci.cancel();
-        client.getMessageHandler().onGameMessage(packet.content(), packet.overlay());
-    }
-
-    @Inject(method = "onChatMessage", at = @At("HEAD"), cancellable = true)
-    void onGameMessage(ChatMessageS2CPacket packet, CallbackInfo ci) {
-        ci.cancel();
-        client.getMessageHandler().onGameMessage(packet.unsignedContent(), false);
+        minecraft.getChatListener().handleSystemMessage(packet.content(), packet.overlay());
     }
 
     @Unique
     @SuppressWarnings("unchecked")
     private void addCommands() {
-        CommandManager.register((CommandDispatcher<ClientCommandSource>) (Object) commandDispatcher);
+        CommandManager.register((CommandDispatcher<ClientSuggestionProvider>) (Object) commands);
     }
 }

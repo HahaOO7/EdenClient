@@ -3,12 +3,12 @@ package at.haha007.edenclient.utils;
 import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.callbacks.JoinWorldCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
-import net.minecraft.client.network.ClientPlayerEntity;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
+import net.minecraft.client.player.LocalPlayer;
 
 public class Scheduler {
 
@@ -42,7 +42,7 @@ public class Scheduler {
         System.out.println("Scheduler tasks cleared");
     }
 
-    private synchronized void tick(ClientPlayerEntity clientPlayerEntity) {
+    private synchronized void tick(LocalPlayer clientPlayerEntity) {
         tick++;
         for (Runnable runnable : sync) {
             runnable.run();

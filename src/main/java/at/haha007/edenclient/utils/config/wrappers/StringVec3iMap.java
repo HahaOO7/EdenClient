@@ -1,6 +1,6 @@
 package at.haha007.edenclient.utils.config.wrappers;
 
-import net.minecraft.util.math.Vec3i;
+import net.minecraft.core.Vec3i;
 
 import java.util.HashMap;
 

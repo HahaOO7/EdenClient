@@ -11,17 +11,16 @@ import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import at.haha007.edenclient.utils.config.wrappers.BiStringStringMap;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import net.minecraft.client.network.ClientCommandSource;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.registry.DefaultedRegistry;
-import net.minecraft.registry.Registries;
-import net.minecraft.util.Identifier;
-
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import net.minecraft.client.multiplayer.ClientSuggestionProvider;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.DefaultedRegistry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
 
 import static at.haha007.edenclient.command.CommandManager.literal;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
@@ -68,15 +67,15 @@ public class ChestShopItemNames {
         return itemNameMap.getKey(longName);
     }
 
-    public LiteralArgumentBuilder<ClientCommandSource> registerCommand() {
-        LiteralArgumentBuilder<ClientCommandSource> mapItemNames = literal("mapitemnames");
+    public LiteralArgumentBuilder<ClientSuggestionProvider> registerCommand() {
+        LiteralArgumentBuilder<ClientSuggestionProvider> mapItemNames = literal("mapitemnames");
         mapItemNames.executes(c -> {
             sendModMessage("/datafetcher mapitemnames <start/check>");
             return 1;
         });
 
         mapItemNames.then(literal("start").executes(c -> {
-            ClientPlayerEntity entityPlayer = PlayerUtils.getPlayer();
+            LocalPlayer entityPlayer = PlayerUtils.getPlayer();
 
             if (nameLookupRunning) {
                 sendModMessage("Mapping of item names already running!");
@@ -90,10 +89,10 @@ public class ChestShopItemNames {
             mi.setEnabled(true);
 
 
-            DefaultedRegistry<Item> itemRegistry = Registries.ITEM;
+            DefaultedRegistry<Item> itemRegistry = BuiltInRegistries.ITEM;
             String[] minecraftIDs = itemRegistry.stream()
-                    .map(itemRegistry::getId)
-                    .map(Identifier::toString)
+                    .map(itemRegistry::getKey)
+                    .map(ResourceLocation::toString)
                     .map(itemName -> itemName.split(":")[1])
                     .map(itemName -> itemName.replace('_', ' '))
                     .map(String::toLowerCase)
@@ -116,7 +115,7 @@ public class ChestShopItemNames {
                 }
                 String item = minecraftIDs[i];
                 System.out.println("Mapping item:" + item);
-                entityPlayer.networkHandler.sendChatMessage("/iteminfo " + item);
+                entityPlayer.connection.sendChat("/iteminfo " + item);
                 if (i % 60 == 0) {
                     sendModMessage(ChatColor.GOLD + "Mapped " + ChatColor.AQUA + i + ChatColor.GOLD + " items of " + ChatColor.AQUA + minecraftIDs.length + ChatColor.GOLD + " this far.");
                 }

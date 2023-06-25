@@ -1,8 +1,8 @@
 package at.haha007.edenclient.mixinterface;
 
-import net.minecraft.screen.slot.Slot;
-import net.minecraft.screen.slot.SlotActionType;
+import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.inventory.Slot;
 
 public interface IHandledScreen {
-    void clickMouse(Slot slot, int slotId, int button, SlotActionType actionType);
+    void clickMouse(Slot slot, int slotId, int button, ClickType actionType);
 }

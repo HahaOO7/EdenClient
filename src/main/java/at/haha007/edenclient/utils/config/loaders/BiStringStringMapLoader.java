@@ -1,26 +1,26 @@
 package at.haha007.edenclient.utils.config.loaders;
 
 import at.haha007.edenclient.utils.config.wrappers.BiStringStringMap;
-import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.CompoundTag;
 
-public class BiStringStringMapLoader implements ConfigLoader<NbtCompound, BiStringStringMap> {
+public class BiStringStringMapLoader implements ConfigLoader<CompoundTag, BiStringStringMap> {
 
-    public NbtCompound save(Object value) {
-        NbtCompound tag = new NbtCompound();
+    public CompoundTag save(Object value) {
+        CompoundTag tag = new CompoundTag();
         cast(value).forEach(tag::putString);
         return tag;
     }
 
-    public BiStringStringMap load(NbtCompound tag) {
+    public BiStringStringMap load(CompoundTag tag) {
         BiStringStringMap list = new BiStringStringMap();
-        for (String key : tag.getKeys()) {
+        for (String key : tag.getAllKeys()) {
             list.put(key, tag.getString(key));
         }
         return list;
     }
 
-    public NbtCompound parse(String s) {
-        NbtCompound tag = new NbtCompound();
+    public CompoundTag parse(String s) {
+        CompoundTag tag = new CompoundTag();
         if (s.isEmpty()) return tag;
         String[] a = s.split(";");
         for (int i = 0; i < a.length; i++) {

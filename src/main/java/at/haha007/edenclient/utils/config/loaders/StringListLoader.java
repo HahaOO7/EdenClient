@@ -1,33 +1,33 @@
 package at.haha007.edenclient.utils.config.loaders;
 
 import at.haha007.edenclient.utils.config.wrappers.StringList;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.nbt.NbtList;
-import net.minecraft.nbt.NbtString;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.StringTag;
+import net.minecraft.nbt.Tag;
 
-public class StringListLoader implements ConfigLoader<NbtList, StringList> {
+public class StringListLoader implements ConfigLoader<ListTag, StringList> {
 
-    public NbtList save(Object value) {
-        NbtList list = new NbtList();
+    public ListTag save(Object value) {
+        ListTag list = new ListTag();
         for (String s : cast(value)) {
-            list.add(NbtString.of(s));
+            list.add(StringTag.valueOf(s));
         }
         return list;
     }
 
-    public StringList load(NbtList nbtElement) {
+    public StringList load(ListTag nbtElement) {
         StringList list = new StringList();
-        for (NbtElement element : nbtElement) {
-            list.add(element.asString());
+        for (Tag element : nbtElement) {
+            list.add(element.getAsString());
         }
         return list;
     }
 
-    public NbtList parse(String s) {
-        NbtList list = new NbtList();
+    public ListTag parse(String s) {
+        ListTag list = new ListTag();
         if (s.isEmpty()) return list;
         for (String v : s.split(";")) {
-            list.add(NbtString.of(v));
+            list.add(StringTag.valueOf(v));
         }
         return list;
     }

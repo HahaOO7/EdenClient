@@ -1,18 +1,18 @@
 package at.haha007.edenclient.utils.config.loaders;
 
-import net.minecraft.nbt.NbtDouble;
+import net.minecraft.nbt.DoubleTag;
 
-public class DoubleLoader implements ConfigLoader<NbtDouble, Double> {
+public class DoubleLoader implements ConfigLoader<DoubleTag, Double> {
 
-    public NbtDouble save(Object value) {
-        return NbtDouble.of(cast(value));
+    public DoubleTag save(Object value) {
+        return DoubleTag.valueOf(cast(value));
     }
 
-    public Double load(NbtDouble nbtElement) {
-        return nbtElement.doubleValue();
+    public Double load(DoubleTag nbtElement) {
+        return nbtElement.getAsDouble();
     }
 
-    public NbtDouble parse(String s) {
-        return NbtDouble.of(s.isEmpty() ? 0 : Double.parseDouble(s));
+    public DoubleTag parse(String s) {
+        return DoubleTag.valueOf(s.isEmpty() ? 0 : Double.parseDouble(s));
     }
 }

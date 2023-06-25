@@ -6,13 +6,17 @@ import at.haha007.edenclient.utils.MathUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.hud.ChatHud;
-import net.minecraft.client.gui.hud.ChatHudLine;
-import net.minecraft.client.network.ClientCommandSource;
-import net.minecraft.client.util.ChatMessages;
-import net.minecraft.text.*;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.client.GuiMessage;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.ChatComponent;
+import net.minecraft.client.gui.components.ComponentRenderUtils;
+import net.minecraft.client.multiplayer.ClientSuggestionProvider;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.HoverEvent;
+import net.minecraft.network.chat.Style;
+import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.util.FormattedCharSink;
+import net.minecraft.util.Mth;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -33,7 +37,7 @@ public class AntiSpam {
     }
 
     private void registerCommand() {
-        LiteralArgumentBuilder<ClientCommandSource> node = literal("eantispam");
+        LiteralArgumentBuilder<ClientSuggestionProvider> node = literal("eantispam");
         node.then(literal("toggle").executes(c -> {
             enabled = !enabled;
             sendModMessage(ChatColor.GOLD + (enabled ? "Antispam enabled" : "Antispam disabled"));
@@ -47,13 +51,13 @@ public class AntiSpam {
 
     private void onChat(AddChatMessageCallback.ChatAddEvent event) {
         if (!enabled) return;
-        List<ChatHudLine.Visible> chatLines = event.getChatLines();
-        Text chatText = event.getChatText();
+        List<GuiMessage.Line> chatLines = event.getChatLines();
+        Component chatText = event.getChatText();
         if (chatText == null) return;
         if (chatLines.isEmpty())
             return;
 
-        class JustGiveMeTheStringVisitor implements CharacterVisitor {
+        class JustGiveMeTheStringVisitor implements FormattedCharSink {
             final StringBuilder sb = new StringBuilder();
 
             @Override
@@ -68,11 +72,11 @@ public class AntiSpam {
             }
         }
 
-        ChatHud chat = MinecraftClient.getInstance().inGameHud.getChatHud();
+        ChatComponent chat = Minecraft.getInstance().gui.getChat();
         int maxTextLength =
-                MathHelper.floor(chat.getWidth() / chat.getChatScale());
-        List<OrderedText> newLines = ChatMessages.breakRenderedChatMessageLines(
-                chatText, maxTextLength, MinecraftClient.getInstance().textRenderer);
+                Mth.floor(chat.getWidth() / chat.getScale());
+        List<FormattedCharSequence> newLines = ComponentRenderUtils.wrapComponents(
+                chatText, maxTextLength, Minecraft.getInstance().font);
 
         int spamCounter = 1;
         int matchingLines = 0;
@@ -150,8 +154,8 @@ public class AntiSpam {
             matchingLines = 0;
         }
 
-        chatText = Text.literal("").append(chatText).append(Text.literal(" [x" + spamCounter + "]")
-                .setStyle(Style.EMPTY.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.literal(new SimpleDateFormat("hh:mm:ss").format(new Date()))))));
+        chatText = Component.literal("").append(chatText).append(Component.literal(" [x" + spamCounter + "]")
+                .setStyle(Style.EMPTY.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(new SimpleDateFormat("hh:mm:ss").format(new Date()))))));
 
         event.setChatText(chatText);
     }

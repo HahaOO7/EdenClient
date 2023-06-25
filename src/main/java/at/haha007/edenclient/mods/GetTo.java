@@ -9,19 +9,19 @@ import at.haha007.edenclient.mods.datafetcher.DataFetcher;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.RenderUtils;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.*;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import net.minecraft.client.gl.VertexBuffer;
-import net.minecraft.client.network.ClientCommandSource;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.render.*;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.command.argument.BlockPosArgumentType;
-import net.minecraft.command.argument.PosArgument;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.Vec3i;
+import net.minecraft.client.multiplayer.ClientSuggestionProvider;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
+import net.minecraft.commands.arguments.coordinates.Coordinates;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Vec3i;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 
 import java.util.Comparator;
@@ -48,44 +48,44 @@ public class GetTo {
     }
 
     private void build() {
-        vb = new VertexBuffer();
-        Box bb = new Box(0, 0, 0, 1, 1, 1);
+        vb = new VertexBuffer(VertexBuffer.Usage.STATIC);
+        AABB bb = new AABB(0, 0, 0, 1, 1, 1);
         RenderUtils.drawOutlinedBox(bb, vb);
     }
 
-    private void tick(ClientPlayerEntity player) {
+    private void tick(LocalPlayer player) {
         if (target == null) return;
-        if (player.getBlockPos().getSquaredDistance(target) < 10) target = null;
+        if (player.blockPosition().distSqr(target) < 10) target = null;
     }
 
-    private void render(MatrixStack matrixStack, VertexConsumerProvider.Immediate vertexConsumerProvider, float deltaTick) {
+    private void render(PoseStack matrixStack, MultiBufferSource.BufferSource vertexConsumerProvider, float deltaTick) {
         if (target == null) return;
-        RenderSystem.setShader(GameRenderer::getPositionProgram);
+        RenderSystem.setShader(GameRenderer::getPositionShader);
         RenderSystem.setShaderColor(1, 1, 1, 1);
         RenderSystem.disableDepthTest();
 
         if (box) {
-            matrixStack.push();
+            matrixStack.pushPose();
             matrixStack.translate(target.getX(), target.getY(), target.getZ());
-            this.vb.draw(matrixStack.peek().getPositionMatrix(), RenderSystem.getProjectionMatrix(), RenderSystem.getShader());
-            matrixStack.pop();
+            this.vb.drawWithShader(matrixStack.last().pose(), RenderSystem.getProjectionMatrix(), RenderSystem.getShader());
+            matrixStack.popPose();
         }
         if (tracer) {
-            Matrix4f matrix = matrixStack.peek().getPositionMatrix();
-            Vec3d start = RenderUtils.getCameraPos().add(PlayerUtils.getClientLookVec());
-            BufferBuilder bb = Tessellator.getInstance().getBuffer();
-            bb.begin(VertexFormat.DrawMode.DEBUG_LINES, VertexFormats.POSITION);
-            bb.vertex(matrix, target.getX() + .5f, target.getY() + .5f, target.getZ() + .5f).next();
-            bb.vertex(matrix, (float) start.x, (float) start.y, (float) start.z).next();
+            Matrix4f matrix = matrixStack.last().pose();
+            Vec3 start = RenderUtils.getCameraPos().add(PlayerUtils.getClientLookVec());
+            BufferBuilder bb = Tesselator.getInstance().getBuilder();
+            bb.begin(VertexFormat.Mode.DEBUG_LINES, DefaultVertexFormat.POSITION);
+            bb.vertex(matrix, target.getX() + .5f, target.getY() + .5f, target.getZ() + .5f).endVertex();
+            bb.vertex(matrix, (float) start.x, (float) start.y, (float) start.z).endVertex();
             RenderSystem.setShaderColor(1, 1, 1, 1);
-            BufferRenderer.drawWithGlobalProgram(bb.end());
+            BufferUploader.drawWithShader(bb.end());
         }
     }
 
     private void registerCommand() {
-        LiteralArgumentBuilder<ClientCommandSource> cmd = literal(commandName);
-        cmd.then(argument("target", BlockPosArgumentType.blockPos()).executes(c -> {
-            BlockPos pos = c.getArgument("target", PosArgument.class).toAbsoluteBlockPos(PlayerUtils.getPlayer().getCommandSource());
+        LiteralArgumentBuilder<ClientSuggestionProvider> cmd = literal(commandName);
+        cmd.then(argument("target", BlockPosArgument.blockPos()).executes(c -> {
+            BlockPos pos = c.getArgument("target", Coordinates.class).getBlockPos(PlayerUtils.getPlayer().createCommandSourceStack());
             getTo(pos, true, true, true);
             return 1;
         }).then(argument("tags", StringArgumentType.word()).suggests((c, b) -> {
@@ -96,7 +96,7 @@ public class GetTo {
             b.suggest("-tbp");
             return b.buildFuture();
         }).executes(c -> {
-            BlockPos pos = c.getArgument("target", PosArgument.class).toAbsoluteBlockPos(PlayerUtils.getPlayer().getCommandSource());
+            BlockPos pos = c.getArgument("target", Coordinates.class).getBlockPos(PlayerUtils.getPlayer().createCommandSourceStack());
             String tags = c.getArgument("tags", String.class);
             if (!tags.startsWith("-")) {
                 PlayerUtils.sendModMessage("/getto <target> -[t,b,p]");
@@ -131,13 +131,13 @@ public class GetTo {
     }
 
     private Optional<String> getNearestPlayerWarp(Vec3i pos) {
-        Vec3i pp = PlayerUtils.getPlayer().getBlockPos();
+        Vec3i pp = PlayerUtils.getPlayer().blockPosition();
         return EdenClient.getMod(DataFetcher.class).getPlayerWarps().getAll().entrySet().stream()
-                .min(Comparator.comparingDouble(e -> e.getValue().getSquaredDistance(pos)))
+                .min(Comparator.comparingDouble(e -> e.getValue().distSqr(pos)))
                 .map(e -> dist(pos, pp) < dist(e.getValue(), pos) ? null : e.getKey());
     }
 
     private double dist(Vec3i a, Vec3i b) {
-        return a.getSquaredDistance(b);
+        return a.distSqr(b);
     }
 }

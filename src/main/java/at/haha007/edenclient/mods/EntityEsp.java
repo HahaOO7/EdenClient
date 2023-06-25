@@ -11,22 +11,22 @@ import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import at.haha007.edenclient.utils.config.wrappers.EntityTypeSet;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.*;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
-import net.minecraft.client.gl.VertexBuffer;
-import net.minecraft.client.network.ClientCommandSource;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.render.*;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.registry.DefaultedRegistry;
-import net.minecraft.registry.Registries;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.client.multiplayer.ClientSuggestionProvider;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.core.DefaultedRegistry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 
 import java.util.ArrayList;
@@ -61,22 +61,22 @@ public class EntityEsp {
         registerCommand();
     }
 
-    private void tick(ClientPlayerEntity player) {
+    private void tick(LocalPlayer player) {
         if (!enabled) {
             entities = new ArrayList<>();
             return;
         }
-        entities = player.getEntityWorld().getEntitiesByClass(Entity.class,
-                player.getBoundingBox().expand(10000, 500, 10000),
+        entities = player.getCommandSenderWorld().getEntitiesOfClass(Entity.class,
+                player.getBoundingBox().inflate(10000, 500, 10000),
                 e -> entityTypes.contains(e.getType()) && e.isAlive() && e != player);
     }
 
     private void build() {
-        wireframeBox = new VertexBuffer();
-        Box bb = new Box(-0.5, 0, -0.5, 0.5, 1, 0.5);
+        wireframeBox = new VertexBuffer(VertexBuffer.Usage.STATIC);
+        AABB bb = new AABB(-0.5, 0, -0.5, 0.5, 1, 0.5);
         RenderUtils.drawOutlinedBox(bb, wireframeBox);
 
-        solidBox = new VertexBuffer();
+        solidBox = new VertexBuffer(VertexBuffer.Usage.STATIC);
         RenderUtils.drawSolidBox(bb, solidBox);
     }
 
@@ -87,23 +87,23 @@ public class EntityEsp {
     }
 
     private void registerCommand() {
-        LiteralArgumentBuilder<ClientCommandSource> cmd = literal("eentityesp");
-        LiteralArgumentBuilder<ClientCommandSource> toggle = literal("toggle");
+        LiteralArgumentBuilder<ClientSuggestionProvider> cmd = literal("eentityesp");
+        LiteralArgumentBuilder<ClientSuggestionProvider> toggle = literal("toggle");
         toggle.executes(c -> {
             enabled = !enabled;
             sendModMessage(enabled ? "EntityEsp enabled" : "EntityEsp disabled");
             return 1;
         });
 
-        DefaultedRegistry<EntityType<?>> registry = Registries.ENTITY_TYPE;
+        DefaultedRegistry<EntityType<?>> registry = BuiltInRegistries.ENTITY_TYPE;
         for (EntityType<?> type : registry) {
-            toggle.then(literal(registry.getId(type).toString().replace("minecraft:", "")).executes(c -> {
+            toggle.then(literal(registry.getKey(type).toString().replace("minecraft:", "")).executes(c -> {
                 if (!entityTypes.contains(type)) {
                     add(type);
-                    sendModMessage("Enabled EntityEsp for EntityType " + type.getUntranslatedName());
+                    sendModMessage("Enabled EntityEsp for EntityType " + type.toShortString());
                 } else {
                     remove(type);
-                    sendModMessage("Disabled EntityEsp for EntityType " + type.getUntranslatedName());
+                    sendModMessage("Disabled EntityEsp for EntityType " + type.toShortString());
                 }
                 return 1;
             }));
@@ -117,8 +117,8 @@ public class EntityEsp {
 
         cmd.then(literal("list").executes(c -> {
             String str = entityTypes.stream()
-                    .map(Registries.ENTITY_TYPE::getId)
-                    .map(Identifier::toString)
+                    .map(BuiltInRegistries.ENTITY_TYPE::getKey)
+                    .map(ResourceLocation::toString)
                     .map(s -> s.substring(10))
                     .collect(Collectors.joining(", "));
             sendModMessage(str);
@@ -144,11 +144,11 @@ public class EntityEsp {
                 "It is also possible to enable tracers and to switch between solid/transparent rendering.");
     }
 
-    RequiredArgumentBuilder<ClientCommandSource, Integer> arg(String key) {
+    RequiredArgumentBuilder<ClientSuggestionProvider, Integer> arg(String key) {
         return argument(key, IntegerArgumentType.integer(0, 255));
     }
 
-    private int setColor(CommandContext<ClientCommandSource> c) {
+    private int setColor(CommandContext<ClientSuggestionProvider> c) {
         this.r = c.getArgument("r", Integer.class) / 256f;
         this.g = c.getArgument("g", Integer.class) / 256f;
         this.b = c.getArgument("b", Integer.class) / 256f;
@@ -164,45 +164,45 @@ public class EntityEsp {
         entityTypes.add(type);
     }
 
-    private void render(MatrixStack matrixStack, VertexConsumerProvider.Immediate vertexConsumerProvider, float tickDelta) {
+    private void render(PoseStack matrixStack, MultiBufferSource.BufferSource vertexConsumerProvider, float tickDelta) {
         if (!enabled) return;
-        RenderSystem.setShader(GameRenderer::getPositionProgram);
+        RenderSystem.setShader(GameRenderer::getPositionShader);
         RenderSystem.setShaderColor(r, g, b, 1);
         RenderSystem.disableDepthTest();
         if (tracer) {
-            Vec3d start = RenderUtils.getCameraPos().add(PlayerUtils.getClientLookVec());
-            Matrix4f matrix = matrixStack.peek().getPositionMatrix();
-            BufferBuilder bb = Tessellator.getInstance().getBuffer();
+            Vec3 start = RenderUtils.getCameraPos().add(PlayerUtils.getClientLookVec());
+            Matrix4f matrix = matrixStack.last().pose();
+            BufferBuilder bb = Tesselator.getInstance().getBuilder();
 
-            bb.begin(VertexFormat.DrawMode.DEBUG_LINES, VertexFormats.POSITION);
+            bb.begin(VertexFormat.Mode.DEBUG_LINES, DefaultVertexFormat.POSITION);
             for (Entity target : entities) {
-                Vec3d t = new Vec3d(
-                        target.prevX + (target.getX() - target.prevX) * tickDelta,
-                        target.prevY + (target.getY() - target.prevY) * tickDelta,
-                        target.prevZ + (target.getZ() - target.prevZ) * tickDelta
+                Vec3 t = new Vec3(
+                        target.xo + (target.getX() - target.xo) * tickDelta,
+                        target.yo + (target.getY() - target.yo) * tickDelta,
+                        target.zo + (target.getZ() - target.zo) * tickDelta
                 );
-                bb.vertex(matrix, (float) t.x, (float) t.y, (float) t.z).next();
-                bb.vertex(matrix, (float) start.x, (float) start.y, (float) start.z).next();
+                bb.vertex(matrix, (float) t.x, (float) t.y, (float) t.z).endVertex();
+                bb.vertex(matrix, (float) start.x, (float) start.y, (float) start.z).endVertex();
             }
-            BufferRenderer.drawWithGlobalProgram(Objects.requireNonNull(bb.end()));
+            BufferUploader.drawWithShader(Objects.requireNonNull(bb.end()));
         }
         Runnable drawBoxTask = solid ? () -> draw(solidBox, matrixStack) : () -> draw(wireframeBox, matrixStack);
         for (Entity target : entities) {
-            matrixStack.push();
+            matrixStack.pushPose();
             matrixStack.translate(
-                    target.prevX + (target.getX() - target.prevX) * tickDelta,
-                    target.prevY + (target.getY() - target.prevY) * tickDelta,
-                    target.prevZ + (target.getZ() - target.prevZ) * tickDelta
+                    target.xo + (target.getX() - target.xo) * tickDelta,
+                    target.yo + (target.getY() - target.yo) * tickDelta,
+                    target.zo + (target.getZ() - target.zo) * tickDelta
             );
-            matrixStack.scale(target.getWidth(), target.getHeight(), target.getWidth());
+            matrixStack.scale(target.getBbWidth(), target.getBbHeight(), target.getBbWidth());
             drawBoxTask.run();
-            matrixStack.pop();
+            matrixStack.popPose();
         }
     }
 
-    private void draw(VertexBuffer solidBox, MatrixStack matrixStack) {
+    private void draw(VertexBuffer solidBox, PoseStack matrixStack) {
         solidBox.bind();
-        solidBox.draw(matrixStack.peek().getPositionMatrix(), RenderSystem.getProjectionMatrix(), RenderSystem.getShader());
+        solidBox.drawWithShader(matrixStack.last().pose(), RenderSystem.getProjectionMatrix(), RenderSystem.getShader());
         VertexBuffer.unbind();
     }
 

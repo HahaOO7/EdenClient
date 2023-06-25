@@ -3,11 +3,11 @@ package at.haha007.edenclient.mods;
 import at.haha007.edenclient.command.CommandManager;
 import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.PlayerUtils;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.visitor.NbtTextFormatter;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.TextComponentTagVisitor;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.item.ItemStack;
 
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
@@ -15,18 +15,18 @@ public class NbtInfo {
 
     public NbtInfo() {
         CommandManager.register(CommandManager.literal("enbt").executes(c -> {
-                    ClientPlayerEntity player = PlayerUtils.getPlayer();
-                    PlayerInventory inv = player.getInventory();
-                    ItemStack stack = inv.getMainHandStack();
+                    LocalPlayer player = PlayerUtils.getPlayer();
+                    Inventory inv = player.getInventory();
+                    ItemStack stack = inv.getSelected();
                     if (stack.isEmpty()) {
                         sendModMessage(ChatColor.GOLD + "Take an item in your hand!");
                     } else {
-                        NbtCompound tag = stack.getNbt();
+                        CompoundTag tag = stack.getTag();
                         if(tag == null){
                             sendModMessage(ChatColor.GOLD + "This item has no tag.");
                             return 1;
                         }
-                        sendModMessage(new NbtTextFormatter("", 1).apply(tag));
+                        sendModMessage(new TextComponentTagVisitor("", 1).visit(tag));
                     }
                     return 1;
                 }),

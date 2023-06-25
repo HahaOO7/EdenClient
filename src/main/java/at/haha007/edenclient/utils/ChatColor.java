@@ -1,39 +1,38 @@
 package at.haha007.edenclient.utils;
 
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
-import net.minecraft.text.TextColor;
-import net.minecraft.util.Formatting;
-
 import java.awt.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.TextColor;
 
 public class ChatColor {
 
-    public static final String BLACK = Formatting.BLACK.toString();
-    public static final String DARK_BLUE = Formatting.DARK_BLUE.toString();
-    public static final String DARK_GREEN = Formatting.DARK_GREEN.toString();
-    public static final String DARK_AQUA = Formatting.DARK_AQUA.toString();
-    public static final String DARK_RED = Formatting.DARK_RED.toString();
-    public static final String DARK_PURPLE = Formatting.DARK_PURPLE.toString();
-    public static final String GOLD = Formatting.GOLD.toString();
-    public static final String GRAY = Formatting.GRAY.toString();
-    public static final String DARK_GRAY = Formatting.DARK_GRAY.toString();
-    public static final String BLUE = Formatting.BLUE.toString();
-    public static final String GREEN = Formatting.GREEN.toString();
-    public static final String AQUA = Formatting.AQUA.toString();
-    public static final String RED = Formatting.RED.toString();
-    public static final String LIGHT_PURPLE = Formatting.LIGHT_PURPLE.toString();
-    public static final String YELLOW = Formatting.YELLOW.toString();
-    public static final String WHITE = Formatting.WHITE.toString();
-    public static final String OBFUSCATED = Formatting.OBFUSCATED.toString();
-    public static final String BOLD = Formatting.BOLD.toString();
-    public static final String STRIKETHROUGH = Formatting.STRIKETHROUGH.toString();
-    public static final String UNDERLINE = Formatting.UNDERLINE.toString();
-    public static final String ITALIC = Formatting.ITALIC.toString();
-    public static final String RESET = Formatting.RESET.toString();
+    public static final String BLACK = ChatFormatting.BLACK.toString();
+    public static final String DARK_BLUE = ChatFormatting.DARK_BLUE.toString();
+    public static final String DARK_GREEN = ChatFormatting.DARK_GREEN.toString();
+    public static final String DARK_AQUA = ChatFormatting.DARK_AQUA.toString();
+    public static final String DARK_RED = ChatFormatting.DARK_RED.toString();
+    public static final String DARK_PURPLE = ChatFormatting.DARK_PURPLE.toString();
+    public static final String GOLD = ChatFormatting.GOLD.toString();
+    public static final String GRAY = ChatFormatting.GRAY.toString();
+    public static final String DARK_GRAY = ChatFormatting.DARK_GRAY.toString();
+    public static final String BLUE = ChatFormatting.BLUE.toString();
+    public static final String GREEN = ChatFormatting.GREEN.toString();
+    public static final String AQUA = ChatFormatting.AQUA.toString();
+    public static final String RED = ChatFormatting.RED.toString();
+    public static final String LIGHT_PURPLE = ChatFormatting.LIGHT_PURPLE.toString();
+    public static final String YELLOW = ChatFormatting.YELLOW.toString();
+    public static final String WHITE = ChatFormatting.WHITE.toString();
+    public static final String OBFUSCATED = ChatFormatting.OBFUSCATED.toString();
+    public static final String BOLD = ChatFormatting.BOLD.toString();
+    public static final String STRIKETHROUGH = ChatFormatting.STRIKETHROUGH.toString();
+    public static final String UNDERLINE = ChatFormatting.UNDERLINE.toString();
+    public static final String ITALIC = ChatFormatting.ITALIC.toString();
+    public static final String RESET = ChatFormatting.RESET.toString();
 
 
     private final byte r, g, b;
@@ -54,20 +53,20 @@ public class ChatColor {
         return String.format("§#%02X%02X%02X", r, g, b);
     }
 
-    public static MutableText translateColors(String string) {
+    public static MutableComponent translateColors(String string) {
         final Pattern hex = Pattern.compile("§#[0-9a-fA-F]{6}");
-        MutableText text = Text.literal("");
+        MutableComponent text = Component.literal("");
         Style style = Style.EMPTY;
         Matcher matcher = hex.matcher(string);
         while (matcher.find()) {
             int start = matcher.start();
             int end = matcher.end();
-            text.append(Text.literal(string.substring(0, start)).setStyle(style));
-            style = style.withColor(TextColor.parse(string.substring(start + 1, end)));
+            text.append(Component.literal(string.substring(0, start)).setStyle(style));
+            style = style.withColor(TextColor.parseColor(string.substring(start + 1, end)));
             string = string.substring(end);
             matcher = hex.matcher(string);
         }
-        text.append(Text.literal(string).setStyle(style));
+        text.append(Component.literal(string).setStyle(style));
         return text;
     }
 }

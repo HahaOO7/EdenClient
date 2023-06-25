@@ -1,24 +1,24 @@
 package at.haha007.edenclient.utils.config.loaders;
 
-import net.minecraft.item.Item;
-import net.minecraft.nbt.NbtString;
-import net.minecraft.registry.DefaultedRegistry;
-import net.minecraft.registry.Registries;
-import net.minecraft.util.Identifier;
+import net.minecraft.core.DefaultedRegistry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.StringTag;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
 
-public class ItemLoader implements ConfigLoader<NbtString, Item> {
+public class ItemLoader implements ConfigLoader<StringTag, Item> {
 
-    private static final DefaultedRegistry<Item> registry = Registries.ITEM;
+    private static final DefaultedRegistry<Item> registry = BuiltInRegistries.ITEM;
 
-    public NbtString save(Object value) {
-        return NbtString.of(registry.getId(cast(value)).toString());
+    public StringTag save(Object value) {
+        return StringTag.valueOf(registry.getKey(cast(value)).toString());
     }
 
-    public Item load(NbtString nbtElement) {
-        return registry.get(new Identifier(nbtElement.asString()));
+    public Item load(StringTag nbtElement) {
+        return registry.get(new ResourceLocation(nbtElement.getAsString()));
     }
 
-    public NbtString parse(String s) {
-        return NbtString.of("minecraft:" + s);
+    public StringTag parse(String s) {
+        return StringTag.valueOf("minecraft:" + s);
     }
 }

@@ -1,26 +1,26 @@
 package at.haha007.edenclient.utils.config.loaders;
 
 import at.haha007.edenclient.utils.config.wrappers.StringStringMap;
-import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.CompoundTag;
 
-public class StringStringMapLoader implements ConfigLoader<NbtCompound, StringStringMap> {
+public class StringStringMapLoader implements ConfigLoader<CompoundTag, StringStringMap> {
 
-    public NbtCompound save(Object value) {
-        NbtCompound tag = new NbtCompound();
+    public CompoundTag save(Object value) {
+        CompoundTag tag = new CompoundTag();
         cast(value).forEach(tag::putString);
         return tag;
     }
 
-    public StringStringMap load(NbtCompound tag) {
+    public StringStringMap load(CompoundTag tag) {
         StringStringMap list = new StringStringMap();
-        for (String key : tag.getKeys()) {
+        for (String key : tag.getAllKeys()) {
             list.put(key, tag.getString(key));
         }
         return list;
     }
 
-    public NbtCompound parse(String s) {
-        NbtCompound tag = new NbtCompound();
+    public CompoundTag parse(String s) {
+        CompoundTag tag = new CompoundTag();
         if (s.isEmpty()) return tag;
         String[] a = s.split(";");
         for (int i = 0; i < a.length; i++) {

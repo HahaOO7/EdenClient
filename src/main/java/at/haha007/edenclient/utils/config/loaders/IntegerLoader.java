@@ -1,19 +1,19 @@
 package at.haha007.edenclient.utils.config.loaders;
 
-import net.minecraft.nbt.NbtInt;
+import net.minecraft.nbt.IntTag;
 
-public class IntegerLoader implements ConfigLoader<NbtInt, Integer> {
+public class IntegerLoader implements ConfigLoader<IntTag, Integer> {
 
-    public NbtInt save(Object value) {
-        return NbtInt.of(cast(value));
+    public IntTag save(Object value) {
+        return IntTag.valueOf(cast(value));
     }
 
-    public Integer load(NbtInt value) {
-        return value.intValue();
+    public Integer load(IntTag value) {
+        return value.getAsInt();
     }
 
-    public NbtInt parse(String s) {
-        if (s.isEmpty()) return NbtInt.of(0);
-        return NbtInt.of(Integer.parseInt(s));
+    public IntTag parse(String s) {
+        if (s.isEmpty()) return IntTag.valueOf(0);
+        return IntTag.valueOf(Integer.parseInt(s));
     }
 }

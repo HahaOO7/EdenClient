@@ -10,20 +10,19 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientCommandSource;
-import net.minecraft.client.network.ClientPlayNetworkHandler;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.item.Item;
-import net.minecraft.registry.DefaultedRegistry;
-import net.minecraft.registry.Registries;
-import net.minecraft.util.Identifier;
-
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.client.multiplayer.ClientSuggestionProvider;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.DefaultedRegistry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.item.Item;
 
 import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
@@ -43,7 +42,7 @@ public class AutoSell {
     }
 
     private void registerCommand(String cmd) {
-        LiteralArgumentBuilder<ClientCommandSource> node = literal(cmd);
+        LiteralArgumentBuilder<ClientSuggestionProvider> node = literal(cmd);
 
         node.then(literal("toggle").executes(c -> {
             enabled = !enabled;
@@ -62,34 +61,34 @@ public class AutoSell {
             return 1;
         }));
 
-        DefaultedRegistry<Item> registry = Registries.ITEM;
+        DefaultedRegistry<Item> registry = BuiltInRegistries.ITEM;
         for (Item item : registry) {
-            node.then(literal("add").then(literal(registry.getId(item).toString().replace("minecraft:", "")).executes(c -> {
+            node.then(literal("add").then(literal(registry.getKey(item).toString().replace("minecraft:", "")).executes(c -> {
                 autoSellItems.add(item);
-                sendModMessage("Added /sell " + item.getName().getString());
+                sendModMessage("Added /sell " + item.getDescription().getString());
                 return 1;
             })));
         }
 
         node.then(literal("remove").then(argument("item", StringArgumentType.greedyString()).suggests(this::suggestRemoveItems).executes(c -> {
-            Optional<Item> opt = Registries.ITEM.getOrEmpty(new Identifier(c.getArgument("item", String.class).replace(" ", "_")));
+            Optional<Item> opt = BuiltInRegistries.ITEM.getOptional(new ResourceLocation(c.getArgument("item", String.class).replace(" ", "_")));
             if (opt.isEmpty()) {
                 sendModMessage("No item with this name exists.");
                 return 1;
             }
             if (autoSellItems.remove(opt.get()))
-                sendModMessage("Removed /sell " + opt.get().getName().getString());
+                sendModMessage("Removed /sell " + opt.get().getDescription().getString());
             else {
-                sendModMessage("Couldn't remove /sell " + opt.get().getName().getString() + " because it wasn't in your sell list.");
+                sendModMessage("Couldn't remove /sell " + opt.get().getDescription().getString() + " because it wasn't in your sell list.");
             }
             return 1;
         })));
 
 
         node.then(literal("stats").executes(c -> {
-            ClientPlayNetworkHandler networkHandler = MinecraftClient.getInstance().getNetworkHandler();
+            ClientPacketListener networkHandler = Minecraft.getInstance().getConnection();
             if (networkHandler == null) return -1;
-            networkHandler.sendChatMessage("/esellstatstracker global");
+            networkHandler.sendChat("/esellstatstracker global");
             return 1;
         }));
 
@@ -107,35 +106,35 @@ public class AutoSell {
                 "It will always toggle when your inventory is full and execute the sell-command. You can select the items you want to sell yourself.");
     }
 
-    private CompletableFuture<Suggestions> suggestRemoveItems(CommandContext<ClientCommandSource> clientCommandSourceCommandContext, SuggestionsBuilder suggestionsBuilder) {
-        DefaultedRegistry<Item> itemRegistry = Registries.ITEM;
-        autoSellItems.stream().sorted(Comparator.comparing(s -> s.getName().getString()))
-                .map(itemRegistry::getId)
-                .map(Identifier::toString)
+    private CompletableFuture<Suggestions> suggestRemoveItems(CommandContext<ClientSuggestionProvider> clientCommandSourceCommandContext, SuggestionsBuilder suggestionsBuilder) {
+        DefaultedRegistry<Item> itemRegistry = BuiltInRegistries.ITEM;
+        autoSellItems.stream().sorted(Comparator.comparing(s -> s.getDescription().getString()))
+                .map(itemRegistry::getKey)
+                .map(ResourceLocation::toString)
                 .map(itemName -> itemName.split(":")[1])
                 .map(String::toLowerCase).toList().forEach(suggestionsBuilder::suggest);
         return suggestionsBuilder.buildFuture();
     }
 
-    public void onInventoryChange(PlayerInventory inventory) {
+    public void onInventoryChange(Inventory inventory) {
         if (!enabled || !isFullInventory(inventory)) return;
         executeAutoSell();
     }
 
     private void executeAutoSell() {
-        ClientPlayerEntity player = PlayerUtils.getPlayer();
-        ClientPlayNetworkHandler networkHandler = MinecraftClient.getInstance().getNetworkHandler();
+        LocalPlayer player = PlayerUtils.getPlayer();
+        ClientPacketListener networkHandler = Minecraft.getInstance().getConnection();
         if(networkHandler == null) return;
         long time = System.currentTimeMillis();
         if (time - 200 < lastSell) return;
         autoSellItems
                 .stream()
-                .filter(item -> player.getInventory().containsAny(Collections.singleton(item)))
-                .forEach(item -> networkHandler.sendChatMessage("/sell " + item.getName().getString().replace(' ', '_')));
+                .filter(item -> player.getInventory().hasAnyOf(Collections.singleton(item)))
+                .forEach(item -> networkHandler.sendChat("/sell " + item.getDescription().getString().replace(' ', '_')));
         lastSell = time;
     }
 
-    private boolean isFullInventory(PlayerInventory inventory) {
-        return inventory.getEmptySlot() == -1;
+    private boolean isFullInventory(Inventory inventory) {
+        return inventory.getFreeSlot() == -1;
     }
 }

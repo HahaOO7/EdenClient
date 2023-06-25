@@ -2,13 +2,13 @@ package at.haha007.edenclient.mods;
 
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.Scheduler;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.entity.MovementType;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.Vec3i;
-
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import java.util.Random;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Vec3i;
+import net.minecraft.world.entity.MoverType;
+import net.minecraft.world.phys.Vec3;
 
 import static at.haha007.edenclient.command.CommandManager.literal;
 import static at.haha007.edenclient.command.CommandManager.register;
@@ -22,7 +22,7 @@ public class AntiAfk {
         var node = literal("eantiafk");
 
         node.then(literal("toggle").executes(c -> {
-            startPos = PlayerUtils.getPlayer().getBlockPos();
+            startPos = PlayerUtils.getPlayer().blockPosition();
             Scheduler.get().scheduleSyncRepeating(this::moveAround, 20 * 60 * 5, 0);
             PlayerUtils.sendModMessage("Start moving around randomly in a 3x3 area, walk away to cancel.");
             return 1;
@@ -33,8 +33,8 @@ public class AntiAfk {
     }
 
     private boolean moveAround() {
-        ClientPlayerEntity player = PlayerUtils.getPlayer();
-        BlockPos bp = player.getBlockPos();
+        LocalPlayer player = PlayerUtils.getPlayer();
+        BlockPos bp = player.blockPosition();
         if (maxDistance(bp, startPos) > 1) return false;
 
         BlockPos target = getNewTarget();
@@ -45,14 +45,14 @@ public class AntiAfk {
         BlockPos finalTarget = target;
 
         Scheduler.get().scheduleSyncRepeating(() -> {
-            Vec3d pos = player.getPos();
-            Vec3d move = Vec3d.ofBottomCenter(finalTarget).subtract(pos);
+            Vec3 pos = player.position();
+            Vec3 move = Vec3.atBottomCenterOf(finalTarget).subtract(pos);
             move = move.multiply(1, 0, 1);
             if (move.length() > 3) return false;
             if (move.length() > .2)
-                player.move(MovementType.SELF, move.normalize().multiply(.2));
+                player.move(MoverType.SELF, move.normalize().scale(.2));
             else {
-                player.move(MovementType.SELF, move);
+                player.move(MoverType.SELF, move);
                 return false;
             }
             return true;
@@ -64,11 +64,11 @@ public class AntiAfk {
     private BlockPos getNewTarget() {
         int r = random.nextInt(5);
         return switch (r) {
-            case 0 -> startPos.add(0, 0, 0);
-            case 1 -> startPos.add(1, 0, 0);
-            case 2 -> startPos.add(0, 0, 1);
-            case 3 -> startPos.add(-1, 0, 0);
-            case 4 -> startPos.add(0, 0, -1);
+            case 0 -> startPos.offset(0, 0, 0);
+            case 1 -> startPos.offset(1, 0, 0);
+            case 2 -> startPos.offset(0, 0, 1);
+            case 3 -> startPos.offset(-1, 0, 0);
+            case 4 -> startPos.offset(0, 0, -1);
             default -> null;
         };
     }

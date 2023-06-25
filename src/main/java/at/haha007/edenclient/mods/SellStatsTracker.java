@@ -12,15 +12,14 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import net.minecraft.client.network.ClientCommandSource;
-import net.minecraft.nbt.NbtCompound;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import net.minecraft.client.multiplayer.ClientSuggestionProvider;
+import net.minecraft.nbt.CompoundTag;
 
 import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
@@ -76,7 +75,7 @@ public class SellStatsTracker {
     }
 
     private void registerCommand() {
-        LiteralArgumentBuilder<ClientCommandSource> node = literal("esellstatstracker");
+        LiteralArgumentBuilder<ClientSuggestionProvider> node = literal("esellstatstracker");
 
         node.then(literal("global").executes(c -> {
             sendModMessage(ChatColor.GOLD + "Stats: ");
@@ -105,7 +104,7 @@ public class SellStatsTracker {
             return 1;
         })));
 
-        LiteralArgumentBuilder<ClientCommandSource> simplify = literal("simplifymessages");
+        LiteralArgumentBuilder<ClientSuggestionProvider> simplify = literal("simplifymessages");
         simplify.then(literal("toggle").executes(c -> {
             simplifyMessages = !simplifyMessages;
             MessageIgnorer mi = EdenClient.getMod(MessageIgnorer.class);
@@ -128,7 +127,7 @@ public class SellStatsTracker {
                 "The simplifymessages option replaces the cluttered messages with better stats.");
     }
 
-    private CompletableFuture<Suggestions> suggestItems(CommandContext<ClientCommandSource> clientCommandSourceCommandContext, SuggestionsBuilder suggestionsBuilder) {
+    private CompletableFuture<Suggestions> suggestItems(CommandContext<ClientSuggestionProvider> clientCommandSourceCommandContext, SuggestionsBuilder suggestionsBuilder) {
         data.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach(e -> suggestionsBuilder.suggest(e.getKey()));
         return suggestionsBuilder.buildFuture();
     }
@@ -136,42 +135,42 @@ public class SellStatsTracker {
     private static record SellStatsForItem(int amountSold, double money) {
     }
 
-    private static class SellStatsForItemLoader implements ConfigLoader<NbtCompound, SellStatsForItem> {
-        public NbtCompound save(Object value) {
+    private static class SellStatsForItemLoader implements ConfigLoader<CompoundTag, SellStatsForItem> {
+        public CompoundTag save(Object value) {
             SellStatsForItem ss = cast(value);
-            NbtCompound tag = new NbtCompound();
+            CompoundTag tag = new CompoundTag();
             tag.putInt("amountSold", ss.amountSold);
             tag.putDouble("money", ss.money);
             return tag;
         }
 
-        public SellStatsForItem load(NbtCompound tag) {
+        public SellStatsForItem load(CompoundTag tag) {
             return new SellStatsForItem(tag.getInt("amountSold"), tag.getDouble("money"));
         }
 
-        public NbtCompound parse(String s) {
-            return new NbtCompound();
+        public CompoundTag parse(String s) {
+            return new CompoundTag();
         }
     }
 
-    private static class SellStatsForItemMapLoader implements ConfigLoader<NbtCompound, SellStatsForItemMap> {
-        public NbtCompound save(Object value) {
+    private static class SellStatsForItemMapLoader implements ConfigLoader<CompoundTag, SellStatsForItemMap> {
+        public CompoundTag save(Object value) {
             SellStatsForItemMap map = cast(value);
-            NbtCompound tag = new NbtCompound();
+            CompoundTag tag = new CompoundTag();
             map.forEach((k, v) -> tag.put(k, PerWorldConfig.get().toNbt(v)));
             return tag;
         }
 
-        public SellStatsForItemMap load(NbtCompound tag) {
+        public SellStatsForItemMap load(CompoundTag tag) {
             SellStatsForItemMap map = new SellStatsForItemMap();
-            for (String key : tag.getKeys()) {
+            for (String key : tag.getAllKeys()) {
                 map.put(key, PerWorldConfig.get().toObject(tag.get(key), SellStatsForItem.class));
             }
             return map;
         }
 
-        public NbtCompound parse(String s) {
-            return new NbtCompound();
+        public CompoundTag parse(String s) {
+            return new CompoundTag();
         }
     }
 

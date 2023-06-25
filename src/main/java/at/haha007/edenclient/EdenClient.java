@@ -8,8 +8,7 @@ import at.haha007.edenclient.render.TracerRenderer;
 import at.haha007.edenclient.utils.Scheduler;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import net.fabricmc.api.ClientModInitializer;
-import net.minecraft.client.MinecraftClient;
-
+import net.minecraft.client.Minecraft;
 import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -95,6 +94,6 @@ public class EdenClient implements ClientModInitializer {
     }
 
     public static File getConfigDirectory() {
-        return new File(MinecraftClient.getInstance().runDirectory, "config");
+        return new File(Minecraft.getInstance().gameDirectory, "config");
     }
 }

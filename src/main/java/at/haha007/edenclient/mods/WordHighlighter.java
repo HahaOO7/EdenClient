@@ -8,9 +8,13 @@ import at.haha007.edenclient.utils.config.wrappers.StringList;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import net.minecraft.client.network.ClientCommandSource;
-import net.minecraft.text.*;
-import net.minecraft.util.Formatting;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.multiplayer.ClientSuggestionProvider;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.contents.LiteralContents;
+import net.minecraft.network.chat.contents.TranslatableContents;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -48,7 +52,7 @@ public class WordHighlighter {
     }
 
     private void registerCommand(String name) {
-        LiteralArgumentBuilder<ClientCommandSource> node = literal(name);
+        LiteralArgumentBuilder<ClientSuggestionProvider> node = literal(name);
         node.then(literal("toggle").executes(c -> {
             enabled = !enabled;
             sendModMessage(ChatColor.GOLD + (enabled ? "Enabled WordHighlighter!" : "Disabled WordHighlighter!"));
@@ -116,7 +120,7 @@ public class WordHighlighter {
     }
 
     public void setUnderlined(boolean underlined) {
-        style = style.withUnderline(underlined);
+        style = style.withUnderlined(underlined);
         sendModMessage(ChatColor.GOLD + (underlined ? "Words are now underlined!" : "Words are no longer underlined!"));
     }
 
@@ -128,7 +132,7 @@ public class WordHighlighter {
     private void setStyle(String s) {
         s = s.toLowerCase();
         if (s.equals("reset")) {
-            style = Style.EMPTY.withFormatting(Formatting.AQUA, Formatting.BOLD);
+            style = Style.EMPTY.applyFormats(ChatFormatting.AQUA, ChatFormatting.BOLD);
             sendModMessage(ChatColor.GOLD + "Style reset!");
             return;
         }
@@ -138,8 +142,8 @@ public class WordHighlighter {
 
     private Style getStyleFromFormattingCode(String input) {
         Style style = Style.EMPTY;
-        style = style.withFormatting(input.chars().mapToObj(c -> (char) c).
-                map(Formatting::byCode).filter(Objects::nonNull).toList().toArray(new Formatting[0]));
+        style = style.applyFormats(input.chars().mapToObj(c -> (char) c).
+                map(ChatFormatting::getByCode).filter(Objects::nonNull).toList().toArray(new ChatFormatting[0]));
         return style;
     }
 
@@ -181,18 +185,18 @@ public class WordHighlighter {
         sendUsageDebugMessage();
     }
 
-    private Text highlight(Text txt, String string) {
-        if (!(txt instanceof MutableText text)) {
+    private Component highlight(Component txt, String string) {
+        if (!(txt instanceof MutableComponent text)) {
             txt.getSiblings().replaceAll(y -> highlight(y, string));
             return txt;
         }
 
 
-        if (text.getContent() instanceof LiteralTextContent t) {
-            String s = t.string();
+        if (text.getContents() instanceof LiteralContents t) {
+            String s = t.text();
             Pattern pattern = Pattern.compile(string, Pattern.CASE_INSENSITIVE | Pattern.LITERAL);
             Matcher matcher = pattern.matcher(s);
-            List<MutableText> subtext = new ArrayList<>();
+            List<MutableComponent> subtext = new ArrayList<>();
             Style baseStyle = txt.getStyle();
             Style style = this.style.withHoverEvent(baseStyle.getHoverEvent()).withClickEvent(baseStyle.getClickEvent());
             while (matcher.find()) {
@@ -201,7 +205,7 @@ public class WordHighlighter {
                 String pre = s.substring(0, start);
                 String match = s.substring(start, end);
                 if (!pre.isEmpty())
-                    subtext.add(Text.literal(pre).setStyle(baseStyle));
+                    subtext.add(Component.literal(pre).setStyle(baseStyle));
                 subtext.add(getStyled(match, style));//replace with rainbow
                 s = s.substring(end);
                 matcher = pattern.matcher(s);
@@ -211,18 +215,18 @@ public class WordHighlighter {
                 return text;
             }
             if (!s.isEmpty())
-                subtext.add(Text.literal(s).setStyle(baseStyle));
-            MutableText nextText = Text.literal("");
+                subtext.add(Component.literal(s).setStyle(baseStyle));
+            MutableComponent nextText = Component.literal("");
             subtext.forEach(nextText::append);
             txt.getSiblings().stream().map(sibling -> highlight(sibling, string)).forEach(nextText::append);
             return nextText;
-        } else if (text.getContent() instanceof TranslatableTextContent t) {
+        } else if (text.getContents() instanceof TranslatableContents t) {
             Object[] args = t.getArgs();
             for (int i = 0; i < args.length; i++) {
-                if (args[i] instanceof Text y)
+                if (args[i] instanceof Component y)
                     args[i] = highlight(y, string);
                 else if (args[i] instanceof String y)
-                    args[i] = highlight(Text.literal(y), string);
+                    args[i] = highlight(Component.literal(y), string);
             }
             txt.getSiblings().replaceAll(y -> highlight(y, string));
             return txt;
@@ -232,19 +236,19 @@ public class WordHighlighter {
         }
     }
 
-    private MutableText getStyled(String string, Style style) {
+    private MutableComponent getStyled(String string, Style style) {
         if (style.isObfuscated()) {
             final Style finalStyle = style.withObfuscated(false);
-            MutableText text = Text.literal("");
+            MutableComponent text = Component.literal("");
             AtomicInteger i = new AtomicInteger();
             string.chars()
                     .mapToObj(c -> new String(new int[]{c}, 0, 1))
-                    .map(Text::literal)
+                    .map(Component::literal)
                     .map(t -> t.setStyle(finalStyle.withColor(getFancyRainbowColorAtIndex(i.getAndIncrement()))))
                     .forEach(text::append);
             return text;
         }
-        return Text.literal(string).setStyle(style);
+        return Component.literal(string).setStyle(style);
     }
 
 

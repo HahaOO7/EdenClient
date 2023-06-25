@@ -6,36 +6,36 @@ import at.haha007.edenclient.render.TracerRenderer;
 import at.haha007.edenclient.utils.PlayerUtils;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import net.minecraft.client.network.ClientCommandSource;
-import net.minecraft.command.argument.BlockPosArgumentType;
-import net.minecraft.command.argument.PosArgument;
-import net.minecraft.util.math.BlockBox;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.client.multiplayer.ClientSuggestionProvider;
+import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
+import net.minecraft.commands.arguments.coordinates.Coordinates;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
 import static at.haha007.edenclient.command.CommandManager.*;
 
 public class RenderShape {
 
     public RenderShape() {
-        LiteralArgumentBuilder<ClientCommandSource> cmd = literal("erendershape");
-        LiteralArgumentBuilder<ClientCommandSource> boxCmd = literal("box");
-        boxCmd.then(argument("pos1", new BlockPosArgumentType())
-                .then(argument("pos2", new BlockPosArgumentType()).then(argument("time", IntegerArgumentType.integer(1))
+        LiteralArgumentBuilder<ClientSuggestionProvider> cmd = literal("erendershape");
+        LiteralArgumentBuilder<ClientSuggestionProvider> boxCmd = literal("box");
+        boxCmd.then(argument("pos1", new BlockPosArgument())
+                .then(argument("pos2", new BlockPosArgument()).then(argument("time", IntegerArgumentType.integer(1))
                         .executes(c -> {
-                            BlockPos pos1 = c.getArgument("pos1", PosArgument.class).toAbsoluteBlockPos(PlayerUtils.getPlayer().getCommandSource());
-                            BlockPos pos2 = c.getArgument("pos2", PosArgument.class).toAbsoluteBlockPos(PlayerUtils.getPlayer().getCommandSource());
+                            BlockPos pos1 = c.getArgument("pos1", Coordinates.class).getBlockPos(PlayerUtils.getPlayer().createCommandSourceStack());
+                            BlockPos pos2 = c.getArgument("pos2", Coordinates.class).getBlockPos(PlayerUtils.getPlayer().createCommandSourceStack());
                             int t = c.getArgument("time", Integer.class) * 20;
-                            EdenClient.getMod(CubeRenderer.class).add(Box.from(BlockBox.create(pos1, pos2)), t);
+                            EdenClient.getMod(CubeRenderer.class).add(AABB.of(BoundingBox.fromCorners(pos1, pos2)), t);
                             return 1;
                         }))));
-        LiteralArgumentBuilder<ClientCommandSource> tracerCmd = literal("tracer");
-        tracerCmd.then(argument("target", BlockPosArgumentType.blockPos()).then(argument("time", IntegerArgumentType.integer(1))
+        LiteralArgumentBuilder<ClientSuggestionProvider> tracerCmd = literal("tracer");
+        tracerCmd.then(argument("target", BlockPosArgument.blockPos()).then(argument("time", IntegerArgumentType.integer(1))
                 .executes(c -> {
                     int time = c.getArgument("time", Integer.class) * 20;
-                    BlockPos target = c.getArgument("target", PosArgument.class).toAbsoluteBlockPos(PlayerUtils.getPlayer().getCommandSource());
-                    EdenClient.getMod(TracerRenderer.class).add(Vec3d.ofCenter(target), time);
+                    BlockPos target = c.getArgument("target", Coordinates.class).getBlockPos(PlayerUtils.getPlayer().createCommandSourceStack());
+                    EdenClient.getMod(TracerRenderer.class).add(Vec3.atCenterOf(target), time);
                     return 1;
                 })));
 

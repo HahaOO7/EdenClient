@@ -1,8 +1,7 @@
 package at.haha007.edenclient.utils.config.wrappers;
 
-import net.minecraft.block.Block;
-
 import java.util.HashSet;
+import net.minecraft.world.level.block.Block;
 
 public class BlockSet extends HashSet<Block> {
 }

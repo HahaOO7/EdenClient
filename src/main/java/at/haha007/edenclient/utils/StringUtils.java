@@ -5,24 +5,24 @@ import java.net.SocketAddress;
 public class StringUtils {
 
     public static String getWorldOrServerName() {
-        net.minecraft.client.MinecraftClient mc = net.minecraft.client.MinecraftClient.getInstance();
-        if (mc.isIntegratedServerRunning()) {
-            net.minecraft.server.integrated.IntegratedServer server = mc.getServer();
+        net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+        if (mc.hasSingleplayerServer()) {
+            net.minecraft.client.server.IntegratedServer server = mc.getSingleplayerServer();
 
             if (server != null) {
-                return server.getSaveProperties().getLevelName();
+                return server.getWorldData().getLevelName();
             }
         } else {
-            net.minecraft.client.network.ServerInfo server = mc.getCurrentServerEntry();
+            net.minecraft.client.multiplayer.ServerData server = mc.getCurrentServer();
 
             if (server != null) {
-                return server.address.replace(':', '_');
+                return server.ip.replace(':', '_');
             } else {
-                net.minecraft.client.network.ClientPlayNetworkHandler handler = mc.getNetworkHandler();
-                net.minecraft.network.ClientConnection connection = handler != null ? handler.getConnection() : null;
+                net.minecraft.client.multiplayer.ClientPacketListener handler = mc.getConnection();
+                net.minecraft.network.Connection connection = handler != null ? handler.getConnection() : null;
 
                 if (connection != null) {
-                    return "realms_" + stringifyAddress(connection.getAddress());
+                    return "realms_" + stringifyAddress(connection.getRemoteAddress());
                 }
             }
         }

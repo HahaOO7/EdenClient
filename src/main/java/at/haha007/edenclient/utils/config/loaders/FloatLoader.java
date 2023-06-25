@@ -1,18 +1,18 @@
 package at.haha007.edenclient.utils.config.loaders;
 
-import net.minecraft.nbt.NbtFloat;
+import net.minecraft.nbt.FloatTag;
 
-public class FloatLoader implements ConfigLoader<NbtFloat, Float> {
+public class FloatLoader implements ConfigLoader<FloatTag, Float> {
 
-    public NbtFloat save(Object value) {
-        return NbtFloat.of(cast(value));
+    public FloatTag save(Object value) {
+        return FloatTag.valueOf(cast(value));
     }
 
-    public Float load(NbtFloat nbtElement) {
-        return nbtElement.floatValue();
+    public Float load(FloatTag nbtElement) {
+        return nbtElement.getAsFloat();
     }
 
-    public NbtFloat parse(String s) {
-        return NbtFloat.of(s.isEmpty() ? 0 : Float.parseFloat(s));
+    public FloatTag parse(String s) {
+        return FloatTag.valueOf(s.isEmpty() ? 0 : Float.parseFloat(s));
     }
 }

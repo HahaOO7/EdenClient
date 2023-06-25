@@ -6,43 +6,42 @@ import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import at.haha007.edenclient.utils.config.loaders.ConfigLoader;
 import at.haha007.edenclient.utils.config.wrappers.ItemList;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.ChestBlock;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.ChestBlockEntity;
-import net.minecraft.block.enums.ChestType;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.world.ClientChunkManager;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.nbt.NbtList;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.registry.tag.BlockTags;
-import net.minecraft.screen.GenericContainerScreenHandler;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.screen.ShulkerBoxScreenHandler;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec3i;
-import net.minecraft.world.chunk.WorldChunk;
-
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import net.minecraft.client.multiplayer.ClientChunkCache;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.Registry;
+import net.minecraft.core.Vec3i;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.world.Container;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ChestMenu;
+import net.minecraft.world.inventory.ShulkerBoxMenu;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.ChestBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.ChestBlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.ChestType;
+import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.phys.BlockHitResult;
 
 public class ContainerInfo {
     @ConfigSubscriber()
@@ -64,14 +63,14 @@ public class ContainerInfo {
         PerWorldConfig.get().register(this, "ContainerInfo");
     }
 
-    private void onInventoryChange(PlayerInventory playerInventory) {
-        ScreenHandler sh = playerInventory.player.currentScreenHandler;
-        if (!(sh instanceof ShulkerBoxScreenHandler) && !(sh instanceof GenericContainerScreenHandler)) {
+    private void onInventoryChange(Inventory playerInventory) {
+        AbstractContainerMenu sh = playerInventory.player.containerMenu;
+        if (!(sh instanceof ShulkerBoxMenu) && !(sh instanceof ChestMenu)) {
             lastInteractedBlock = null;
             return;
         }
 
-        List<ItemStack> items = sh.getStacks();
+        List<ItemStack> items = sh.getItems();
         items = items.subList(0, items.size() - 36);
         if (items.isEmpty()) lastInteractedBlock = null;
         else onOpenInventory(items);
@@ -82,9 +81,9 @@ public class ContainerInfo {
         //smallest only chests and shulkerboxes!
         if (itemStacks.size() < 27) return;
         ChunkPos cp = new ChunkPos(new BlockPos(lastInteractedBlock));
-        Registry<Block> registry = PlayerUtils.getPlayer().world.getRegistryManager().get(BlockTags.SHULKER_BOXES.registry());
+        Registry<Block> registry = PlayerUtils.getPlayer().level().registryAccess().registryOrThrow(BlockTags.SHULKER_BOXES.registry());
         Map<Item, List<ItemStack>> items = itemStacks.stream().
-                flatMap(stack -> registry.containsId(Registries.BLOCK.getId(Block.getBlockFromItem(stack.getItem()))) ?
+                flatMap(stack -> registry.containsKey(BuiltInRegistries.BLOCK.getKey(Block.byItem(stack.getItem()))) ?
                         mapShulkerBox(stack) : Stream.of(stack)).collect(Collectors.groupingBy(ItemStack::getItem));
         items.remove(Items.AIR);
 
@@ -104,51 +103,51 @@ public class ContainerInfo {
     }
 
     private Stream<? extends ItemStack> mapShulkerBox(ItemStack stack) {
-        NbtCompound tag = stack.getOrCreateNbt();
-        NbtList list = tag.getCompound("BlockEntityTag").getList("Items", NbtElement.COMPOUND_TYPE);
+        CompoundTag tag = stack.getOrCreateTag();
+        ListTag list = tag.getCompound("BlockEntityTag").getList("Items", Tag.TAG_COMPOUND);
         if (list.isEmpty())
             return Stream.of(stack);
-        return list.stream().map(nbt -> (NbtCompound) nbt).map(this::getStackFromCompound);
+        return list.stream().map(nbt -> (CompoundTag) nbt).map(this::getStackFromCompound);
     }
 
-    private ItemStack getStackFromCompound(NbtCompound tag) {
-        Item item = Registries.ITEM.get(new Identifier(tag.getString("id")));
-        ItemStack stack = item.getDefaultStack();
+    private ItemStack getStackFromCompound(CompoundTag tag) {
+        Item item = BuiltInRegistries.ITEM.get(new ResourceLocation(tag.getString("id")));
+        ItemStack stack = item.getDefaultInstance();
         stack.setCount(tag.getByte("Count"));
         return stack;
     }
 
-    private ActionResult attackBlock(ClientPlayerEntity player, BlockPos blockPos, Direction direction) {
+    private InteractionResult attackBlock(LocalPlayer player, BlockPos blockPos, Direction direction) {
         lastInteractedBlock = null;
-        return ActionResult.PASS;
+        return InteractionResult.PASS;
     }
 
-    private ActionResult interactBlock(ClientPlayerEntity player, ClientWorld world, Hand hand, BlockHitResult blockHitResult) {
+    private InteractionResult interactBlock(LocalPlayer player, ClientLevel world, InteractionHand hand, BlockHitResult blockHitResult) {
         BlockEntity be = world.getBlockEntity(blockHitResult.getBlockPos());
         boolean isLeftChest = false;
         if (be instanceof ChestBlockEntity) {
             BlockState blockState = world.getBlockState(blockHitResult.getBlockPos());
-            isLeftChest = blockState.get(ChestBlock.CHEST_TYPE) == ChestType.LEFT;
+            isLeftChest = blockState.getValue(ChestBlock.TYPE) == ChestType.LEFT;
         }
-        if (be instanceof Inventory && !isLeftChest) {
+        if (be instanceof Container && !isLeftChest) {
             lastInteractedBlock = blockHitResult.getBlockPos();
-            lastClickedDirection = blockHitResult.getSide();
+            lastClickedDirection = blockHitResult.getDirection();
         } else {
             lastInteractedBlock = null;
         }
-        return ActionResult.PASS;
+        return InteractionResult.PASS;
     }
 
-    private void tick(ClientPlayerEntity player) {
-        ChunkPos center = player.getChunkPos();
-        ClientChunkManager cm = player.clientWorld.getChunkManager();
-        ChunkPos.stream(center, 2).
-                map(cp -> cm.getWorldChunk(cp.x, cp.z, false)).
+    private void tick(LocalPlayer player) {
+        ChunkPos center = player.chunkPosition();
+        ClientChunkCache cm = player.clientLevel.getChunkSource();
+        ChunkPos.rangeClosed(center, 2).
+                map(cp -> cm.getChunk(cp.x, cp.z, false)).
                 filter(Objects::nonNull).
                 forEach(this::updateChunk);
     }
 
-    private void updateChunk(WorldChunk chunk) {
+    private void updateChunk(LevelChunk chunk) {
         Map<BlockPos, BlockEntity> be = chunk.getBlockEntities();
         ChestMap map = chunkMap.get(chunk.getPos());
         if (map == null) return;
@@ -176,37 +175,37 @@ public class ContainerInfo {
         }
     }
 
-    private static class ChestInfoLoader implements ConfigLoader<NbtCompound, ChestInfo> {
+    private static class ChestInfoLoader implements ConfigLoader<CompoundTag, ChestInfo> {
         @Override
-        public NbtCompound save(Object value) {
+        public CompoundTag save(Object value) {
             ChestInfo chestInfo = cast(value);
-            NbtCompound compound = new NbtCompound();
+            CompoundTag compound = new CompoundTag();
             compound.put("items", PerWorldConfig.get().toNbt(chestInfo.items));
             compound.putString("direction", chestInfo.face.getName());
             return compound;
         }
 
         @Override
-        public ChestInfo load(NbtCompound tag) {
+        public ChestInfo load(CompoundTag tag) {
             ChestInfo chestInfo = new ChestInfo();
-            NbtElement itemsCompound = tag.get("items");
+            Tag itemsCompound = tag.get("items");
             chestInfo.items = PerWorldConfig.get().toObject(itemsCompound, ItemList.class);
             chestInfo.face = Direction.byName(tag.getString("direction"));
             return chestInfo;
         }
 
         @Override
-        public NbtCompound parse(String s) {
-            return new NbtCompound();
+        public CompoundTag parse(String s) {
+            return new CompoundTag();
         }
     }
 
-    private static class ChestMapLoader implements ConfigLoader<NbtList, ChestMap> {
-        public NbtList save(Object value) {
-            NbtList tag = new NbtList();
+    private static class ChestMapLoader implements ConfigLoader<ListTag, ChestMap> {
+        public ListTag save(Object value) {
+            ListTag tag = new ListTag();
             ChestMap map = cast(value);
             map.forEach((k, v) -> {
-                NbtCompound c = new NbtCompound();
+                CompoundTag c = new CompoundTag();
                 c.put("pos", PerWorldConfig.get().toNbt(k));
                 c.put("info", PerWorldConfig.get().toNbt(v));
                 tag.add(c);
@@ -214,10 +213,10 @@ public class ContainerInfo {
             return tag;
         }
 
-        public ChestMap load(NbtList tag) {
+        public ChestMap load(ListTag tag) {
             ChestMap map = new ChestMap();
             tag.forEach(e -> {
-                NbtCompound c = (NbtCompound) e;
+                CompoundTag c = (CompoundTag) e;
                 Vec3i bp = PerWorldConfig.get().toObject(c.get("pos"), Vec3i.class);
                 ChestInfo itemList = PerWorldConfig.get().toObject(c.get("info"), ChestInfo.class);
                 map.put(bp, itemList);
@@ -225,20 +224,20 @@ public class ContainerInfo {
             return map;
         }
 
-        public NbtList parse(String s) {
-            return new NbtList();
+        public ListTag parse(String s) {
+            return new ListTag();
         }
     }
 
     private static class ChunkChestMap extends HashMap<ChunkPos, ChestMap> {
     }
 
-    private static class ContainerConfigLoader implements ConfigLoader<NbtList, ChunkChestMap> {
-        public NbtList save(Object value) {
+    private static class ContainerConfigLoader implements ConfigLoader<ListTag, ChunkChestMap> {
+        public ListTag save(Object value) {
             ChunkChestMap map = cast(value);
-            NbtList list = new NbtList();
+            ListTag list = new ListTag();
             map.forEach((k, v) -> {
-                NbtCompound c = new NbtCompound();
+                CompoundTag c = new CompoundTag();
                 c.put("pos", PerWorldConfig.get().toNbt(k));
                 c.put("map", PerWorldConfig.get().toNbt(v));
                 list.add(c);
@@ -246,10 +245,10 @@ public class ContainerInfo {
             return list;
         }
 
-        public ChunkChestMap load(NbtList tag) {
+        public ChunkChestMap load(ListTag tag) {
             ChunkChestMap map = new ChunkChestMap();
             tag.forEach(e -> {
-                NbtCompound c = (NbtCompound) e;
+                CompoundTag c = (CompoundTag) e;
                 ChunkPos bp = PerWorldConfig.get().toObject(c.get("pos"), ChunkPos.class);
                 ChestMap itemList = PerWorldConfig.get().toObject(c.get("map"), ChestMap.class);
                 map.put(bp, itemList);
@@ -257,8 +256,8 @@ public class ContainerInfo {
             return map;
         }
 
-        public NbtList parse(String s) {
-            return new NbtList();
+        public ListTag parse(String s) {
+            return new ListTag();
         }
     }
 }

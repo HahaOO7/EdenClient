@@ -1,8 +1,7 @@
 package at.haha007.edenclient.utils.config.wrappers;
 
-import net.minecraft.item.Item;
-
 import java.util.HashSet;
+import net.minecraft.world.item.Item;
 
 public class ItemSet extends HashSet<Item> {
 }

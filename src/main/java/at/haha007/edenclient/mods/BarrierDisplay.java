@@ -5,16 +5,16 @@ import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
-import net.minecraft.block.Blocks;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.particle.BlockMarkerParticle;
-import net.minecraft.item.Items;
-import net.minecraft.particle.BlockStateParticleEffect;
-import net.minecraft.particle.ParticleTypes;
-import net.minecraft.util.math.BlockPos;
-
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import java.util.Random;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.particle.BlockMarker;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.BlockParticleOption;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.Blocks;
 
 import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
@@ -33,15 +33,15 @@ public class BarrierDisplay {
         PerWorldConfig.get().register(this, "barrierDisplay");
     }
 
-    private void onTick(ClientPlayerEntity player) {
+    private void onTick(LocalPlayer player) {
         if (!enabled) return;
-        if (player.getInventory().getMainHandStack().getItem() == Items.BARRIER) return;
+        if (player.getInventory().getSelected().getItem() == Items.BARRIER) return;
         for (int i = 0; i < counter; i++) {
-            BlockPos pos = player.getBlockPos().add((int) (rand.nextGaussian() * dist), (int) (rand.nextGaussian() * dist), (int) (rand.nextGaussian() * dist));
-            if (player.clientWorld.getBlockState(pos).getBlock() != Blocks.BARRIER) continue;
-            var effect = new BlockStateParticleEffect(ParticleTypes.BLOCK_MARKER, Blocks.BARRIER.getDefaultState());
-            MinecraftClient.getInstance().particleManager.addParticle(new BlockMarkerParticle.Factory().createParticle(effect,
-                    player.clientWorld, pos.getX() + .5, pos.getY() + .5, pos.getZ() + .5, 0, 0, 0));
+            BlockPos pos = player.blockPosition().offset((int) (rand.nextGaussian() * dist), (int) (rand.nextGaussian() * dist), (int) (rand.nextGaussian() * dist));
+            if (player.clientLevel.getBlockState(pos).getBlock() != Blocks.BARRIER) continue;
+            var effect = new BlockParticleOption(ParticleTypes.BLOCK_MARKER, Blocks.BARRIER.defaultBlockState());
+            Minecraft.getInstance().particleEngine.add(new BlockMarker.Provider().createParticle(effect,
+                    player.clientLevel, pos.getX() + .5, pos.getY() + .5, pos.getZ() + .5, 0, 0, 0));
         }
     }
 

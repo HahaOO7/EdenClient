@@ -2,8 +2,7 @@ package at.haha007.edenclient.callbacks;
 
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.EventFactory;
-import net.minecraft.item.ItemStack;
-
+import net.minecraft.world.item.ItemStack;
 import java.util.List;
 
 public interface InventoryOpenCallback {
