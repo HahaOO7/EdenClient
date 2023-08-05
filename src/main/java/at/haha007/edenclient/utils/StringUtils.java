@@ -6,25 +6,24 @@ public class StringUtils {
 
     public static String getWorldOrServerName() {
         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+
         if (mc.hasSingleplayerServer()) {
             net.minecraft.client.server.IntegratedServer server = mc.getSingleplayerServer();
 
             if (server != null) {
                 return server.getWorldData().getLevelName();
             }
-        } else {
-            net.minecraft.client.multiplayer.ServerData server = mc.getCurrentServer();
+        }
 
-            if (server != null) {
-                return server.ip.replace(':', '_');
-            } else {
-                net.minecraft.client.multiplayer.ClientPacketListener handler = mc.getConnection();
-                net.minecraft.network.Connection connection = handler != null ? handler.getConnection() : null;
+        net.minecraft.client.multiplayer.ServerData server = mc.getCurrentServer();
+        if (server != null) {
+            return server.ip.trim().replace(':', '_');
+        }
 
-                if (connection != null) {
-                    return "realms_" + stringifyAddress(connection.getRemoteAddress());
-                }
-            }
+        net.minecraft.client.multiplayer.ClientPacketListener handler = mc.getConnection();
+        net.minecraft.network.Connection connection = handler != null ? handler.getConnection() : null;
+        if (connection != null) {
+            return "realms_" + stringifyAddress(connection.getRemoteAddress());
         }
 
         return null;

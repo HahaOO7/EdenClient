@@ -23,7 +23,7 @@ public class StepHeight {
     }
 
     private void onWorldJoin() {
-        Scheduler.get().scheduleSyncDelayed(this::update, 1);
+        Scheduler.scheduler().scheduleSyncDelayed(this::update, 1);
     }
 
     private void registerCommand() {

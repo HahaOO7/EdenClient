@@ -62,7 +62,7 @@ public class Greetings {
         if (msg.startsWith("[-] ")) {
             String name = msg.substring(4);
             quitTimes.put(name, System.currentTimeMillis());
-            Scheduler.get().scheduleSyncDelayed(() -> quitTimes.remove(name), wbMaxDelay);
+            Scheduler.scheduler().scheduleSyncDelayed(() -> quitTimes.remove(name), wbMaxDelay);
         }
 
         if (msg.startsWith("[+] ")) {
@@ -86,9 +86,9 @@ public class Greetings {
     private void addDelay(String name, String message) {
         if (sentPlayers.contains(name)) return;
         sentPlayers.add(name);
-        Scheduler.get().scheduleSyncDelayed(() -> {
+        Scheduler.scheduler().scheduleSyncDelayed(() -> {
             PlayerUtils.messageC2S(message.replace("%player%", name));
-            Scheduler.get().scheduleSyncDelayed(() -> sentPlayers.remove(name), minDelay);
+            Scheduler.scheduler().scheduleSyncDelayed(() -> sentPlayers.remove(name), minDelay);
         }, random.nextInt(100) + 60);
     }
 

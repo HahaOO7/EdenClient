@@ -1,9 +1,6 @@
 package at.haha007.edenclient.utils;
 
 import at.haha007.edenclient.mixinterface.IHandledScreen;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Optional;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
@@ -18,6 +15,10 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Optional;
+
 public class PlayerUtils {
 
     private static final Component prefix = Component.literal("[EC] ").setStyle(Style.EMPTY.applyFormats(ChatFormatting.LIGHT_PURPLE, ChatFormatting.BOLD));
@@ -28,7 +29,10 @@ public class PlayerUtils {
             sendModMessage("Tried sending message longer than 256 characters: " + msg);
             return;
         }
-        player.connection.sendChat(msg);
+        if (msg.startsWith("/"))
+            player.connection.sendCommand(msg);
+        else
+            player.connection.sendChat(msg);
     }
 
     public static void sendMessage(Component text) {

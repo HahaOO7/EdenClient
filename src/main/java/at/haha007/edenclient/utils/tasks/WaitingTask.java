@@ -2,7 +2,7 @@ package at.haha007.edenclient.utils.tasks;
 
 import java.util.function.BooleanSupplier;
 
-public class WaitingTask implements ITask {
+public class WaitingTask implements Task {
     private final BooleanSupplier waitingFor;
 
     public WaitingTask(BooleanSupplier condition) {

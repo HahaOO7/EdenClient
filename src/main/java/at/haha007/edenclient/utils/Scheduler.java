@@ -3,12 +3,14 @@ package at.haha007.edenclient.utils;
 import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.callbacks.JoinWorldCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
+import net.minecraft.client.player.LocalPlayer;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
-import net.minecraft.client.player.LocalPlayer;
+import java.util.function.Supplier;
 
 public class Scheduler {
 
@@ -18,13 +20,13 @@ public class Scheduler {
     private final TreeMap<Long, Set<Runnable>> delayedSync = new TreeMap<>();
     private final TreeMap<Long, Set<RepeatingRunnable>> repeatingSync = new TreeMap<>();
     private long tick;
+    private Thread mainThread = Thread.currentThread();
 
-    public static Scheduler get() {
+    public static Scheduler scheduler() {
         return instance;
     }
 
-
-    private static record RepeatingRunnable(int delta, BooleanSupplier runnable) {
+    private record RepeatingRunnable(int delta, BooleanSupplier runnable) {
     }
 
     private Scheduler() {
@@ -43,17 +45,21 @@ public class Scheduler {
     }
 
     private synchronized void tick(LocalPlayer clientPlayerEntity) {
+        if (mainThread != Thread.currentThread()) {
+            mainThread = Thread.currentThread();
+        }
         tick++;
+
         for (Runnable runnable : sync) {
             runnable.run();
         }
         sync.clear();
 
-        while (delayedSync.size() > 0 && delayedSync.firstKey() <= tick) {
+        while (!delayedSync.isEmpty() && delayedSync.firstKey() <= tick) {
             delayedSync.pollFirstEntry().getValue().forEach(Runnable::run);
         }
 
-        while (repeatingSync.size() > 0 && repeatingSync.firstKey() <= tick) {
+        while (!repeatingSync.isEmpty() && repeatingSync.firstKey() <= tick) {
             Map.Entry<Long, Set<RepeatingRunnable>> entry = repeatingSync.pollFirstEntry();
             entry.getValue().forEach(run -> {
                 if (run.runnable().getAsBoolean()) {
@@ -81,6 +87,19 @@ public class Scheduler {
         set.add(runnable);
     }
 
+    public <T> CompletableFuture<T> callSync(Supplier<T> callable) {
+        //on the main thread, return a completed future
+        if (isMainThreadActive()) {
+            T value = callable.get();
+            return CompletableFuture.completedFuture(value);
+        }
+        //async thread, complete future on next tick
+        CompletableFuture<T> future = new CompletableFuture<>();
+        Runnable runnable = () -> future.complete(callable.get());
+        runSync(runnable);
+        return future;
+    }
+
     public boolean cancelTask(Runnable runnable) {
         AtomicBoolean found = new AtomicBoolean(false);
         delayedSync.values().forEach(c -> found.set(found.get() || c.remove(runnable)));
@@ -98,6 +117,13 @@ public class Scheduler {
     }
 
     public synchronized void runSync(@NotNull Runnable runnable) {
-        sync.add(runnable);
+        if (isMainThreadActive())
+            runnable.run();
+        else
+            sync.add(runnable);
+    }
+
+    private boolean isMainThreadActive() {
+        return Thread.currentThread() == mainThread;
     }
 }

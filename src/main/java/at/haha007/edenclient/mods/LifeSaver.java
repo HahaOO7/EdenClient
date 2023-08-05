@@ -64,14 +64,14 @@ public class LifeSaver {
             sendModMessage("Trying to save your life!");
 
             schedulerRunning = true;
-            Scheduler.get().scheduleSyncRepeating(() -> {
+            Scheduler.scheduler().scheduleSyncRepeating(() -> {
                 LocalPlayer entity = PlayerUtils.getPlayer();
                 if (entity.getY() > height && entity.getHealth() > health) {
                     sendModMessage("I hope I saved your life!");
                     schedulerRunning = false;
                     return false;
                 }
-                entityPlayer.connection.sendChat("/farmwelt");
+                entityPlayer.connection.sendChat("/spawn");
                 return true;
             }, 20, 0);
         }

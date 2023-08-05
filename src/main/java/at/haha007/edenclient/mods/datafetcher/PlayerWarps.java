@@ -72,7 +72,7 @@ public class PlayerWarps {
 
     private int fetchData() {
         TaskManager tm = new TaskManager(1000);
-        Queue<ITask> q = new LinkedList<>();
+        Queue<Task> q = new LinkedList<>();
         q.add(new RunnableTask(() -> fetchData(tm, q, shops, 10)));
         q.add(new RunnableTask(() -> fetchData(tm, q, builds, 12)));
         q.add(new RunnableTask(() -> fetchData(tm, q, farms, 14)));
@@ -99,10 +99,10 @@ public class PlayerWarps {
         return 1;
     }
 
-    private void fetchData(TaskManager tm, Queue<ITask> endTask, Map<String, Vec3i> map, int slot) {
+    private void fetchData(TaskManager tm, Queue<Task> endTask, Map<String, Vec3i> map, int slot) {
         map.clear();
-        tm.then(new RunnableTask(() -> PlayerUtils.messageC2S("/pw")));
-        tm.then(new WaitForInventoryNameTask(Pattern.compile(". PlayerWarps - Kategorien")));
+        tm.then(new RunnableTask(() -> PlayerUtils.messageC2S("/pwarp")));
+        tm.then(new WaitForInventoryNameTask(Pattern.compile(".*")));
         tm.then(new RunnableTask(() -> PlayerUtils.clickSlot(slot)));
         tm.then(new WaitForInventoryNameTask(Pattern.compile(". PlayerWarps - Seite 1/[0-9]{1,2}")));
         tm.then(new RunnableTask(() -> {

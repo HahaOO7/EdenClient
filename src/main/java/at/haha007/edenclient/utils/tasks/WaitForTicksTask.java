@@ -1,6 +1,6 @@
 package at.haha007.edenclient.utils.tasks;
 
-public class WaitForTicksTask implements ITask {
+public class WaitForTicksTask implements Task {
     private int ticks;
 
     public WaitForTicksTask(int ticks) {

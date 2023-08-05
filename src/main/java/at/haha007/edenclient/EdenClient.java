@@ -27,7 +27,7 @@ public class EdenClient implements ClientModInitializer {
         INSTANCE = this;
 
         PerWorldConfig.get();
-        Scheduler.get();
+        Scheduler.scheduler();
 
         registerMod(DataFetcher.class);
         registerMod(CubeRenderer.class);

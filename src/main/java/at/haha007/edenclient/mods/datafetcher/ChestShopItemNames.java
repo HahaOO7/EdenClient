@@ -2,6 +2,7 @@ package at.haha007.edenclient.mods.datafetcher;
 
 import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.callbacks.AddChatMessageCallback;
+import at.haha007.edenclient.callbacks.JoinWorldCallback;
 import at.haha007.edenclient.callbacks.LeaveWorldCallback;
 import at.haha007.edenclient.mods.MessageIgnorer;
 import at.haha007.edenclient.utils.ChatColor;
@@ -11,16 +12,17 @@ import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import at.haha007.edenclient.utils.config.wrappers.BiStringStringMap;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Predicate;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import net.minecraft.client.multiplayer.ClientSuggestionProvider;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.DefaultedRegistry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
+
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static at.haha007.edenclient.command.CommandManager.literal;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
@@ -36,13 +38,14 @@ public class ChestShopItemNames {
     ChestShopItemNames() {
         AddChatMessageCallback.EVENT.register(this::onChat);
         PerWorldConfig.get().register(this, "dataFetcher.chestShopItemNames");
+        JoinWorldCallback.EVENT.register(() -> nameLookupRunning = false);
         LeaveWorldCallback.EVENT.register(() -> nameLookupRunning = false);
     }
 
     private void onChat(AddChatMessageCallback.ChatAddEvent event) {
         String message = event.getChatText().getString();
-        String fullNameMessageSyntax = "Voller Name: (?<originalname>[A-Za-z0-9_ ]{1,40})";
-        String shortenedNameMessageSyntax = "Shop Schild: (?<shortenedname>[A-Za-z0-9_ ]{1,40})";
+        String fullNameMessageSyntax = "Full Name: (?<originalname>[A-Za-z0-9_ ]{1,40})";
+        String shortenedNameMessageSyntax = "Shop Sign: (?<shortenedname>[A-Za-z0-9_ ]{1,40})";
 
         Matcher fullNameMatcher = Pattern.compile(fullNameMessageSyntax).matcher(message);
         Matcher shortenedNameMatcher = Pattern.compile(shortenedNameMessageSyntax).matcher(message);
@@ -102,11 +105,11 @@ public class ChestShopItemNames {
 
             AtomicInteger index = new AtomicInteger();
             nameLookupRunning = true;
-            Scheduler.get().scheduleSyncRepeating(() -> {
+            Scheduler.scheduler().scheduleSyncRepeating(() -> {
                 int i = index.getAndIncrement();
                 if (i >= minecraftIDs.length) {
                     sendModMessage("Finished mapping of all items! Disconnect from the world now to save all items into the config properly! They will be loaded the next time you join the world.");
-                    Scheduler.get().scheduleSyncDelayed(() -> {
+                    Scheduler.scheduler().scheduleSyncDelayed(() -> {
                         nameLookupRunning = false;
                         mi.disable(MessageIgnorer.Predefined.ITEM_INFO);
                         mi.setEnabled(wasMessageIgnoringEnabled);

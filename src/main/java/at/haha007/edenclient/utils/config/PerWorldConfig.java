@@ -3,6 +3,7 @@ package at.haha007.edenclient.utils.config;
 import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.callbacks.JoinWorldCallback;
 import at.haha007.edenclient.callbacks.LeaveWorldCallback;
+import at.haha007.edenclient.utils.Scheduler;
 import at.haha007.edenclient.utils.StringUtils;
 import at.haha007.edenclient.utils.config.loaders.*;
 import at.haha007.edenclient.utils.config.wrappers.*;
@@ -17,6 +18,7 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
+
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -102,6 +104,7 @@ public class PerWorldConfig {
     }
 
     private void onLeave() {
+        if (worldName == null || worldName.equals("null")) return;
         long start = System.nanoTime();
         System.out.println("[EC] Start saving config: " + worldName);
         saveConfig();
@@ -110,12 +113,21 @@ public class PerWorldConfig {
     }
 
     private void onJoin() {
-        worldName = StringUtils.getWorldOrServerName();
-        long start = System.nanoTime();
-        System.out.println("[EC] Start loading config: " + worldName);
-        loadConfig();
-        //noinspection RedundantStringFormatCall
-        System.out.println(String.format("[EC] Loading done, this took %sms.", TimeUnit.NANOSECONDS.toMillis((System.nanoTime() - start))));
+        Scheduler.scheduler().runAsync(() -> {
+            try {
+                Thread.sleep(1000);
+                worldName = StringUtils.getWorldOrServerName();
+                if(worldName == null || worldName.equals("null"))
+                    System.err.println("[EC] World is null!");
+                long start = System.nanoTime();
+                System.out.println("[EC] Start loading config: " + worldName);
+                loadConfig();
+                //noinspection RedundantStringFormatCall
+                System.out.println(String.format("[EC] Loading done, this took %sms.", TimeUnit.NANOSECONDS.toMillis((System.nanoTime() - start))));
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
     private void loadConfig() {

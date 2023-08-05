@@ -18,7 +18,7 @@ public class ChestShopEntry {
     public ChestShopEntry(SignBlockEntity sign) {
         String[] linesFront = new String[4];
         for (int i = 0; i < linesFront.length; i++) {
-            linesFront[i] = sign.getFrontText().getMessage(i, false).getString().trim();
+            linesFront[i] = sign.getFrontText().getMessage(i, true).getString().trim();
         }
 
         String player = linesFront[0];

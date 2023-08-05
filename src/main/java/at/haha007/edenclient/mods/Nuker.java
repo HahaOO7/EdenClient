@@ -82,7 +82,7 @@ public class Nuker {
         })));
         cmd.then(literal("area")
                 .then(literal("max").executes(c -> {
-                    area = BoundingBox.fromCorners(new Vec3i(-1000000,1000000,-1000000),new Vec3i(1000000,-1000000,1000000));
+                    area = BoundingBox.fromCorners(new Vec3i(-1000000, 1000000, -1000000), new Vec3i(1000000, -1000000, 1000000));
                     PlayerUtils.sendModMessage("Nuke area updated.");
                     return 1;
                 }))
@@ -157,11 +157,10 @@ public class Nuker {
         MultiPlayerGameMode im = Minecraft.getInstance().gameMode;
         if (im == null) return;
         if (nh == null) return;
-        if (limit > 1) {
+        if(target == null) {
             List<BlockPos> minableBlocks = getInstantMinableBlocksInRange(player);
             if (!minableBlocks.isEmpty()) {
-                target = null;
-                minableBlocks.forEach(p -> {
+                minableBlocks.stream().limit(limit).forEach(p -> {
                     nh.send(new ServerboundPlayerActionPacket(ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK, p, getHitDirectionForBlock(player, p)));
                     nh.send(new ServerboundPlayerActionPacket(ServerboundPlayerActionPacket.Action.STOP_DESTROY_BLOCK, p, getHitDirectionForBlock(player, p)));
                     player.clientLevel.setBlockAndUpdate(p, air);
@@ -171,9 +170,11 @@ public class Nuker {
             }
         }
 
-        if (target == null || Vec3.atCenterOf(target).distanceTo(player.getEyePosition()) > distance) findTarget(player);
+        if (target == null || Vec3.atCenterOf(target).distanceTo(player.getEyePosition()) > distance)
+            findTarget(player);
         if (target == null) return;
         Direction dir = getHitDirectionForBlock(player, target);
+
         if (im.continueDestroyBlock(target, dir))
             nh.send(new ServerboundSwingPacket(InteractionHand.MAIN_HAND));
         else

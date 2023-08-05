@@ -1,30 +1,37 @@
 package at.haha007.edenclient.utils.tasks;
 
-import at.haha007.edenclient.utils.Scheduler;
-
 import java.util.LinkedList;
 import java.util.Queue;
 
+import static at.haha007.edenclient.utils.Scheduler.scheduler;
+
 public class TaskManager implements Cloneable {
 
-    private final Queue<ITask> tasks = new LinkedList<>();
+    private final Queue<Task> tasks = new LinkedList<>();
     private int maxIter;
-    boolean started = false;
+    private boolean started = false;
 
     public TaskManager(int maxFailedIter) {
         maxIter = maxFailedIter;
     }
 
-    public TaskManager then(ITask task) {
+    public TaskManager then(Task task) {
         tasks.add(task);
         return this;
     }
 
+    public void run(){
+        while(!tasks.isEmpty()){
+
+        }
+    }
+
     public void start() {
+//        scheduler().runAsync(this::run);
         if (started) return;
         started = true;
         if (!tick()) return;
-        Scheduler.get().scheduleSyncRepeating(this::tick, 1, 1);
+        scheduler().scheduleSyncRepeating(this::tick, 1, 1);
     }
 
     private boolean tick() {

@@ -332,9 +332,9 @@ public class WorldEditReplaceHelper {
             }
             appendix.append("]");
 
-            Scheduler.get().scheduleSyncDelayed(() -> sendStandardReplaceCommand(fromBlock, toBlock, appendix.toString()), delayFactor.intValue() * delay + 1);
+            Scheduler.scheduler().scheduleSyncDelayed(() -> sendStandardReplaceCommand(fromBlock, toBlock, appendix.toString()), delayFactor.intValue() * delay + 1);
         });
-        Scheduler.get().scheduleSyncDelayed(() -> sendModMessage("All commands have been sent. Replacing might take longer depending on the size of the selection."), delayFactor.intValue() * delay + 2);
+        Scheduler.scheduler().scheduleSyncDelayed(() -> sendModMessage("All commands have been sent. Replacing might take longer depending on the size of the selection."), delayFactor.intValue() * delay + 2);
     }
 
     private void generatePermutations(List<List<String>> lists, List<String> result, int depth, String current) {

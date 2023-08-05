@@ -46,7 +46,7 @@ import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 public class ChestShopMod {
 
     @ConfigSubscriber
-    private ChestShopMap shops;
+    private ChestShopMap shops = new ChestShopMap();
     @ConfigSubscriber("false")
     private boolean searchEnabled = true;
 
@@ -73,7 +73,6 @@ public class ChestShopMod {
         if (!cm.hasChunk(chunk.x, chunk.z)) return;
         LevelChunk c = cm.getChunk(chunk.x, chunk.z, false);
         if (c == null) return;
-
         shops.remove(chunk);
         ChestShopSet cs = new ChestShopSet();
         c.getBlockEntities().values().stream()
@@ -103,7 +102,7 @@ public class ChestShopMod {
             return 1;
         }));
 
-        node.then(literal("updateshops").executes(c -> {
+        node.then(literal("visitshops").executes(c -> {
             var shops = EdenClient.getMod(DataFetcher.class).getPlayerWarps().getShops();
             TaskManager tm = new TaskManager((shops.size() + 2) * 120);
             sendModMessage(ChatColor.GOLD + "Teleporting to all player warps, this will take about " +
@@ -112,7 +111,7 @@ public class ChestShopMod {
             int count = shops.size();
             AtomicInteger i = new AtomicInteger(1);
             for (String shop : shops.keySet()) {
-                tm.then(new RunnableTask(() -> PlayerUtils.messageC2S("/pw " + shop)));
+                tm.then(new RunnableTask(() -> PlayerUtils.messageC2S("/pwarp " + shop)));
                 tm.then(new WaitForTicksTask(120)); //wait for chunks to load
                 tm.then(new RunnableTask(() -> sendModMessage(ChatColor.GOLD + "Shop " +
                         ChatColor.AQUA + i.getAndIncrement() +
@@ -225,7 +224,7 @@ public class ChestShopMod {
             List<String> keys = new ArrayList<>();
             keys.addAll(buyEntries.keySet());
             keys.addAll(sellEntries.keySet());
-            keys = keys.stream().sorted(Comparator.comparing(s -> s)).collect(Collectors.toList());
+            keys = keys.stream().sorted(Comparator.comparing(s -> s)).distinct().collect(Collectors.toList());
             ChestShopItemNames itemNameMap = EdenClient.getMod(DataFetcher.class).getChestShopItemNames();
             for (String key : keys) {
                 List<ChestShopEntry> currentBuyEntries = buyEntries.get(key);
@@ -376,7 +375,9 @@ public class ChestShopMod {
 
     private CompletableFuture<Suggestions> suggestBuy(CommandContext<ClientSuggestionProvider> context, SuggestionsBuilder suggestionsBuilder) {
         ChestShopItemNames itemNameMap = EdenClient.getMod(DataFetcher.class).getChestShopItemNames();
-        shops.values().forEach(s -> s.stream().filter(ChestShopEntry::canBuy).map(entry -> itemNameMap.getLongName(entry.getItem())).filter(Objects::nonNull).forEach(suggestionsBuilder::suggest));
+        shops.values().forEach(s -> s.stream().filter(ChestShopEntry::canBuy)
+                .map(entry -> itemNameMap.getLongName(entry.getItem()))
+                .filter(Objects::nonNull).forEach(suggestionsBuilder::suggest));
         return suggestionsBuilder.buildFuture();
     }
 }
