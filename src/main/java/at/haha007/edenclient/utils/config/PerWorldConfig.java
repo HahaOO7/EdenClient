@@ -113,13 +113,14 @@ public class PerWorldConfig {
     }
 
     private void onJoin() {
+        onLeave();
+        worldName = StringUtils.getWorldOrServerName();
+        if(worldName == null || worldName.equals("null"))
+            System.err.println("[EC] World is null!");
+        long start = System.nanoTime();
         Scheduler.scheduler().runAsync(() -> {
             try {
                 Thread.sleep(1000);
-                worldName = StringUtils.getWorldOrServerName();
-                if(worldName == null || worldName.equals("null"))
-                    System.err.println("[EC] World is null!");
-                long start = System.nanoTime();
                 System.out.println("[EC] Start loading config: " + worldName);
                 loadConfig();
                 //noinspection RedundantStringFormatCall

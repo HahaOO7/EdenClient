@@ -1,9 +1,8 @@
 package at.haha007.edenclient.callbacks;
 
+import at.haha007.edenclient.utils.ContainerInfo;
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.EventFactory;
-import net.minecraft.world.item.ItemStack;
-import java.util.List;
 
 public interface InventoryOpenCallback {
     Event<InventoryOpenCallback> EVENT = EventFactory.createArrayBacked(InventoryOpenCallback.class,
@@ -13,5 +12,5 @@ public interface InventoryOpenCallback {
                 }
             });
 
-    void open(List<ItemStack> items);
+    void open(ContainerInfo items);
 }

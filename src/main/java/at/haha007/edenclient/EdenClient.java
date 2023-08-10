@@ -1,14 +1,18 @@
 package at.haha007.edenclient;
 
+import at.haha007.edenclient.command.CommandManager;
 import at.haha007.edenclient.mods.*;
 import at.haha007.edenclient.mods.chestshop.ChestShopMod;
 import at.haha007.edenclient.mods.datafetcher.DataFetcher;
 import at.haha007.edenclient.render.CubeRenderer;
 import at.haha007.edenclient.render.TracerRenderer;
+import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.Scheduler;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
+import at.haha007.edenclient.utils.tasks.*;
 import net.fabricmc.api.ClientModInitializer;
 import net.minecraft.client.Minecraft;
+
 import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -20,7 +24,8 @@ import java.util.concurrent.Executors;
 public class EdenClient implements ClientModInitializer {
     public static EdenClient INSTANCE;
     private static final Map<Class<?>, Object> registeredMods = new HashMap<>();
-    public static ExecutorService chatThread = Executors.newSingleThreadExecutor();;
+    public static ExecutorService chatThread = Executors.newSingleThreadExecutor();
+    ;
 
     @Override
     public void onInitializeClient() {
@@ -66,6 +71,21 @@ public class EdenClient implements ClientModInitializer {
         registerMod(NbtInfo.class);
         registerMod(WorldEditReplaceHelper.class);
         registerMod(RenderShape.class);
+
+        if (false) return;
+        CommandManager.register(CommandManager.literal("etest").executes(c -> {
+            TaskManager tm = new TaskManager();
+            tm.then(new MaxTimeTask(new WaitForInventoryTask(), 10_000));
+            tm.then(() -> PlayerUtils.sendModMessage("1"));
+            tm.then(new WaitForTicksTask(20));
+            tm.then(() -> PlayerUtils.sendModMessage("2"));
+            CompleteCommandTask completeTask = new CompleteCommandTask("sammelvariablen ");
+            tm.then(completeTask);
+            tm.then(() -> System.out.println(String.join("\n", completeTask.getSuggestions())));
+            tm.then(new SyncTask(() -> PlayerUtils.sendModMessage("SYNC OUTPUT")));
+            tm.start();
+            return 1;
+        }));
     }
 
     private void registerMod(Class<?> clazz) {

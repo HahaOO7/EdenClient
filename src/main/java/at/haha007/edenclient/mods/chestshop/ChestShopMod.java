@@ -9,7 +9,7 @@ import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
-import at.haha007.edenclient.utils.tasks.RunnableTask;
+import at.haha007.edenclient.utils.tasks.SyncTask;
 import at.haha007.edenclient.utils.tasks.TaskManager;
 import at.haha007.edenclient.utils.tasks.WaitForTicksTask;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -104,23 +104,23 @@ public class ChestShopMod {
 
         node.then(literal("visitshops").executes(c -> {
             var shops = EdenClient.getMod(DataFetcher.class).getPlayerWarps().getShops();
-            TaskManager tm = new TaskManager((shops.size() + 2) * 120);
+            TaskManager tm = new TaskManager();
             sendModMessage(ChatColor.GOLD + "Teleporting to all player warps, this will take about " +
                     ChatColor.AQUA + (shops.size() * 6) +
                     ChatColor.GOLD + " seconds.");
             int count = shops.size();
             AtomicInteger i = new AtomicInteger(1);
             for (String shop : shops.keySet()) {
-                tm.then(new RunnableTask(() -> PlayerUtils.messageC2S("/pwarp " + shop)));
+                tm.then(new SyncTask(() -> PlayerUtils.messageC2S("/pwarp " + shop)));
                 tm.then(new WaitForTicksTask(120)); //wait for chunks to load
-                tm.then(new RunnableTask(() -> sendModMessage(ChatColor.GOLD + "Shop " +
+                tm.then(new SyncTask(() -> sendModMessage(ChatColor.GOLD + "Shop " +
                         ChatColor.AQUA + i.getAndIncrement() +
                         ChatColor.GOLD + "/" +
                         ChatColor.AQUA + count +
                         ChatColor.GOLD + " | " +
                         ChatColor.AQUA + ((count - i.get() + 1) * 5) +
                         ChatColor.GOLD + " seconds left")));
-                tm.then(new RunnableTask(() -> checkForShops(PlayerUtils.getPlayer(), 8)));
+                tm.then(new SyncTask(() -> checkForShops(PlayerUtils.getPlayer(), 8)));
             }
             tm.start();
             return 1;
@@ -243,11 +243,11 @@ public class ChestShopMod {
                 if (originalName == null) originalName = key;
 
                 lines.add(originalName + ":");
-                if (currentBuyEntries.size() > 0) {
+                if (!currentBuyEntries.isEmpty()) {
                     lines.add("Buy:");
                     currentBuyEntries.forEach(e -> lines.add(String.format("%-15s [%6d, %3d, %6d] for %.2f$/item", e.getOwner(), e.getPos().getX(), e.getPos().getY(), e.getPos().getZ(), e.getBuyPricePerItem())));
                 }
-                if (currentSellEntries.size() > 0) {
+                if (!currentSellEntries.isEmpty()) {
                     lines.add("Sell:");
                     currentSellEntries.forEach(e -> lines.add(String.format("%-15s [%6d, %3d, %6d] for %.2f$/item", e.getOwner(), e.getPos().getX(), e.getPos().getY(), e.getPos().getZ(), e.getSellPricePerItem())));
                 }

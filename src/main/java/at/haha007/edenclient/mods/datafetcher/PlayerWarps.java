@@ -71,14 +71,14 @@ public class PlayerWarps {
     }
 
     private int fetchData() {
-        TaskManager tm = new TaskManager(1000);
+        TaskManager tm = new TaskManager();
         Queue<Task> q = new LinkedList<>();
-        q.add(new RunnableTask(() -> fetchData(tm, q, shops, 10)));
-        q.add(new RunnableTask(() -> fetchData(tm, q, builds, 12)));
-        q.add(new RunnableTask(() -> fetchData(tm, q, farms, 14)));
-        q.add(new RunnableTask(() -> fetchData(tm, q, other, 16)));
-        q.add(new RunnableTask(() -> fetchData(tm, q, hidden, 22)));
-        q.add(new RunnableTask(() -> {
+        q.add(new SyncTask(() -> fetchData(tm, q, shops, 10)));
+        q.add(new SyncTask(() -> fetchData(tm, q, builds, 12)));
+        q.add(new SyncTask(() -> fetchData(tm, q, farms, 14)));
+        q.add(new SyncTask(() -> fetchData(tm, q, other, 16)));
+        q.add(new SyncTask(() -> fetchData(tm, q, hidden, 22)));
+        q.add(new SyncTask(() -> {
             Screen screen = Minecraft.getInstance().screen;
             if (screen == null) return;
             screen.onClose();
@@ -89,8 +89,8 @@ public class PlayerWarps {
     }
 
     private int fetchData(Map<String, Vec3i> map, int slot) {
-        TaskManager tm = new TaskManager(1000);
-        fetchData(tm, new LinkedList<>(List.of(new RunnableTask(() -> {
+        TaskManager tm = new TaskManager();
+        fetchData(tm, new LinkedList<>(List.of(new SyncTask(() -> {
             Screen screen = Minecraft.getInstance().screen;
             if (screen == null) return;
             screen.onClose();
@@ -101,11 +101,11 @@ public class PlayerWarps {
 
     private void fetchData(TaskManager tm, Queue<Task> endTask, Map<String, Vec3i> map, int slot) {
         map.clear();
-        tm.then(new RunnableTask(() -> PlayerUtils.messageC2S("/pwarp")));
-        tm.then(new WaitForInventoryNameTask(Pattern.compile(".*")));
-        tm.then(new RunnableTask(() -> PlayerUtils.clickSlot(slot)));
-        tm.then(new WaitForInventoryNameTask(Pattern.compile(". PlayerWarps - Seite 1/[0-9]{1,2}")));
-        tm.then(new RunnableTask(() -> {
+        tm.then(new SyncTask(() -> PlayerUtils.messageC2S("/pwarp")));
+        tm.then(new WaitForInventoryTask(Pattern.compile(".*")));
+        tm.then(new SyncTask(() -> PlayerUtils.clickSlot(slot)));
+        tm.then(new WaitForInventoryTask(Pattern.compile(". PlayerWarps - Seite 1/[0-9]{1,2}")));
+        tm.then(new SyncTask(() -> {
             Pattern pattern = Pattern.compile(". PlayerWarps - Seite 1/(?<pages>[0-9]{1,2})");
             Screen screen = Minecraft.getInstance().screen;
             if (screen == null) return;
@@ -114,12 +114,12 @@ public class PlayerWarps {
             int pages = Integer.parseInt(matcher.group("pages"));
 
             tm.then(new WaitForTicksTask(5));
-            tm.then(new RunnableTask(() -> scanWarps(map)));
+            tm.then(new SyncTask(() -> scanWarps(map)));
             for (int i = 2; i <= pages; i++) {
-                tm.then(new RunnableTask(() -> PlayerUtils.clickSlot(50)));
-                tm.then(new WaitForInventoryNameTask(Pattern.compile(". PlayerWarps - Seite " + i + "/" + pages)));
+                tm.then(new SyncTask(() -> PlayerUtils.clickSlot(50)));
+                tm.then(new WaitForInventoryTask(Pattern.compile(". PlayerWarps - Seite " + i + "/" + pages)));
                 tm.then(new WaitForTicksTask(5));
-                tm.then(new RunnableTask(() -> scanWarps(map)));
+                tm.then(new SyncTask(() -> scanWarps(map)));
             }
             tm.then(endTask.poll());
         }));

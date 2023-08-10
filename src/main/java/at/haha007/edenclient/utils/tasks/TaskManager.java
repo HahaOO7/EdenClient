@@ -1,18 +1,28 @@
 package at.haha007.edenclient.utils.tasks;
 
-import java.util.LinkedList;
-import java.util.Queue;
+import at.haha007.edenclient.callbacks.LeaveWorldCallback;
+
+import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static at.haha007.edenclient.utils.Scheduler.scheduler;
 
-public class TaskManager implements Cloneable {
+public class TaskManager implements Cloneable, Task {
+    private static final Set<TaskManager> running = Collections.synchronizedSet(new HashSet<>());
 
     private final Queue<Task> tasks = new LinkedList<>();
-    private int maxIter;
-    private boolean started = false;
+    private final AtomicBoolean started = new AtomicBoolean(false);
+    private Thread thread = null;
 
-    public TaskManager(int maxFailedIter) {
-        maxIter = maxFailedIter;
+    static {
+        LeaveWorldCallback.EVENT.register(() -> {
+            running.forEach(TaskManager::cancel);
+            running.clear();
+        });
+
+    }
+
+    public TaskManager() {
     }
 
     public TaskManager then(Task task) {
@@ -20,29 +30,27 @@ public class TaskManager implements Cloneable {
         return this;
     }
 
-    public void run(){
-        while(!tasks.isEmpty()){
-
+    public void run() throws InterruptedException {
+        running.add(this);
+        thread = Thread.currentThread();
+        while (!tasks.isEmpty()) {
+            tasks.poll().run();
         }
+        running.remove(this);
     }
 
     public void start() {
-//        scheduler().runAsync(this::run);
-        if (started) return;
-        started = true;
-        if (!tick()) return;
-        scheduler().scheduleSyncRepeating(this::tick, 1, 1);
-    }
-
-    private boolean tick() {
-        if (--maxIter < 0) {
-            tasks.clear();
-            return false;
-        }
-        while (!tasks.isEmpty() && tasks.peek().run()) {
-            tasks.poll();
-        }
-        return !tasks.isEmpty();
+        if (started.get()) return;
+        started.set(true);
+        scheduler().runAsync(() -> {
+            try {
+                run();
+            } catch (InterruptedException e) {
+                System.err.println("Task interrupted!");
+                //noinspection CallToPrintStackTrace
+                e.printStackTrace();
+            }
+        });
     }
 
     @Override
@@ -56,6 +64,8 @@ public class TaskManager implements Cloneable {
 
     public void cancel() {
         tasks.clear();
-        maxIter = -1;
+        if (thread != null)
+            thread.interrupt();
+        running.remove(this);
     }
 }

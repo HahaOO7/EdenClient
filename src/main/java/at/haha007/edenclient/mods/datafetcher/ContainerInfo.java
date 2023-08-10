@@ -6,10 +6,6 @@ import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import at.haha007.edenclient.utils.config.loaders.ConfigLoader;
 import at.haha007.edenclient.utils.config.wrappers.ItemList;
-import java.util.*;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import net.minecraft.client.multiplayer.ClientChunkCache;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
@@ -43,6 +39,11 @@ import net.minecraft.world.level.block.state.properties.ChestType;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.phys.BlockHitResult;
 
+import java.util.*;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 public class ContainerInfo {
     @ConfigSubscriber()
     private final ChunkChestMap chunkMap;
@@ -55,7 +56,7 @@ public class ContainerInfo {
         PlayerTickCallback.EVENT.register(this::tick);
         PlayerAttackBlockCallback.EVENT.register(this::attackBlock);
         PlayerInteractBlockCallback.EVENT.register(this::interactBlock);
-        InventoryOpenCallback.EVENT.register(this::onOpenInventory);
+        InventoryOpenCallback.EVENT.register(c -> onOpenInventory(c.getItems()));
         PlayerInvChangeCallback.EVENT.register(this::onInventoryChange);
         PerWorldConfig.get().register(new ContainerConfigLoader(), ChunkChestMap.class);
         PerWorldConfig.get().register(new ChestMapLoader(), ChestMap.class);

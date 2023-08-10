@@ -6,11 +6,11 @@ import net.fabricmc.fabric.api.event.EventFactory;
 
 public interface CommandSuggestionCallback {
     Event<CommandSuggestionCallback> EVENT = EventFactory.createArrayBacked(CommandSuggestionCallback.class,
-            listeners -> (suggestions) -> {
+            listeners -> (suggestions, id) -> {
                 for (CommandSuggestionCallback listener : listeners) {
-                    listener.suggest(suggestions);
+                    listener.suggest(suggestions, id);
                 }
             });
 
-    void suggest(Suggestions suggestions);
+    void suggest(Suggestions suggestions, int id);
 }
