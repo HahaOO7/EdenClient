@@ -5,6 +5,7 @@ import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexBuffer;
 import com.mojang.blaze3d.vertex.VertexFormat;
+import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -14,6 +15,10 @@ public enum RenderUtils {
 
     public static Vec3 getCameraPos() {
         return Minecraft.getInstance().getBlockEntityRenderDispatcher().camera.getPosition();
+    }
+
+    public static Camera getCamera() {
+        return Minecraft.getInstance().getBlockEntityRenderDispatcher().camera;
     }
 
     public static void drawOutlinedBox(AABB bb, VertexBuffer vertexBuffer) {

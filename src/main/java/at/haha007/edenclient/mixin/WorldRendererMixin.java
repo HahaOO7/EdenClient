@@ -27,13 +27,17 @@ public class WorldRendererMixin {
 
     @Inject(method = "renderLevel", at = @At("HEAD"))
     private void renderWorld(PoseStack matrix, float tickDelta, long limitTime, boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer, LightTexture lightmapTextureManager, Matrix4f positionMatrix, CallbackInfo ci) {
+        matrix.pushPose();
         Vec3 cameraPos = camera.getPosition();
         matrix.translate(-cameraPos.x, -cameraPos.y, -cameraPos.z);
         float[] color = RenderSystem.getShaderColor();
+
         GL11.glEnable(GL11.GL_LINE_SMOOTH);
         WorldRenderCallback.EVENT.invoker().render(matrix, renderBuffers.bufferSource(), tickDelta);
         GL11.glDisable(GL11.GL_LINE_SMOOTH);
+
         RenderSystem.enableDepthTest();
+        RenderSystem.setShaderColor(1,1,1,1);
         RenderSystem.setShaderColor(color[0], color[1], color[2], color[3]);
         matrix.popPose();
     }
