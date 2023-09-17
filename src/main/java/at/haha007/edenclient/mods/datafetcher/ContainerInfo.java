@@ -30,12 +30,9 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.ChestBlockEntity;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.properties.ChestType;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.phys.BlockHitResult;
 
@@ -53,15 +50,18 @@ public class ContainerInfo {
 
     ContainerInfo() {
         chunkMap = new ChunkChestMap();
+
         PlayerTickCallback.EVENT.register(this::tick);
         PlayerAttackBlockCallback.EVENT.register(this::attackBlock);
         PlayerInteractBlockCallback.EVENT.register(this::interactBlock);
         InventoryOpenCallback.EVENT.register(c -> onOpenInventory(c.getItems()));
         PlayerInvChangeCallback.EVENT.register(this::onInventoryChange);
+
         PerWorldConfig.get().register(new ContainerConfigLoader(), ChunkChestMap.class);
         PerWorldConfig.get().register(new ChestMapLoader(), ChestMap.class);
         PerWorldConfig.get().register(new ChestInfoLoader(), ChestInfo.class);
         PerWorldConfig.get().register(this, "ContainerInfo");
+
     }
 
     private void onInventoryChange(Inventory playerInventory) {
@@ -82,7 +82,9 @@ public class ContainerInfo {
         //smallest only chests and shulkerboxes!
         if (itemStacks.size() < 27) return;
         ChunkPos cp = new ChunkPos(new BlockPos(lastInteractedBlock));
-        Registry<Block> registry = PlayerUtils.getPlayer().level().registryAccess().registryOrThrow(BlockTags.SHULKER_BOXES.registry());
+        @SuppressWarnings("resource")
+        Level level = PlayerUtils.getPlayer().level();
+        Registry<Block> registry = level.registryAccess().registryOrThrow(BlockTags.SHULKER_BOXES.registry());
         Map<Item, List<ItemStack>> items = itemStacks.stream().
                 flatMap(stack -> registry.containsKey(BuiltInRegistries.BLOCK.getKey(Block.byItem(stack.getItem()))) ?
                         mapShulkerBox(stack) : Stream.of(stack)).collect(Collectors.groupingBy(ItemStack::getItem));
@@ -125,12 +127,7 @@ public class ContainerInfo {
 
     private InteractionResult interactBlock(LocalPlayer player, ClientLevel world, InteractionHand hand, BlockHitResult blockHitResult) {
         BlockEntity be = world.getBlockEntity(blockHitResult.getBlockPos());
-        boolean isLeftChest = false;
-        if (be instanceof ChestBlockEntity) {
-            BlockState blockState = world.getBlockState(blockHitResult.getBlockPos());
-            isLeftChest = blockState.getValue(ChestBlock.TYPE) == ChestType.LEFT;
-        }
-        if (be instanceof Container && !isLeftChest) {
+        if (be instanceof Container) {
             lastInteractedBlock = blockHitResult.getBlockPos();
             lastClickedDirection = blockHitResult.getDirection();
         } else {
@@ -160,7 +157,7 @@ public class ContainerInfo {
         return chunkMap.containsKey(chunkPos) ? chunkMap.get(chunkPos) : new ChestMap();
     }
 
-    private static class ChestMap extends HashMap<Vec3i, ChestInfo> {
+    public static class ChestMap extends HashMap<Vec3i, ChestInfo> {
     }
 
     public static class ChestInfo {

@@ -32,10 +32,12 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
+import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import static at.haha007.edenclient.command.CommandManager.*;
@@ -157,15 +159,15 @@ public class Nuker {
         MultiPlayerGameMode im = Minecraft.getInstance().gameMode;
         if (im == null) return;
         if (nh == null) return;
-        if(target == null) {
+        if (target == null) {
             List<BlockPos> minableBlocks = getInstantMinableBlocksInRange(player);
             if (!minableBlocks.isEmpty()) {
                 minableBlocks.stream().limit(limit).forEach(p -> {
                     nh.send(new ServerboundPlayerActionPacket(ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK, p, getHitDirectionForBlock(player, p)));
-                    nh.send(new ServerboundPlayerActionPacket(ServerboundPlayerActionPacket.Action.STOP_DESTROY_BLOCK, p, getHitDirectionForBlock(player, p)));
+//                    nh.send(new ServerboundPlayerActionPacket(ServerboundPlayerActionPacket.Action.STOP_DESTROY_BLOCK, p, getHitDirectionForBlock(player, p)));
                     player.clientLevel.setBlockAndUpdate(p, air);
                 });
-                nh.send(new ServerboundSwingPacket(InteractionHand.MAIN_HAND));
+//                nh.send(new ServerboundSwingPacket(InteractionHand.MAIN_HAND));
                 return;
             }
         }
@@ -189,6 +191,7 @@ public class Nuker {
         stream = stream.filter(p -> player.getBlockY() <= p.getY());
         stream = stream.filter(area::isInside);
         stream = stream.filter(p -> !world.getBlockState(p).isAir());
+        stream = stream.filter(Predicate.not(this::isNextToLiquid));
         if (filterEnabled) {
             stream = stream.filter(p -> applyFilter(world.getBlockState(p).getBlock()));
         }
@@ -203,11 +206,13 @@ public class Nuker {
         stream = stream.filter(area::isInside);
         stream = stream.filter(p -> !world.getBlockState(p).isAir());
         stream = stream.filter(p -> instantMinable(p, player));
+        stream = stream.filter(Predicate.not(this::isNextToLiquid));
         if (filterEnabled) {
             stream = stream.filter(p -> applyFilter(world.getBlockState(p).getBlock()));
         }
         stream = stream.limit(limit);
         return stream.map(BlockPos::new).toList();
+
     }
 
     private boolean applyFilter(Block block) {
@@ -219,6 +224,22 @@ public class Nuker {
         BlockState state = world.getBlockState(pos);
         float delta = state.getDestroyProgress(player, world, pos);
         return delta >= 1;
+    }
+
+    private boolean isNextToLiquid(BlockPos pos) {
+        LocalPlayer player = PlayerUtils.getPlayer();
+        ClientLevel world = player.clientLevel;
+        //don't care about down
+        FluidState state = world.getFluidState(pos.relative(Direction.UP));
+        if (!state.isEmpty()) return true;
+        state = world.getFluidState(pos.relative(Direction.NORTH));
+        if (!state.isEmpty()) return true;
+        state = world.getFluidState(pos.relative(Direction.SOUTH));
+        if (!state.isEmpty()) return true;
+        state = world.getFluidState(pos.relative(Direction.WEST));
+        if (!state.isEmpty()) return true;
+        state = world.getFluidState(pos.relative(Direction.EAST));
+        return !state.isEmpty();
     }
 
     private Stream<BlockPos> getNearby(LocalPlayer player) {

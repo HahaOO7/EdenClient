@@ -38,6 +38,7 @@ public class AutoHarvest {
 
     private final Set<Block> justReplant = Set.of(Blocks.POTATOES, Blocks.CARROTS, Blocks.NETHER_WART, Blocks.WHEAT, Blocks.BEETROOTS);
     private final Set<Block> sameBelow = Set.of(Blocks.SUGAR_CANE);
+    private int cropsHarvestedThisTick = 0;
 
     @ConfigSubscriber("false")
     private boolean enabled;
@@ -69,10 +70,11 @@ public class AutoHarvest {
         world = player.clientLevel;
         Vec3 pos = player.getEyePosition();
         BlockPos blockPos = player.blockPosition();
+        cropsHarvestedThisTick = 0;
         switch (cycle) {
             case 0 ->//harvest
                     BlockPos.withinManhattanStream(blockPos, 5, 5, 5).
-                            filter(b -> Vec3.atCenterOf(b).closerThan(pos, 5)).
+                            filter(b -> Vec3.atCenterOf(b).closerThan(pos, 4)).
                             forEach(this::harvestCrop);
             case 1 -> {//select
                 boolean found = false;
@@ -100,6 +102,7 @@ public class AutoHarvest {
                 BlockPos.withinManhattanStream(blockPos, 5, 5, 5).
                         filter(b -> world.getBlockState(b).getBlock() == filter).
                         filter(b -> world.getBlockState(b.above()).getBlock() == Blocks.AIR).
+                        limit(2).
                         forEach(this::clickPos);
             }
         }
@@ -107,6 +110,7 @@ public class AutoHarvest {
     }
 
     private void harvestCrop(BlockPos pos) {
+        if (cropsHarvestedThisTick > 2) return;
         //harvest sugarcane
         sameBelow(pos);
         //harvest normal crops
@@ -123,6 +127,7 @@ public class AutoHarvest {
             return;
         if (!cropBlock.isMaxAge(state))
             return;
+        cropsHarvestedThisTick++;
         attackPos(pos);
     }
 
@@ -133,6 +138,7 @@ public class AutoHarvest {
             return;
         if (state.getValue(BlockStateProperties.AGE_3) < 3)
             return;
+        cropsHarvestedThisTick++;
         attackPos(pos);
     }
 
@@ -143,6 +149,7 @@ public class AutoHarvest {
             return;
         if (world.getBlockState(pos.below()).getBlock() != block)
             return;
+        cropsHarvestedThisTick++;
         attackPos(pos);
     }
 

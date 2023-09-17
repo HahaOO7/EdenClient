@@ -6,12 +6,12 @@ import at.haha007.edenclient.mods.chestshop.ChestShopMod;
 import at.haha007.edenclient.mods.datafetcher.DataFetcher;
 import at.haha007.edenclient.render.CubeRenderer;
 import at.haha007.edenclient.render.TracerRenderer;
-import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.Scheduler;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
-import at.haha007.edenclient.utils.tasks.*;
+import com.mojang.brigadier.tree.CommandNode;
 import net.fabricmc.api.ClientModInitializer;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientPacketListener;
 
 import java.io.File;
 import java.lang.reflect.Constructor;
@@ -74,16 +74,19 @@ public class EdenClient implements ClientModInitializer {
 
         if (false) return;
         CommandManager.register(CommandManager.literal("etest").executes(c -> {
-            TaskManager tm = new TaskManager();
-            tm.then(new MaxTimeTask(new WaitForInventoryTask(), 10_000));
-            tm.then(() -> PlayerUtils.sendModMessage("1"));
-            tm.then(new WaitForTicksTask(20));
-            tm.then(() -> PlayerUtils.sendModMessage("2"));
-            CompleteCommandTask completeTask = new CompleteCommandTask("sammelvariablen ");
-            tm.then(completeTask);
-            tm.then(() -> System.out.println(String.join("\n", completeTask.getSuggestions())));
-            tm.then(new SyncTask(() -> PlayerUtils.sendModMessage("SYNC OUTPUT")));
-            tm.start();
+            ClientPacketListener connection = Minecraft.getInstance().getConnection();
+            if (connection == null) return -1;
+            connection.getCommands().getRoot().getChildren().stream().map(CommandNode::getName).forEach(System.out::println);
+//            TaskManager tm = new TaskManager();
+//            tm.then(new MaxTimeTask(new WaitForInventoryTask(), 10_000));
+//            tm.then(() -> PlayerUtils.sendModMessage("1"));
+//            tm.then(new WaitForTicksTask(20));
+//            tm.then(() -> PlayerUtils.sendModMessage("2"));
+//            CompleteCommandTask completeTask = new CompleteCommandTask("sammelvariablen ");
+//            tm.then(completeTask);
+//            tm.then(() -> System.out.println(String.join("\n", completeTask.getSuggestions())));
+//            tm.then(new SyncTask(() -> PlayerUtils.sendModMessage("SYNC OUTPUT")));
+//            tm.start();
             return 1;
         }));
     }

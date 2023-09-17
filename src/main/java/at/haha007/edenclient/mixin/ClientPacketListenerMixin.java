@@ -16,7 +16,6 @@ import net.minecraft.client.telemetry.WorldSessionTelemetryManager;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.*;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.ItemStack;

@@ -26,9 +26,11 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Quaternionf;
 
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static at.haha007.edenclient.command.CommandManager.literal;
 import static at.haha007.edenclient.utils.PlayerUtils.getPlayer;
@@ -53,7 +55,12 @@ public class ContainerDisplay {
         }
         ChunkPos chunkPos = player.chunkPosition();
         entries = new HashMap<>();
-        ChunkPos.rangeClosed(chunkPos, 2).forEach(cp -> entries.putAll(EdenClient.getMod(DataFetcher.class).getContainerInfo().getContainerInfo(cp)));
+        ChunkPos.rangeClosed(chunkPos, 1).forEach(cp -> entries.putAll(EdenClient.getMod(DataFetcher.class).getContainerInfo().getContainerInfo(cp)));
+        Vec3i pp = player.blockPosition();
+        entries = entries.entrySet().stream()
+                .sorted(Comparator.comparingInt(e -> e.getKey().distManhattan(pp)))
+                .limit(200)
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
     private void registerCommand() {
@@ -109,7 +116,6 @@ public class ContainerDisplay {
             //scale item down
             List<Item> items = chestInfo.items();
             int loopCount = Math.min(items.size(), 9);
-
             if (loopCount > 1) {
                 //multiple items -> render 3x3 items
                 matrixStack.scale(.3f, .3f, .3f);
