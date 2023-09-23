@@ -1,99 +1,35 @@
 package at.haha007.edenclient;
 
-import at.haha007.edenclient.command.CommandManager;
-import at.haha007.edenclient.mods.*;
-import at.haha007.edenclient.mods.chestshop.ChestShopMod;
-import at.haha007.edenclient.mods.datafetcher.DataFetcher;
-import at.haha007.edenclient.render.CubeRenderer;
-import at.haha007.edenclient.render.TracerRenderer;
-import at.haha007.edenclient.utils.Scheduler;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
-import com.mojang.brigadier.tree.CommandNode;
+import com.mojang.logging.LogUtils;
 import net.fabricmc.api.ClientModInitializer;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.ClientPacketListener;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 public class EdenClient implements ClientModInitializer {
     public static EdenClient INSTANCE;
     private static final Map<Class<?>, Object> registeredMods = new HashMap<>();
     public static ExecutorService chatThread = Executors.newSingleThreadExecutor();
-    ;
 
     @Override
     public void onInitializeClient() {
         INSTANCE = this;
-
         PerWorldConfig.get();
-        Scheduler.scheduler();
-
-        registerMod(DataFetcher.class);
-        registerMod(CubeRenderer.class);
-        registerMod(TracerRenderer.class);
-
-        // Chat | These Mods interact with each message being sent to the client (in descending order)
-        registerMod(SellStatsTracker.class);
-        registerMod(ChestShopMod.class);
-        registerMod(MessageIgnorer.class);
-        registerMod(WordHighlighter.class);
-        registerMod(Greetings.class);
-        registerMod(AntiSpam.class);
-
-        // Gameplay | These Mods interact with your gameplay passively
-        registerMod(AutoSell.class);
-        registerMod(BarrierDisplay.class);
-        registerMod(ItemEsp.class);
-        registerMod(EntityEsp.class);
-        registerMod(TileEntityEsp.class);
-        registerMod(AntiStrip.class);
-        registerMod(AutoSheer.class);
-        registerMod(SignCopy.class);
-        registerMod(Nuker.class);
-        registerMod(AutoHarvest.class);
-        registerMod(LifeSaver.class);
-        registerMod(GetTo.class);
-        registerMod(AntiAfk.class);
-        registerMod(ContainerDisplay.class);
-        registerMod(HeadHunt.class);
-        registerMod(AutoMoss.class);
-        registerMod(DoubleDoor.class);
-        registerMod(StepHeight.class);
-        registerMod(Bridge.class);
-
-        // Commands only | These Mods only actively interact with your gameplay when directly using its commands
-        registerMod(Rainbowifier.class);
-        registerMod(NbtInfo.class);
-        registerMod(WorldEditReplaceHelper.class);
-        registerMod(RenderShape.class);
-
-        if (false) return;
-        CommandManager.register(CommandManager.literal("etest").executes(c -> {
-            ClientPacketListener connection = Minecraft.getInstance().getConnection();
-            if (connection == null) return -1;
-            connection.getCommands().getRoot().getChildren().stream().map(CommandNode::getName).forEach(System.out::println);
-//            TaskManager tm = new TaskManager();
-//            tm.then(new MaxTimeTask(new WaitForInventoryTask(), 10_000));
-//            tm.then(() -> PlayerUtils.sendModMessage("1"));
-//            tm.then(new WaitForTicksTask(20));
-//            tm.then(() -> PlayerUtils.sendModMessage("2"));
-//            CompleteCommandTask completeTask = new CompleteCommandTask("sammelvariablen ");
-//            tm.then(completeTask);
-//            tm.then(() -> System.out.println(String.join("\n", completeTask.getSuggestions())));
-//            tm.then(new SyncTask(() -> PlayerUtils.sendModMessage("SYNC OUTPUT")));
-//            tm.start();
-            return 1;
-        }));
+        getModsClassesFromFile().forEach(this::registerMod);
     }
 
     private void registerMod(Class<?> clazz) {
         try {
+            LogUtils.getLogger().info("[EC] Registering mod: %s".formatted(clazz.getCanonicalName()));
             Constructor<?> constructor = clazz.getConstructor();
             constructor.setAccessible(true);
             Object object = constructor.newInstance();
@@ -102,7 +38,7 @@ public class EdenClient implements ClientModInitializer {
                  IllegalAccessException |
                  InvocationTargetException |
                  NoSuchMethodException e) {
-            e.printStackTrace();
+            LogUtils.getLogger().trace("Error while enabling mod: " + clazz.getCanonicalName(), e);
         }
     }
 
@@ -113,11 +49,60 @@ public class EdenClient implements ClientModInitializer {
 
     public static File getDataFolder() {
         File file = getConfigDirectory();
-        if (!file.exists()) file.mkdirs();
+        if (!file.exists())
+            //noinspection ResultOfMethodCallIgnored
+            file.mkdirs();
         return file;
     }
 
     public static File getConfigDirectory() {
         return new File(Minecraft.getInstance().gameDirectory, "config");
+    }
+
+    private List<Class<?>> getModsClassesFromFile() {
+        record AnnotatedClass(Class<?> clazz, List<Class<?>> dependencies) {
+        }
+        try (InputStream is = getClass().getClassLoader().getResourceAsStream("mods.txt")) {
+            if (is == null) throw new IOException("File not found: mods.txt");
+            String[] strings = new String(is.readAllBytes()).split("\n");
+            List<AnnotatedClass> annotatedClasses = new ArrayList<>();
+            for (String string : strings) {
+                Class<?> clazz = Class.forName(string);
+                Mod mod = clazz.getAnnotation(Mod.class);
+                List<Class<?>> dependencies = Arrays.stream(mod.dependencies()).distinct().sorted().toList();
+                AnnotatedClass annotatedClass = new AnnotatedClass(clazz, dependencies);
+                annotatedClasses.add(annotatedClass);
+            }
+
+            List<AnnotatedClass> sortedClasses = new ArrayList<>();
+            for (AnnotatedClass annotatedClass : annotatedClasses) {
+                List<Class<?>> dependencies = new ArrayList<>(annotatedClass.dependencies());
+                for (Class<?> dependency : dependencies) {
+                    if (dependency == annotatedClass.clazz())
+                        throw new IllegalStateException("Mods cannot depend on themself: %s".formatted(dependency.getCanonicalName()));
+
+                    if (!annotatedClasses.stream().map(AnnotatedClass::clazz).toList().contains(dependency)) {
+                        throw new IllegalStateException("Declared dependency is not a Mod: %s -> %s"
+                                .formatted(annotatedClass.clazz().getCanonicalName(), dependency.getCanonicalName()));
+                    }
+                }
+
+                int index = 0;
+                for (int i = 0; i < sortedClasses.size(); i++) {
+                    if (index >= sortedClasses.size() || dependencies.isEmpty())
+                        break;
+                    dependencies.remove(sortedClasses.get(index).clazz());
+                    index++;
+                }
+                if (!dependencies.isEmpty())
+                    throw new IllegalStateException("Dependency Error: %s"
+                            .formatted(String.join(", ", dependencies.stream().map(Class::getCanonicalName).toList())));
+                sortedClasses.add(index, annotatedClass);
+            }
+            return sortedClasses.stream().map(AnnotatedClass::clazz).collect(Collectors.toList());
+        } catch (IOException | ClassNotFoundException e) {
+            LogUtils.getLogger().trace("Error while loading mods: ", e);
+        }
+        return new ArrayList<>();
     }
 }

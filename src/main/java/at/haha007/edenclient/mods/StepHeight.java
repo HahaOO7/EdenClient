@@ -1,5 +1,6 @@
 package at.haha007.edenclient.mods;
 
+import at.haha007.edenclient.Mod;
 import at.haha007.edenclient.callbacks.JoinWorldCallback;
 import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.PlayerUtils;
@@ -12,6 +13,7 @@ import net.minecraft.client.multiplayer.ClientSuggestionProvider;
 
 import static at.haha007.edenclient.command.CommandManager.*;
 
+@Mod
 public class StepHeight {
     @ConfigSubscriber("0.6")
     float stepHeight = 0.6f;

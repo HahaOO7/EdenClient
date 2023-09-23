@@ -1,5 +1,6 @@
 package at.haha007.edenclient.mods;
 
+import at.haha007.edenclient.Mod;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.PlayerUtils;
@@ -19,6 +20,7 @@ import net.minecraft.world.phys.Vec3;
 import static at.haha007.edenclient.command.CommandManager.literal;
 import static at.haha007.edenclient.command.CommandManager.register;
 
+@Mod
 public class AutoSheer {
     @ConfigSubscriber("false")
     boolean enabled = false;

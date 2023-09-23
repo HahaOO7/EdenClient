@@ -1,8 +1,11 @@
 package at.haha007.edenclient.mods.datafetcher;
 
+import at.haha007.edenclient.Mod;
+
 import static at.haha007.edenclient.command.CommandManager.literal;
 import static at.haha007.edenclient.command.CommandManager.register;
 
+@Mod
 public class DataFetcher {
     private final PlayerWarps playerWarps = new PlayerWarps();
     private final ChestShopItemNames chestShopItemNames = new ChestShopItemNames();

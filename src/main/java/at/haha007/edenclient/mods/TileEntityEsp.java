@@ -1,5 +1,6 @@
 package at.haha007.edenclient.mods;
 
+import at.haha007.edenclient.Mod;
 import at.haha007.edenclient.callbacks.GameRenderCallback;
 import at.haha007.edenclient.callbacks.JoinWorldCallback;
 import at.haha007.edenclient.callbacks.LeaveWorldCallback;
@@ -38,6 +39,7 @@ import java.util.stream.Collectors;
 import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
+@Mod
 public class TileEntityEsp {
     @ConfigSubscriber("false")
     private boolean enabled;

@@ -1,12 +1,11 @@
 package at.haha007.edenclient.mods;
 
+import at.haha007.edenclient.Mod;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
-import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import java.util.Random;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.particle.BlockMarker;
 import net.minecraft.client.player.LocalPlayer;
@@ -16,9 +15,12 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
 
+import java.util.Random;
+
 import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
+@Mod
 public class BarrierDisplay {
     private static final int dist = 5;
     private final Random rand = new Random();

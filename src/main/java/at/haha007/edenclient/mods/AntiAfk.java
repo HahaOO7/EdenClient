@@ -1,18 +1,20 @@
 package at.haha007.edenclient.mods;
 
+import at.haha007.edenclient.Mod;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.Scheduler;
-
-import java.util.Random;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.Random;
+
 import static at.haha007.edenclient.command.CommandManager.literal;
 import static at.haha007.edenclient.command.CommandManager.register;
 
+@Mod
 public class AntiAfk {
 
     private BlockPos startPos;

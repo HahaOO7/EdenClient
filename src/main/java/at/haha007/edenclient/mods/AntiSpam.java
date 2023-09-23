@@ -1,5 +1,6 @@
 package at.haha007.edenclient.mods;
 
+import at.haha007.edenclient.Mod;
 import at.haha007.edenclient.callbacks.AddChatMessageCallback;
 import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.MathUtils;
@@ -26,6 +27,7 @@ import static at.haha007.edenclient.command.CommandManager.literal;
 import static at.haha007.edenclient.command.CommandManager.register;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
+@Mod
 public class AntiSpam {
     @ConfigSubscriber("false")
     private boolean enabled;

@@ -5,17 +5,27 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.ContainerScreen;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
+import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.Optional;
 
@@ -94,5 +104,93 @@ public class PlayerUtils {
 
     public static ClientPacketListener networkHandler() {
         return getPlayer().connection;
+    }
+
+    public static boolean selectPlacableBlock() {
+        LocalPlayer player = getPlayer();
+        Inventory inventory = player.getInventory();
+
+        ClientPacketListener connection = Minecraft.getInstance().getConnection();
+        if (connection == null) return false;
+        MultiPlayerGameMode gameMode = Minecraft.getInstance().gameMode;
+        if (gameMode == null) return false;
+        ClientLevel level = player.clientLevel;
+
+        int slot = -1;
+        for (int i = 0; i < 36; i++) {
+            ItemStack stack = inventory.getItem(i);
+            if (stack.isEmpty()) continue;
+            Item item = stack.getItem();
+            if (!(item instanceof BlockItem blockItem)) continue;
+            Block block = blockItem.getBlock();
+            BlockState defaultState = block.defaultBlockState();
+            if (!defaultState.isCollisionShapeFullBlock(level, BlockPos.ZERO))
+                continue;
+            slot = i;
+            break;
+        }
+        if (slot < 0) return false;
+
+        //replace slot 9
+        connection.send(new ServerboundSetCarriedItemPacket(8));
+        gameMode.handlePickItem(slot);
+        return true;
+    }
+
+    public static boolean selectItem(Item item) {
+        LocalPlayer player = getPlayer();
+        Inventory inventory = player.getInventory();
+
+        ClientPacketListener connection = Minecraft.getInstance().getConnection();
+        if (connection == null) return false;
+        MultiPlayerGameMode gameMode = Minecraft.getInstance().gameMode;
+        if (gameMode == null) return false;
+
+        int slot = -1;
+        for (int i = 0; i < 36; i++) {
+            ItemStack stack = inventory.getItem(i);
+            if (stack.isEmpty()) continue;
+            if (!item.equals(inventory.getItem(i).getItem()))
+                continue;
+            slot = i;
+            break;
+        }
+        if (slot < 0) return false;
+
+        //replace slot 9
+        connection.send(new ServerboundSetCarriedItemPacket(8));
+        gameMode.handlePickItem(slot);
+        return true;
+    }
+
+    public static Optional<Item> selectAnyItem(Collection<Item> options) {
+        LocalPlayer player = getPlayer();
+        Inventory inventory = player.getInventory();
+
+        ClientPacketListener connection = Minecraft.getInstance().getConnection();
+        if (connection == null) return Optional.empty();
+        MultiPlayerGameMode gameMode = Minecraft.getInstance().gameMode;
+        if (gameMode == null) return Optional.empty();
+        ClientLevel level = player.clientLevel;
+
+        int slot = -1;
+        Item select = null;
+        for (int i = 0; i < 36; i++) {
+            ItemStack stack = inventory.getItem(i);
+            if (stack.isEmpty()) continue;
+            Item item = stack.getItem();
+            if (!options.contains(item))
+                continue;
+            slot = i;
+            select = item;
+            break;
+        }
+        if (slot < 0) return Optional.empty();
+
+        //replace slot 9
+        connection.send(new ServerboundSetCarriedItemPacket(8));
+        gameMode.handlePickItem(slot);
+        return Optional.of(select);
+
     }
 }

@@ -1,5 +1,6 @@
 package at.haha007.edenclient.mods;
 
+import at.haha007.edenclient.Mod;
 import at.haha007.edenclient.callbacks.AddChatMessageCallback;
 import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.PlayerUtils;
@@ -15,13 +16,15 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import net.minecraft.client.multiplayer.ClientSuggestionProvider;
+
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
-import net.minecraft.client.multiplayer.ClientSuggestionProvider;
 
 import static at.haha007.edenclient.command.CommandManager.*;
 
+@Mod
 public class Greetings {
     @ConfigSubscriber("false")
     private boolean enabled;

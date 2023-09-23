@@ -1,5 +1,6 @@
 package at.haha007.edenclient.mods;
 
+import at.haha007.edenclient.Mod;
 import at.haha007.edenclient.callbacks.JoinWorldCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -16,7 +17,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
@@ -28,6 +28,7 @@ import static at.haha007.edenclient.command.CommandManager.register;
 import static at.haha007.edenclient.utils.PlayerUtils.getPlayer;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
+@Mod
 public class Bridge {
     private boolean enabled;
 
@@ -42,16 +43,21 @@ public class Bridge {
             return;
         }
         Item item = player.getInventory().getSelected().getItem();
+        System.out.println("A");
         if (!(item instanceof BlockItem blockItem)) return;
+        System.out.println("B");
         Block block = blockItem.getBlock();
         BlockState defaultState = block.defaultBlockState();
         if (!defaultState.isCollisionShapeFullBlock(player.clientLevel, player.blockPosition())) return;
+        System.out.println("C");
 
         ClientLevel world = player.clientLevel;
         int y = player.blockPosition().getY() - 1;
         Optional<BlockPos> target = Optional.of(player).map(Entity::blockPosition)
-                .filter(bp -> world.getBlockState(bp).getBlock() == Blocks.AIR)
+                .map(bp -> bp.relative(Direction.DOWN))
+                .filter(bp -> world.getBlockState(bp).canBeReplaced())
                 .filter(bp -> bp.getY() == y);
+        System.out.println(target.orElse(null));
         target.ifPresent(this::clickPos);
     }
 

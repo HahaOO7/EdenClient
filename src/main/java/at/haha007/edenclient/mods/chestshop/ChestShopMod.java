@@ -1,5 +1,6 @@
 package at.haha007.edenclient.mods.chestshop;
 
+import at.haha007.edenclient.Mod;
 import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.mods.GetTo;
@@ -43,6 +44,7 @@ import java.util.stream.Collectors;
 import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
+@Mod
 public class ChestShopMod {
 
     @ConfigSubscriber

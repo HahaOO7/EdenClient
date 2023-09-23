@@ -1,5 +1,6 @@
 package at.haha007.edenclient.mods;
 
+import at.haha007.edenclient.Mod;
 import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.callbacks.GameRenderCallback;
 import at.haha007.edenclient.callbacks.JoinWorldCallback;
@@ -29,6 +30,7 @@ import java.util.Optional;
 
 import static at.haha007.edenclient.command.CommandManager.*;
 
+@Mod
 public class GetTo {
     private Vec3i target;
     private VertexBuffer vb;

@@ -1,5 +1,6 @@
 package at.haha007.edenclient.mods;
 
+import at.haha007.edenclient.Mod;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.command.CommandManager;
 import at.haha007.edenclient.utils.PlayerUtils;
@@ -34,6 +35,7 @@ import java.util.Set;
 import static at.haha007.edenclient.utils.PlayerUtils.getHitDirectionForBlock;
 import static at.haha007.edenclient.utils.PlayerUtils.getPlayer;
 
+@Mod
 public class AutoHarvest {
 
     private final Set<Block> justReplant = Set.of(Blocks.POTATOES, Blocks.CARROTS, Blocks.NETHER_WART, Blocks.WHEAT, Blocks.BEETROOTS);
