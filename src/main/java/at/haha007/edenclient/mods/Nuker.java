@@ -166,10 +166,8 @@ public class Nuker {
             if (!minableBlocks.isEmpty()) {
                 minableBlocks.stream().limit(limit).forEach(p -> {
                     nh.send(new ServerboundPlayerActionPacket(ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK, p, getHitDirectionForBlock(player, p)));
-//                    nh.send(new ServerboundPlayerActionPacket(ServerboundPlayerActionPacket.Action.STOP_DESTROY_BLOCK, p, getHitDirectionForBlock(player, p)));
                     player.clientLevel.setBlockAndUpdate(p, air);
                 });
-//                nh.send(new ServerboundSwingPacket(InteractionHand.MAIN_HAND));
                 return;
             }
         }

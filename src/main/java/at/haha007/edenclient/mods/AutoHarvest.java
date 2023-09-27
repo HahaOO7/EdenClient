@@ -17,8 +17,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
 import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -30,6 +28,7 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.List;
 import java.util.Set;
 
 import static at.haha007.edenclient.utils.PlayerUtils.getHitDirectionForBlock;
@@ -156,22 +155,11 @@ public class AutoHarvest {
     }
 
     private boolean selectNetherwartItem() {
-        return selectItem(Items.NETHER_WART);
+        return PlayerUtils.selectItem(Items.NETHER_WART);
     }
 
     private boolean selectFarmlandItem() {
-        for (Item item : new Item[]{Items.WHEAT_SEEDS, Items.BEETROOT_SEEDS, Items.POTATO, Items.CARROT}) {
-            if (selectItem(item))
-                return true;
-        }
-        return false;
-    }
-
-    private boolean selectItem(Item item) {
-        LocalPlayer player = PlayerUtils.getPlayer();
-        Inventory inventory = player.getInventory();
-        inventory.setPickedItem(item.getDefaultInstance());
-        return inventory.getSelected().getItem() == item;
+        return PlayerUtils.selectAnyItem(List.of(Items.WHEAT_SEEDS, Items.BEETROOT_SEEDS, Items.POTATO, Items.CARROT)).isPresent();
     }
 
     private void attackPos(BlockPos target) {
@@ -179,8 +167,8 @@ public class AutoHarvest {
         ClientPacketListener nh = Minecraft.getInstance().getConnection();
         if (nh == null)
             return;
+        player.clientLevel.setBlockAndUpdate(target, Blocks.AIR.defaultBlockState());
         nh.send(new ServerboundPlayerActionPacket(ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK, target, getHitDirectionForBlock(player, target)));
-        nh.send(new ServerboundPlayerActionPacket(ServerboundPlayerActionPacket.Action.STOP_DESTROY_BLOCK, target, getHitDirectionForBlock(player, target)));
     }
 
     private void clickPos(Vec3i target) {

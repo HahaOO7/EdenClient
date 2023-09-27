@@ -25,8 +25,6 @@ import java.util.Queue;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static at.haha007.edenclient.utils.MathUtils.integer;
-
 public class PlayerWarps {
 
     @ConfigSubscriber
@@ -133,7 +131,7 @@ public class PlayerWarps {
         Container inventory = containerScreen.getMenu().getContainer();
         for (int i = 0; i < 45; i++) {
             ItemStack item = inventory.getItem(i);
-            if (item == null) continue;
+            if (item.isEmpty()) continue;
             String name = item.getHoverName().getString();
             item.getTooltipLines(null, TooltipFlag.Default.NORMAL)
                     .stream().map(Component::getString)
@@ -148,9 +146,9 @@ public class PlayerWarps {
         Pattern pattern = Pattern.compile("(?<x>-?[0-9]+), (?<y>-?[0-9]+), (?<z>-?[0-9]+)");
         Matcher matcher = pattern.matcher(s);
         if (!matcher.matches()) return Vec3i.ZERO;
-        return new Vec3i(integer(matcher.group("x")),
-                integer(matcher.group("y")),
-                integer(matcher.group("z")));
+        return new Vec3i(Integer.parseInt(matcher.group("x")),
+                Integer.parseInt(matcher.group("y")),
+                Integer.parseInt(matcher.group("z")));
     }
 
     public Map<String, Vec3i> getShops() {

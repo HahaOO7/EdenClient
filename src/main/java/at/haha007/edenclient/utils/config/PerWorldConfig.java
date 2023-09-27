@@ -115,7 +115,7 @@ public class PerWorldConfig {
     private void onJoin() {
         onLeave();
         long start = System.nanoTime();
-        Scheduler.scheduler().runAsync(() -> {
+        EdenClient.getMod(Scheduler.class).runAsync(() -> {
             try {
                 Thread.sleep(1000);
                 worldName = StringUtils.getWorldOrServerName();

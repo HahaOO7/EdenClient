@@ -105,11 +105,11 @@ public class ChestShopItemNames {
 
             AtomicInteger index = new AtomicInteger();
             nameLookupRunning = true;
-            Scheduler.scheduler().scheduleSyncRepeating(() -> {
+            EdenClient.getMod(Scheduler.class).scheduleSyncRepeating(() -> {
                 int i = index.getAndIncrement();
                 if (i >= minecraftIDs.length) {
                     sendModMessage("Finished mapping of all items! Disconnect from the world now to save all items into the config properly! They will be loaded the next time you join the world.");
-                    Scheduler.scheduler().scheduleSyncDelayed(() -> {
+                    EdenClient.getMod(Scheduler.class).scheduleSyncDelayed(() -> {
                         nameLookupRunning = false;
                         mi.disable(MessageIgnorer.Predefined.ITEM_INFO);
                         mi.setEnabled(wasMessageIgnoringEnabled);

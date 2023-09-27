@@ -10,22 +10,4 @@ public class MathUtils {
             return false;
         }
     }
-
-    public static boolean isDouble(String s) {
-        try {
-            Double.parseDouble(s);
-            return true;
-
-        } catch (NumberFormatException e) {
-            return false;
-        }
-    }
-
-    public static int clamp(int n, int min, int max) {
-        return Math.max(min, Math.min(n, max));
-    }
-
-    public static int integer(String string) {
-        return Integer.parseInt(string);
-    }
 }

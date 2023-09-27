@@ -1,5 +1,6 @@
 package at.haha007.edenclient.utils.tasks;
 
+import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.utils.Scheduler;
 
 import java.util.concurrent.CompletableFuture;
@@ -13,7 +14,7 @@ public class SyncTask implements Task {
     }
 
     public void run() throws InterruptedException {
-        CompletableFuture<Integer> future = Scheduler.scheduler().callSync(() -> {
+        CompletableFuture<Integer> future = EdenClient.getMod(Scheduler.class).callSync(() -> {
             runnable.run();
             return 1;
         });

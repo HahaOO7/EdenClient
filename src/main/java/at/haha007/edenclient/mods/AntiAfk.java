@@ -1,5 +1,6 @@
 package at.haha007.edenclient.mods;
 
+import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.Mod;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.Scheduler;
@@ -14,7 +15,7 @@ import java.util.Random;
 import static at.haha007.edenclient.command.CommandManager.literal;
 import static at.haha007.edenclient.command.CommandManager.register;
 
-@Mod
+@Mod(dependencies = Scheduler.class)
 public class AntiAfk {
 
     private BlockPos startPos;
@@ -25,7 +26,7 @@ public class AntiAfk {
 
         node.then(literal("toggle").executes(c -> {
             startPos = PlayerUtils.getPlayer().blockPosition();
-            Scheduler.scheduler().scheduleSyncRepeating(this::moveAround, 20 * 60 * 5, 0);
+            EdenClient.getMod(Scheduler.class).scheduleSyncRepeating(this::moveAround, 20 * 60 * 5, 0);
             PlayerUtils.sendModMessage("Start moving around randomly in a 3x3 area, walk away to cancel.");
             return 1;
         }));
@@ -46,7 +47,7 @@ public class AntiAfk {
 
         BlockPos finalTarget = target;
 
-        Scheduler.scheduler().scheduleSyncRepeating(() -> {
+        EdenClient.getMod(Scheduler.class).scheduleSyncRepeating(() -> {
             Vec3 pos = player.position();
             Vec3 move = Vec3.atBottomCenterOf(finalTarget).subtract(pos);
             move = move.multiply(1, 0, 1);

@@ -1,5 +1,6 @@
 package at.haha007.edenclient.mods;
 
+import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.Mod;
 import at.haha007.edenclient.callbacks.AddChatMessageCallback;
 import at.haha007.edenclient.utils.ChatColor;
@@ -20,7 +21,6 @@ import net.minecraft.client.multiplayer.ClientSuggestionProvider;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 import static at.haha007.edenclient.command.CommandManager.*;
 
@@ -65,7 +65,7 @@ public class Greetings {
         if (msg.startsWith("[-] ")) {
             String name = msg.substring(4);
             quitTimes.put(name, System.currentTimeMillis());
-            Scheduler.scheduler().scheduleSyncDelayed(() -> quitTimes.remove(name), wbMaxDelay);
+            EdenClient.getMod(Scheduler.class).scheduleSyncDelayed(() -> quitTimes.remove(name), wbMaxDelay);
         }
 
         if (msg.startsWith("[+] ")) {
@@ -89,9 +89,9 @@ public class Greetings {
     private void addDelay(String name, String message) {
         if (sentPlayers.contains(name)) return;
         sentPlayers.add(name);
-        Scheduler.scheduler().scheduleSyncDelayed(() -> {
+        EdenClient.getMod(Scheduler.class).scheduleSyncDelayed(() -> {
             PlayerUtils.messageC2S(message.replace("%player%", name));
-            Scheduler.scheduler().scheduleSyncDelayed(() -> sentPlayers.remove(name), minDelay);
+            EdenClient.getMod(Scheduler.class).scheduleSyncDelayed(() -> sentPlayers.remove(name), minDelay);
         }, random.nextInt(100) + 60);
     }
 
@@ -118,7 +118,7 @@ public class Greetings {
 
         cmd.then(literal("new").then(literal("list").executes(c -> {
             List<String> newMessages = welcomeNewPlayerMessages.stream().toList();
-            if (newMessages.size() == 0) {
+            if (newMessages.isEmpty()) {
                 PlayerUtils.sendModMessage("No messages registered.");
             }
             PlayerUtils.sendModMessage("Messages for new players:");
@@ -149,7 +149,7 @@ public class Greetings {
 
         cmd.then(literal("old").then(literal("list").executes(c -> {
             List<String> oldMessages = greetOldPlayerMessages.stream().toList();
-            if (oldMessages.size() == 0) {
+            if (oldMessages.isEmpty()) {
                 PlayerUtils.sendModMessage("No messages registered.");
             }
             PlayerUtils.sendModMessage("Messages for old players:");
@@ -180,7 +180,7 @@ public class Greetings {
 
         cmd.then(literal("wb").then(literal("list").executes(c -> {
             List<String> wbMessages = welcomeBackPlayerMessages.stream().toList();
-            if (wbMessages.size() == 0) {
+            if (wbMessages.isEmpty()) {
                 PlayerUtils.sendModMessage("No messages registered.");
             }
             PlayerUtils.sendModMessage("Messages for welcome-back players:");
@@ -249,12 +249,12 @@ public class Greetings {
         }))));
 
         cmd.then(literal("ignore").then(literal("list").executes(c -> {
-            if (ignoredPlayers.size() == 0) {
+            if (ignoredPlayers.isEmpty()) {
                 PlayerUtils.sendModMessage(ChatColor.GOLD + "No players ignored for Greetings.");
                 return 0;
             }
 
-            List<String> ignoredPlayersList = ignoredPlayers.stream().sorted().collect(Collectors.toList());
+            List<String> ignoredPlayersList = ignoredPlayers.stream().sorted().toList();
             PlayerUtils.sendModMessage(ChatColor.GOLD + "Ignored players for Greetings:");
             for (int i = 0; i < ignoredPlayers.size(); i++) {
                 PlayerUtils.sendModMessage(ChatColor.GOLD + "[" + (i + 1) + "] " + ChatColor.AQUA + ignoredPlayersList.get(i));
@@ -295,7 +295,7 @@ public class Greetings {
         })))));
 
         cmd.then(literal("player").then(literal("greet").then(literal("list").executes(c -> {
-            if (specificPlayerGreetMessages.entrySet().size() == 0) {
+            if (specificPlayerGreetMessages.entrySet().isEmpty()) {
                 PlayerUtils.sendModMessage(ChatColor.GOLD + "No specific messages for any player registered.");
                 return 0;
             }
@@ -340,7 +340,7 @@ public class Greetings {
         })))));
 
         cmd.then(literal("player").then(literal("wb").then(literal("list").executes(c -> {
-            if (specificPlayerWBMessages.entrySet().size() == 0) {
+            if (specificPlayerWBMessages.entrySet().isEmpty()) {
                 PlayerUtils.sendModMessage("No specific messages for any player registered.");
                 return 0;
             }

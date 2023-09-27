@@ -11,16 +11,22 @@ import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Vec3i;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
+import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
 import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
 import net.minecraft.util.Mth;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
@@ -63,6 +69,39 @@ public class PlayerUtils {
         sendMessage(Component.empty().append(prefix).append(Component.empty().append(text).withStyle(ChatFormatting.GOLD)));
     }
 
+    public static boolean walkTowards(Vec3 target) {
+        var player = getPlayer();
+        //get delta vec
+        Vec3 vec = target.subtract(player.position());
+        //remove vertical component
+        vec = vec.subtract(0, vec.y, 0);
+        //if the horizontal component is less then 0.1 we have reached the destination
+        if (vec.length() <= 0.1) return true;
+
+        //calculate the movement speed
+        double genericMovementSpeed = player.getSpeed();
+        double speed = Optional.ofNullable(player.getEffect(MobEffects.MOVEMENT_SPEED)).map(MobEffectInstance::getAmplifier).orElse(-1) + 1;
+        double slow = Optional.ofNullable(player.getEffect(MobEffects.MOVEMENT_SLOWDOWN)).map(MobEffectInstance::getAmplifier).orElse(-1) + 1;
+        //this formula is not exact, but close enough
+        double movementSpeed = genericMovementSpeed * 10 * (5.612 + speed * 1.123 - slow * 0.841);
+        movementSpeed /= 20;
+
+        //scale the vector to the movement speed
+        movementSpeed = Math.min(target.distanceTo(player.position()), movementSpeed);
+        vec = vec.normalize().scale(movementSpeed);
+
+
+        //move the player
+        player.move(MoverType.SELF, vec);
+
+        return player.position().distanceTo(target) <= 0.1;
+    }
+
+    public boolean walkTowards(Vec3i target) {
+        Vec3 t = Vec3.atBottomCenterOf(target);
+        return walkTowards(t);
+    }
+
     public static void sendModMessage(String text) {
         sendModMessage(Component.literal(text));
     }
@@ -102,8 +141,35 @@ public class PlayerUtils {
         return direction.orElse(null);
     }
 
-    public static ClientPacketListener networkHandler() {
+    public static ClientPacketListener packetListener() {
         return getPlayer().connection;
+    }
+
+    /**
+     * Attack a block
+     *
+     * @param pos The position to break
+     * @return if the block was broken
+     */
+    public static boolean breakBlock(BlockPos pos) {
+        LocalPlayer player = getPlayer();
+        ClientLevel world = player.clientLevel;
+        BlockState state = world.getBlockState(pos);
+        Block block = state.getBlock();
+        float delta = state.getDestroyProgress(player, world, pos);
+        ClientPacketListener nh = player.connection;
+        boolean instantMine = delta >= 1;
+        Direction dir = getHitDirectionForBlock(player, pos);
+        if (instantMine) {
+            nh.send(new ServerboundPlayerActionPacket(ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK, pos, dir));
+            world.setBlockAndUpdate(pos, Blocks.AIR.defaultBlockState());
+            return true;
+        }
+        MultiPlayerGameMode gameMode = Minecraft.getInstance().gameMode;
+        if (gameMode == null) return false;
+        gameMode.continueDestroyBlock(pos, dir);
+        state = world.getBlockState(pos);
+        return state.getBlock() != block;
     }
 
     public static boolean selectPlacableBlock() {
@@ -131,7 +197,17 @@ public class PlayerUtils {
         }
         if (slot < 0) return false;
 
+        if (slot < 9 && inventory.selected == slot)
+            return true;
+
+        if (slot < 9) {
+            inventory.selected = slot;
+            connection.send(new ServerboundSetCarriedItemPacket(slot));
+            return true;
+        }
+
         //replace slot 9
+        inventory.selected = 8;
         connection.send(new ServerboundSetCarriedItemPacket(8));
         gameMode.handlePickItem(slot);
         return true;
@@ -157,7 +233,17 @@ public class PlayerUtils {
         }
         if (slot < 0) return false;
 
-        //replace slot 9
+        if (slot < 9 && inventory.selected == slot)
+            return true;
+
+        if (slot < 9) {
+            inventory.selected = slot;
+            connection.send(new ServerboundSetCarriedItemPacket(slot));
+            return true;
+        }
+
+        //select slot 9
+        inventory.selected = 8;
         connection.send(new ServerboundSetCarriedItemPacket(8));
         gameMode.handlePickItem(slot);
         return true;
@@ -171,7 +257,6 @@ public class PlayerUtils {
         if (connection == null) return Optional.empty();
         MultiPlayerGameMode gameMode = Minecraft.getInstance().gameMode;
         if (gameMode == null) return Optional.empty();
-        ClientLevel level = player.clientLevel;
 
         int slot = -1;
         Item select = null;
@@ -187,10 +272,19 @@ public class PlayerUtils {
         }
         if (slot < 0) return Optional.empty();
 
+        if (slot < 9 && inventory.selected == slot)
+            return Optional.of(select);
+
+        if (slot < 9) {
+            inventory.selected = slot;
+            connection.send(new ServerboundSetCarriedItemPacket(slot));
+            return Optional.of(select);
+        }
+
         //replace slot 9
+        inventory.selected = 8;
         connection.send(new ServerboundSetCarriedItemPacket(8));
         gameMode.handlePickItem(slot);
         return Optional.of(select);
-
     }
 }

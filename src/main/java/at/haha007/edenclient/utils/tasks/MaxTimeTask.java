@@ -1,5 +1,6 @@
 package at.haha007.edenclient.utils.tasks;
 
+import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.utils.Scheduler;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -19,7 +20,7 @@ public class MaxTimeTask implements Task {
     public void run() throws InterruptedException {
         AtomicBoolean done = new AtomicBoolean(false);
         Thread thread = Thread.currentThread();
-        Scheduler.scheduler().runAsync(() -> {
+        EdenClient.getMod(Scheduler.class).runAsync(() -> {
             try {
                 Thread.sleep(millis);
                 if (!done.get()) {

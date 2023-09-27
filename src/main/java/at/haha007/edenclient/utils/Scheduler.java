@@ -1,6 +1,7 @@
 package at.haha007.edenclient.utils;
 
 import at.haha007.edenclient.EdenClient;
+import at.haha007.edenclient.Mod;
 import at.haha007.edenclient.callbacks.JoinWorldCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import net.minecraft.client.player.LocalPlayer;
@@ -12,19 +13,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
+@Mod
 public class Scheduler {
-
-    private static final Scheduler instance = new Scheduler();
 
     private final Set<Runnable> sync = Collections.synchronizedSet(new HashSet<>());
     private final TreeMap<Long, Set<Runnable>> delayedSync = new TreeMap<>();
     private final TreeMap<Long, Set<RepeatingRunnable>> repeatingSync = new TreeMap<>();
     private long tick;
     private Thread mainThread = Thread.currentThread();
-
-    public static Scheduler scheduler() {
-        return instance;
-    }
 
     private record RepeatingRunnable(int delta, BooleanSupplier runnable) {
     }

@@ -1,11 +1,12 @@
 package at.haha007.edenclient.utils.tasks;
 
+import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.callbacks.LeaveWorldCallback;
+import at.haha007.edenclient.utils.Scheduler;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static at.haha007.edenclient.utils.Scheduler.scheduler;
 
 public class TaskManager implements Cloneable, Task {
     private static final Set<TaskManager> running = Collections.synchronizedSet(new HashSet<>());
@@ -42,7 +43,7 @@ public class TaskManager implements Cloneable, Task {
     public void start() {
         if (started.get()) return;
         started.set(true);
-        scheduler().runAsync(() -> {
+        EdenClient.getMod(Scheduler.class).runAsync(() -> {
             try {
                 run();
             } catch (InterruptedException e) {

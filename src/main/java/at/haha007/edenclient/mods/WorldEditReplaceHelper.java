@@ -1,5 +1,6 @@
 package at.haha007.edenclient.mods;
 
+import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.Mod;
 import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.PlayerUtils;
@@ -77,7 +78,7 @@ public class WorldEditReplaceHelper {
                 }))));
 
         node.then(literal("undo").executes(c -> {
-            if (undoCommandStack.size() == 0) {
+            if (undoCommandStack.isEmpty()) {
                 sendModMessage("Nothing left to undo.");
                 return 0;
             }
@@ -89,7 +90,7 @@ public class WorldEditReplaceHelper {
         }));
 
         node.then(literal("redo").executes(c -> {
-            if (redoCommandStack.size() == 0) {
+            if (redoCommandStack.isEmpty()) {
                 sendModMessage("Nothing left to redo.");
                 return 0;
             }
@@ -333,9 +334,9 @@ public class WorldEditReplaceHelper {
             }
             appendix.append("]");
 
-            Scheduler.scheduler().scheduleSyncDelayed(() -> sendStandardReplaceCommand(fromBlock, toBlock, appendix.toString()), delayFactor.intValue() * delay + 1);
+            EdenClient.getMod(Scheduler.class).scheduleSyncDelayed(() -> sendStandardReplaceCommand(fromBlock, toBlock, appendix.toString()), delayFactor.intValue() * delay + 1);
         });
-        Scheduler.scheduler().scheduleSyncDelayed(() -> sendModMessage("All commands have been sent. Replacing might take longer depending on the size of the selection."), delayFactor.intValue() * delay + 2);
+        EdenClient.getMod(Scheduler.class).scheduleSyncDelayed(() -> sendModMessage("All commands have been sent. Replacing might take longer depending on the size of the selection."), delayFactor.intValue() * delay + 2);
     }
 
     private void generatePermutations(List<List<String>> lists, List<String> result, int depth, String current) {

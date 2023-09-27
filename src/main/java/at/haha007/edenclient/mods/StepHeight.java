@@ -1,5 +1,6 @@
 package at.haha007.edenclient.mods;
 
+import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.Mod;
 import at.haha007.edenclient.callbacks.JoinWorldCallback;
 import at.haha007.edenclient.utils.ChatColor;
@@ -25,7 +26,7 @@ public class StepHeight {
     }
 
     private void onWorldJoin() {
-        Scheduler.scheduler().scheduleSyncDelayed(this::update, 1);
+        EdenClient.getMod(Scheduler.class).scheduleSyncDelayed(this::update, 1);
     }
 
     private void registerCommand() {
