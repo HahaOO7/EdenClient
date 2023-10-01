@@ -5,7 +5,6 @@ import at.haha007.edenclient.callbacks.AddChatMessageCallback;
 import at.haha007.edenclient.mixinterface.IVisibleMessageAccessor;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.StringUtils;
-import com.mojang.logging.LogUtils;
 import net.minecraft.client.GuiMessage;
 import net.minecraft.client.GuiMessageTag;
 import net.minecraft.client.gui.components.ChatComponent;

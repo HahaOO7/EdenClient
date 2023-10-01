@@ -1,5 +1,6 @@
-package at.haha007.edenclient;
+package at.haha007.edenclient.processors;
 
+import at.haha007.edenclient.annotations.Mod;
 import com.google.auto.service.AutoService;
 
 import javax.annotation.processing.*;
@@ -15,7 +16,7 @@ import java.util.stream.Collectors;
 
 @AutoService(Processor.class)
 @SupportedSourceVersion(SourceVersion.RELEASE_17)
-@SupportedAnnotationTypes("at.haha007.edenclient.Mod")
+@SupportedAnnotationTypes(value = "at.haha007.edenclient.annotations.Mod")
 public class ModAnnotationProcessor extends AbstractProcessor {
     private static boolean processed = false;
 

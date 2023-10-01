@@ -1,6 +1,6 @@
 package at.haha007.edenclient.mods;
 
-import at.haha007.edenclient.Mod;
+import at.haha007.edenclient.annotations.Mod;
 import at.haha007.edenclient.command.CommandManager;
 import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.PlayerUtils;

@@ -1,6 +1,6 @@
 package at.haha007.edenclient.mods.datafetcher;
 
-import at.haha007.edenclient.Mod;
+import at.haha007.edenclient.annotations.Mod;
 
 import static at.haha007.edenclient.command.CommandManager.literal;
 import static at.haha007.edenclient.command.CommandManager.register;

@@ -1,7 +1,7 @@
 package at.haha007.edenclient.mods;
 
-import at.haha007.edenclient.Mod;
 import at.haha007.edenclient.EdenClient;
+import at.haha007.edenclient.annotations.Mod;
 import at.haha007.edenclient.callbacks.AddChatMessageCallback;
 import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
@@ -21,7 +21,6 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;

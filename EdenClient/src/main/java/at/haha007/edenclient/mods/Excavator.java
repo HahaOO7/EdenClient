@@ -1,12 +1,13 @@
 package at.haha007.edenclient.mods;
 
-import at.haha007.edenclient.Mod;
+import at.haha007.edenclient.annotations.Mod;
 import at.haha007.edenclient.callbacks.ConfigLoadedCallback;
 import at.haha007.edenclient.callbacks.JoinWorldCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.command.CommandManager;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.Scheduler;
+import at.haha007.edenclient.utils.StringUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -270,11 +271,11 @@ public class Excavator {
             ClientLevel world = PlayerUtils.getPlayer().clientLevel;
             scheduler.runAsync(
                     () -> streamOut(PlayerUtils.getPlayer().blockPosition().below()).map(BlockPos::new).forEach(b -> {
-                        world.setBlockAndUpdate(b, Blocks.WATER.defaultBlockState());
                         try {
+                            world.setBlockAndUpdate(b, Blocks.WATER.defaultBlockState());
                             Thread.sleep(1);
-                        } catch (InterruptedException e) {
-                            throw new RuntimeException(e);
+                        } catch (InterruptedException | IndexOutOfBoundsException e) {
+                            StringUtils.getLogger().error("Error while don't-ing.", e);
                         }
                     }));
             return 1;

@@ -27,7 +27,7 @@ dependencies {
     // Fabric API. This is technically optional, but you probably want it anyway.
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
     implementation project(":EcAnnotations")
-    annotationProcessor project(":EcAnnotations")
+    annotationProcessor project(":EcProcessors")
 }
 
 processResources {
@@ -55,14 +55,24 @@ jar {
     from("LICENSE") {
         rename { "${it}_${project.base.archivesName.get()}" }
     }
+    from {
+        configurations
+                .runtimeClasspath
+                .collect {
+                    if(it.name.equalsIgnoreCase("EcAnnotations.jar")) {
+                        zipTree(it)
+                    }
+                    else {
+                        null
+                    }
+                }
+    }
 }
+
 
 // configure the maven publication
 publishing {
     publications {
-        mavenJava(MavenPublication) {
-            from components.java
-        }
     }
 
     // See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.

@@ -1,6 +1,6 @@
 package at.haha007.edenclient.utils;
 
-import at.haha007.edenclient.Mod;
+import at.haha007.edenclient.annotations.Mod;
 import at.haha007.edenclient.callbacks.LeaveWorldCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import net.minecraft.client.player.LocalPlayer;

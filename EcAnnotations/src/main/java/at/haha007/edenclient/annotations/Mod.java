@@ -1,4 +1,4 @@
-package at.haha007.edenclient;
+package at.haha007.edenclient.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

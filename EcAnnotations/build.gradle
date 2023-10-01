@@ -11,8 +11,6 @@ repositories {
 dependencies {
     testImplementation platform('org.junit:junit-bom:5.9.1')
     testImplementation 'org.junit.jupiter:junit-jupiter'
-    annotationProcessor group: 'com.google.auto.service', name: 'auto-service', version: '1.1.1'
-    compileOnly group: 'com.google.auto.service', name: 'auto-service', version: '1.1.1'
 }
 
 test {

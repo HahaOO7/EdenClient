@@ -141,10 +141,6 @@ public class PlayerUtils {
         return direction.orElse(null);
     }
 
-    public static ClientPacketListener packetListener() {
-        return getPlayer().connection;
-    }
-
     /**
      * Attack a block
      *

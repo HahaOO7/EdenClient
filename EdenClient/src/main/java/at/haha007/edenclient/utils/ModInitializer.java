@@ -1,8 +1,7 @@
 package at.haha007.edenclient.utils;
 
 import at.haha007.edenclient.EdenClient;
-import at.haha007.edenclient.Mod;
-import com.mojang.logging.LogUtils;
+import at.haha007.edenclient.annotations.Mod;
 
 import java.io.IOException;
 import java.io.InputStream;
