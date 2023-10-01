@@ -43,13 +43,10 @@ public class Bridge {
             return;
         }
         Item item = player.getInventory().getSelected().getItem();
-        System.out.println("A");
         if (!(item instanceof BlockItem blockItem)) return;
-        System.out.println("B");
         Block block = blockItem.getBlock();
         BlockState defaultState = block.defaultBlockState();
         if (!defaultState.isCollisionShapeFullBlock(player.clientLevel, player.blockPosition())) return;
-        System.out.println("C");
 
         ClientLevel world = player.clientLevel;
         int y = player.blockPosition().getY() - 1;
@@ -57,7 +54,6 @@ public class Bridge {
                 .map(bp -> bp.relative(Direction.DOWN))
                 .filter(bp -> world.getBlockState(bp).canBeReplaced())
                 .filter(bp -> bp.getY() == y);
-        System.out.println(target.orElse(null));
         target.ifPresent(this::clickPos);
     }
 

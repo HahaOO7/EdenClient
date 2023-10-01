@@ -75,17 +75,18 @@ public class Excavator {
         //if it is not safe to drop
         if (!state.getShape(player.clientLevel, dropFloor).isEmpty() &&
                 !state.isFaceSturdy(player.clientLevel, dropFloor, Direction.UP)) {
-            return new Target(dropFloor, 4.5, breakBlockTargetAction(dropFloor));
+            return new Target(dropFloor, 5, breakBlockTargetAction(dropFloor));
         }
         if (state.isFaceSturdy(player.clientLevel, dropFloor, Direction.UP)) {
             Vec3 center = Vec3.atBottomCenterOf(player.blockPosition());
             player.setPos(center);
-            return new Target(dropFloor, 4.5, new BooleanSupplier() {
-                int cooldown = 0;
-                BooleanSupplier destroyBlock = breakBlockTargetAction(dropFloor.above());
+            return new Target(dropFloor, 5, new BooleanSupplier() {
+                int noActionDelay = 0;
+                private final BooleanSupplier destroyBlock = breakBlockTargetAction(dropFloor.above());
+
                 public boolean getAsBoolean() {
-                    if(!destroyBlock.getAsBoolean())return false;
-                    return cooldown++ >= 10;
+                    if (!destroyBlock.getAsBoolean()) return false;
+                    return noActionDelay++ >= 10;
                 }
             });
         }
@@ -155,7 +156,7 @@ public class Excavator {
             if (level.getBlockState(block).getShape(level, block).isEmpty()) {
                 continue;
             }
-            return new Target(block, 4.5, breakBlockTargetAction(block));
+            return new Target(block, 5, breakBlockTargetAction(block));
         }
 
         return null;
@@ -311,7 +312,7 @@ public class Excavator {
             BlockPos pos1 = c.getArgument("pos1", Coordinates.class).getBlockPos(stack);
             BlockPos pos2 = c.getArgument("pos2", Coordinates.class).getBlockPos(stack);
             setArea(BoundingBox.fromCorners(pos1, pos2));
-            PlayerUtils.sendModMessage("Excavating from %s to %s.");
+            PlayerUtils.sendModMessage("Excavating from %s to %s.".formatted(pos1, pos2));
             return 1;
         });
 

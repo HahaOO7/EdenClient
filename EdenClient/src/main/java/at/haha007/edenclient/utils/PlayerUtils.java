@@ -69,14 +69,14 @@ public class PlayerUtils {
         sendMessage(Component.empty().append(prefix).append(Component.empty().append(text).withStyle(ChatFormatting.GOLD)));
     }
 
-    public static boolean walkTowards(Vec3 target) {
+    public static void walkTowards(Vec3 target) {
         var player = getPlayer();
         //get delta vec
         Vec3 vec = target.subtract(player.position());
         //remove vertical component
         vec = vec.subtract(0, vec.y, 0);
-        //if the horizontal component is less then 0.1 we have reached the destination
-        if (vec.length() <= 0.1) return true;
+        //if the horizontal component is less than 0.1 we have reached the destination
+        if (vec.length() <= 0.1) return;
 
         //calculate the movement speed
         double genericMovementSpeed = player.getSpeed();
@@ -94,12 +94,12 @@ public class PlayerUtils {
         //move the player
         player.move(MoverType.SELF, vec);
 
-        return player.position().distanceTo(target) <= 0.1;
+        player.position().distanceTo(target);
     }
 
-    public static boolean walkTowards(Vec3i target) {
+    public static void walkTowards(Vec3i target) {
         Vec3 t = Vec3.atBottomCenterOf(target);
-        return walkTowards(t);
+        walkTowards(t);
     }
 
     public static void sendModMessage(String text) {
@@ -109,7 +109,7 @@ public class PlayerUtils {
     public static void clickSlot(int slotId) {
         Screen screen = Minecraft.getInstance().screen;
         if (!(screen instanceof ContainerScreen gcs)) return;
-        ((IHandledScreen) screen).clickMouse(gcs.getMenu().slots.get(slotId), slotId, 0, ClickType.PICKUP_ALL);
+        ((IHandledScreen) screen).edenClient$clickMouse(gcs.getMenu().slots.get(slotId), slotId, 0, ClickType.PICKUP_ALL);
     }
 
     public static Vec3 getClientLookVec() {

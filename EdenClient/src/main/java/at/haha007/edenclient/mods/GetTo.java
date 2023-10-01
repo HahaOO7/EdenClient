@@ -91,7 +91,6 @@ public class GetTo {
             getTo(pos, true, true, true);
             return 1;
         }).then(argument("tags", StringArgumentType.word()).suggests((c, b) -> {
-            System.out.println(b.getInput());
             b.suggest("-t");
             b.suggest("-b");
             b.suggest("-p");

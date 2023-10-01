@@ -4,5 +4,5 @@ import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.Slot;
 
 public interface IHandledScreen {
-    void clickMouse(Slot slot, int slotId, int button, ClickType actionType);
+    void edenClient$clickMouse(Slot slot, int slotId, int button, ClickType actionType);
 }

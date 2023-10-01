@@ -4,6 +4,7 @@ import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.callbacks.AddChatMessageCallback;
 import at.haha007.edenclient.mixinterface.IVisibleMessageAccessor;
 import at.haha007.edenclient.utils.PlayerUtils;
+import at.haha007.edenclient.utils.StringUtils;
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.GuiMessage;
 import net.minecraft.client.GuiMessageTag;
@@ -42,12 +43,12 @@ public abstract class ChatHudMixin implements IVisibleMessageAccessor {
             try {
                 AddChatMessageCallback.EVENT.invoker().interact(event);
             } catch (Throwable t) {
-                t.printStackTrace();
+                StringUtils.getLogger().error("Error while processing chat message", t);
             }
             chatText = event.getChatText();
             if (chatText != null && !chatText.getString().isBlank()) {
                 addMessage(chatText, null, GuiMessageTag.system());
-                LogUtils.getLogger().info("Chat: " + Component.Serializer.toJson(chatText));
+                StringUtils.getLogger().info("Chat: " + Component.Serializer.toJson(chatText));
             }
         });
     }

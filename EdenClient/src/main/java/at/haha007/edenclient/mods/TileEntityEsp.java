@@ -162,7 +162,8 @@ public class TileEntityEsp {
             return 1;
         }));
 
-        cmd.then(literal("color").then(arg("r").then(arg("g").then(arg("b").executes(this::setColor)))));
+        cmd.then(literal("color").then(arg("r").then(arg("g").then(arg("b")
+                .executes(this::setColor)))));
 
         cmd.then(literal("clear").executes(c -> {
             types.clear();

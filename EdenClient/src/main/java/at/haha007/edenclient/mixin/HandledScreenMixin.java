@@ -13,7 +13,7 @@ public abstract class HandledScreenMixin implements IHandledScreen {
     protected abstract void slotClicked(Slot slot, int slotId, int button, ClickType actionType);
 
     @Override
-    public void clickMouse(Slot slot, int slotId, int button, ClickType actionType) {
+    public void edenClient$clickMouse(Slot slot, int slotId, int button, ClickType actionType) {
         slotClicked(slot, slotId, button, actionType);
     }
 }

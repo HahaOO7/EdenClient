@@ -5,6 +5,7 @@ import at.haha007.edenclient.Mod;
 import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.Scheduler;
+import at.haha007.edenclient.utils.StringUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
@@ -341,7 +342,7 @@ public class WorldEditReplaceHelper {
 
     private void generatePermutations(List<List<String>> lists, List<String> result, int depth, String current) {
         if (depth == lists.size()) {
-            System.out.println("[EC] Permutation created: " + current);
+            StringUtils.getLogger().info("Permutation created: " + current);
             result.add(current);
             return;
         }
@@ -358,7 +359,7 @@ public class WorldEditReplaceHelper {
         if (message.length() > 256)
             sendModMessage("Cannot execute: " + message + " because this command too long.");
         entityPlayer.connection.sendChat(message);
-        System.out.println("[EC] Sent command: " + message);
+        StringUtils.getLogger().info("Sent command: " + message);
     }
 
     private String getBlockIDFromBlock(Block block) {

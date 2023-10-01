@@ -8,6 +8,7 @@ import at.haha007.edenclient.mods.datafetcher.ChestShopItemNames;
 import at.haha007.edenclient.mods.datafetcher.DataFetcher;
 import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.PlayerUtils;
+import at.haha007.edenclient.utils.StringUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import at.haha007.edenclient.utils.tasks.SyncTask;
@@ -191,7 +192,11 @@ public class ChestShopMod {
             List<String> exploitableItems = getExploitableShopsText();
 
             File folder = new File(EdenClient.getDataFolder(), "ChestShop_Exploitable");
-            if (!folder.exists()) folder.mkdirs();
+            if (!folder.exists()) {
+                if (!folder.mkdirs()) {
+                    StringUtils.getLogger().error("Failed to create ChestShop folder!");
+                }
+            }
             SimpleDateFormat formatter = new SimpleDateFormat("yyyy_MM_dd_hh_mm_ss");
             File file = new File(folder, formatter.format(new Date()) + ".txt");
 
@@ -199,7 +204,7 @@ public class ChestShopMod {
                 if (!file.exists())
                     if (!file.createNewFile()) return -1;
             } catch (IOException e) {
-                e.printStackTrace();
+                StringUtils.getLogger().error("Error while creating file: " + file.getAbsolutePath(), e);
             }
 
             try (FileWriter writer = new FileWriter(file); BufferedWriter bw = new BufferedWriter(writer)) {
@@ -213,7 +218,7 @@ public class ChestShopMod {
                                 .withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, file.getAbsolutePath())))));
             } catch (IOException e) {
                 sendModMessage("Error while writing file. See console for more info.");
-                e.printStackTrace();
+                StringUtils.getLogger().error("Couldn't write shop contents.", e);
             }
             return 1;
         }));
@@ -257,7 +262,11 @@ public class ChestShopMod {
             }
 
             File folder = new File(EdenClient.getDataFolder(), "ChestShopModEntries");
-            if (!folder.exists()) folder.mkdirs();
+            if (!folder.exists()) {
+                if (!folder.mkdirs()) {
+                    StringUtils.getLogger().error("Failed to create ChestShop folder!");
+                }
+            }
             SimpleDateFormat formatter = new SimpleDateFormat("yyyy_MM_dd_hh_mm_ss");
             Date date = new Date();
             File file = new File(folder, formatter.format(date) + ".txt");
@@ -266,7 +275,7 @@ public class ChestShopMod {
                 if (!file.exists())
                     if (!file.createNewFile()) return -1;
             } catch (IOException e) {
-                e.printStackTrace();
+                StringUtils.getLogger().error("Error while creating file: " + file.getAbsolutePath(), e);
             }
 
             try (FileWriter writer = new FileWriter(file); BufferedWriter bw = new BufferedWriter(writer)) {
@@ -284,7 +293,7 @@ public class ChestShopMod {
                                 .withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, file.getAbsolutePath())))));
             } catch (IOException e) {
                 sendModMessage("Error while writing file. See console for more info.");
-                e.printStackTrace();
+                StringUtils.getLogger().error("Couldn't write shop contents.", e);
             }
             return 1;
         }));
@@ -307,10 +316,10 @@ public class ChestShopMod {
         Map<String, List<ChestShopEntry>> sellEntries = getSellShops();
         List<String> exploitableShopsText = new ArrayList<>();
         ChestShopItemNames itemNameMap = EdenClient.getMod(DataFetcher.class).getChestShopItemNames();
-        for (Map.Entry<String, List<ChestShopEntry>> entry : buyEntries.entrySet().stream().sorted(Map.Entry.comparingByKey()).collect(Collectors.toList())) {
+        for (Map.Entry<String, List<ChestShopEntry>> entry : buyEntries.entrySet().stream().sorted(Map.Entry.comparingByKey()).toList()) {
             if (!sellEntries.containsKey(entry.getKey())) continue;
-            List<ChestShopEntry> currentSellEntries = sellEntries.get(entry.getKey()).stream().sorted(Comparator.comparingDouble(ChestShopEntry::getSellPricePerItem).reversed()).collect(Collectors.toList());
-            List<ChestShopEntry> currentBuyEntries = entry.getValue().stream().sorted(Comparator.comparingDouble(ChestShopEntry::getBuyPricePerItem)).collect(Collectors.toList());
+            List<ChestShopEntry> currentSellEntries = sellEntries.get(entry.getKey()).stream().sorted(Comparator.comparingDouble(ChestShopEntry::getSellPricePerItem).reversed()).toList();
+            List<ChestShopEntry> currentBuyEntries = entry.getValue().stream().sorted(Comparator.comparingDouble(ChestShopEntry::getBuyPricePerItem)).toList();
 
             ChestShopEntry currentSellEntry = currentSellEntries.get(0);
             ChestShopEntry currentBuyEntry = currentBuyEntries.get(0);

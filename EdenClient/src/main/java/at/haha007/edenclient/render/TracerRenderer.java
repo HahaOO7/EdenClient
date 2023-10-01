@@ -52,7 +52,7 @@ public class TracerRenderer {
     }
 
     public void add(Vec3 target, int ticks) {
-        ticks += this.tick;
+        ticks += (int) this.tick;
         Set<Vec3> set = tracers.computeIfAbsent(ticks, k -> new HashSet<>());
         set.add(target);
     }

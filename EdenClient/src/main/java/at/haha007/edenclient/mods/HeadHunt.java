@@ -85,8 +85,6 @@ public class HeadHunt {
                 .map(v -> (Vec3i) v).collect(Collectors.toSet());
         heads.removeAll(foundHeads);
         heads.stream().filter(bp -> player.position().distanceToSqr(Vec3.atCenterOf(bp)) < 20).forEach(this::clickPos);
-
-        System.out.println("Heads found: " + heads.size());
     }
 
     private void clickPos(Vec3i target) {
@@ -96,7 +94,6 @@ public class HeadHunt {
         if (im == null) return;
         im.useItemOn(getPlayer(), InteractionHand.MAIN_HAND, new BlockHitResult(Vec3.atLowerCornerOf(bp.relative(dir)), dir, bp, false));
         foundHeads.add(target);
-        System.out.println("Head clicked: " + target);
     }
 
     private void build() {

@@ -65,7 +65,7 @@ public class CubeRenderer {
     }
 
     public void add(AABB box, int ticks) {
-        ticks += this.tick;
+        ticks += (int) this.tick;
         Set<AABB> set = cubes.computeIfAbsent(ticks, k -> new HashSet<>());
         set.add(box);
     }

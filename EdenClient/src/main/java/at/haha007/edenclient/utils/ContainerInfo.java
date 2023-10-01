@@ -16,8 +16,7 @@ public class ContainerInfo {
         try {
             return cache.get(id, ContainerInfo::new);
         } catch (ExecutionException e) {
-            //noinspection CallToPrintStackTrace
-            e.printStackTrace();
+            StringUtils.getLogger().error("Failed to get ContainerInfo for id: " + id, e);
             return new ContainerInfo();
         }
     }

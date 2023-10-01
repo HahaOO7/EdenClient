@@ -49,7 +49,7 @@ public class CompleteCommandTask implements Task {
             try {
                 listeners.add(this);
                 var con = PlayerUtils.getPlayer().connection;
-                //unsafe if the server connection is faster then your cpu!
+                //unsafe if the server connection is faster than your cpu!
                 con.send(new ServerboundCommandSuggestionPacket(id, command));
                 lock.wait();
             } catch (InterruptedException ignored) {

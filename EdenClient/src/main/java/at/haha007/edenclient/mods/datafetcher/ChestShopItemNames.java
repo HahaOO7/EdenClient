@@ -56,7 +56,6 @@ public class ChestShopItemNames {
 
         if (lastFullNameCached != null && shortenedNameMatcher.matches()) {
             itemNameMap.put(shortenedNameMatcher.group("shortenedname").toLowerCase(), lastFullNameCached);
-            System.out.println("Item mapped: " + lastFullNameCached);
             lastFullNameCached = null;
         }
 
@@ -117,7 +116,6 @@ public class ChestShopItemNames {
                     return false;
                 }
                 String item = minecraftIDs[i];
-                System.out.println("Mapping item:" + item);
                 entityPlayer.connection.sendChat("/iteminfo " + item);
                 if (i % 60 == 0) {
                     sendModMessage(ChatColor.GOLD + "Mapped " + ChatColor.AQUA + i + ChatColor.GOLD + " items of " + ChatColor.AQUA + minecraftIDs.length + ChatColor.GOLD + " this far.");

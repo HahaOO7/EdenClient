@@ -26,7 +26,7 @@ public class ModInitializer {
 
     private void registerMod(Class<?> clazz) {
         try {
-            LogUtils.getLogger().info("[EC] Registering mod: %s".formatted(clazz.getCanonicalName()));
+            StringUtils.getLogger().info("Registering mod: %s".formatted(clazz.getCanonicalName()));
             Constructor<?> constructor = clazz.getDeclaredConstructor();
             constructor.setAccessible(true);
             Object object = constructor.newInstance();
@@ -35,7 +35,7 @@ public class ModInitializer {
                  IllegalAccessException |
                  InvocationTargetException |
                  NoSuchMethodException e) {
-            LogUtils.getLogger().error("Error while enabling mod: " + clazz.getCanonicalName(), e);
+            StringUtils.getLogger().error("Error while enabling mod: " + clazz.getCanonicalName(), e);
         }
     }
 
@@ -64,7 +64,7 @@ public class ModInitializer {
             }
             return annotatedClasses;
         } catch (IOException | ClassNotFoundException e) {
-            LogUtils.getLogger().trace("[EC] Error while loading mod.txt", e);
+            StringUtils.getLogger().trace("Error while loading mod.txt", e);
         }
         return new ArrayList<>();
     }
@@ -93,7 +93,7 @@ public class ModInitializer {
                     clazz = visit;
                     break;
                 }
-                if (clazz == null) throw new IllegalStateException("[EC] Error while sorting mod dependencies");
+                if (clazz == null) throw new IllegalStateException("Error while sorting mod dependencies");
                 toVisit.remove(clazz);
             }
             return list;

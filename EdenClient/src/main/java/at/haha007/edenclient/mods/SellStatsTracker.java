@@ -82,7 +82,7 @@ public class SellStatsTracker {
 
         node.then(literal("global").executes(c -> {
             sendModMessage(ChatColor.GOLD + "Stats: ");
-            data.entrySet().stream().sorted((e1, e2) -> Integer.compare(e2.getValue().amountSold, e1.getValue().amountSold)).collect(Collectors.toList()).forEach(entry -> sendModMessage(
+            data.entrySet().stream().sorted((e1, e2) -> Integer.compare(e2.getValue().amountSold, e1.getValue().amountSold)).toList().forEach(entry -> sendModMessage(
                     ChatColor.AQUA + (entry.getKey().substring(0, 1).toUpperCase() + entry.getKey().substring(1)) +
                             ChatColor.GOLD + " sold " +
                             ChatColor.AQUA + entry.getValue().amountSold +
@@ -135,7 +135,7 @@ public class SellStatsTracker {
         return suggestionsBuilder.buildFuture();
     }
 
-    private static record SellStatsForItem(int amountSold, double money) {
+    private record SellStatsForItem(int amountSold, double money) {
     }
 
     private static class SellStatsForItemLoader implements ConfigLoader<CompoundTag, SellStatsForItem> {
