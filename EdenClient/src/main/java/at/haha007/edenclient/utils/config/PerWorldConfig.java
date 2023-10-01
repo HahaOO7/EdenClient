@@ -1,6 +1,7 @@
 package at.haha007.edenclient.utils.config;
 
 import at.haha007.edenclient.EdenClient;
+import at.haha007.edenclient.callbacks.ConfigLoadedCallback;
 import at.haha007.edenclient.callbacks.JoinWorldCallback;
 import at.haha007.edenclient.callbacks.LeaveWorldCallback;
 import at.haha007.edenclient.utils.Scheduler;
@@ -124,6 +125,7 @@ public class PerWorldConfig {
                 System.out.println("[EC] Start loading config: " + worldName);
                 loadConfig();
                 System.out.printf("[EC] Loading done, this took %sms.%n", TimeUnit.NANOSECONDS.toMillis((System.nanoTime() - start)));
+                ConfigLoadedCallback.EVENT.invoker().configLoaded();
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }

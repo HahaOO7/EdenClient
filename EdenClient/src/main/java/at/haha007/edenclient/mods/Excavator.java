@@ -1,6 +1,7 @@
 package at.haha007.edenclient.mods;
 
 import at.haha007.edenclient.Mod;
+import at.haha007.edenclient.callbacks.ConfigLoadedCallback;
 import at.haha007.edenclient.callbacks.JoinWorldCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.command.CommandManager;
@@ -11,7 +12,6 @@ import at.haha007.edenclient.utils.config.PerWorldConfig;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.multiplayer.ClientSuggestionProvider;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.client.player.LocalPlayer;
@@ -21,360 +21,201 @@ import net.minecraft.commands.arguments.coordinates.Coordinates;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
-import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
 import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
+import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import static at.haha007.edenclient.EdenClient.getMod;
-import static net.minecraft.network.protocol.game.ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK;
 
 @Mod
 public class Excavator {
     private boolean enabled = false;
-    @ConfigSubscriber("3")
-    private int limit;
     @ConfigSubscriber("-1000000,1000000,-1000000,1000000,-1000000,1000000")
     private BoundingBox area;
     private BoundingBox wallArea;
-    private BlockPos currentlyBreaking;
+    private Target target;
 
     private Excavator() {
         PerWorldConfig.get().register(this, "excavator");
         JoinWorldCallback.EVENT.register(this::onJoinWorld);
         PlayerTickCallback.EVENT.register(this::tick);
-        streamOut(Vec3i.ZERO).limit(100).forEach(System.out::println);
+        ConfigLoadedCallback.EVENT.register(this::onConfigLoaded);
         registerCommand();
     }
 
-    private void tick(LocalPlayer localPlayer) {
+    private void tick(LocalPlayer player) {
         if (!enabled) return;
-        move();
-        if (tryToPlaceBlocks()) return;
-        tryToBreakBlocks();
-    }
-
-    private void move() {
-        LocalPlayer player = PlayerUtils.getPlayer();
-        Optional<Vec3i> target = getNearestTarget(player.blockPosition());
-        if (target.isEmpty())
-            PlayerUtils.walkTowards(player.blockPosition().getCenter());
-        else
-            PlayerUtils.walkTowards(Vec3.atBottomCenterOf(target.get()));
-    }
-
-    /**
-     * @return true if at least one block was placed
-     */
-    private boolean tryToPlaceBlocks() {
-        LocalPlayer player = PlayerUtils.getPlayer();
-        ClientLevel level = player.clientLevel;
-        BlockPos playerPos = player.blockPosition();
-        MultiPlayerGameMode gameMode = Minecraft.getInstance().gameMode;
-        if (gameMode == null) return false;
-        AtomicInteger placed = new AtomicInteger(0);
-        getNearbyAreaPositions(playerPos, 4.5)
-                .map(BlockPos::new)
-                .filter(pos -> pos.getY() == playerPos.below().getY())
-                .filter(pos -> level.getBlockState(pos).isAir() ||
-                        level.getBlockState(pos).is(Blocks.WATER) ||
-                        level.getBlockState(pos).is(Blocks.LAVA))
-                .limit((limit - placed.get()) / 2)
-                .forEach(pos -> {
-                    PlayerUtils.selectPlacableBlock();
-                    Direction dir = Direction.UP;
-                    BlockHitResult hitResult = new BlockHitResult(Vec3.atBottomCenterOf((pos.relative(dir))), dir, pos, false);
-                    gameMode.useItemOn(player, InteractionHand.MAIN_HAND, hitResult);
-                    placed.addAndGet(2);
-                });
-        getNearbyWallPositions(playerPos, 4.5)
-                .map(BlockPos::new)
-                .filter(pos -> !level.getFluidState(pos).isEmpty())
-                .filter(pos -> level.getBlockState(pos).isAir() ||
-                        level.getBlockState(pos).is(Blocks.WATER) ||
-                        level.getBlockState(pos).is(Blocks.LAVA))
-                .limit((limit - placed.get()) / 2)
-                .forEach(pos -> {
-                    PlayerUtils.selectPlacableBlock();
-                    Direction dir = Direction.UP;
-                    BlockHitResult hitResult = new BlockHitResult(Vec3.atBottomCenterOf((pos.relative(dir))), dir, pos, false);
-                    gameMode.useItemOn(player, InteractionHand.MAIN_HAND, hitResult);
-                    placed.addAndGet(2);
-                });
-        if (limit == placed.get()) return true;
-        getNearbyAreaPositions(playerPos, 4.5)
-                .map(BlockPos::new)
-                .filter(pos -> !level.getFluidState(pos).isEmpty())
-                .filter(pos -> level.getBlockState(pos).isAir() ||
-                        level.getBlockState(pos).is(Blocks.WATER) ||
-                        level.getBlockState(pos).is(Blocks.LAVA))
-                .limit((limit - placed.get()) / 2)
-                .forEach(pos -> {
-                    PlayerUtils.selectPlacableBlock();
-                    Direction dir = Direction.UP;
-                    BlockHitResult hitResult = new BlockHitResult(Vec3.atBottomCenterOf((pos.relative(dir))), dir, pos, false);
-                    gameMode.useItemOn(player, InteractionHand.MAIN_HAND, hitResult);
-                    placed.addAndGet(2);
-                });
-        return placed.get() > 0;
-    }
-
-    /**
-     * @return true if hitting a block
-     */
-    private boolean tryToBreakBlocks() {
-        LocalPlayer player = PlayerUtils.getPlayer();
-        ClientLevel level = player.clientLevel;
-        BlockPos playerPos = player.blockPosition();
-        ClientPacketListener packetListener = player.connection;
-        //try to continue block breaking
-        if (currentlyBreaking != null && level.getBlockState(currentlyBreaking).getCollisionShape(level, currentlyBreaking).isEmpty())
-            currentlyBreaking = null;
-        if (currentlyBreaking != null && playerPos.distSqr(currentlyBreaking) < 25) {
-            swapToBestSlot(currentlyBreaking, player);
-            if (!PlayerUtils.breakBlock(currentlyBreaking)) return true;
-            currentlyBreaking = null;
-            return true;
+        if (target == null) findTarget(player);
+        if (target == null) {
+            target = dropDownTarget(player);
+            return;
         }
-        AtomicInteger actions = new AtomicInteger(0);
-        //find waterlogged floor blocks
-        getNearbyAreaPositions(playerPos, 4.5)
-                .map(BlockPos::new)
-                .filter(pos -> !level.getFluidState(pos).isEmpty())
-                .filter(pos -> !level.getBlockState(pos).getCollisionShape(level, pos).isEmpty())
-                .limit(Math.max(limit - actions.get(),0))
-                .forEach(pos -> {
-                    if (actions.get() >= limit) return;
-                    if (swapToBestSlot(pos, player))
-                        actions.incrementAndGet();
-                    if (isInstantBreakable(pos, player)) {
-                        actions.incrementAndGet();
-                        Direction hitDirectionForBlock = PlayerUtils.getHitDirectionForBlock(player, pos);
-                        ServerboundPlayerActionPacket packet = new ServerboundPlayerActionPacket(START_DESTROY_BLOCK, pos, hitDirectionForBlock);
-                        packetListener.send(packet);
-                        player.clientLevel.setBlockAndUpdate(pos, Blocks.AIR.defaultBlockState());
-                    }
-                    currentlyBreaking = pos;
-                    actions.set(20000000);
-                });
-        getNearbyAreaPositions(playerPos, 4.5)
-                .map(BlockPos::new)
-                .map(BlockPos::above)
-                .filter(pos -> !level.getFluidState(pos).isEmpty())
-                .filter(pos -> !level.getBlockState(pos).getCollisionShape(level, pos).isEmpty())
-                .limit(Math.max(limit - actions.get(),0))
-                .forEach(pos -> {
-                    if (actions.get() >= limit) return;
-                    if (swapToBestSlot(pos, player))
-                        actions.incrementAndGet();
-                    if (isInstantBreakable(pos, player)) {
-                        actions.incrementAndGet();
-                        Direction hitDirectionForBlock = PlayerUtils.getHitDirectionForBlock(player, pos);
-                        ServerboundPlayerActionPacket packet = new ServerboundPlayerActionPacket(START_DESTROY_BLOCK, pos, hitDirectionForBlock);
-                        packetListener.send(packet);
-                        player.clientLevel.setBlockAndUpdate(pos, Blocks.AIR.defaultBlockState());
-                    }
-                    currentlyBreaking = pos;
-                    actions.set(20000000);
-                });
-
-        //find waterlogged wall blocks
-        getNearbyWallPositions(playerPos, 4.5)
-                .map(BlockPos::new)
-                .filter(pos -> !level.getFluidState(pos).isEmpty())
-                .filter(pos -> !level.getBlockState(pos).getCollisionShape(level, pos).isEmpty())
-                .limit(Math.max(limit - actions.get(),0))
-                .forEach(pos -> {
-                    if (actions.get() >= limit) return;
-                    if (swapToBestSlot(pos, player))
-                        actions.incrementAndGet();
-                    if (isInstantBreakable(pos, player)) {
-                        actions.incrementAndGet();
-                        Direction hitDirectionForBlock = PlayerUtils.getHitDirectionForBlock(player, pos);
-                        ServerboundPlayerActionPacket packet = new ServerboundPlayerActionPacket(START_DESTROY_BLOCK, pos, hitDirectionForBlock);
-                        packetListener.send(packet);
-                        player.clientLevel.setBlockAndUpdate(pos, Blocks.AIR.defaultBlockState());
-                    }
-                    currentlyBreaking = pos;
-                    actions.set(20000000);
-                });
-        getNearbyWallPositions(playerPos, 4.5)
-                .map(BlockPos::new)
-                .map(BlockPos::above)
-                .filter(pos -> !level.getFluidState(pos).isEmpty())
-                .filter(pos -> !level.getBlockState(pos).getCollisionShape(level, pos).isEmpty())
-                .limit(Math.max(limit - actions.get(),0))
-                .forEach(pos -> {
-                    if (actions.get() >= limit) return;
-                    if (swapToBestSlot(pos, player))
-                        actions.incrementAndGet();
-                    if (isInstantBreakable(pos, player)) {
-                        actions.incrementAndGet();
-                        Direction hitDirectionForBlock = PlayerUtils.getHitDirectionForBlock(player, pos);
-                        ServerboundPlayerActionPacket packet = new ServerboundPlayerActionPacket(START_DESTROY_BLOCK, pos, hitDirectionForBlock);
-                        packetListener.send(packet);
-                        player.clientLevel.setBlockAndUpdate(pos, Blocks.AIR.defaultBlockState());
-                    }
-                    currentlyBreaking = pos;
-                    actions.set(20000000);
-                });
-        //find area block to break
-        getNearbyAreaPositions(playerPos, 4.5)
-                .map(BlockPos::new)
-                .filter(pos -> level.getFluidState(pos.above()).isEmpty())
-                .filter(pos -> level.getFluidState(pos.north()).isEmpty())
-                .filter(pos -> level.getFluidState(pos.south()).isEmpty())
-                .filter(pos -> level.getFluidState(pos.east()).isEmpty())
-                .filter(pos -> level.getFluidState(pos.west()).isEmpty())
-                .filter(pos -> !level.getBlockState(pos).getCollisionShape(level, pos).isEmpty())
-                .limit(Math.max(limit - actions.get(),0))
-                .forEach(pos -> {
-                    if (actions.get() >= limit) return;
-                    if (swapToBestSlot(pos, player))
-                        actions.incrementAndGet();
-                    if (isInstantBreakable(pos, player)) {
-                        actions.incrementAndGet();
-                        Direction hitDirectionForBlock = PlayerUtils.getHitDirectionForBlock(player, pos);
-                        ServerboundPlayerActionPacket packet = new ServerboundPlayerActionPacket(START_DESTROY_BLOCK, pos, hitDirectionForBlock);
-                        packetListener.send(packet);
-                        player.clientLevel.setBlockAndUpdate(pos, Blocks.AIR.defaultBlockState());
-                    }
-                    currentlyBreaking = pos;
-                    actions.set(20000000);
-                });
-        getNearbyAreaPositions(playerPos, 4.5)
-                .map(BlockPos::new)
-                .map(BlockPos::above)
-                .filter(pos -> level.getFluidState(pos.above()).isEmpty())
-                .filter(pos -> level.getFluidState(pos.north()).isEmpty())
-                .filter(pos -> level.getFluidState(pos.south()).isEmpty())
-                .filter(pos -> level.getFluidState(pos.east()).isEmpty())
-                .filter(pos -> level.getFluidState(pos.west()).isEmpty())
-                .filter(pos -> !level.getBlockState(pos).getCollisionShape(level, pos).isEmpty())
-                .limit(Math.max(limit - actions.get(),0))
-                .forEach(pos -> {
-                    if (actions.get() >= limit) return;
-                    if (swapToBestSlot(pos, player))
-                        actions.incrementAndGet();
-                    if (isInstantBreakable(pos, player)) {
-                        actions.incrementAndGet();
-                        Direction hitDirectionForBlock = PlayerUtils.getHitDirectionForBlock(player, pos);
-                        ServerboundPlayerActionPacket packet = new ServerboundPlayerActionPacket(START_DESTROY_BLOCK, pos, hitDirectionForBlock);
-                        packetListener.send(packet);
-                        player.clientLevel.setBlockAndUpdate(pos, Blocks.AIR.defaultBlockState());
-                    }
-                    currentlyBreaking = pos;
-                    actions.set(20000000);
-                });
-        return actions.get() > 0;
+        if (target.tick(player))
+            target = null;
     }
 
-    private Stream<Vec3i> getNearbyWallPositions(Vec3i center, double distance) {
-        int radius = (int) Math.ceil(distance);
-        long area = radius * radius * 4L;
-        double distanceSquared = distance * distance;
-        return streamOut(center)
-                .limit(area)
-                .filter(this::isWall)
-                .filter(v -> center.distSqr(v) <= distanceSquared);
+    private Target dropDownTarget(LocalPlayer player) {
+        BlockPos playerPos = player.blockPosition();
+        BlockPos dropFloor = playerPos.below().below();
+        BlockState state = player.clientLevel.getBlockState(dropFloor);
+        //if it is not safe to drop
+        if (!state.getShape(player.clientLevel, dropFloor).isEmpty() &&
+                !state.isFaceSturdy(player.clientLevel, dropFloor, Direction.UP)) {
+            return new Target(dropFloor, 4.5, breakBlockTargetAction(dropFloor));
+        }
+        if (state.isFaceSturdy(player.clientLevel, dropFloor, Direction.UP)) {
+            Vec3 center = Vec3.atBottomCenterOf(player.blockPosition());
+            player.setPos(center);
+            return new Target(dropFloor, 4.5, new BooleanSupplier() {
+                int cooldown = 0;
+                BooleanSupplier destroyBlock = breakBlockTargetAction(dropFloor.above());
+                public boolean getAsBoolean() {
+                    if(!destroyBlock.getAsBoolean())return false;
+                    return cooldown++ >= 10;
+                }
+            });
+        }
+        return new Target(playerPos, 4.5, placeBlockTargetAction(dropFloor));
     }
 
-    private Stream<Vec3i> getNearbyAreaPositions(Vec3i center, double distance) {
-        int radius = (int) Math.ceil(distance);
-        long area = radius * radius * 4L;
-        double distanceSquared = distance * distance;
-        return streamOut(center)
-                .limit(area)
-                .filter(this.area::isInside)
-                .filter(v -> center.distSqr(v) <= distanceSquared);
-    }
-
-    private Optional<Vec3i> getNearestTarget(Vec3i center) {
-        long limit = (long) area.getXSpan() * area.getZSpan();
-        return streamOut(center)
-                .limit(limit)
-                .filter(this::isTarget)
+    private void findTarget(LocalPlayer player) {
+        BlockPos playerPos = player.blockPosition();
+        Optional<Target> target = streamOuterArea(playerPos.getY())
+                .sorted(Comparator.comparingInt(x -> x.distManhattan(playerPos)))
+                .map(x -> createTarget(x, player))
+                .filter(Objects::nonNull)
                 .findFirst();
+        this.target = target.orElse(null);
     }
 
-    private boolean isInstantBreakable(BlockPos pos, LocalPlayer player) {
-        ClientLevel world = player.clientLevel;
-        BlockState state = world.getBlockState(pos);
-        float delta = state.getDestroyProgress(player, world, pos);
-        return delta >= 1;
-    }
+    private Target createTarget(Vec3i vec, LocalPlayer player) {
+        if (!wallArea.isInside(vec)) return null;
+        ClientLevel level = player.clientLevel;
+        BlockPos posFeet = new BlockPos(vec);
+        BlockPos posFloor = posFeet.below();
+        BlockPos posHead = posFeet.above();
+        BlockState blockStateFeet = level.getBlockState(posFeet);
+        FluidState fluidStateFeet = level.getFluidState(posFeet);
+        BlockState blockStateFloor = level.getBlockState(posFloor);
+        FluidState fluidStateFloor = level.getFluidState(posFloor);
+        BlockState blockStateHead = level.getBlockState(posHead);
+        FluidState fluidStateHead = level.getFluidState(posHead);
 
-    /**
-     * @return true if swapped
-     */
-    private boolean swapToBestSlot(BlockPos pos, LocalPlayer player) {
-        Inventory inventory = player.getInventory();
-        ClientLevel world = player.clientLevel;
-        BlockState state = world.getBlockState(pos);
-        int startSlot = inventory.selected;
-        int bestSlot = startSlot;
-        float bestDelta = state.getDestroyProgress(player, world, pos);
-        //if the selected item is already instant breaking there is no need to find the best one
-        if (bestDelta >= 1) {
-//            System.out.println("Starter slot is instant breaking.");
-            return false;
+        //check for fluids to replace
+        if (!fluidStateFeet.isEmpty() && (blockStateFeet.canBeReplaced() || blockStateFeet.isAir())) {
+            return new Target(posFeet, 4.5, placeBlockTargetAction(posFeet));
         }
+        if (!fluidStateFloor.isEmpty() && (blockStateFloor.canBeReplaced() || blockStateFloor.isAir())) {
+            return new Target(posFloor, 4.5, placeBlockTargetAction(posFloor));
+        }
+        if (!fluidStateHead.isEmpty() && (blockStateHead.canBeReplaced() || blockStateHead.isAir())) {
+            return new Target(posHead, 4.5, placeBlockTargetAction(posHead));
+        }
+
+        //check for floor to place
+        if (blockStateFloor.canBeReplaced() || blockStateFloor.isAir()) {
+            return new Target(posFloor, 4.5, placeBlockTargetAction(posFloor));
+        }
+
+        //if wall place blocks
+        if (isWall(posFeet)) {
+            if (blockStateFeet.canBeReplaced() || blockStateFeet.isAir()) {
+                return new Target(posFeet, 4.5, placeBlockTargetAction(posFeet));
+            }
+            if (blockStateFloor.canBeReplaced() || blockStateFloor.isAir()) {
+                return new Target(posFloor, 4.5, placeBlockTargetAction(posFloor));
+            }
+            if (blockStateHead.canBeReplaced() || blockStateHead.isAir()) {
+                return new Target(posHead, 4.5, placeBlockTargetAction(posHead));
+            }
+            return null;
+        }
+
+        BlockPos[] blocks = new BlockPos[]{posFeet, posHead};
+        for (BlockPos block : blocks) {
+            //check for neighboring fluids
+            if (hasNeighboringFluids(block, level)) {
+                continue;
+            }
+            //check for blocks to be broken
+            if (level.getBlockState(block).getShape(level, block).isEmpty()) {
+                continue;
+            }
+            return new Target(block, 4.5, breakBlockTargetAction(block));
+        }
+
+        return null;
+    }
+
+    @SuppressWarnings("RedundantIfStatement")
+    private boolean hasNeighboringFluids(BlockPos pos, ClientLevel level) {
+        if (!level.getFluidState(pos.above()).isEmpty()) return true;
+        if (!level.getFluidState(pos.north()).isEmpty()) return true;
+        if (!level.getFluidState(pos.south()).isEmpty()) return true;
+        if (!level.getFluidState(pos.east()).isEmpty()) return true;
+        if (!level.getFluidState(pos.west()).isEmpty()) return true;
+        return false;
+    }
+
+    private BooleanSupplier breakBlockTargetAction(BlockPos pos) {
+        return () -> {
+            LocalPlayer player = PlayerUtils.getPlayer();
+            ClientLevel level = player.clientLevel;
+            BlockState state = level.getBlockState(pos);
+            if (state.getShape(level, pos).isEmpty()) return true;
+            selectBestTool(pos, player);
+            return PlayerUtils.breakBlock(pos);
+        };
+    }
+
+    private BooleanSupplier placeBlockTargetAction(BlockPos pos) {
+        return () -> {
+            if (!PlayerUtils.selectPlacableBlock()) {
+                return false;
+            }
+            MultiPlayerGameMode gameMode = Minecraft.getInstance().gameMode;
+            if (gameMode == null) {
+                return false;
+            }
+            LocalPlayer player = PlayerUtils.getPlayer();
+            BlockHitResult hitResult = new BlockHitResult(Vec3.atLowerCornerOf(pos), Direction.UP, pos, false);
+            gameMode.useItemOn(player, InteractionHand.MAIN_HAND, hitResult);
+            return true;
+        };
+    }
+
+    private void selectBestTool(BlockPos pos, LocalPlayer player) {
+        ClientLevel level = player.clientLevel;
+        BlockState state = level.getBlockState(pos);
+        int originalSlot = player.getInventory().selected;
+        float bestDelta = state.getDestroyProgress(player, level, pos);
+        int bestSlot = originalSlot;
+        if (bestDelta >= 1) return;
         for (int i = 0; i < 9; i++) {
-            float delta = state.getDestroyProgress(player, world, pos);
-            if (delta >= bestDelta) continue;
+            player.getInventory().selected = i;
+            float delta = state.getDestroyProgress(player, level, pos);
+            if (delta <= bestDelta) continue;
             bestSlot = i;
             bestDelta = delta;
         }
-        inventory.selected = startSlot;
-        if (startSlot == bestSlot) return false;
-        inventory.selected = bestSlot;
-        PlayerUtils.packetListener().send(new ServerboundSetCarriedItemPacket(bestSlot));
-        return true;
-    }
-
-    private boolean isTarget(Vec3i vec) {
-        return isWallTarget(vec) || isAreaTarget(vec);
-    }
-
-    private boolean isWallTarget(Vec3i vec) {
-        if (area.isInside(vec) || !wallArea.isInside(vec)) return false;
-        LocalPlayer player = PlayerUtils.getPlayer();
-        ClientLevel world = player.clientLevel;
-        BlockPos feet = new BlockPos(vec);
-        BlockPos head = new BlockPos(vec.above());
-        BlockPos floor = new BlockPos(vec.below());
-
-        if (!world.getFluidState(floor).isEmpty())
-            return true;
-        if (!world.getFluidState(feet).isEmpty())
-            return true;
-        return !world.getFluidState(head).isEmpty();
-    }
-
-    private boolean isAreaTarget(Vec3i vec) {
-        if (!area.isInside(vec)) return false;
-        LocalPlayer player = PlayerUtils.getPlayer();
-        ClientLevel world = player.clientLevel;
-        BlockPos floor = new BlockPos(vec.below());
-        BlockPos feet = new BlockPos(vec);
-        BlockPos head = new BlockPos(vec.above());
-
-        if (!world.getFluidState(floor).isEmpty())
-            return true;
-        if (!world.getBlockState(feet).isAir())
-            return true;
-        return !world.getBlockState(head).isAir();
+        player.getInventory().selected = originalSlot;
+        if (bestSlot == originalSlot) return;
+        player.getInventory().selected = bestSlot;
+        player.connection.send(new ServerboundSetCarriedItemPacket(bestSlot));
     }
 
     private boolean isWall(Vec3i pos) {
@@ -400,6 +241,19 @@ public class Excavator {
                 return vec;
             }
         });
+    }
+
+    private Stream<Vec3i> streamOuterArea(int y) {
+        int zSpan = wallArea.getZSpan();
+        int xSpan = wallArea.getXSpan();
+        Vec3i src = new Vec3i(wallArea.minX(), y, wallArea.minZ());
+        Vec3i[] vectors = new Vec3i[xSpan * zSpan];
+        for (int x = 0; x < xSpan; x++) {
+            for (int z = 0; z < zSpan; z++) {
+                vectors[x + z * xSpan] = new Vec3i(x, 0, z).offset(src);
+            }
+        }
+        return Arrays.stream(vectors);
     }
 
     private void registerCommand() {
@@ -440,6 +294,7 @@ public class Excavator {
         on.executes(c -> {
             enabled = true;
             PlayerUtils.sendModMessage("Excavator enabled.");
+            target = null;
             return 1;
         });
         ///eexcavate ~ ~10 ~ ~10 ~-100 ~10
@@ -447,6 +302,7 @@ public class Excavator {
             enabled = !enabled;
             if (enabled) PlayerUtils.sendModMessage("Excavator enabled.");
             else PlayerUtils.sendModMessage("Excavator disabled.");
+            target = null;
             return 1;
         });
         pos2Cmd.executes(c -> {
@@ -475,9 +331,23 @@ public class Excavator {
 
     private void onJoinWorld() {
         enabled = false;
-        currentlyBreaking = null;
-        getMod(Scheduler.class).scheduleSyncDelayed(() -> {
-            setArea(area);
-        }, 1);
+        target = null;
+    }
+
+    private void onConfigLoaded() {
+        setArea(area);
+    }
+
+    private record Target(BlockPos pos, double actionDistance, BooleanSupplier action) {
+        public boolean tick(LocalPlayer player) {
+            if (player.position().subtract(pos.getCenter()).horizontalDistance() > 2)
+                PlayerUtils.walkTowards(pos);
+            return performAction(player);
+        }
+
+        private boolean performAction(LocalPlayer player) {
+            if (pos.getCenter().distanceTo(player.position()) > actionDistance) return false;
+            return action.getAsBoolean();
+        }
     }
 }

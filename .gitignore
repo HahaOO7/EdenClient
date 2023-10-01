@@ -4,6 +4,8 @@
 build/
 out/
 classes/
+EdenClient/run/
+EdenClient/logs/
 
 # eclipse
 
@@ -24,8 +26,3 @@ bin/
 .classpath
 .project
 
-# fabric
-
-run/
-logs/
-/ModAnnotationHandler/target/

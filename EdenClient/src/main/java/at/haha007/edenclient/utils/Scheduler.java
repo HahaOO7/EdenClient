@@ -1,8 +1,7 @@
 package at.haha007.edenclient.utils;
 
-import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.Mod;
-import at.haha007.edenclient.callbacks.JoinWorldCallback;
+import at.haha007.edenclient.callbacks.LeaveWorldCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import net.minecraft.client.player.LocalPlayer;
 import org.jetbrains.annotations.NotNull;
@@ -26,9 +25,7 @@ public class Scheduler {
     }
 
     private Scheduler() {
-        if (EdenClient.INSTANCE == null)
-            throw new ExceptionInInitializerError("Scheduler cant be called before initializing EdenClient");
-        JoinWorldCallback.EVENT.register(this::cleanup);
+        LeaveWorldCallback.EVENT.register(this::cleanup);
         PlayerTickCallback.EVENT.register(this::tick);
     }
 

@@ -87,7 +87,7 @@ public class PlayerUtils {
         movementSpeed /= 20;
 
         //scale the vector to the movement speed
-        movementSpeed = Math.min(target.distanceTo(player.position()), movementSpeed);
+        movementSpeed = Math.min(target.distanceTo(player.position()) * .5, movementSpeed);
         vec = vec.normalize().scale(movementSpeed);
 
 
@@ -97,7 +97,7 @@ public class PlayerUtils {
         return player.position().distanceTo(target) <= 0.1;
     }
 
-    public boolean walkTowards(Vec3i target) {
+    public static boolean walkTowards(Vec3i target) {
         Vec3 t = Vec3.atBottomCenterOf(target);
         return walkTowards(t);
     }
