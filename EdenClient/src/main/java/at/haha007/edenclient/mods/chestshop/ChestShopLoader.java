@@ -8,8 +8,7 @@ import net.minecraft.nbt.Tag;
 
 public class ChestShopLoader implements ConfigLoader<ListTag, ChestShopMap> {
 
-    public ListTag save(Object value) {
-        ChestShopMap map = cast(value);
+    public ListTag save(ChestShopMap map) {
         ListTag list = new ListTag();
         map.values().stream()
                 .flatMap(Collection::stream)

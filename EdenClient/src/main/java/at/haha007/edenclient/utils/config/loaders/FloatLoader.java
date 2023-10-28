@@ -4,8 +4,8 @@ import net.minecraft.nbt.FloatTag;
 
 public class FloatLoader implements ConfigLoader<FloatTag, Float> {
 
-    public FloatTag save(Object value) {
-        return FloatTag.valueOf(cast(value));
+    public FloatTag save(Float value) {
+        return FloatTag.valueOf(value);
     }
 
     public Float load(FloatTag nbtElement) {

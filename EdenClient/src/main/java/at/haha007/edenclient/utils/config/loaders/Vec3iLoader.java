@@ -7,8 +7,7 @@ import static java.lang.Integer.parseInt;
 
 public class Vec3iLoader implements ConfigLoader<IntArrayTag, Vec3i> {
 
-    public IntArrayTag save(Object value) {
-        Vec3i v = cast(value);
+    public IntArrayTag save(Vec3i v) {
         return new IntArrayTag(new int[]{v.getX(), v.getY(), v.getZ()});
     }
 

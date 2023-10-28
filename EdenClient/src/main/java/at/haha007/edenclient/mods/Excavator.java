@@ -7,7 +7,9 @@ import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.command.CommandManager;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.Scheduler;
-import at.haha007.edenclient.utils.StringUtils;
+import at.haha007.edenclient.utils.Utils;
+import at.haha007.edenclient.utils.area.BlockArea;
+import at.haha007.edenclient.utils.area.SavableBlockArea;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -16,24 +18,19 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.ClientSuggestionProvider;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
-import net.minecraft.commands.arguments.coordinates.Coordinates;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
 import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.Arrays;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BooleanSupplier;
@@ -45,9 +42,8 @@ import static at.haha007.edenclient.EdenClient.getMod;
 @Mod
 public class Excavator {
     private boolean enabled = false;
-    @ConfigSubscriber("-1000000,1000000,-1000000,1000000,-1000000,1000000")
-    private BoundingBox area;
-    private BoundingBox wallArea;
+    @ConfigSubscriber()
+    private SavableBlockArea area;
     private Target target;
 
     private Excavator() {
@@ -60,9 +56,20 @@ public class Excavator {
 
     private void tick(LocalPlayer player) {
         if (!enabled) return;
-        if (target == null) findTarget(player);
+        if (area == null) {
+            PlayerUtils.sendModMessage("Excavator area not defined");
+            enabled = false;
+            return;
+        }
+        if (target == null) {
+            target = findTarget(player);
+        }
         if (target == null) {
             target = dropDownTarget(player);
+            if (target == null) {
+                enabled = false;
+                PlayerUtils.sendModMessage("Excavator done");
+            }
             return;
         }
         if (target.tick(player))
@@ -71,7 +78,13 @@ public class Excavator {
 
     private Target dropDownTarget(LocalPlayer player) {
         BlockPos playerPos = player.blockPosition();
-        BlockPos dropFloor = playerPos.below().below();
+        int floorY = playerPos.getY() - 1;
+        BlockPos dropPos = area.stream().filter(p -> p.getY() == floorY)
+                .min(Comparator.comparingDouble(pos -> pos.distSqr(playerPos)))
+                .map(BlockPos::above)
+                .orElse(null);
+        if (dropPos == null) return null;
+        BlockPos dropFloor = dropPos.below().below();
         BlockState state = player.clientLevel.getBlockState(dropFloor);
         //if it is not safe to drop
         if (!state.getShape(player.clientLevel, dropFloor).isEmpty() &&
@@ -79,8 +92,8 @@ public class Excavator {
             return new Target(dropFloor, 5, breakBlockTargetAction(dropFloor));
         }
         if (state.isFaceSturdy(player.clientLevel, dropFloor, Direction.UP)) {
-            Vec3 center = Vec3.atBottomCenterOf(player.blockPosition());
-            player.setPos(center);
+            Vec3 center = Vec3.atBottomCenterOf(playerPos);
+
             return new Target(dropFloor, 5, new BooleanSupplier() {
                 int noActionDelay = 0;
                 private final BooleanSupplier destroyBlock = breakBlockTargetAction(dropFloor.above());
@@ -89,77 +102,136 @@ public class Excavator {
                     if (!destroyBlock.getAsBoolean()) return false;
                     return noActionDelay++ >= 10;
                 }
-            });
+            }) {
+                @Override
+                public boolean tick(LocalPlayer player) {
+                    PlayerUtils.walkTowards(pos());
+                    if (Vec3.atBottomCenterOf(pos()).subtract(player.position()).horizontalDistance() < .3) {
+                        player.setPos(center);
+                        return super.performAction(player);
+                    }
+                    return false;
+                }
+            };
         }
-        return new Target(playerPos, 4.5, placeBlockTargetAction(dropFloor));
+        return new Target(dropPos, 4.5, placeBlockTargetAction(dropFloor));
     }
 
-    private void findTarget(LocalPlayer player) {
+    private Target findTarget(LocalPlayer player) {
         BlockPos playerPos = player.blockPosition();
-        Optional<Target> target = streamOuterArea(playerPos.getY())
-                .sorted(Comparator.comparingInt(x -> x.distManhattan(playerPos)))
-                .map(x -> createTarget(x, player))
-                .filter(Objects::nonNull)
-                .findFirst();
-        this.target = target.orElse(null);
+        Target target = areaTarget(playerPos);
+        if (target != null) return target;
+        target = ceilingTarget(playerPos);
+        if (target != null) return target;
+        target = floorTarget(playerPos);
+        if (target != null) return target;
+        target = wallTarget(playerPos);
+        return target;
     }
 
-    private Target createTarget(Vec3i vec, LocalPlayer player) {
-        if (!wallArea.isInside(vec)) return null;
+    private Target areaTarget(BlockPos pos) {
+        int minY = pos.getY() - 1;
+        int maxY = pos.getY() + 4;
+        List<BlockPos> c = area.stream().filter(p -> filterMinY(minY, p))
+                .filter(p -> p.getY() < maxY)
+                .sorted(Comparator.comparingDouble(pos::distManhattan)).toList();
+
+        Optional<Target> placeTarget = c.stream().map(this::placeTarget).filter(Objects::nonNull).findFirst();
+        c = c.stream().filter(p -> p.getY() > minY).toList();
+        Optional<Target> breakTarget = c.stream().map(this::breakTarget).filter(Objects::nonNull).findFirst();
+
+        double distBreak = breakTarget.map(b -> b.pos().distSqr(pos)).orElse(Double.MAX_VALUE);
+        double distPlace = placeTarget.map(b -> b.pos().distSqr(pos)).orElse(Double.MAX_VALUE) - 2;
+        return distBreak < distPlace ? breakTarget.orElse(null) : placeTarget.orElse(null);
+    }
+
+    private Target ceilingTarget(BlockPos playerPos) {
+        int minY = playerPos.getY() + 2;
+        int maxY = playerPos.getY() + 4;
+        List<BlockPos> c = area.ceilingStream().filter(p -> filterMinY(minY, p))
+                .filter(p -> p.getY() < maxY)
+                .sorted(Comparator.comparingDouble(playerPos::distManhattan)).toList();
+        Optional<Target> target = c.stream().map(this::breakWaterloggedTarget).filter(Objects::nonNull).findFirst();
+        if (target.isPresent()) return target.get();
+
+        target = c.stream().map(this::placeTarget).filter(Objects::nonNull).findFirst();
+        return target.orElse(null);
+    }
+
+    private Target floorTarget(BlockPos playerPos) {
+        int minY = playerPos.getY() - 2;
+        int maxY = playerPos.getY() + 2;
+        List<BlockPos> c = area.floorStream().filter(p -> filterMinY(minY, p))
+                .filter(p -> p.getY() < maxY)
+                .sorted(Comparator.comparingDouble(playerPos::distManhattan)).toList();
+        Optional<Target> target = c.stream().map(this::breakWaterloggedTarget).filter(Objects::nonNull).findFirst();
+        if (target.isPresent()) return target.get();
+
+        target = c.stream().map(this::placeTarget).filter(Objects::nonNull).findFirst();
+        return target.orElse(null);
+    }
+
+    private Target wallTarget(BlockPos playerPos) {
+        int minY = playerPos.getY();
+        int maxY = playerPos.getY() + 2;
+        List<BlockPos> c = area.wallStream().filter(p -> filterMinY(minY, p))
+                .filter(p -> p.getY() < maxY)
+                .sorted(Comparator.comparingDouble(playerPos::distManhattan)).toList();
+        Optional<Target> target = c.stream().map(this::breakWaterloggedTarget).filter(Objects::nonNull).findFirst();
+        if (target.isPresent()) return target.get();
+
+        target = c.stream().map(this::placeTarget).filter(Objects::nonNull).findFirst();
+        return target.orElse(null);
+    }
+
+    private boolean filterMinY(int y, BlockPos pos) {
+        return pos.getY() >= y;
+    }
+
+    private Target placeTarget(BlockPos pos) {
+        LocalPlayer player = PlayerUtils.getPlayer();
         ClientLevel level = player.clientLevel;
-        BlockPos posFeet = new BlockPos(vec);
-        BlockPos posFloor = posFeet.below();
-        BlockPos posHead = posFeet.above();
-        BlockState blockStateFeet = level.getBlockState(posFeet);
-        FluidState fluidStateFeet = level.getFluidState(posFeet);
-        BlockState blockStateFloor = level.getBlockState(posFloor);
-        FluidState fluidStateFloor = level.getFluidState(posFloor);
-        BlockState blockStateHead = level.getBlockState(posHead);
-        FluidState fluidStateHead = level.getFluidState(posHead);
+        Target target = new Target(pos, 4.5, placeBlockTargetAction(pos));
+        BlockState blockState = level.getBlockState(pos);
+        FluidState fluidState = level.getFluidState(pos);
+        int floorY = player.getBlockY() - 1;
+        if (!fluidState.isEmpty() && blockState.getShape(level, pos).isEmpty()) {
+            return target;
+        }
+        if ((blockState.isAir() || blockState.canBeReplaced()) && pos.getY() == floorY) {
+            return target;
+        }
+        if ((area.isWall(pos) || area.isCeiling(pos) || area.isFloor(pos)) && (blockState.isAir() || blockState.canBeReplaced())) {
+            return target;
+        }
+        return null;
+    }
 
-        //check for fluids to replace
-        if (!fluidStateFeet.isEmpty() && (blockStateFeet.canBeReplaced() || blockStateFeet.isAir())) {
-            return new Target(posFeet, 4.5, placeBlockTargetAction(posFeet));
-        }
-        if (!fluidStateFloor.isEmpty() && (blockStateFloor.canBeReplaced() || blockStateFloor.isAir())) {
-            return new Target(posFloor, 4.5, placeBlockTargetAction(posFloor));
-        }
-        if (!fluidStateHead.isEmpty() && (blockStateHead.canBeReplaced() || blockStateHead.isAir())) {
-            return new Target(posHead, 4.5, placeBlockTargetAction(posHead));
-        }
-
-        //check for floor to place
-        if (blockStateFloor.canBeReplaced() || blockStateFloor.isAir()) {
-            return new Target(posFloor, 4.5, placeBlockTargetAction(posFloor));
-        }
-
-        //if wall place blocks
-        if (isWall(posFeet)) {
-            if (blockStateFeet.canBeReplaced() || blockStateFeet.isAir()) {
-                return new Target(posFeet, 4.5, placeBlockTargetAction(posFeet));
-            }
-            if (blockStateFloor.canBeReplaced() || blockStateFloor.isAir()) {
-                return new Target(posFloor, 4.5, placeBlockTargetAction(posFloor));
-            }
-            if (blockStateHead.canBeReplaced() || blockStateHead.isAir()) {
-                return new Target(posHead, 4.5, placeBlockTargetAction(posHead));
-            }
+    private Target breakTarget(BlockPos pos) {
+        LocalPlayer player = PlayerUtils.getPlayer();
+        ClientLevel level = player.clientLevel;
+        BlockState blockState = level.getBlockState(pos);
+        FluidState fluidState = level.getFluidState(pos);
+        Target target = new Target(pos, 5, breakBlockTargetAction(pos));
+        boolean hasCollisionShape = !blockState.getShape(level, pos).isEmpty();
+        if (!fluidState.isEmpty() && hasCollisionShape)
+            return target;
+        if (hasNeighboringFluids(pos, level))
             return null;
-        }
+        if (hasCollisionShape)
+            return target;
+        return null;
+    }
 
-        BlockPos[] blocks = new BlockPos[]{posFeet, posHead};
-        for (BlockPos block : blocks) {
-            //check for neighboring fluids
-            if (hasNeighboringFluids(block, level)) {
-                continue;
-            }
-            //check for blocks to be broken
-            if (level.getBlockState(block).getShape(level, block).isEmpty()) {
-                continue;
-            }
-            return new Target(block, 5, breakBlockTargetAction(block));
-        }
-
+    private Target breakWaterloggedTarget(BlockPos pos) {
+        LocalPlayer player = PlayerUtils.getPlayer();
+        ClientLevel level = player.clientLevel;
+        BlockState blockState = level.getBlockState(pos);
+        FluidState fluidState = level.getFluidState(pos);
+        Target target = new Target(pos, 5, breakBlockTargetAction(pos));
+        boolean hasCollisionShape = !blockState.getShape(level, pos).isEmpty();
+        if (!fluidState.isEmpty() && hasCollisionShape)
+            return target;
         return null;
     }
 
@@ -220,10 +292,6 @@ public class Excavator {
         player.connection.send(new ServerboundSetCarriedItemPacket(bestSlot));
     }
 
-    private boolean isWall(Vec3i pos) {
-        return wallArea.isInside(pos) && !area.isInside(pos);
-    }
-
     private Stream<Vec3i> streamOut(Vec3i source) {
         return Stream.generate(new Supplier<>() {
             private Vec3i last = source.relative(Direction.WEST);
@@ -245,23 +313,8 @@ public class Excavator {
         });
     }
 
-    private Stream<Vec3i> streamOuterArea(int y) {
-        int zSpan = wallArea.getZSpan();
-        int xSpan = wallArea.getXSpan();
-        Vec3i src = new Vec3i(wallArea.minX(), y, wallArea.minZ());
-        Vec3i[] vectors = new Vec3i[xSpan * zSpan];
-        for (int x = 0; x < xSpan; x++) {
-            for (int z = 0; z < zSpan; z++) {
-                vectors[x + z * xSpan] = new Vec3i(x, 0, z).offset(src);
-            }
-        }
-        return Arrays.stream(vectors);
-    }
-
     private void registerCommand() {
         LiteralArgumentBuilder<ClientSuggestionProvider> cmd = CommandManager.literal("eexcavate");
-        var pos1Cmd = CommandManager.argument("pos1", BlockPosArgument.blockPos());
-        var pos2Cmd = CommandManager.argument("pos2", BlockPosArgument.blockPos());
         var off = CommandManager.literal("off");
         var on = CommandManager.literal("on");
         var toggle = CommandManager.literal("toggle");
@@ -275,7 +328,7 @@ public class Excavator {
                             world.setBlockAndUpdate(b, Blocks.WATER.defaultBlockState());
                             Thread.sleep(1);
                         } catch (InterruptedException | IndexOutOfBoundsException e) {
-                            StringUtils.getLogger().error("Error while don't-ing.", e);
+                            Utils.getLogger().error("Error while don't-ing.", e);
                         }
                     }));
             return 1;
@@ -307,28 +360,24 @@ public class Excavator {
             target = null;
             return 1;
         });
-        pos2Cmd.executes(c -> {
-            Player player = PlayerUtils.getPlayer();
-            CommandSourceStack stack = player.createCommandSourceStack();
-            BlockPos pos1 = c.getArgument("pos1", Coordinates.class).getBlockPos(stack);
-            BlockPos pos2 = c.getArgument("pos2", Coordinates.class).getBlockPos(stack);
-            setArea(BoundingBox.fromCorners(pos1, pos2));
-            PlayerUtils.sendModMessage("Excavating from %s to %s.".formatted(pos1, pos2));
-            return 1;
-        });
 
         cmd.then(off);
         cmd.then(on);
         cmd.then(toggle);
-        pos1Cmd.then(pos2Cmd);
-        cmd.then(pos1Cmd);
+
+        LiteralArgumentBuilder<ClientSuggestionProvider> areaCmd = CommandManager.literal("area");
+        var cmds = BlockArea.commands((c, a) -> {
+            setArea(a);
+            PlayerUtils.sendModMessage("Updated area. Use '/eexcavate on' to start.");
+        });
+        cmds.forEach(areaCmd::then);
+        cmd.then(areaCmd);
 
         CommandManager.register(cmd, "Excavate area.");
     }
 
-    private void setArea(BoundingBox box) {
-        area = box;
-        wallArea = area.inflatedBy(1);
+    private void setArea(BlockArea area) {
+        this.area = new SavableBlockArea(area);
     }
 
     private void onJoinWorld() {
@@ -340,7 +389,17 @@ public class Excavator {
         setArea(area);
     }
 
-    private record Target(BlockPos pos, double actionDistance, BooleanSupplier action) {
+    private static class Target {
+        private final BlockPos pos;
+        private final double actionDistance;
+        private final BooleanSupplier action;
+
+        private Target(BlockPos pos, double actionDistance, BooleanSupplier action) {
+            this.pos = pos;
+            this.actionDistance = actionDistance;
+            this.action = action;
+        }
+
         public boolean tick(LocalPlayer player) {
             if (player.position().subtract(pos.getCenter()).horizontalDistance() > 2)
                 PlayerUtils.walkTowards(pos);
@@ -351,5 +410,33 @@ public class Excavator {
             if (pos.getCenter().distanceTo(player.position()) > actionDistance) return false;
             return action.getAsBoolean();
         }
+
+        public BlockPos pos() {
+            return pos;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == this) return true;
+            if (obj == null || obj.getClass() != this.getClass()) return false;
+            var that = (Target) obj;
+            return Objects.equals(this.pos, that.pos) &&
+                    Double.doubleToLongBits(this.actionDistance) == Double.doubleToLongBits(that.actionDistance) &&
+                    Objects.equals(this.action, that.action);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(pos, actionDistance, action);
+        }
+
+        @Override
+        public String toString() {
+            return "Target[" +
+                    "pos=" + pos + ", " +
+                    "actionDistance=" + actionDistance + ", " +
+                    "action=" + action + ']';
+        }
+
     }
 }

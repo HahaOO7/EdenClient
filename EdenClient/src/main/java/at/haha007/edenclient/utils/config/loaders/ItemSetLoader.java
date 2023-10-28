@@ -10,8 +10,7 @@ import net.minecraft.world.item.Item;
 
 public class ItemSetLoader implements ConfigLoader<ListTag, ItemSet> {
 
-    public ListTag save(Object value) {
-        Set<Item> list = cast(value);
+    public ListTag save(ItemSet list) {
         ListTag nbt = new ListTag();
         for (Item item : list) {
             nbt.add(PerWorldConfig.get().toNbt(item));

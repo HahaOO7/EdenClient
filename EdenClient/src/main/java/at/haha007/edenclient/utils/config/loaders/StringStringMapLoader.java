@@ -5,9 +5,9 @@ import net.minecraft.nbt.CompoundTag;
 
 public class StringStringMapLoader implements ConfigLoader<CompoundTag, StringStringMap> {
 
-    public CompoundTag save(Object value) {
+    public CompoundTag save(StringStringMap value) {
         CompoundTag tag = new CompoundTag();
-        cast(value).forEach(tag::putString);
+        value.forEach(tag::putString);
         return tag;
     }
 

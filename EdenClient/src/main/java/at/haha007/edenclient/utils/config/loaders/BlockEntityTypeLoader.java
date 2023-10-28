@@ -10,8 +10,8 @@ public class BlockEntityTypeLoader implements ConfigLoader<StringTag, BlockEntit
 
     private static final Registry<BlockEntityType<?>> registry = BuiltInRegistries.BLOCK_ENTITY_TYPE;
 
-    public StringTag save(Object value) {
-        return StringTag.valueOf(String.valueOf(registry.getKey(cast(value))));
+    public StringTag save(BlockEntityType<?> value) {
+        return StringTag.valueOf(String.valueOf(registry.getKey(value)));
     }
 
     public BlockEntityType<?> load(StringTag nbtElement) {

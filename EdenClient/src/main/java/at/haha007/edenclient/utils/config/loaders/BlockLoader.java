@@ -10,8 +10,8 @@ public class BlockLoader implements ConfigLoader<StringTag, Block> {
 
     private static final DefaultedRegistry<Block> registry = BuiltInRegistries.BLOCK;
 
-    public StringTag save(Object value) {
-        return StringTag.valueOf(registry.getKey(cast(value)).toString());
+    public StringTag save(Block value) {
+        return StringTag.valueOf(registry.getKey(value).toString());
     }
 
     public Block load(StringTag nbtElement) {

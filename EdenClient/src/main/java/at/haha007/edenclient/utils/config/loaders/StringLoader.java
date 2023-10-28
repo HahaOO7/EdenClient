@@ -4,8 +4,8 @@ import net.minecraft.nbt.StringTag;
 
 public class StringLoader implements ConfigLoader<StringTag, String> {
 
-    public StringTag save(Object value) {
-        return StringTag.valueOf(cast(value));
+    public StringTag save(String value) {
+        return StringTag.valueOf(value);
     }
 
     public String load(StringTag nbtElement) {

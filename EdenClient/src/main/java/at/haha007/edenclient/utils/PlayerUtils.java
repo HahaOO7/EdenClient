@@ -66,7 +66,19 @@ public class PlayerUtils {
     }
 
     public static void sendModMessage(Component text) {
-        sendMessage(Component.empty().append(prefix).append(Component.empty().append(text).withStyle(ChatFormatting.GOLD)));
+        sendMessage(createModMessage(text));
+    }
+
+    public static void sendModMessage(String text) {
+        sendModMessage(Component.literal(text));
+    }
+
+    public static Component createModMessage(String text) {
+        return createModMessage(Component.literal(text));
+    }
+
+    public static Component createModMessage(Component text) {
+        return Component.empty().append(prefix).append(Component.empty().append(text).withStyle(ChatFormatting.GOLD));
     }
 
     public static void walkTowards(Vec3 target) {
@@ -100,10 +112,6 @@ public class PlayerUtils {
     public static void walkTowards(Vec3i target) {
         Vec3 t = Vec3.atBottomCenterOf(target);
         walkTowards(t);
-    }
-
-    public static void sendModMessage(String text) {
-        sendModMessage(Component.literal(text));
     }
 
     public static void clickSlot(int slotId) {

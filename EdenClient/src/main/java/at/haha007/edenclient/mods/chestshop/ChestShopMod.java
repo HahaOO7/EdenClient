@@ -8,7 +8,7 @@ import at.haha007.edenclient.mods.datafetcher.ChestShopItemNames;
 import at.haha007.edenclient.mods.datafetcher.DataFetcher;
 import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.PlayerUtils;
-import at.haha007.edenclient.utils.StringUtils;
+import at.haha007.edenclient.utils.Utils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import at.haha007.edenclient.utils.tasks.SyncTask;
@@ -194,7 +194,7 @@ public class ChestShopMod {
             File folder = new File(EdenClient.getDataFolder(), "ChestShop_Exploitable");
             if (!folder.exists()) {
                 if (!folder.mkdirs()) {
-                    StringUtils.getLogger().error("Failed to create ChestShop folder!");
+                    Utils.getLogger().error("Failed to create ChestShop folder!");
                 }
             }
             SimpleDateFormat formatter = new SimpleDateFormat("yyyy_MM_dd_hh_mm_ss");
@@ -204,7 +204,7 @@ public class ChestShopMod {
                 if (!file.exists())
                     if (!file.createNewFile()) return -1;
             } catch (IOException e) {
-                StringUtils.getLogger().error("Error while creating file: " + file.getAbsolutePath(), e);
+                Utils.getLogger().error("Error while creating file: " + file.getAbsolutePath(), e);
             }
 
             try (FileWriter writer = new FileWriter(file); BufferedWriter bw = new BufferedWriter(writer)) {
@@ -218,7 +218,7 @@ public class ChestShopMod {
                                 .withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, file.getAbsolutePath())))));
             } catch (IOException e) {
                 sendModMessage("Error while writing file. See console for more info.");
-                StringUtils.getLogger().error("Couldn't write shop contents.", e);
+                Utils.getLogger().error("Couldn't write shop contents.", e);
             }
             return 1;
         }));
@@ -264,7 +264,7 @@ public class ChestShopMod {
             File folder = new File(EdenClient.getDataFolder(), "ChestShopModEntries");
             if (!folder.exists()) {
                 if (!folder.mkdirs()) {
-                    StringUtils.getLogger().error("Failed to create ChestShop folder!");
+                    Utils.getLogger().error("Failed to create ChestShop folder!");
                 }
             }
             SimpleDateFormat formatter = new SimpleDateFormat("yyyy_MM_dd_hh_mm_ss");
@@ -275,7 +275,7 @@ public class ChestShopMod {
                 if (!file.exists())
                     if (!file.createNewFile()) return -1;
             } catch (IOException e) {
-                StringUtils.getLogger().error("Error while creating file: " + file.getAbsolutePath(), e);
+                Utils.getLogger().error("Error while creating file: " + file.getAbsolutePath(), e);
             }
 
             try (FileWriter writer = new FileWriter(file); BufferedWriter bw = new BufferedWriter(writer)) {
@@ -293,7 +293,7 @@ public class ChestShopMod {
                                 .withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, file.getAbsolutePath())))));
             } catch (IOException e) {
                 sendModMessage("Error while writing file. See console for more info.");
-                StringUtils.getLogger().error("Couldn't write shop contents.", e);
+                Utils.getLogger().error("Couldn't write shop contents.", e);
             }
             return 1;
         }));

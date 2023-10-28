@@ -2,7 +2,7 @@ package at.haha007.edenclient.command;
 
 import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.PlayerUtils;
-import at.haha007.edenclient.utils.StringUtils;
+import at.haha007.edenclient.utils.Utils;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -122,7 +122,7 @@ public class CommandManager {
         try {
             dispatcher.execute(command, clientCommandSource);
         } catch (CommandSyntaxException e) {
-            StringUtils.getLogger().error(e.getMessage(), e);
+            Utils.getLogger().error(e.getMessage(), e);
         }
     }
 }

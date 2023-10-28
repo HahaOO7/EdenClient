@@ -4,8 +4,8 @@ import net.minecraft.nbt.IntTag;
 
 public class IntegerLoader implements ConfigLoader<IntTag, Integer> {
 
-    public IntTag save(Object value) {
-        return IntTag.valueOf(cast(value));
+    public IntTag save(Integer value) {
+        return IntTag.valueOf(value);
     }
 
     public Integer load(IntTag value) {

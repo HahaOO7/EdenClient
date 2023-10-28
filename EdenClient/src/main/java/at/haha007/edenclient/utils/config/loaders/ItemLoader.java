@@ -10,8 +10,8 @@ public class ItemLoader implements ConfigLoader<StringTag, Item> {
 
     private static final DefaultedRegistry<Item> registry = BuiltInRegistries.ITEM;
 
-    public StringTag save(Object value) {
-        return StringTag.valueOf(registry.getKey(cast(value)).toString());
+    public StringTag save(Item value) {
+        return StringTag.valueOf(registry.getKey(value).toString());
     }
 
     public Item load(StringTag nbtElement) {

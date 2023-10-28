@@ -7,9 +7,9 @@ import net.minecraft.nbt.CompoundTag;
 
 public class StringVec3iMapLoader implements ConfigLoader<CompoundTag, StringVec3iMap> {
 
-    public CompoundTag save(Object value) {
+    public CompoundTag save(StringVec3iMap value) {
         CompoundTag tag = new CompoundTag();
-        cast(value).forEach((k, v) -> tag.put(k, PerWorldConfig.get().toNbt(v)));
+        value.forEach((k, v) -> tag.put(k, PerWorldConfig.get().toNbt(v)));
         return tag;
     }
 

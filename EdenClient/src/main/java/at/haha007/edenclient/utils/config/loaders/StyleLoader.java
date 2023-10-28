@@ -6,8 +6,7 @@ import net.minecraft.network.chat.TextColor;
 
 public class StyleLoader implements ConfigLoader<CompoundTag, Style> {
     @Override
-    public CompoundTag save(Object value) {
-        Style s = cast(value);
+    public CompoundTag save(Style s) {
         CompoundTag tag = new CompoundTag();
         tag.putBoolean("bold", s.isBold());
         tag.putBoolean("obfuscated", s.isObfuscated());

@@ -8,10 +8,8 @@ import net.minecraft.world.item.Item;
 
 public class ItemListLoader implements ConfigLoader<ListTag, ItemList> {
 
-    public ListTag save(Object value) {
-        ItemList list = cast(value);
+    public ListTag save(ItemList list) {
         ListTag tag = new ListTag();
-
         list.forEach(item -> tag.add(PerWorldConfig.get().toNbt(item)));
         return tag;
     }

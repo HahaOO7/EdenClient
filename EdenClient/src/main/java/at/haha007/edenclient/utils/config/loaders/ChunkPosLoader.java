@@ -4,8 +4,7 @@ import net.minecraft.nbt.IntArrayTag;
 import net.minecraft.world.level.ChunkPos;
 
 public class ChunkPosLoader implements ConfigLoader<IntArrayTag, ChunkPos> {
-    public IntArrayTag save(Object value) {
-        ChunkPos cp = cast(value);
+    public IntArrayTag save(ChunkPos cp) {
         return new IntArrayTag(new int[]{cp.x, cp.z});
     }
 

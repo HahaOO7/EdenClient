@@ -9,8 +9,7 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 
 public class BlockEntityTypeSetLoader implements ConfigLoader<ListTag, BlockEntityTypeSet> {
 
-    public ListTag save(Object value) {
-        BlockEntityTypeSet list = cast(value);
+    public ListTag save(BlockEntityTypeSet list) {
         ListTag nbt = new ListTag();
         for (BlockEntityType<?> item : list) {
             nbt.add(PerWorldConfig.get().toNbt(item));

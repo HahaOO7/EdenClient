@@ -4,22 +4,18 @@ import at.haha007.edenclient.callbacks.CommandSuggestionCallback;
 import at.haha007.edenclient.callbacks.InventoryOpenCallback;
 import at.haha007.edenclient.command.CommandManager;
 import at.haha007.edenclient.utils.ContainerInfo;
-import com.mojang.authlib.GameProfile;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.suggestion.Suggestions;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.multiplayer.ClientSuggestionProvider;
-import net.minecraft.client.multiplayer.ServerData;
-import net.minecraft.client.telemetry.WorldSessionTelemetryManager;
+import net.minecraft.client.multiplayer.CommonListenerCookie;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.*;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.ItemStack;
-import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -33,8 +29,7 @@ import java.util.List;
 public abstract class ClientPacketListenerMixin {
     @Shadow
     private CommandDispatcher<SharedSuggestionProvider> commands;
-    @Shadow
-    @Final
+    @Unique
     private Minecraft minecraft;
 
     @Shadow
@@ -69,7 +64,8 @@ public abstract class ClientPacketListenerMixin {
 
     @SuppressWarnings("unchecked")
     @Inject(method = "<init>", at = @At("RETURN"))
-    private void onConstruct(Minecraft client, Screen screen, Connection connection, ServerData serverInfo, GameProfile profile, WorldSessionTelemetryManager worldSession, CallbackInfo ci) {
+    private void onConstruct(Minecraft minecraft, Connection connection, CommonListenerCookie commonListenerCookie, CallbackInfo ci) {
+        this.minecraft = Minecraft.getInstance();
         addCommands();
         CommandManager.register((CommandDispatcher<ClientSuggestionProvider>) (Object) commands);
     }

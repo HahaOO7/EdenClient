@@ -3,8 +3,8 @@ package at.haha007.edenclient.utils.config.loaders;
 import net.minecraft.nbt.ByteTag;
 
 public class BooleanLoader implements ConfigLoader<ByteTag, Boolean> {
-    public ByteTag save(Object value) {
-        return ByteTag.valueOf(cast(value));
+    public ByteTag save(Boolean value) {
+        return ByteTag.valueOf(value);
     }
 
     public Boolean load(ByteTag value) {

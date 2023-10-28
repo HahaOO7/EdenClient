@@ -105,12 +105,12 @@ public class ContainerInfo {
             map.put(lastInteractedBlock, chestInfo);
     }
 
-    private Stream<? extends ItemStack> mapShulkerBox(ItemStack stack) {
+    private Stream<ItemStack> mapShulkerBox(ItemStack stack) {
         CompoundTag tag = stack.getOrCreateTag();
         ListTag list = tag.getCompound("BlockEntityTag").getList("Items", Tag.TAG_COMPOUND);
         if (list.isEmpty())
             return Stream.of(stack);
-        return list.stream().map(nbt -> (CompoundTag) nbt).map(this::getStackFromCompound);
+        return list.stream().map(CompoundTag.class::cast).map(this::getStackFromCompound);
     }
 
     private ItemStack getStackFromCompound(CompoundTag tag) {
@@ -175,8 +175,7 @@ public class ContainerInfo {
 
     private static class ChestInfoLoader implements ConfigLoader<CompoundTag, ChestInfo> {
         @Override
-        public CompoundTag save(Object value) {
-            ChestInfo chestInfo = cast(value);
+        public CompoundTag save(ChestInfo chestInfo) {
             CompoundTag compound = new CompoundTag();
             compound.put("items", PerWorldConfig.get().toNbt(chestInfo.items));
             compound.putString("direction", chestInfo.face.getName());
@@ -199,9 +198,8 @@ public class ContainerInfo {
     }
 
     private static class ChestMapLoader implements ConfigLoader<ListTag, ChestMap> {
-        public ListTag save(Object value) {
+        public ListTag save(ChestMap map) {
             ListTag tag = new ListTag();
-            ChestMap map = cast(value);
             map.forEach((k, v) -> {
                 CompoundTag c = new CompoundTag();
                 c.put("pos", PerWorldConfig.get().toNbt(k));
@@ -231,8 +229,7 @@ public class ContainerInfo {
     }
 
     private static class ContainerConfigLoader implements ConfigLoader<ListTag, ChunkChestMap> {
-        public ListTag save(Object value) {
-            ChunkChestMap map = cast(value);
+        public ListTag save(ChunkChestMap map) {
             ListTag list = new ListTag();
             map.forEach((k, v) -> {
                 CompoundTag c = new CompoundTag();

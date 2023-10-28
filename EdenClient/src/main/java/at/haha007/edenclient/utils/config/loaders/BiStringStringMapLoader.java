@@ -5,9 +5,9 @@ import net.minecraft.nbt.CompoundTag;
 
 public class BiStringStringMapLoader implements ConfigLoader<CompoundTag, BiStringStringMap> {
 
-    public CompoundTag save(Object value) {
+    public CompoundTag save(BiStringStringMap value) {
         CompoundTag tag = new CompoundTag();
-        cast(value).forEach(tag::putString);
+        value.forEach(tag::putString);
         return tag;
     }
 

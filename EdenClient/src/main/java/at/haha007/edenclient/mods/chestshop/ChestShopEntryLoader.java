@@ -5,8 +5,8 @@ import net.minecraft.nbt.CompoundTag;
 
 public class ChestShopEntryLoader implements ConfigLoader<CompoundTag, ChestShopEntry> {
 
-    public CompoundTag save(Object value) {
-        return cast(value).toTag();
+    public CompoundTag save(ChestShopEntry value) {
+        return value.toTag();
     }
 
     public ChestShopEntry load(CompoundTag tag) {

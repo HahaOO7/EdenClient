@@ -4,8 +4,8 @@ import net.minecraft.nbt.DoubleTag;
 
 public class DoubleLoader implements ConfigLoader<DoubleTag, Double> {
 
-    public DoubleTag save(Object value) {
-        return DoubleTag.valueOf(cast(value));
+    public DoubleTag save(Double value) {
+        return DoubleTag.valueOf(value);
     }
 
     public Double load(DoubleTag nbtElement) {

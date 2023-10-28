@@ -138,11 +138,10 @@ public class SellStatsTracker {
     }
 
     private static class SellStatsForItemLoader implements ConfigLoader<CompoundTag, SellStatsForItem> {
-        public CompoundTag save(Object value) {
-            SellStatsForItem ss = cast(value);
+        public CompoundTag save(SellStatsForItem sellStats) {
             CompoundTag tag = new CompoundTag();
-            tag.putInt("amountSold", ss.amountSold);
-            tag.putDouble("money", ss.money);
+            tag.putInt("amountSold", sellStats.amountSold);
+            tag.putDouble("money", sellStats.money);
             return tag;
         }
 
@@ -156,8 +155,7 @@ public class SellStatsTracker {
     }
 
     private static class SellStatsForItemMapLoader implements ConfigLoader<CompoundTag, SellStatsForItemMap> {
-        public CompoundTag save(Object value) {
-            SellStatsForItemMap map = cast(value);
+        public CompoundTag save(SellStatsForItemMap map) {
             CompoundTag tag = new CompoundTag();
             map.forEach((k, v) -> tag.put(k, PerWorldConfig.get().toNbt(v)));
             return tag;

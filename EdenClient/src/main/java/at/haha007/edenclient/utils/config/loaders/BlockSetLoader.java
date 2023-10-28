@@ -9,8 +9,7 @@ import net.minecraft.world.level.block.Block;
 
 public class BlockSetLoader implements ConfigLoader<ListTag, BlockSet> {
 
-    public ListTag save(Object value) {
-        BlockSet list = cast(value);
+    public ListTag save(BlockSet list) {
         ListTag nbt = new ListTag();
         for (Block item : list) {
             nbt.add(PerWorldConfig.get().toNbt(item));

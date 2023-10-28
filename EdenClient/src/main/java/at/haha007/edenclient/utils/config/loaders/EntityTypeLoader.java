@@ -10,8 +10,8 @@ public class EntityTypeLoader implements ConfigLoader<StringTag, EntityType<?>> 
 
     private static final DefaultedRegistry<EntityType<?>> registry = BuiltInRegistries.ENTITY_TYPE;
 
-    public StringTag save(Object value) {
-        return StringTag.valueOf(registry.getKey(cast(value)).toString());
+    public StringTag save(EntityType<?> value) {
+        return StringTag.valueOf(registry.getKey(value).toString());
     }
 
     public EntityType<?> load(StringTag nbtElement) {

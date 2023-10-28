@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.SocketAddress;
 
-public class StringUtils {
+public class Utils {
 
     public static String getWorldOrServerName() {
         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();

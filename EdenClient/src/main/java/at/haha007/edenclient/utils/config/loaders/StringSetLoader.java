@@ -7,9 +7,9 @@ import net.minecraft.nbt.Tag;
 
 public class StringSetLoader implements ConfigLoader<ListTag, StringSet> {
 
-    public ListTag save(Object value) {
+    public ListTag save(StringSet value) {
         ListTag list = new ListTag();
-        for (String s : cast(value)) {
+        for (String s : value) {
             list.add(StringTag.valueOf(s));
         }
         return list;

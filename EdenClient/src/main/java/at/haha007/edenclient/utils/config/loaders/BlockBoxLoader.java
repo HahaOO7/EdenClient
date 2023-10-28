@@ -7,8 +7,7 @@ import net.minecraft.world.level.levelgen.structure.BoundingBox;
 
 public class BlockBoxLoader implements ConfigLoader<IntArrayTag, BoundingBox> {
 
-    public IntArrayTag save(Object value) {
-        BoundingBox bb = cast(value);
+    public IntArrayTag save(BoundingBox bb) {
         return new IntArrayTag(new int[]{
                 bb.minX(),
                 bb.maxX(),

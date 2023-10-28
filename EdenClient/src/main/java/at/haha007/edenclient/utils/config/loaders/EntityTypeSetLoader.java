@@ -9,8 +9,7 @@ import net.minecraft.world.entity.EntityType;
 
 public class EntityTypeSetLoader implements ConfigLoader<ListTag, EntityTypeSet> {
 
-    public ListTag save(Object value) {
-        EntityTypeSet list = cast(value);
+    public ListTag save(EntityTypeSet list) {
         ListTag nbt = new ListTag();
         for (EntityType<?> item : list) {
             nbt.add(PerWorldConfig.get().toNbt(item));

@@ -5,7 +5,8 @@ import at.haha007.edenclient.callbacks.ConfigLoadedCallback;
 import at.haha007.edenclient.callbacks.JoinWorldCallback;
 import at.haha007.edenclient.callbacks.LeaveWorldCallback;
 import at.haha007.edenclient.utils.Scheduler;
-import at.haha007.edenclient.utils.StringUtils;
+import at.haha007.edenclient.utils.Utils;
+import at.haha007.edenclient.utils.area.*;
 import at.haha007.edenclient.utils.config.loaders.*;
 import at.haha007.edenclient.utils.config.wrappers.*;
 import net.minecraft.core.Vec3i;
@@ -97,6 +98,12 @@ public class PerWorldConfig {
         register(new BiStringStringMapLoader(), BiStringStringMap.class);
 
         register(new ChunkPosLoader(), ChunkPos.class);
+
+        register(new BlockAreaLoader(), SavableBlockArea.class);
+        register(new CubeAreaLoader(), CubeArea.class);
+        register(new SphereAreaLoader(), SphereArea.class);
+        register(new CylinderAreaLoader(), CylinderArea.class);
+
     }
 
     @SuppressWarnings("unchecked")
@@ -107,9 +114,9 @@ public class PerWorldConfig {
     private void onLeave() {
         if (worldName == null || worldName.equals("null")) return;
         long start = System.nanoTime();
-        StringUtils.getLogger().info("Start saving config: " + worldName);
+        Utils.getLogger().info("Start saving config: " + worldName);
         saveConfig();
-        StringUtils.getLogger().info(String.format("Saving done, this took %sms.", TimeUnit.NANOSECONDS.toMillis((System.nanoTime() - start))));
+        Utils.getLogger().info(String.format("Saving done, this took %sms.", TimeUnit.NANOSECONDS.toMillis((System.nanoTime() - start))));
     }
 
     private void onJoin() {
@@ -118,12 +125,12 @@ public class PerWorldConfig {
         EdenClient.getMod(Scheduler.class).runAsync(() -> {
             try {
                 Thread.sleep(1000);
-                worldName = StringUtils.getWorldOrServerName();
+                worldName = Utils.getWorldOrServerName();
                 if (worldName == null || worldName.equals("null"))
-                    StringUtils.getLogger().error("World is null!", new NullPointerException());
-                StringUtils.getLogger().info("Start loading config: " + worldName);
+                    Utils.getLogger().error("World is null!", new NullPointerException());
+                Utils.getLogger().info("Start loading config: " + worldName);
                 loadConfig();
-                StringUtils.getLogger().info("Loading done, this took %sms.%n"
+                Utils.getLogger().info("Loading done, this took %sms.%n"
                         .formatted(TimeUnit.NANOSECONDS.toMillis((System.nanoTime() - start))));
                 ConfigLoadedCallback.EVENT.invoker().configLoaded();
             } catch (InterruptedException e) {
@@ -136,7 +143,7 @@ public class PerWorldConfig {
         File file = new File(folder, worldName + ".mca");
         if (!folder.exists()) {
             if (!folder.mkdirs()) {
-                StringUtils.getLogger().error("Failed to create config folder!");
+                Utils.getLogger().error("Failed to create config folder!");
                 return;
             }
         }
@@ -144,7 +151,7 @@ public class PerWorldConfig {
         try {
             tag = file.exists() ? NbtIo.readCompressed(file) : new CompoundTag();
         } catch (IOException e) {
-            StringUtils.getLogger().error("Error while loading PerWorldConfig: " + worldName, e);
+            Utils.getLogger().error("Error while loading PerWorldConfig: " + worldName, e);
         }
         CompoundTag finalTag = tag;
         registered.forEach((key, obj) -> load(getCompound(finalTag, key), obj));
@@ -159,14 +166,14 @@ public class PerWorldConfig {
         File file = new File(folder, worldName + ".mca");
         if (!folder.exists()) {
             if (!folder.mkdirs()) {
-                StringUtils.getLogger().error("Failed to create config folder!");
+                Utils.getLogger().error("Failed to create config folder!");
                 return;
             }
         }
         try {
             NbtIo.writeCompressed(tag, file);
         } catch (IOException e) {
-            StringUtils.getLogger().error("Error while saving PerWorldConfig: " + worldName, e);
+            Utils.getLogger().error("Error while saving PerWorldConfig: " + worldName, e);
         }
     }
 
@@ -178,7 +185,7 @@ public class PerWorldConfig {
             Class<?> c = getClass(field);
             ConfigLoader<Tag, ?> loader = getLoader(c);
             if (loader == null) {
-                StringUtils.getLogger().error("Error loading config: No loader found for class: " + c.getCanonicalName());
+                Utils.getLogger().error("Error loading config: No loader found for class: " + c.getCanonicalName());
                 continue;
             }
             try {
@@ -189,12 +196,12 @@ public class PerWorldConfig {
                 try {
                     value = loader.load(nbt);
                 } catch (ClassCastException e) {
-                    StringUtils.getLogger().error("Error while loading " + field.getName() + " in class " + obj.getClass().getSimpleName(), e);
+                    Utils.getLogger().error("Error while loading " + field.getName() + " in class " + obj.getClass().getSimpleName(), e);
                     value = loader.load(loader.parse(annotation.value()));
                 }
                 field.set(obj, value);
             } catch (IllegalAccessException e) {
-                StringUtils.getLogger().error("Error loading config: Can't access field: " + c.getCanonicalName() + "." + field.getName(), e);
+                Utils.getLogger().error("Error loading config: Can't access field: " + c.getCanonicalName() + "." + field.getName(), e);
             }
         }
     }
@@ -203,16 +210,21 @@ public class PerWorldConfig {
         for (Field field : obj.getClass().getDeclaredFields()) {
             if (!field.isAnnotationPresent(ConfigSubscriber.class)) continue;
             Class<?> c = getClass(field);
-            ConfigLoader<Tag, ?> loader = getLoader(c);
+            @SuppressWarnings("unchecked")
+            ConfigLoader<Tag, Object> loader = (ConfigLoader<Tag, Object>) getLoader(c);
             if (loader == null) {
-                StringUtils.getLogger().error("Error loading config: No loader found for class: " + c.getCanonicalName(), new NullPointerException());
+                Utils.getLogger().error("Error loading config: No loader found for class: " + c.getCanonicalName(), new NullPointerException());
                 continue;
             }
             try {
                 field.setAccessible(true);
-                tag.put(field.getName(), loader.save(field.get(obj)));
+                Object value = field.get(obj);
+                if (value == null) continue;
+                Tag nbt = loader.save(value);
+                if (nbt == null) continue;
+                tag.put(field.getName(), nbt);
             } catch (IllegalAccessException e) {
-                StringUtils.getLogger().error("Error loading config: Can't access field: " + c.getCanonicalName() + "." + field.getName(), e);
+                Utils.getLogger().error("Error loading config: Can't access field: " + c.getCanonicalName() + "." + field.getName(), e);
             }
         }
     }
@@ -226,11 +238,12 @@ public class PerWorldConfig {
         return wrapperClasses.getOrDefault(clazz, clazz);
     }
 
-    private ConfigLoader<Tag, ?> getLoader(Class<?> clazz) {
+    private <T> ConfigLoader<Tag, ? super T> getLoader(Class<T> clazz) {
         if (null == clazz) return null;
         ConfigLoader<Tag, ?> loader = loaders.get(getClass(clazz));
         if (loader == null) return getLoader(clazz.getSuperclass());
-        return loader;
+        //noinspection unchecked
+        return (ConfigLoader<Tag, ? super T>) loader;
     }
 
     private CompoundTag getCompound(CompoundTag root, String path) {
@@ -245,9 +258,10 @@ public class PerWorldConfig {
     }
 
     public Tag toNbt(Object object) {
-        ConfigLoader<Tag, ?> loader = getLoader(object.getClass());
+        //noinspection unchecked
+        ConfigLoader<Tag, Object> loader = (ConfigLoader<Tag, Object>) getLoader(object.getClass());
         if (loader == null) {
-            StringUtils.getLogger().error("Error loading config: No loader found for class: " + object.getClass().getCanonicalName(), new NullPointerException());
+            Utils.getLogger().error("Error loading config: No loader found for class: " + object.getClass().getCanonicalName(), new NullPointerException());
             return null;
         }
         return loader.save(object);
@@ -256,7 +270,7 @@ public class PerWorldConfig {
     public <T> T toObject(Tag nbt, Class<T> type) {
         ConfigLoader<Tag, ?> loader = getLoader(type);
         if (loader == null) {
-            StringUtils.getLogger().error("Error loading config: No loader found for class: " + type.getCanonicalName(), new NullPointerException());
+            Utils.getLogger().error("Error loading config: No loader found for class: " + type.getCanonicalName(), new NullPointerException());
             return null;
         }
         //noinspection unchecked
