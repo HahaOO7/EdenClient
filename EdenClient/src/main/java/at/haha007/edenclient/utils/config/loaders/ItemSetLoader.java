@@ -2,7 +2,6 @@ package at.haha007.edenclient.utils.config.loaders;
 
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import at.haha007.edenclient.utils.config.wrappers.ItemSet;
-import java.util.Set;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;

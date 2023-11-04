@@ -42,7 +42,7 @@ import static at.haha007.edenclient.EdenClient.getMod;
 @Mod
 public class Excavator {
     private boolean enabled = false;
-    @ConfigSubscriber()
+    @ConfigSubscriber("0,0,0,0,0,0")
     private SavableBlockArea area;
     private Target target;
 
@@ -377,6 +377,14 @@ public class Excavator {
     }
 
     private void setArea(BlockArea area) {
+        if(area == null){
+            this.area = null;
+            return;
+        }
+        if(area instanceof SavableBlockArea savableBlockArea){
+            this.area = savableBlockArea;
+            return;
+        }
         this.area = new SavableBlockArea(area);
     }
 

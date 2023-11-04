@@ -24,7 +24,6 @@ public class MinecraftClientMixin {
     void onDisconnect(ClientLevel world, CallbackInfo ci) {
         boolean connected = world != null;
         if (connected == this.connected) return;
-
         if (connected) {
             JoinWorldCallback.EVENT.invoker().join();
         } else {
@@ -36,6 +35,7 @@ public class MinecraftClientMixin {
     @Inject(at = @At("TAIL"), method = "disconnect(Lnet/minecraft/client/gui/screens/Screen;)V")
     void onDisconnect(Screen screen, CallbackInfo ci) {
         if (!this.connected) return;
+        connected = false;
         LeaveWorldCallback.EVENT.invoker().leave();
     }
 }

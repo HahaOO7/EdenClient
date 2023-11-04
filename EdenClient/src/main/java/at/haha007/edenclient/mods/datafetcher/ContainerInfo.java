@@ -54,7 +54,7 @@ public class ContainerInfo {
         PlayerTickCallback.EVENT.register(this::tick);
         PlayerAttackBlockCallback.EVENT.register(this::attackBlock);
         PlayerInteractBlockCallback.EVENT.register(this::interactBlock);
-        InventoryOpenCallback.EVENT.register(c -> onOpenInventory(c.getItems()));
+        ContainerCloseCallback.EVENT.register(this::onCloseInventory);
         PlayerInvChangeCallback.EVENT.register(this::onInventoryChange);
 
         PerWorldConfig.get().register(new ContainerConfigLoader(), ChunkChestMap.class);
@@ -74,10 +74,10 @@ public class ContainerInfo {
         List<ItemStack> items = sh.getItems();
         items = items.subList(0, items.size() - 36);
         if (items.isEmpty()) lastInteractedBlock = null;
-        else onOpenInventory(items);
+        else onCloseInventory(items);
     }
 
-    private void onOpenInventory(List<ItemStack> itemStacks) {
+    private void onCloseInventory(List<ItemStack> itemStacks) {
         if (lastInteractedBlock == null) return;
         //smallest only chests and shulkerboxes!
         if (itemStacks.size() < 27) return;

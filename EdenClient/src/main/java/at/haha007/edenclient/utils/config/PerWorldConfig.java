@@ -99,7 +99,7 @@ public class PerWorldConfig {
 
         register(new ChunkPosLoader(), ChunkPos.class);
 
-        register(new BlockAreaLoader(), SavableBlockArea.class);
+        register(new SavableBlockAreaLoader(), SavableBlockArea.class);
         register(new CubeAreaLoader(), CubeArea.class);
         register(new SphereAreaLoader(), SphereArea.class);
         register(new CylinderAreaLoader(), CylinderArea.class);
@@ -126,8 +126,9 @@ public class PerWorldConfig {
             try {
                 Thread.sleep(1000);
                 worldName = Utils.getWorldOrServerName();
-                if (worldName == null || worldName.equals("null"))
+                if (worldName == null || worldName.equals("null")) {
                     Utils.getLogger().error("World is null!", new NullPointerException());
+                }
                 Utils.getLogger().info("Start loading config: " + worldName);
                 loadConfig();
                 Utils.getLogger().info("Loading done, this took %sms.%n"
@@ -195,7 +196,7 @@ public class PerWorldConfig {
                 Object value;
                 try {
                     value = loader.load(nbt);
-                } catch (ClassCastException e) {
+                } catch (ClassCastException | IllegalArgumentException e) {
                     Utils.getLogger().error("Error while loading " + field.getName() + " in class " + obj.getClass().getSimpleName(), e);
                     value = loader.load(loader.parse(annotation.value()));
                 }

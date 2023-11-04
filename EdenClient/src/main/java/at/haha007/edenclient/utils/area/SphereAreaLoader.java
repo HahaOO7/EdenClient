@@ -35,7 +35,7 @@ public class SphereAreaLoader implements ConfigLoader<CompoundTag, SphereArea> {
     }
 
     public ConfigLoader<CompoundTag, BlockArea> asBlockAreaLoader() {
-        return new ConfigLoader<CompoundTag, BlockArea>() {
+        return new ConfigLoader<>() {
             @Override
             public CompoundTag save(BlockArea value) {
                 if (!(value instanceof SphereArea sphereArea))

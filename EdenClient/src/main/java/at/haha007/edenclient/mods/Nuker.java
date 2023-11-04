@@ -4,6 +4,9 @@ import at.haha007.edenclient.annotations.Mod;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.PlayerUtils;
+import at.haha007.edenclient.utils.area.BlockArea;
+import at.haha007.edenclient.utils.area.CubeArea;
+import at.haha007.edenclient.utils.area.SavableBlockArea;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import at.haha007.edenclient.utils.config.wrappers.BlockSet;
@@ -18,9 +21,6 @@ import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.multiplayer.ClientSuggestionProvider;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
-import net.minecraft.commands.arguments.coordinates.Coordinates;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
@@ -32,7 +32,6 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.Vec3;
 
@@ -57,8 +56,10 @@ public class Nuker {
     @ConfigSubscriber("20")
     private int limit = 20;
     @ConfigSubscriber("-1000000,1000000,-1000000,1000000,-1000000,1000000")
-    private BoundingBox area;
+    private SavableBlockArea area;
     private BlockPos target = null;
+    @ConfigSubscriber("true")
+    private boolean filterHeight;
 
     public Nuker() {
         registerCommand();
@@ -84,25 +85,28 @@ public class Nuker {
             PlayerUtils.sendModMessage("Nuker limit per tick is " + limit);
             return 1;
         })));
-        cmd.then(literal("area")
-                .then(literal("max").executes(c -> {
-                    area = BoundingBox.fromCorners(new Vec3i(-1000000, 1000000, -1000000), new Vec3i(1000000, -1000000, 1000000));
-                    PlayerUtils.sendModMessage("Nuke area updated.");
-                    return 1;
-                }))
-                .then(argument("min", BlockPosArgument.blockPos()).then(argument("max", BlockPosArgument.blockPos()).executes(c -> {
-                    LocalPlayer player = PlayerUtils.getPlayer();
-                    CommandSourceStack cs = player.createCommandSourceStack();
-                    BlockPos min = c.getArgument("min", Coordinates.class).getBlockPos(cs);
-                    BlockPos max = c.getArgument("max", Coordinates.class).getBlockPos(cs);
-                    area = BoundingBox.fromCorners(min, max);
-                    PlayerUtils.sendModMessage("Nuke area updated.");
-                    return 1;
-                }))));
+        var areaCmd = literal("area");
+        areaCmd.then(literal("max").executes(c -> {
+            Vec3i min = new Vec3i(-1000000, -1000000, -1000000);
+            Vec3i max = new Vec3i(1000000, 1000000, 1000000);
+            this.area = new SavableBlockArea(new CubeArea(min, max));
+            PlayerUtils.sendModMessage("Nuke area updated.");
+            return 1;
+        }));
+        BlockArea.commands((c, area) -> {
+            this.area = new SavableBlockArea(area);
+            PlayerUtils.sendModMessage("Nuke area updated.");
+        }).forEach(areaCmd::then);
+        cmd.then(areaCmd);
         cmd.then(literal("filter")
                 .then(literal("toggle").executes(c -> {
                     filterEnabled = !filterEnabled;
                     PlayerUtils.sendModMessage(filterEnabled ? "Filter enabled" : "Filter disabled");
+                    return 1;
+                }))
+                .then(literal("height").executes(c -> {
+                    this.filterHeight = !this.filterHeight;
+                    PlayerUtils.sendModMessage(this.filterHeight ? "Filter height enabled" : "Filter height disabled");
                     return 1;
                 }))
                 .then(addCommand())
@@ -188,8 +192,9 @@ public class Nuker {
         Vec3 playerPos = player.getEyePosition();
         Stream<BlockPos> stream = getNearby(player);
         stream = stream.filter(p -> Vec3.atCenterOf(p).closerThan(playerPos, distance));
-        stream = stream.filter(p -> player.getBlockY() <= p.getY());
-        stream = stream.filter(area::isInside);
+        if (filterHeight)
+            stream = stream.filter(p -> player.getBlockY() <= p.getY());
+        stream = stream.filter(area::contains);
         stream = stream.filter(p -> !world.getBlockState(p).isAir());
         stream = stream.filter(Predicate.not(this::isNextToLiquid));
         if (filterEnabled) {
@@ -202,8 +207,9 @@ public class Nuker {
         ClientLevel world = player.clientLevel;
         Stream<BlockPos> stream = getNearby(player);
         stream = stream.filter(p -> Vec3.atCenterOf(p).closerThan(player.getEyePosition(), distance));
-        stream = stream.filter(p -> player.getBlockY() <= p.getY());
-        stream = stream.filter(area::isInside);
+        if (filterHeight)
+            stream = stream.filter(p -> player.getBlockY() <= p.getY());
+        stream = stream.filter(area::contains);
         stream = stream.filter(p -> !world.getBlockState(p).isAir());
         stream = stream.filter(p -> instantMinable(p, player));
         stream = stream.filter(Predicate.not(this::isNextToLiquid));

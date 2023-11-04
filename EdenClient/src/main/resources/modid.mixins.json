@@ -6,9 +6,10 @@
   "mixins": [
   ],
   "client": [
+    "AbstractContainerScreenMixin",
     "ChatHudMixin",
-    "ClientPlayerMixin",
     "ClientPacketListenerMixin",
+    "ClientPlayerMixin",
     "GameRendererMixin",
     "HandledScreenMixin",
     "MinecraftClientMixin",

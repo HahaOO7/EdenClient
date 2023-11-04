@@ -2,7 +2,6 @@ package at.haha007.edenclient.utils.area;
 
 import at.haha007.edenclient.command.CommandManager;
 import at.haha007.edenclient.utils.PlayerUtils;
-import at.haha007.edenclient.utils.Utils;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.client.multiplayer.ClientSuggestionProvider;
@@ -127,8 +126,6 @@ public class CubeArea implements BlockArea {
         RequiredArgumentBuilder<ClientSuggestionProvider, Coordinates> a = CommandManager.argument(pos1, BlockPosArgument.blockPos());
         RequiredArgumentBuilder<ClientSuggestionProvider, Coordinates> b = CommandManager.argument(pos2, BlockPosArgument.blockPos());
         b = b.executes(c -> {
-            Utils.getLogger().error("CUBE AREA");
-            System.out.println("CUBE AREA");
             CubeArea area = fromCommand(c, pos1, pos2);
             executor.accept(c, area);
             return 1;
