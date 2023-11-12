@@ -1,6 +1,7 @@
 package at.haha007.edenclient.mods;
 
 import at.haha007.edenclient.annotations.Mod;
+import at.haha007.edenclient.callbacks.ConfigLoadedCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.PlayerUtils;
@@ -64,7 +65,14 @@ public class Nuker {
     public Nuker() {
         registerCommand();
         PlayerTickCallback.EVENT.register(this::onTick);
+        ConfigLoadedCallback.EVENT.register(this::configLoaded);
         PerWorldConfig.get().register(this, "nuker");
+    }
+
+    private void configLoaded() {
+        if(area == null) {
+            area = new SavableBlockArea(new CubeArea(new Vec3i(-1000000, -1000000, -1000000), new Vec3i(1000000, 1000000, 1000000)));
+        }
     }
 
     private void registerCommand() {

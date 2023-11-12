@@ -2,16 +2,19 @@ package at.haha007.edenclient.utils.config.loaders;
 
 import at.haha007.edenclient.utils.config.wrappers.StringStringMap;
 import net.minecraft.nbt.CompoundTag;
+import org.jetbrains.annotations.NotNull;
 
 public class StringStringMapLoader implements ConfigLoader<CompoundTag, StringStringMap> {
 
-    public CompoundTag save(StringStringMap value) {
+    @NotNull
+    public CompoundTag save(@NotNull StringStringMap value) {
         CompoundTag tag = new CompoundTag();
         value.forEach(tag::putString);
         return tag;
     }
 
-    public StringStringMap load(CompoundTag tag) {
+    @NotNull
+    public StringStringMap load(@NotNull CompoundTag tag) {
         StringStringMap list = new StringStringMap();
         for (String key : tag.getAllKeys()) {
             list.put(key, tag.getString(key));
@@ -19,7 +22,8 @@ public class StringStringMapLoader implements ConfigLoader<CompoundTag, StringSt
         return list;
     }
 
-    public CompoundTag parse(String s) {
+    @NotNull
+    public CompoundTag parse(@NotNull String s) {
         CompoundTag tag = new CompoundTag();
         if (s.isEmpty()) return tag;
         String[] a = s.split(";");

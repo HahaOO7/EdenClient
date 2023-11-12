@@ -1,18 +1,22 @@
 package at.haha007.edenclient.utils.config.loaders;
 
 import net.minecraft.nbt.DoubleTag;
+import org.jetbrains.annotations.NotNull;
 
 public class DoubleLoader implements ConfigLoader<DoubleTag, Double> {
 
-    public DoubleTag save(Double value) {
+    @NotNull
+    public DoubleTag save(@NotNull Double value) {
         return DoubleTag.valueOf(value);
     }
 
-    public Double load(DoubleTag nbtElement) {
+    @NotNull
+    public Double load(@NotNull DoubleTag nbtElement) {
         return nbtElement.getAsDouble();
     }
 
-    public DoubleTag parse(String s) {
+    @NotNull
+    public DoubleTag parse(@NotNull String s) {
         return DoubleTag.valueOf(s.isEmpty() ? 0 : Double.parseDouble(s));
     }
 }

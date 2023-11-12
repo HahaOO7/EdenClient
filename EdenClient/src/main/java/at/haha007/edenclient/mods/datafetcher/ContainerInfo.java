@@ -35,6 +35,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.phys.BlockHitResult;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -175,7 +176,8 @@ public class ContainerInfo {
 
     private static class ChestInfoLoader implements ConfigLoader<CompoundTag, ChestInfo> {
         @Override
-        public CompoundTag save(ChestInfo chestInfo) {
+        @NotNull
+        public CompoundTag save(@NotNull ChestInfo chestInfo) {
             CompoundTag compound = new CompoundTag();
             compound.put("items", PerWorldConfig.get().toNbt(chestInfo.items));
             compound.putString("direction", chestInfo.face.getName());
@@ -183,7 +185,8 @@ public class ContainerInfo {
         }
 
         @Override
-        public ChestInfo load(CompoundTag tag) {
+        @NotNull
+        public ChestInfo load(@NotNull CompoundTag tag) {
             ChestInfo chestInfo = new ChestInfo();
             Tag itemsCompound = tag.get("items");
             chestInfo.items = PerWorldConfig.get().toObject(itemsCompound, ItemList.class);
@@ -192,13 +195,16 @@ public class ContainerInfo {
         }
 
         @Override
-        public CompoundTag parse(String s) {
+        @NotNull
+        public CompoundTag parse(@NotNull String s) {
             return new CompoundTag();
         }
     }
 
     private static class ChestMapLoader implements ConfigLoader<ListTag, ChestMap> {
-        public ListTag save(ChestMap map) {
+
+        @NotNull
+        public ListTag save(@NotNull ChestMap map) {
             ListTag tag = new ListTag();
             map.forEach((k, v) -> {
                 CompoundTag c = new CompoundTag();
@@ -209,7 +215,8 @@ public class ContainerInfo {
             return tag;
         }
 
-        public ChestMap load(ListTag tag) {
+        @NotNull
+        public ChestMap load(@NotNull ListTag tag) {
             ChestMap map = new ChestMap();
             tag.forEach(e -> {
                 CompoundTag c = (CompoundTag) e;
@@ -220,7 +227,8 @@ public class ContainerInfo {
             return map;
         }
 
-        public ListTag parse(String s) {
+        @NotNull
+        public ListTag parse(@NotNull String s) {
             return new ListTag();
         }
     }
@@ -229,7 +237,8 @@ public class ContainerInfo {
     }
 
     private static class ContainerConfigLoader implements ConfigLoader<ListTag, ChunkChestMap> {
-        public ListTag save(ChunkChestMap map) {
+        @NotNull
+        public ListTag save(@NotNull ChunkChestMap map) {
             ListTag list = new ListTag();
             map.forEach((k, v) -> {
                 CompoundTag c = new CompoundTag();
@@ -240,7 +249,8 @@ public class ContainerInfo {
             return list;
         }
 
-        public ChunkChestMap load(ListTag tag) {
+        @NotNull
+        public ChunkChestMap load(@NotNull ListTag tag) {
             ChunkChestMap map = new ChunkChestMap();
             tag.forEach(e -> {
                 CompoundTag c = (CompoundTag) e;
@@ -251,7 +261,8 @@ public class ContainerInfo {
             return map;
         }
 
-        public ListTag parse(String s) {
+        @NotNull
+        public ListTag parse(@NotNull String s) {
             return new ListTag();
         }
     }

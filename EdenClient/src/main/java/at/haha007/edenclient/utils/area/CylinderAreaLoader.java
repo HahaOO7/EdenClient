@@ -6,12 +6,14 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.IntArrayTag;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
 public class CylinderAreaLoader implements ConfigLoader<CompoundTag, CylinderArea> {
 
-    public CompoundTag save(CylinderArea value) {
+    @NotNull
+    public CompoundTag save(@NotNull CylinderArea value) {
         CompoundTag tag = new CompoundTag();
         Vec3iLoader loader = new Vec3iLoader();
         IntArrayTag centerTag = loader.save(value.getBottomCenter());
@@ -21,7 +23,8 @@ public class CylinderAreaLoader implements ConfigLoader<CompoundTag, CylinderAre
         return tag;
     }
 
-    public CylinderArea load(CompoundTag nbtElement) {
+    @NotNull
+    public CylinderArea load(@NotNull CompoundTag nbtElement) {
         Vec3iLoader loader = new Vec3iLoader();
         Vec3i center = loader.load((IntArrayTag) Objects.requireNonNull(nbtElement.get("center")));
         double radius = nbtElement.getDouble("radius");
@@ -29,26 +32,34 @@ public class CylinderAreaLoader implements ConfigLoader<CompoundTag, CylinderAre
         return new CylinderArea(new BlockPos(center), height, radius);
     }
 
-    public CompoundTag parse(String s) {
-        return null;
+    @NotNull
+    public CompoundTag parse(@NotNull String s) {
+        CompoundTag tag = new CompoundTag();
+        tag.put("center", new Vec3iLoader().save(Vec3i.ZERO));
+        tag.putDouble("radius", -1);
+        tag.putInt("height", -1);
+        return tag;
     }
 
     public ConfigLoader<CompoundTag, BlockArea> asBlockAreaLoader() {
         return new ConfigLoader<>() {
             @Override
-            public CompoundTag save(BlockArea value) {
+            @NotNull
+            public CompoundTag save(@NotNull BlockArea value) {
                 if (!(value instanceof CylinderArea cylinderArea))
                     throw new IllegalArgumentException("Invalid block area type");
                 return CylinderAreaLoader.this.save(cylinderArea);
             }
 
             @Override
-            public BlockArea load(CompoundTag nbtElement) {
+            @NotNull
+            public BlockArea load(@NotNull CompoundTag nbtElement) {
                 return CylinderAreaLoader.this.load(nbtElement);
             }
 
             @Override
-            public CompoundTag parse(String s) {
+            @NotNull
+            public CompoundTag parse(@NotNull String s) {
                 return CylinderAreaLoader.this.parse(s);
             }
         };

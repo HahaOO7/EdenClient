@@ -1,12 +1,16 @@
 package at.haha007.edenclient.utils.config.loaders;
 
 import net.minecraft.nbt.Tag;
+import org.jetbrains.annotations.NotNull;
 
 public interface ConfigLoader<C extends Tag, V> {
-    C save(V value);
+    @NotNull
+    C save(@NotNull V value);
 
-    V load(C nbtElement);
+    @NotNull
+    V load(@NotNull C nbtElement);
 
-    C parse(String s);
+    @NotNull
+    C parse(@NotNull String s);
 
 }

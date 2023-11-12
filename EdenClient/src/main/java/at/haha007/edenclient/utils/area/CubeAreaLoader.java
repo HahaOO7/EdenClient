@@ -3,11 +3,14 @@ package at.haha007.edenclient.utils.area;
 import at.haha007.edenclient.utils.config.loaders.ConfigLoader;
 import net.minecraft.core.Vec3i;
 import net.minecraft.nbt.CompoundTag;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
 public class CubeAreaLoader implements ConfigLoader<CompoundTag, CubeArea> {
-    public CompoundTag save(CubeArea area) {
+
+    @NotNull
+    public CompoundTag save(@NotNull CubeArea area) {
         int minX = area.getBox().minX();
         int minY = area.getBox().minY();
         int minZ = area.getBox().minZ();
@@ -25,7 +28,8 @@ public class CubeAreaLoader implements ConfigLoader<CompoundTag, CubeArea> {
     }
 
     @Override
-    public CubeArea load(CompoundTag nbtElement) {
+    @NotNull
+    public CubeArea load(@NotNull CompoundTag nbtElement) {
         int minX = nbtElement.getInt("minX");
         int minY = nbtElement.getInt("minY");
         int minZ = nbtElement.getInt("minZ");
@@ -36,7 +40,8 @@ public class CubeAreaLoader implements ConfigLoader<CompoundTag, CubeArea> {
     }
 
     @Override
-    public CompoundTag parse(String s) {
+    @NotNull
+    public CompoundTag parse(@NotNull String s) {
         if (s.isEmpty()) return new CompoundTag();
         String[] a = s.split(",");
         int[] ints = Arrays.stream(a).mapToInt(Integer::parseInt).toArray();
@@ -53,19 +58,22 @@ public class CubeAreaLoader implements ConfigLoader<CompoundTag, CubeArea> {
     public ConfigLoader<CompoundTag, BlockArea> asBlockAreaLoader() {
         return new ConfigLoader<>() {
             @Override
-            public CompoundTag save(BlockArea value) {
+            @NotNull
+            public CompoundTag save(@NotNull BlockArea value) {
                 if (!(value instanceof CubeArea cubeArea))
                     throw new IllegalArgumentException("Invalid block area type");
                 return CubeAreaLoader.this.save(cubeArea);
             }
 
             @Override
-            public BlockArea load(CompoundTag nbtElement) {
+            @NotNull
+            public BlockArea load(@NotNull CompoundTag nbtElement) {
                 return CubeAreaLoader.this.load(nbtElement);
             }
 
             @Override
-            public CompoundTag parse(String s) {
+            @NotNull
+            public CompoundTag parse(@NotNull String s) {
                 return CubeAreaLoader.this.parse(s);
             }
         };

@@ -1,14 +1,17 @@
 package at.haha007.edenclient.mods.chestshop;
 
 import at.haha007.edenclient.utils.config.loaders.ConfigLoader;
-import java.util.Collection;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Collection;
 
 public class ChestShopLoader implements ConfigLoader<ListTag, ChestShopMap> {
 
-    public ListTag save(ChestShopMap map) {
+    @NotNull
+    public ListTag save(@NotNull ChestShopMap map) {
         ListTag list = new ListTag();
         map.values().stream()
                 .flatMap(Collection::stream)
@@ -17,7 +20,8 @@ public class ChestShopLoader implements ConfigLoader<ListTag, ChestShopMap> {
         return list;
     }
 
-    public ChestShopMap load(ListTag tag) {
+    @NotNull
+    public ChestShopMap load(@NotNull ListTag tag) {
         ChestShopMap map = new ChestShopMap();
         for (Tag element : tag) {
             ChestShopEntry entry = new ChestShopEntry((CompoundTag) element);
@@ -27,7 +31,8 @@ public class ChestShopLoader implements ConfigLoader<ListTag, ChestShopMap> {
         return map;
     }
 
-    public ListTag parse(String s) {
+    @NotNull
+    public ListTag parse(@NotNull String s) {
         return new ListTag();
     }
 }

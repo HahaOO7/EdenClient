@@ -3,10 +3,12 @@ package at.haha007.edenclient.utils.config.loaders;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
+import org.jetbrains.annotations.NotNull;
 
 public class StyleLoader implements ConfigLoader<CompoundTag, Style> {
     @Override
-    public CompoundTag save(Style s) {
+    @NotNull
+    public CompoundTag save(@NotNull Style s) {
         CompoundTag tag = new CompoundTag();
         tag.putBoolean("bold", s.isBold());
         tag.putBoolean("obfuscated", s.isObfuscated());
@@ -20,7 +22,8 @@ public class StyleLoader implements ConfigLoader<CompoundTag, Style> {
     }
 
     @Override
-    public Style load(CompoundTag tag) {
+    @NotNull
+    public Style load(@NotNull CompoundTag tag) {
         Style style = Style.EMPTY;
         style = style.withBold(tag.getBoolean("bold"));
         style = style.withObfuscated(tag.getBoolean("obfuscated"));
@@ -33,7 +36,8 @@ public class StyleLoader implements ConfigLoader<CompoundTag, Style> {
     }
 
     @Override
-    public CompoundTag parse(String s) {
+    @NotNull
+    public CompoundTag parse(@NotNull String s) {
         return new CompoundTag();
     }
 }

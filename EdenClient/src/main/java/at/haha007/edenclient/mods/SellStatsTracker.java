@@ -15,6 +15,7 @@ import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.client.multiplayer.ClientSuggestionProvider;
 import net.minecraft.nbt.CompoundTag;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -138,30 +139,37 @@ public class SellStatsTracker {
     }
 
     private static class SellStatsForItemLoader implements ConfigLoader<CompoundTag, SellStatsForItem> {
-        public CompoundTag save(SellStatsForItem sellStats) {
+
+        @NotNull
+        public CompoundTag save(@NotNull SellStatsForItem sellStats) {
             CompoundTag tag = new CompoundTag();
             tag.putInt("amountSold", sellStats.amountSold);
             tag.putDouble("money", sellStats.money);
             return tag;
         }
 
-        public SellStatsForItem load(CompoundTag tag) {
+        @NotNull
+        public SellStatsForItem load(@NotNull CompoundTag tag) {
             return new SellStatsForItem(tag.getInt("amountSold"), tag.getDouble("money"));
         }
 
-        public CompoundTag parse(String s) {
+        @NotNull
+        public CompoundTag parse(@NotNull String s) {
             return new CompoundTag();
         }
     }
 
     private static class SellStatsForItemMapLoader implements ConfigLoader<CompoundTag, SellStatsForItemMap> {
-        public CompoundTag save(SellStatsForItemMap map) {
+
+        @NotNull
+        public CompoundTag save(@NotNull SellStatsForItemMap map) {
             CompoundTag tag = new CompoundTag();
             map.forEach((k, v) -> tag.put(k, PerWorldConfig.get().toNbt(v)));
             return tag;
         }
 
-        public SellStatsForItemMap load(CompoundTag tag) {
+        @NotNull
+        public SellStatsForItemMap load(@NotNull CompoundTag tag) {
             SellStatsForItemMap map = new SellStatsForItemMap();
             for (String key : tag.getAllKeys()) {
                 map.put(key, PerWorldConfig.get().toObject(tag.get(key), SellStatsForItem.class));
@@ -169,7 +177,8 @@ public class SellStatsTracker {
             return map;
         }
 
-        public CompoundTag parse(String s) {
+        @NotNull
+        public CompoundTag parse(@NotNull String s) {
             return new CompoundTag();
         }
     }

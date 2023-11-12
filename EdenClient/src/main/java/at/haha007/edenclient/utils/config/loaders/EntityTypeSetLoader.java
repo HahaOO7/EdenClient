@@ -6,10 +6,11 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.world.entity.EntityType;
+import org.jetbrains.annotations.NotNull;
 
 public class EntityTypeSetLoader implements ConfigLoader<ListTag, EntityTypeSet> {
-
-    public ListTag save(EntityTypeSet list) {
+    @NotNull
+    public ListTag save(@NotNull EntityTypeSet list) {
         ListTag nbt = new ListTag();
         for (EntityType<?> item : list) {
             nbt.add(PerWorldConfig.get().toNbt(item));
@@ -17,7 +18,8 @@ public class EntityTypeSetLoader implements ConfigLoader<ListTag, EntityTypeSet>
         return nbt;
     }
 
-    public EntityTypeSet load(ListTag nbtElement) {
+    @NotNull
+    public EntityTypeSet load(@NotNull ListTag nbtElement) {
         EntityTypeSet list = new EntityTypeSet();
         for (Tag nbt : nbtElement) {
             list.add(PerWorldConfig.get().toObject(nbt, EntityType.class));
@@ -25,7 +27,8 @@ public class EntityTypeSetLoader implements ConfigLoader<ListTag, EntityTypeSet>
         return list;
     }
 
-    public ListTag parse(String s) {
+    @NotNull
+    public ListTag parse(@NotNull String s) {
         ListTag list = new ListTag();
         if (s.isEmpty()) return list;
         for (String it : s.split(",")) {

@@ -5,20 +5,24 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
+import org.jetbrains.annotations.NotNull;
 
 public class BlockLoader implements ConfigLoader<StringTag, Block> {
 
     private static final DefaultedRegistry<Block> registry = BuiltInRegistries.BLOCK;
 
-    public StringTag save(Block value) {
+    @NotNull
+    public StringTag save(@NotNull Block value) {
         return StringTag.valueOf(registry.getKey(value).toString());
     }
 
-    public Block load(StringTag nbtElement) {
+    @NotNull
+    public Block load(@NotNull StringTag nbtElement) {
         return registry.get(new ResourceLocation(nbtElement.getAsString()));
     }
 
-    public StringTag parse(String s) {
+    @NotNull
+    public StringTag parse(@NotNull String s) {
         return StringTag.valueOf("minecraft:" + s);
     }
 

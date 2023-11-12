@@ -22,7 +22,7 @@ public class AbstractContainerScreenMixin<T extends AbstractContainerMenu> {
     @Inject(method = "onClose", at = @At("HEAD"))
     void onOnClose(CallbackInfo ci) {
         List<ItemStack> items = menu.getItems();
-        if (items.size() > 27) items = items.subList(0, items.size() - 27);
+        if (items.size() > 27) items = items.subList(0, items.size() - 36);
         ContainerCloseCallback.EVENT.invoker().close(items);
     }
 }
