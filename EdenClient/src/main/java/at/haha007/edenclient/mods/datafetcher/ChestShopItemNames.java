@@ -182,7 +182,7 @@ public class ChestShopItemNames {
                 return false;
             }
             String item = minecraftIDs[i];
-            entityPlayer.connection.sendCommand( command + " " + item);
+            entityPlayer.connection.sendCommand(command + " " + item);
             if (i % 60 == 0) {
                 sendModMessage(ChatColor.GOLD + "Mapped " + ChatColor.AQUA + i + ChatColor.GOLD + " items of " + ChatColor.AQUA + minecraftIDs.length + ChatColor.GOLD + " this far.");
             }

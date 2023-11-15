@@ -24,7 +24,7 @@ public class NbtInfo {
                         sendModMessage(ChatColor.GOLD + "Take an item in your hand!");
                     } else {
                         CompoundTag tag = stack.getTag();
-                        if(tag == null){
+                        if (tag == null) {
                             sendModMessage(ChatColor.GOLD + "This item has no tag.");
                             return 1;
                         }

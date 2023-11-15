@@ -127,7 +127,7 @@ public class AutoSell {
     private void executeAutoSell() {
         LocalPlayer player = PlayerUtils.getPlayer();
         ClientPacketListener networkHandler = Minecraft.getInstance().getConnection();
-        if(networkHandler == null) return;
+        if (networkHandler == null) return;
         long time = System.currentTimeMillis();
         if (time - 200 < lastSell) return;
         autoSellItems

@@ -353,8 +353,8 @@ public class Greetings {
         }))));
 
         register(cmd,
-               "Greetings allows you to automatically greet all players joining the server.",
-               "You can also set specific messages or each player as well as different messages for new players or players that have previously joined in this session already.");
+                "Greetings allows you to automatically greet all players joining the server.",
+                "You can also set specific messages or each player as well as different messages for new players or players that have previously joined in this session already.");
     }
 
     private CompletableFuture<Suggestions> suggestWelcomeBackPlayerMessages

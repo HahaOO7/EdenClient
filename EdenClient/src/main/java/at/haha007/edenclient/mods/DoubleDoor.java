@@ -83,6 +83,6 @@ public class DoubleDoor {
         Direction dir = Direction.UP;
         var nh = Minecraft.getInstance().getConnection();
         if (nh == null) return;
-        nh.send(new ServerboundUseItemOnPacket(InteractionHand.MAIN_HAND, new BlockHitResult(Vec3.atLowerCornerOf(bp.relative(dir)), dir, bp, false),1));
+        nh.send(new ServerboundUseItemOnPacket(InteractionHand.MAIN_HAND, new BlockHitResult(Vec3.atLowerCornerOf(bp.relative(dir)), dir, bp, false), 1));
     }
 }

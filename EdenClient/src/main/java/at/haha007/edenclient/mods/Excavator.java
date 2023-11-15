@@ -377,11 +377,11 @@ public class Excavator {
     }
 
     private void setArea(BlockArea area) {
-        if(area == null){
+        if (area == null) {
             this.area = null;
             return;
         }
-        if(area instanceof SavableBlockArea savableBlockArea){
+        if (area instanceof SavableBlockArea savableBlockArea) {
             this.area = savableBlockArea;
             return;
         }

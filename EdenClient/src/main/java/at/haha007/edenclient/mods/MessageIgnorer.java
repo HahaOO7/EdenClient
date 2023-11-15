@@ -172,8 +172,8 @@ public class MessageIgnorer {
         });
 
         register(node,
-               "MessageIgnorer allows you to set specific Regular Expressions (also known as RegEX) which when matched are not displayed in your chat.",
-               "The predefined values contain useful types of messages like all messages sent by the adminshop when selling items or vote-rewards of other players.");
+                "MessageIgnorer allows you to set specific Regular Expressions (also known as RegEX) which when matched are not displayed in your chat.",
+                "The predefined values contain useful types of messages like all messages sent by the adminshop when selling items or vote-rewards of other players.");
     }
 
     private boolean isEnabled(Predefined pre) {

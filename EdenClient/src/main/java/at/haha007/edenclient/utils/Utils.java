@@ -45,4 +45,12 @@ public class Utils {
     public static Logger getLogger() {
         return LoggerFactory.getLogger("EdenClient");
     }
+
+    public static void sleep(int millis) {
+        try {
+            Thread.sleep(millis); // check every 500 ms if there is a new position requested
+        } catch (InterruptedException e) {
+            Utils.getLogger().error("Error while sleeping.", e);
+        }
+    }
 }
