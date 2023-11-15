@@ -1,11 +1,14 @@
 package at.haha007.edenclient.mods.chestshop;
 
-import at.haha007.edenclient.annotations.Mod;
 import at.haha007.edenclient.EdenClient;
+import at.haha007.edenclient.annotations.Mod;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.mods.GetTo;
+import at.haha007.edenclient.mods.chestshop.pathing.ChestShopModPathing;
+import at.haha007.edenclient.mods.chestshop.pathing.ChestShopModPathingMode;
 import at.haha007.edenclient.mods.datafetcher.ChestShopItemNames;
 import at.haha007.edenclient.mods.datafetcher.DataFetcher;
+import at.haha007.edenclient.mods.pathfinder.PathFinder;
 import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.Utils;
@@ -45,7 +48,7 @@ import java.util.stream.Collectors;
 import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
-@Mod
+@Mod(dependencies = PathFinder.class)
 public class ChestShopMod {
 
     @ConfigSubscriber
@@ -53,12 +56,17 @@ public class ChestShopMod {
     @ConfigSubscriber("false")
     private boolean searchEnabled = true;
 
+    private PathFinder pathFinderMod;
+
+    private boolean baritoneRunning = false;
+
     private int[] chunk = {0, 0};
 
     public ChestShopMod() {
         registerCommand("echestshop");
         registerCommand("ecs");
         PlayerTickCallback.EVENT.register(this::tick);
+        pathFinderMod = EdenClient.getMod(PathFinder.class);
         PerWorldConfig.get().register(this, "chestShop");
         PerWorldConfig.get().register(new ChestShopLoader(), ChestShopMap.class);
         PerWorldConfig.get().register(new ChestShopEntryLoader(), ChestShopEntry.class);
@@ -79,7 +87,7 @@ public class ChestShopMod {
         shops.remove(chunk);
         ChestShopSet cs = new ChestShopSet();
         c.getBlockEntities().values().stream()
-                .filter(t -> t instanceof SignBlockEntity)
+                .filter(SignBlockEntity.class::isInstance)
                 .map(t -> (SignBlockEntity) t)
                 .map(ChestShopEntry::new)
                 .filter(ChestShopEntry::isShop)
@@ -106,14 +114,14 @@ public class ChestShopMod {
         }));
 
         node.then(literal("visitshops").executes(c -> {
-            var shops = EdenClient.getMod(DataFetcher.class).getPlayerWarps().getShops();
+            var pwarpShops = EdenClient.getMod(DataFetcher.class).getPlayerWarps().getShops();
             TaskManager tm = new TaskManager();
             sendModMessage(ChatColor.GOLD + "Teleporting to all player warps, this will take about " +
-                    ChatColor.AQUA + (shops.size() * 6) +
+                    ChatColor.AQUA + (pwarpShops.size() * 6) +
                     ChatColor.GOLD + " seconds.");
-            int count = shops.size();
+            int count = pwarpShops.size();
             AtomicInteger i = new AtomicInteger(1);
-            for (String shop : shops.keySet()) {
+            for (String shop : pwarpShops.keySet()) {
                 tm.then(new SyncTask(() -> PlayerUtils.messageC2S("/pwarp " + shop)));
                 tm.then(new WaitForTicksTask(120)); //wait for chunks to load
                 tm.then(new SyncTask(() -> sendModMessage(ChatColor.GOLD + "Shop " +
@@ -128,6 +136,67 @@ public class ChestShopMod {
             tm.start();
             return 1;
         }));
+
+        node.then(literal("visitbaritone").executes(c -> {
+            if (baritoneRunning) {
+                sendModMessage(ChatColor.GOLD + "Baritone already running!");
+                return 1;
+            }
+            if (!searchEnabled) { // otherwise makes no sense to run this cmd
+                searchEnabled = true;
+            }
+            baritoneRunning = true;
+            Map<String, Vec3i> shops = EdenClient.getMod(DataFetcher.class).getPlayerWarps().getShops();
+            TaskManager tm = new TaskManager();
+            sendModMessage(ChatColor.GOLD + "Teleporting to all player warps and using the "
+                    + ChatColor.AQUA + "Pathfinder "
+                    + ChatColor.GOLD + "to click all shops!");
+            int count = shops.size();
+            AtomicInteger i = new AtomicInteger(1);
+
+            // make sure that the pathfinder is enabled. If the user disables it mid run it will be disabled!
+            pathFinderMod.clear();
+            pathFinderMod.enable();
+
+            for (String shop : shops.keySet()) {
+                if (!pathFinderMod.isEnabled()) {
+                    tm.cancel();
+                }
+                tm.then(new SyncTask(() -> PlayerUtils.messageC2S("/pwarp " + shop)));
+                tm.then(new WaitForTicksTask(40)); // wait 2 seconds for chunks to load
+                tm.then(new SyncTask(() -> sendModMessage(ChatColor.GOLD + "Using baritone to click all shops.")));
+                tm.then(new SyncTask(new ChestShopModPathing(tm, this.shops, 8, pathFinderMod)));
+                tm.then(new WaitForTicksTask(1200)); // todo PROPERLY WAIT!!
+                tm.then(new SyncTask(() -> sendModMessage(ChatColor.GOLD + "Finished clicking all shops.")));
+                tm.then(new SyncTask(() -> sendModMessage(ChatColor.GOLD + "Shop " +
+                        ChatColor.AQUA + i.getAndIncrement() +
+                        ChatColor.GOLD + "/" +
+                        ChatColor.AQUA + count +
+                        ChatColor.GOLD + " finished.")));
+                tm.then(new SyncTask(() -> checkForShops(PlayerUtils.getPlayer(), 8)));
+            }
+            tm.then(() -> baritoneRunning = false);
+            tm.start();
+            return 1;
+        }));
+
+        node.then(literal("visitbaritonesingle").then(argument("pwarp", StringArgumentType.word()).executes(c -> {
+            String pwarpName = c.getArgument("pwarp", String.class);
+
+            // make sure that the pathfinder is enabled. If the user disables it mid run it will be disabled!
+            pathFinderMod.clear();
+            pathFinderMod.enable();
+
+            TaskManager tm = new TaskManager();
+            tm.then(new SyncTask(() -> PlayerUtils.messageC2S("/pwarp " + pwarpName)));
+            tm.then(() -> sendModMessage(ChatColor.GOLD + "Waiting for 2 seconds, then pathing."));
+            tm.then(new WaitForTicksTask(40));
+            tm.then(new SyncTask(new ChestShopModPathing(tm, this.shops, 8, pathFinderMod)));
+            tm.start();
+
+            return 1;
+        })));
+
 
         node.then(literal("list").executes(c -> {
             int sum = shops.values().stream().mapToInt(Set::size).sum();
@@ -192,17 +261,15 @@ public class ChestShopMod {
             List<String> exploitableItems = getExploitableShopsText();
 
             File folder = new File(EdenClient.getDataFolder(), "ChestShop_Exploitable");
-            if (!folder.exists()) {
-                if (!folder.mkdirs()) {
-                    Utils.getLogger().error("Failed to create ChestShop folder!");
-                }
+            if (!folder.exists() && (!folder.mkdirs())) {
+                Utils.getLogger().error("Failed to create ChestShop folder!");
+
             }
             SimpleDateFormat formatter = new SimpleDateFormat("yyyy_MM_dd_hh_mm_ss");
             File file = new File(folder, formatter.format(new Date()) + ".txt");
 
             try {
-                if (!file.exists())
-                    if (!file.createNewFile()) return -1;
+                if (!file.exists() && (!file.createNewFile())) return -1;
             } catch (IOException e) {
                 Utils.getLogger().error("Error while creating file: " + file.getAbsolutePath(), e);
             }
@@ -262,18 +329,16 @@ public class ChestShopMod {
             }
 
             File folder = new File(EdenClient.getDataFolder(), "ChestShopModEntries");
-            if (!folder.exists()) {
-                if (!folder.mkdirs()) {
+            if (!folder.exists() && (!folder.mkdirs())) {
                     Utils.getLogger().error("Failed to create ChestShop folder!");
-                }
+
             }
             SimpleDateFormat formatter = new SimpleDateFormat("yyyy_MM_dd_hh_mm_ss");
             Date date = new Date();
             File file = new File(folder, formatter.format(date) + ".txt");
 
             try {
-                if (!file.exists())
-                    if (!file.createNewFile()) return -1;
+                if (!file.exists() && (!file.createNewFile())) return -1;
             } catch (IOException e) {
                 Utils.getLogger().error("Error while creating file: " + file.getAbsolutePath(), e);
             }
@@ -311,13 +376,24 @@ public class ChestShopMod {
                 "Automatically stores all ChestShops in all chunks you load. You can search specific items to get their buy/sell options. Other features include automatic searching for shops which sell items cheaper than other shops buy them, writing all shops to a file and automatically updating all shops via their playerwarps.");
     }
 
+    private record Disparity(ChestShopEntry buy, ChestShopEntry sell, String nameOfItem, double disparity) {
+
+    }
+
     private List<String> getExploitableShopsText() {
         Map<String, List<ChestShopEntry>> buyEntries = getBuyShops();
         Map<String, List<ChestShopEntry>> sellEntries = getSellShops();
         List<String> exploitableShopsText = new ArrayList<>();
         ChestShopItemNames itemNameMap = EdenClient.getMod(DataFetcher.class).getChestShopItemNames();
+
+        List<Disparity> disparities = new ArrayList<>();
+
         for (Map.Entry<String, List<ChestShopEntry>> entry : buyEntries.entrySet().stream().sorted(Map.Entry.comparingByKey()).toList()) {
-            if (!sellEntries.containsKey(entry.getKey())) continue;
+
+            if (!sellEntries.containsKey(entry.getKey())) {
+                continue;
+            }
+
             List<ChestShopEntry> currentSellEntries = sellEntries.get(entry.getKey()).stream().sorted(Comparator.comparingDouble(ChestShopEntry::getSellPricePerItem).reversed()).toList();
             List<ChestShopEntry> currentBuyEntries = entry.getValue().stream().sorted(Comparator.comparingDouble(ChestShopEntry::getBuyPricePerItem)).toList();
 
@@ -325,22 +401,40 @@ public class ChestShopMod {
             ChestShopEntry currentBuyEntry = currentBuyEntries.get(0);
             int i = 0;
 
-            if (currentSellEntry.getSellPricePerItem() <= currentBuyEntry.getBuyPricePerItem())
+            if (currentSellEntry.getSellPricePerItem() <= currentBuyEntry.getBuyPricePerItem()) {
                 continue;
+            }
 
             String nameOfItem = itemNameMap.getLongName(entry.getKey());
-            exploitableShopsText.add(nameOfItem + ":");
 
             while (currentSellEntry.getSellPricePerItem() > currentBuyEntry.getBuyPricePerItem()) {
-                exploitableShopsText.add(String.format("Buy %s at %s [%d, %d, %d] for %.2f$/item and sell at %s [%d, %d, %d] for %.2f$/item",
-                        nameOfItem, currentBuyEntry.getOwner(), currentBuyEntry.getPos().getX(), currentBuyEntry.getPos().getY(), currentBuyEntry.getPos().getZ(), currentBuyEntry.getBuyPricePerItem(),
-                        currentSellEntry.getOwner(), currentSellEntry.getPos().getX(), currentSellEntry.getPos().getY(), currentSellEntry.getPos().getZ(), currentSellEntry.getSellPricePerItem()));
+                disparities.add(new Disparity(currentBuyEntry, currentSellEntry, nameOfItem, currentSellEntry.getSellPricePerItem() - currentBuyEntry.getBuyPricePerItem()));
                 i++;
                 if (i < currentSellEntries.size())
                     currentSellEntry = currentSellEntries.get(i);
                 else break;
             }
         }
+
+        List<Map.Entry<String, List<Disparity>>> sortedDisparities = disparities.stream().filter(disp -> disp.nameOfItem != null).collect(Collectors.groupingBy(disp -> disp.nameOfItem)).entrySet().stream()
+                .sorted(Comparator.comparingDouble(entry -> entry.getValue().stream().mapToDouble(shop -> shop.disparity).max().getAsDouble())).collect(Collectors.toList());
+
+        // biggest disparity on top
+        Collections.reverse(sortedDisparities);
+
+        for (Map.Entry<String, List<Disparity>> entry : sortedDisparities) {
+            List<Disparity> sortedEntries = entry.getValue().stream().sorted(Comparator.comparingDouble(e -> -e.disparity)).toList();
+            exploitableShopsText.add(entry.getKey() + ":");
+            for (Disparity disparity : sortedEntries) {
+                ChestShopEntry currentBuyEntry = disparity.buy;
+                ChestShopEntry currentSellEntry = disparity.sell;
+                exploitableShopsText.add(String.format("Buy %s at %s [%d, %d, %d] for %.2f$/item and sell at %s [%d, %d, %d] for %.2f$/item",
+                        entry.getKey(), currentBuyEntry.getOwner(), currentBuyEntry.getPos().getX(), currentBuyEntry.getPos().getY(), currentBuyEntry.getPos().getZ(), currentBuyEntry.getBuyPricePerItem(),
+                        currentSellEntry.getOwner(), currentSellEntry.getPos().getX(), currentSellEntry.getPos().getY(), currentSellEntry.getPos().getZ(), currentSellEntry.getSellPricePerItem()));
+            }
+            exploitableShopsText.add("");
+        }
+
         return exploitableShopsText;
     }
 
@@ -378,13 +472,15 @@ public class ChestShopMod {
         return EdenClient.getMod(DataFetcher.class).getPlayerWarps().getAll().entrySet().stream().min(Comparator.comparingDouble(e -> e.getValue().distSqr(pos)));
     }
 
-    private CompletableFuture<Suggestions> suggestSell(CommandContext<ClientSuggestionProvider> context, SuggestionsBuilder suggestionsBuilder) {
+    private CompletableFuture<Suggestions> suggestSell
+            (CommandContext<ClientSuggestionProvider> context, SuggestionsBuilder suggestionsBuilder) {
         ChestShopItemNames itemNameMap = EdenClient.getMod(DataFetcher.class).getChestShopItemNames();
         shops.values().forEach(s -> s.stream().filter(ChestShopEntry::canSell).map(entry -> itemNameMap.getLongName(entry.getItem())).filter(Objects::nonNull).forEach(suggestionsBuilder::suggest));
         return suggestionsBuilder.buildFuture();
     }
 
-    private CompletableFuture<Suggestions> suggestBuy(CommandContext<ClientSuggestionProvider> context, SuggestionsBuilder suggestionsBuilder) {
+    private CompletableFuture<Suggestions> suggestBuy
+            (CommandContext<ClientSuggestionProvider> context, SuggestionsBuilder suggestionsBuilder) {
         ChestShopItemNames itemNameMap = EdenClient.getMod(DataFetcher.class).getChestShopItemNames();
         shops.values().forEach(s -> s.stream().filter(ChestShopEntry::canBuy)
                 .map(entry -> itemNameMap.getLongName(entry.getItem()))

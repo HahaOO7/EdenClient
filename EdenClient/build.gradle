@@ -28,6 +28,8 @@ dependencies {
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
     implementation project(":EcAnnotations")
     annotationProcessor project(":EcProcessors")
+
+    implementation files('baritone-api-fabric-1.10.1.jar')
 }
 
 processResources {
