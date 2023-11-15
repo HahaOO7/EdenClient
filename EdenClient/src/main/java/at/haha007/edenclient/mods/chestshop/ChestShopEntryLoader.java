@@ -23,6 +23,7 @@ public class ChestShopEntryLoader implements ConfigLoader<CompoundTag, ChestShop
         tag.putString("owner", "owner");
         tag.putString("item", "stone");
         tag.putInt("amount", 0);
+        tag.putInt("stock", 0);
         return tag;
     }
 }

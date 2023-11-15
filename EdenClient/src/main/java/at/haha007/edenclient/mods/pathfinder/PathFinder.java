@@ -140,7 +140,7 @@ public class PathFinder {
     }
 
     public boolean isRunning() {
-        return !positionsToVisit.isEmpty();
+        return !positionsToVisit.isEmpty() && enabled;
     }
 
     public void enable() {

@@ -5,15 +5,18 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.SignBlockEntity;
 
 public class ChestShopEntry {
     private Vec3i pos;
     private int sellPrice = -1, buyPrice = -1;
+
     private int amount;
     private String owner;
     private boolean isShop = false;
     private String item;
+    private int stock = -1;
 
     public ChestShopEntry(SignBlockEntity sign) {
         String[] linesFront = new String[4];
@@ -62,6 +65,7 @@ public class ChestShopEntry {
             buyPrice = tag.getInt("buyPrice");
         if (tag.contains("sellPrice"))
             sellPrice = tag.getInt("sellPrice");
+        stock = tag.getInt("stock");
     }
 
     public CompoundTag toTag() {
@@ -74,6 +78,7 @@ public class ChestShopEntry {
             tag.putInt("buyPrice", buyPrice);
         if (canSell())
             tag.putInt("sellPrice", sellPrice);
+        tag.putInt("stock", stock);
         return tag;
     }
 
@@ -93,8 +98,16 @@ public class ChestShopEntry {
         return ((float) buyPrice) / amount;
     }
 
+    public int getFullBuyPrice() {
+        return buyPrice;
+    }
+
     public float getSellPricePerItem() {
         return ((float) sellPrice) / amount;
+    }
+
+    public int getFullSellPrice() {
+        return sellPrice;
     }
 
     public String getItem() {
@@ -107,6 +120,19 @@ public class ChestShopEntry {
 
     public Vec3i getPos() {
         return pos;
+    }
+
+    public int getStock() {
+        return stock;
+    }
+
+    public void setStock(int stock) {
+        System.out.println("STOCK SETTER");
+        this.stock = stock;
+    }
+
+    public int getAmount() {
+        return amount;
     }
 
     public String toString() {
@@ -122,6 +148,7 @@ public class ChestShopEntry {
         if (canSell()) {
             sb.append(String.format(", sell:%d$, spi:%3f1$/i", sellPrice, getSellPricePerItem()));
         }
+        sb.append(String.format(", stock:%d", stock));
         return sb.toString();
     }
 

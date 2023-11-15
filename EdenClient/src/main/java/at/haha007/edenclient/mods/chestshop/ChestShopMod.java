@@ -2,10 +2,10 @@ package at.haha007.edenclient.mods.chestshop;
 
 import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.annotations.Mod;
+import at.haha007.edenclient.callbacks.AddChatMessageCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.mods.GetTo;
 import at.haha007.edenclient.mods.chestshop.pathing.ChestShopModPathing;
-import at.haha007.edenclient.mods.chestshop.pathing.ChestShopModPathingMode;
 import at.haha007.edenclient.mods.datafetcher.ChestShopItemNames;
 import at.haha007.edenclient.mods.datafetcher.DataFetcher;
 import at.haha007.edenclient.mods.pathfinder.PathFinder;
@@ -48,7 +48,7 @@ import java.util.stream.Collectors;
 import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
-@Mod(dependencies = PathFinder.class)
+@Mod(dependencies = {PathFinder.class, DataFetcher.class})
 public class ChestShopMod {
 
     @ConfigSubscriber
@@ -56,9 +56,11 @@ public class ChestShopMod {
     @ConfigSubscriber("false")
     private boolean searchEnabled = true;
 
-    private PathFinder pathFinderMod;
+    private final PathFinder pathFinderMod;
 
-    private boolean baritoneRunning = false;
+    private final DataFetcher dataFetcher;
+
+    private ChestShopModPathing runningChestShopModPathFinding = null;
 
     private int[] chunk = {0, 0};
 
@@ -66,10 +68,18 @@ public class ChestShopMod {
         registerCommand("echestshop");
         registerCommand("ecs");
         PlayerTickCallback.EVENT.register(this::tick);
+        AddChatMessageCallback.EVENT.register(this::onChat);
         pathFinderMod = EdenClient.getMod(PathFinder.class);
+        dataFetcher = EdenClient.getMod(DataFetcher.class);
         PerWorldConfig.get().register(this, "chestShop");
         PerWorldConfig.get().register(new ChestShopLoader(), ChestShopMap.class);
         PerWorldConfig.get().register(new ChestShopEntryLoader(), ChestShopEntry.class);
+    }
+
+    private void onChat(AddChatMessageCallback.ChatAddEvent chatAddEvent) {
+        if (runningChestShopModPathFinding != null) {
+            runningChestShopModPathFinding.onChat(chatAddEvent);
+        }
     }
 
     private void tick(LocalPlayer player) {
@@ -138,14 +148,13 @@ public class ChestShopMod {
         }));
 
         node.then(literal("visitbaritone").executes(c -> {
-            if (baritoneRunning) {
+            if (runningChestShopModPathFinding != null) {
                 sendModMessage(ChatColor.GOLD + "Baritone already running!");
                 return 1;
             }
             if (!searchEnabled) { // otherwise makes no sense to run this cmd
                 searchEnabled = true;
             }
-            baritoneRunning = true;
             Map<String, Vec3i> shops = EdenClient.getMod(DataFetcher.class).getPlayerWarps().getShops();
             TaskManager tm = new TaskManager();
             sendModMessage(ChatColor.GOLD + "Teleporting to all player warps and using the "
@@ -165,8 +174,16 @@ public class ChestShopMod {
                 tm.then(new SyncTask(() -> PlayerUtils.messageC2S("/pwarp " + shop)));
                 tm.then(new WaitForTicksTask(40)); // wait 2 seconds for chunks to load
                 tm.then(new SyncTask(() -> sendModMessage(ChatColor.GOLD + "Using baritone to click all shops.")));
-                tm.then(new SyncTask(new ChestShopModPathing(tm, this.shops, 8, pathFinderMod)));
-                tm.then(new WaitForTicksTask(1200)); // todo PROPERLY WAIT!!
+                tm.then(new SyncTask(() -> this.runningChestShopModPathFinding = new ChestShopModPathing(tm, this.shops, 8, pathFinderMod, dataFetcher)));
+                tm.then(new SyncTask(() -> runningChestShopModPathFinding.run()));
+                tm.then(() -> {
+                    while (!Thread.interrupted()) {
+                        Utils.sleep(200);
+                        if (!pathFinderMod.isRunning()) {
+                            return;
+                        }
+                    }
+                });
                 tm.then(new SyncTask(() -> sendModMessage(ChatColor.GOLD + "Finished clicking all shops.")));
                 tm.then(new SyncTask(() -> sendModMessage(ChatColor.GOLD + "Shop " +
                         ChatColor.AQUA + i.getAndIncrement() +
@@ -175,7 +192,8 @@ public class ChestShopMod {
                         ChatColor.GOLD + " finished.")));
                 tm.then(new SyncTask(() -> checkForShops(PlayerUtils.getPlayer(), 8)));
             }
-            tm.then(() -> baritoneRunning = false);
+            tm.then(new WaitForTicksTask(40));
+            tm.then(() -> this.runningChestShopModPathFinding = null);
             tm.start();
             return 1;
         }));
@@ -191,7 +209,19 @@ public class ChestShopMod {
             tm.then(new SyncTask(() -> PlayerUtils.messageC2S("/pwarp " + pwarpName)));
             tm.then(() -> sendModMessage(ChatColor.GOLD + "Waiting for 2 seconds, then pathing."));
             tm.then(new WaitForTicksTask(40));
-            tm.then(new SyncTask(new ChestShopModPathing(tm, this.shops, 8, pathFinderMod)));
+            tm.then(new SyncTask(() -> this.runningChestShopModPathFinding = new ChestShopModPathing(tm, this.shops, 8, pathFinderMod, dataFetcher)));
+            tm.then(new SyncTask(() -> runningChestShopModPathFinding.run()));
+            tm.then(() -> {
+                while (!Thread.interrupted()) {
+                    Utils.sleep(200);
+                    if (!pathFinderMod.isRunning()) {
+                        return;
+                    }
+                }
+            });
+            tm.then(new WaitForTicksTask(40));
+            tm.then(() -> this.runningChestShopModPathFinding = null);
+            tm.then(() -> sendModMessage(ChatColor.GOLD + "Finished with shop."));
             tm.start();
 
             return 1;
@@ -330,7 +360,7 @@ public class ChestShopMod {
 
             File folder = new File(EdenClient.getDataFolder(), "ChestShopModEntries");
             if (!folder.exists() && (!folder.mkdirs())) {
-                    Utils.getLogger().error("Failed to create ChestShop folder!");
+                Utils.getLogger().error("Failed to create ChestShop folder!");
 
             }
             SimpleDateFormat formatter = new SimpleDateFormat("yyyy_MM_dd_hh_mm_ss");

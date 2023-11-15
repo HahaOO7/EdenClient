@@ -2,6 +2,7 @@ package at.haha007.edenclient.utils.tasks;
 
 import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.utils.Scheduler;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -9,7 +10,10 @@ import java.util.concurrent.ExecutionException;
 public class SyncTask implements Task {
     private final Runnable runnable;
 
-    public SyncTask(Runnable runnable) {
+    public SyncTask(@NotNull Runnable runnable) {
+        if (runnable == null) {
+            throw new IllegalArgumentException("Runnable must not be null");
+        }
         this.runnable = runnable;
     }
 
@@ -21,7 +25,7 @@ public class SyncTask implements Task {
 
         try {
             future.get();
-        } catch ( ExecutionException e) {
+        } catch (ExecutionException e) {
             throw new RuntimeException(e);
         }
     }

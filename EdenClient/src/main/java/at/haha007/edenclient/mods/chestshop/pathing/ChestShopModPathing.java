@@ -1,8 +1,10 @@
 package at.haha007.edenclient.mods.chestshop.pathing;
 
+import at.haha007.edenclient.callbacks.AddChatMessageCallback;
 import at.haha007.edenclient.mods.chestshop.ChestShopEntry;
 import at.haha007.edenclient.mods.chestshop.ChestShopMap;
 import at.haha007.edenclient.mods.chestshop.ChestShopSet;
+import at.haha007.edenclient.mods.datafetcher.DataFetcher;
 import at.haha007.edenclient.mods.pathfinder.PathFinder;
 import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.PlayerUtils;
@@ -32,10 +34,17 @@ public class ChestShopModPathing implements Runnable {
     private final int chunks;
     private final PathFinder pathFinder;
 
-    public ChestShopModPathing(TaskManager tm, ChestShopMap shops, int i, PathFinder pathFinderMod) {
+    private final DataFetcher dataFetcher;
+
+    private ChestShopModPathingChatHandler chatHandler;
+
+    private ChestShopEntry[] sortedEntries;
+
+    public ChestShopModPathing(TaskManager tm, ChestShopMap shops, int i, PathFinder pathFinderMod, DataFetcher dataFetcher) {
         this.tm = tm;
         this.shops = shops;
         this.chunks = i;
+        this.dataFetcher = dataFetcher;
         this.pathFinder = pathFinderMod;
     }
 
@@ -47,10 +56,17 @@ public class ChestShopModPathing implements Runnable {
         if (!chestShopsInRange.isEmpty()) {
             ChestShopModPathingMode mode = ChestShopModPathingMode.selectMode(chestShopsInRange);
             sendModMessage(ChatColor.GOLD + "Using mode: " + ChatColor.AQUA + mode.name());
-            ChestShopEntry[] sortedEntries = mode.getPath(chestShopsInRange);
+            this.sortedEntries = mode.getPath(chestShopsInRange);
+            chatHandler = new ChestShopModPathingChatHandler(sortedEntries, dataFetcher);
             for (ChestShopEntry entry : sortedEntries) {
                 pathFinder.addPositionToVisit(entry.getPos(), () -> runEntryChestClick(entry));
             }
+        }
+    }
+
+    public void onChat(AddChatMessageCallback.ChatAddEvent chatAddEvent) {
+        if (chatHandler != null) {
+            chatHandler.onChat(chatAddEvent);
         }
     }
 
