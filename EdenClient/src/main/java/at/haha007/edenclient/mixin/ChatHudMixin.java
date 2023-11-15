@@ -32,6 +32,11 @@ public abstract class ChatHudMixin implements IVisibleMessageAccessor {
     @Shadow
     public abstract void addMessage(Component message, @Nullable MessageSignature signature, @Nullable GuiMessageTag indicator);
 
+    @Override
+    public List<GuiMessage.Line> edenClient$getVisibleMessages() {
+        return trimmedMessages;
+    }
+
     @Inject(at = @At("HEAD"), method = "addMessage(Lnet/minecraft/network/chat/Component;)V", cancellable = true)
     private void onAddMessage(Component text, CallbackInfo ci) {
         ci.cancel();

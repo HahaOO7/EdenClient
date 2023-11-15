@@ -42,8 +42,7 @@ public class TaskManager implements Cloneable, Task {
     }
 
     public void start() {
-        if (started.get()) return;
-        started.set(true);
+        if (started.getAndSet(true)) return;
         EdenClient.getMod(Scheduler.class).runAsync(() -> {
             try {
                 run();

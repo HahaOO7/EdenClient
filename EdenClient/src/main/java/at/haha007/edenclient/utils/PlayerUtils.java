@@ -1,6 +1,7 @@
 package at.haha007.edenclient.utils;
 
 import at.haha007.edenclient.mixinterface.IHandledScreen;
+import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
@@ -71,6 +72,16 @@ public class PlayerUtils {
 
     public static void sendModMessage(String text) {
         sendModMessage(Component.literal(text));
+    }
+
+    public static void sendModMessage(net.kyori.adventure.text.Component kyoriText) {
+        String json = GsonComponentSerializer.gson().serialize(kyoriText);
+        sendModMessage(Component.Serializer.fromJson(json));
+    }
+
+    public static void sendMessage(net.kyori.adventure.text.Component kyoriText) {
+        String json = GsonComponentSerializer.gson().serialize(kyoriText);
+        sendMessage(Component.Serializer.fromJson(json));
     }
 
     public static Component createModMessage(String text) {

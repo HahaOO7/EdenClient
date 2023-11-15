@@ -5,5 +5,5 @@ import net.minecraft.client.GuiMessage;
 import java.util.List;
 
 public interface IVisibleMessageAccessor {
-    List<GuiMessage.Line> getVisibleMessages();
+    List<GuiMessage.Line> edenClient$getVisibleMessages();
 }
