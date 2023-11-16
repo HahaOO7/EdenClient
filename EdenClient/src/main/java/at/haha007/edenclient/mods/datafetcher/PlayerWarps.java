@@ -76,6 +76,7 @@ public class PlayerWarps {
         q.add(new SyncTask(() -> fetchData(tm, q, farms, 14)));
         q.add(new SyncTask(() -> fetchData(tm, q, other, 16)));
         q.add(new SyncTask(() -> fetchData(tm, q, hidden, 22)));
+        q.add(new SyncTask(() -> fetchData(tm, q, all, 4)));
         q.add(new SyncTask(() -> {
             Screen screen = Minecraft.getInstance().screen;
             if (screen == null) return;
@@ -99,7 +100,7 @@ public class PlayerWarps {
 
     private void fetchData(TaskManager tm, Queue<Task> endTask, Map<String, Vec3i> map, int slot) {
         map.clear();
-        tm.then(new SyncTask(() -> PlayerUtils.messageC2S("/pwarp")));
+        tm.then(new SyncTask(() -> PlayerUtils.messageC2S("/pwarp", false)));
         tm.then(new WaitForInventoryTask(Pattern.compile(".*")));
         tm.then(new SyncTask(() -> PlayerUtils.clickSlot(slot)));
         tm.then(new WaitForInventoryTask(Pattern.compile(". PlayerWarps - Seite 1/[0-9]{1,2}")));

@@ -5,8 +5,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.SignBlockEntity;
+
+import java.util.Objects;
 
 public class ChestShopEntry {
     private Vec3i pos;
@@ -164,5 +165,21 @@ public class ChestShopEntry {
                 getPos().getY(),
                 getPos().getZ(),
                 buy ? getBuyPricePerItem() : getSellPricePerItem());
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ChestShopEntry entry = (ChestShopEntry) o;
+        return sellPrice == entry.sellPrice && buyPrice == entry.buyPrice
+                && amount == entry.amount && isShop == entry.isShop
+                && Objects.equals(pos, entry.pos) && Objects.equals(owner, entry.owner)
+                && Objects.equals(item, entry.item);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(pos, sellPrice, buyPrice, amount, owner, isShop, item);
     }
 }

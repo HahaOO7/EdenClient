@@ -15,6 +15,7 @@ import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.client.multiplayer.ClientSuggestionProvider;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -48,7 +49,11 @@ public class SellStatsTracker {
     }
 
     private void onChat(AddChatMessageCallback.ChatAddEvent event) {
-        String message = event.getChatText().getString();
+        Component component = event.getChatText();
+        if (component == null) {
+            return;
+        }
+        String message = component.getString();
         Matcher matcher = messagePattern.matcher(message);
 
         if (matcher.matches()) {

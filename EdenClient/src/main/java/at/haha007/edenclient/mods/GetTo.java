@@ -119,20 +119,18 @@ public class GetTo {
                 "This mod is for internal use only.");
     }
 
-    public String getCommandTo(Vec3i target) {
-        return String.format("/%s %d %d %d", commandName, target.getX(), target.getY(), target.getZ());
-    }
-
-    private void getTo(BlockPos pos, boolean tracer, boolean box, boolean tp) {
+    public void getTo(BlockPos pos, boolean tracer, boolean box, boolean tp) {
         target = pos;
         this.tracer = tracer;
         this.box = box;
-        if (tp)
-            getNearestPlayerWarp(pos).map(pw -> "/pw " + pw).ifPresent(PlayerUtils::messageC2S);
+        if (tp) {
+            getNearestPlayerWarp(pos).map(pw -> "/pw " + pw).ifPresent(str -> PlayerUtils.messageC2S(str, true));
+        }
     }
 
     private Optional<String> getNearestPlayerWarp(Vec3i pos) {
         Vec3i pp = PlayerUtils.getPlayer().blockPosition();
+        System.out.println(EdenClient.getMod(DataFetcher.class).getPlayerWarps().getAll());
         return EdenClient.getMod(DataFetcher.class).getPlayerWarps().getAll().entrySet().stream()
                 .min(Comparator.comparingDouble(e -> e.getValue().distSqr(pos)))
                 .map(e -> dist(pos, pp) < dist(e.getValue(), pos) ? null : e.getKey());

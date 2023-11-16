@@ -90,7 +90,7 @@ public class Greetings {
         if (sentPlayers.contains(name)) return;
         sentPlayers.add(name);
         EdenClient.getMod(Scheduler.class).scheduleSyncDelayed(() -> {
-            PlayerUtils.messageC2S(message.replace("%player%", name));
+            PlayerUtils.messageC2S(message.replace("%player%", name), false);
             EdenClient.getMod(Scheduler.class).scheduleSyncDelayed(() -> sentPlayers.remove(name), minDelay);
         }, random.nextInt(100) + 60);
     }

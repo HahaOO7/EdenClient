@@ -37,14 +37,14 @@ public class ChestShopItemNames {
 
     @ConfigSubscriber
     private final BiStringStringMap itemNameMap = new BiStringStringMap();
-    @ConfigSubscriber("itemdb")
-    private String command = "itemdb";
+    @ConfigSubscriber("iteminfo")
+    private String command = "iteminfo";
     @ConfigSubscriber("20")
     private int fetchDelay = 20;
-    @ConfigSubscriber("Full Name:")
-    private String fullNamePrefix = "Full Name:";
-    @ConfigSubscriber("Shop Sign:")
-    private String shortNamePrefix = "Shop Sign:";
+    @ConfigSubscriber("Voller Name:")
+    private String fullNamePrefix = "Voller Name:";
+    @ConfigSubscriber("Shop Schild:")
+    private String shortNamePrefix = "Shop Schild:";
 
     private String lastFullNameCached = null;
     private boolean nameLookupRunning = false;
@@ -64,13 +64,13 @@ public class ChestShopItemNames {
 
         if (fullNameMatcher.matches()) {
             lastFullNameCached = fullNameMatcher.group("originalname").trim().toLowerCase().replace(' ', '_');
+            return;
         }
 
         if (lastFullNameCached != null && shortenedNameMatcher.matches()) {
             itemNameMap.put(shortenedNameMatcher.group("shortenedname").toLowerCase(), lastFullNameCached);
             lastFullNameCached = null;
         }
-
     }
 
     public String getLongName(String shortName) {

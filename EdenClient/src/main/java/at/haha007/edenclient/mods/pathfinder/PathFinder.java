@@ -80,7 +80,9 @@ public class PathFinder {
 
             if (enabled) {
                 // reached goal, run the runnable
-                runnable.run();
+                if (runnable != null) {
+                    runnable.run();
+                }
 
                 // remove the goal at the end --> if it cancelled it is still kept in the list
                 positionsToVisit.remove(0);

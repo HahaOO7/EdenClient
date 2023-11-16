@@ -4,7 +4,6 @@ import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.annotations.Mod;
 import at.haha007.edenclient.callbacks.AddChatMessageCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
-import at.haha007.edenclient.mods.GetTo;
 import at.haha007.edenclient.mods.chestshop.pathing.ChestShopModPathing;
 import at.haha007.edenclient.mods.datafetcher.ChestShopItemNames;
 import at.haha007.edenclient.mods.datafetcher.DataFetcher;
@@ -94,15 +93,17 @@ public class ChestShopMod {
         if (!cm.hasChunk(chunk.x, chunk.z)) return;
         LevelChunk c = cm.getChunk(chunk.x, chunk.z, false);
         if (c == null) return;
-        shops.remove(chunk);
-        ChestShopSet cs = new ChestShopSet();
+        ChestShopSet shopsSet = shops.get(chunk);
+        if (shopsSet == null) {
+            shopsSet = new ChestShopSet();
+        }
         c.getBlockEntities().values().stream()
                 .filter(SignBlockEntity.class::isInstance)
                 .map(t -> (SignBlockEntity) t)
                 .map(ChestShopEntry::new)
                 .filter(ChestShopEntry::isShop)
-                .forEach(cs::add);
-        shops.put(chunk, cs);
+                .forEach(shopsSet::add);
+        shops.put(chunk, shopsSet);
     }
 
     private void checkForShops(LocalPlayer player, int radius) {
@@ -132,7 +133,7 @@ public class ChestShopMod {
             int count = pwarpShops.size();
             AtomicInteger i = new AtomicInteger(1);
             for (String shop : pwarpShops.keySet()) {
-                tm.then(new SyncTask(() -> PlayerUtils.messageC2S("/pwarp " + shop)));
+                tm.then(new SyncTask(() -> PlayerUtils.messageC2S("/pwarp " + shop, false)));
                 tm.then(new WaitForTicksTask(120)); //wait for chunks to load
                 tm.then(new SyncTask(() -> sendModMessage(ChatColor.GOLD + "Shop " +
                         ChatColor.AQUA + i.getAndIncrement() +
@@ -171,7 +172,7 @@ public class ChestShopMod {
                 if (!pathFinderMod.isEnabled()) {
                     tm.cancel();
                 }
-                tm.then(new SyncTask(() -> PlayerUtils.messageC2S("/pwarp " + shop)));
+                tm.then(new SyncTask(() -> PlayerUtils.messageC2S("/pwarp " + shop, false)));
                 tm.then(new WaitForTicksTask(40)); // wait 2 seconds for chunks to load
                 tm.then(new SyncTask(() -> sendModMessage(ChatColor.GOLD + "Using baritone to click all shops.")));
                 tm.then(new SyncTask(() -> this.runningChestShopModPathFinding = new ChestShopModPathing(tm, this.shops, 8, pathFinderMod, dataFetcher)));
@@ -206,7 +207,7 @@ public class ChestShopMod {
             pathFinderMod.enable();
 
             TaskManager tm = new TaskManager();
-            tm.then(new SyncTask(() -> PlayerUtils.messageC2S("/pwarp " + pwarpName)));
+            tm.then(new SyncTask(() -> PlayerUtils.messageC2S("/pwarp " + pwarpName, false)));
             tm.then(() -> sendModMessage(ChatColor.GOLD + "Waiting for 2 seconds, then pathing."));
             tm.then(new WaitForTicksTask(40));
             tm.then(new SyncTask(() -> this.runningChestShopModPathFinding = new ChestShopModPathing(tm, this.shops, 8, pathFinderMod, dataFetcher)));
@@ -256,10 +257,10 @@ public class ChestShopMod {
                         Style style = Style.EMPTY.withColor(ChatFormatting.GOLD);
 
                         Vec3i pos = cs.getPos();
-                        String cmd = EdenClient.getMod(GetTo.class).getCommandTo(pos);
+                        String cmd = "";
                         Component hoverText = Component.literal(opw.isPresent() ? opw.get().getKey() : "click me!").withStyle(ChatFormatting.GOLD);
                         style = style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hoverText));
-                        style = style.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, cmd));
+                        //style = style.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, cmd));
                         return Component.literal(cs.formattedString(false)).setStyle(style);
                     }).forEach(PlayerUtils::sendModMessage);
             return 1;
@@ -277,10 +278,10 @@ public class ChestShopMod {
                         Optional<Map.Entry<String, Vec3i>> opw = getNearestPlayerWarp(cs.getPos());
                         Style style = Style.EMPTY.withColor(ChatFormatting.GOLD);
                         Vec3i pos = cs.getPos();
-                        String cmd = EdenClient.getMod(GetTo.class).getCommandTo(pos);
+                        String cmd = "";
                         Component hoverText = Component.literal(opw.isPresent() ? opw.get().getKey() : "click me!").withStyle(ChatFormatting.GOLD);
                         style = style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hoverText));
-                        style = style.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, cmd));
+                        //style = style.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, cmd));
                         return Component.literal(cs.formattedString(true)).setStyle(style);
                     })
                     .forEach(PlayerUtils::sendModMessage);

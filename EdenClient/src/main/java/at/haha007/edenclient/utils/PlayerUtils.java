@@ -38,15 +38,19 @@ import java.util.Optional;
 
 public class PlayerUtils {
 
+    private PlayerUtils() {
+
+    }
+
     private static final Component prefix = Component.literal("[EC] ").setStyle(Style.EMPTY.applyFormats(ChatFormatting.LIGHT_PURPLE, ChatFormatting.BOLD));
 
-    public static void messageC2S(String msg) {
+    public static void messageC2S(String msg, boolean doNotForceCommand) {
         LocalPlayer player = PlayerUtils.getPlayer();
         if (msg.length() > 256) {
             sendModMessage("Tried sending message longer than 256 characters: " + msg);
             return;
         }
-        if (msg.startsWith("/"))
+        if (msg.startsWith("/") && !doNotForceCommand)
             player.connection.sendCommand(msg.substring(1));
         else
             player.connection.sendChat(msg);
