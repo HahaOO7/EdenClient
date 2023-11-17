@@ -6,14 +6,13 @@ import at.haha007.edenclient.mods.datafetcher.DataFetcher;
 import net.minecraft.client.GuiMessage;
 import net.minecraft.util.FormattedCharSequence;
 import org.intellij.lang.annotations.Language;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
 public class ChestShopModPathingChatHandler {
 
@@ -52,25 +51,28 @@ public class ChestShopModPathingChatHandler {
 
         if (line.matches(lastRegex)) {
 
-            String owner = findLatest(OWNER_REGEX, chatAddEvent.getChatLines(), "owner")[0];
-            String stock = findLatest(STOCK_REGEX, chatAddEvent.getChatLines(), "stock")[0];
-            String item = findLatest(ITEM_REGEX, chatAddEvent.getChatLines(), "item")[0];
-            String[] buyResult = findLatest(BUY_REGEX, chatAddEvent.getChatLines(), "amount", "price");
+            String owner = findLatest(OWNER_REGEX, chatAddEvent, "owner")[0];
+            String stock = findLatest(STOCK_REGEX, chatAddEvent, "stock")[0];
+            String item = findLatest(ITEM_REGEX, chatAddEvent, "item")[0];
+            String[] buyResult = findLatest(BUY_REGEX, chatAddEvent, "amount", "price");
             String buyAmount = buyResult != null ? buyResult[0] : null;
             String buyPrice = buyResult != null ? buyResult[1] : null;
-            String[] sellResult = findLatest(SELL_REGEX, chatAddEvent.getChatLines(), "amount", "price");
+            String[] sellResult = findLatest(SELL_REGEX, chatAddEvent, "amount", "price");
+            String sellAmount = sellResult != null ? sellResult[0] : null;
             String sellPrice = sellResult != null ? sellResult[1] : null;
 
             ++index;
 
-            if (!compare(currentEntry, owner, item, buyAmount, buyPrice, sellPrice)) {
-                throw new IllegalStateException();
+            String amount = buyAmount == null ? sellAmount : buyAmount;
+
+            if (!compare(currentEntry, owner, item, amount, buyPrice, sellPrice)) {
+                throw new IllegalStateException("Not equal: " + currentEntry + " " + owner + " " + item + " " + stock + " " + Arrays.toString(buyResult) + " " + Arrays.toString(sellResult));
             }
+
+            System.out.println("Shop stock stored for shop at: " + currentEntry.getPos());
 
             currentEntry.setStock(Integer.parseInt(stock));
         }
-
-        System.out.println(Arrays.toString(sortedEntries));
     }
 
     private boolean compare(ChestShopEntry currentEntry, String owner, String item, String amount, String buyPrice, String sellPrice) {
@@ -88,8 +90,8 @@ public class ChestShopModPathingChatHandler {
             return false;
         }
         if (currentEntry.canBuy()) {
-            if (!buyPrice.equals("" + currentEntry.getFullBuyPrice())) {
-                System.out.println("Buy price not equal " + buyPrice + " " + currentEntry);
+            if (Math.abs(Double.parseDouble(buyPrice) - currentEntry.getFullBuyPrice()) > 0.5 || Math.abs(currentEntry.getFullBuyPrice() - Double.parseDouble(buyPrice)) > 0.5) {
+                System.out.println("Buy price not equal " + buyPrice + " " + currentEntry.getFullBuyPrice());
                 return false;
             }
         } else {
@@ -99,8 +101,8 @@ public class ChestShopModPathingChatHandler {
             }
         }
         if (currentEntry.canSell()) {
-            if (!sellPrice.equals("" + currentEntry.getFullSellPrice())) {
-                System.out.println("Sell price not equal " + sellPrice + " " + currentEntry);
+            if (Math.abs(Double.parseDouble(sellPrice) - currentEntry.getFullSellPrice()) > 0.5 || Math.abs(currentEntry.getFullSellPrice() - Double.parseDouble(sellPrice)) > 0.5) {
+                System.out.println("Sell price not equal " + sellPrice + " " + currentEntry.getFullSellPrice());
                 return false;
             }
         } else {
@@ -112,23 +114,13 @@ public class ChestShopModPathingChatHandler {
         return true;
     }
 
-    private String[] findLatest(String regex, List<GuiMessage.Line> lines, String... capturingGroups) {
-        for (GuiMessage.Line line : lines) {
-            FormattedCharSequence lineSequence = line.content();
+    private String[] findLatest(String regex, AddChatMessageCallback.ChatAddEvent event, String... capturingGroups) {
+        List<String> rawMessages = getStrings(event);
 
-            StringBuilder stringBuilder = new StringBuilder();
-
-            lineSequence.accept((index, style, codePoint) -> {
-                // Assuming style codes are not part of the sequence
-                stringBuilder.appendCodePoint(codePoint);
-                return true; // continue processing
-            });
-
-            String result = stringBuilder.toString();
-
-            if (result.matches(regex)) {
+        for (String rawMessage : rawMessages) {
+            if (rawMessage.matches(regex)) {
                 String[] results = new String[capturingGroups.length];
-                Matcher matcher = Pattern.compile(regex).matcher(result);
+                Matcher matcher = Pattern.compile(regex).matcher(rawMessage);
                 if (!matcher.find()) {
                     throw new IllegalStateException(); // impossible
                 }
@@ -141,5 +133,29 @@ public class ChestShopModPathingChatHandler {
         }
 
         return null;
+    }
+
+    @NotNull
+    private static List<String> getStrings(AddChatMessageCallback.ChatAddEvent event) {
+        List<String> rawMessages = new ArrayList<>();
+        String mainText = event.getChatText().getString();
+        rawMessages.add(mainText);
+
+        for (GuiMessage.Line line : event.getChatLines()) {
+            FormattedCharSequence lineSequence = line.content();
+
+            StringBuilder stringBuilder = new StringBuilder();
+
+            lineSequence.accept((index, style, codePoint) -> {
+                // Assuming style codes are not part of the sequence
+                stringBuilder.appendCodePoint(codePoint);
+                return true; // continue processing
+            });
+
+            String result = stringBuilder.toString();
+            rawMessages.add(result);
+        }
+
+        return rawMessages;
     }
 }

@@ -24,6 +24,7 @@ import net.minecraft.world.phys.Vec3;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
@@ -83,6 +84,8 @@ public class ChestShopModPathing implements Runnable {
         // It's a sign, now get the block it is attached to
         BlockPos containerPos = null;
 
+        // TODO: problem --> sign can be on a wall, but the chest below it
+
         if (signBlockState.getBlock() instanceof WallSignBlock) {
             // For wall signs, find the block it's attached to based on its facing direction
             Direction facing = signBlockState.getValue(WallSignBlock.FACING);
@@ -135,6 +138,6 @@ public class ChestShopModPathing implements Runnable {
                 allShops.addAll(chestShops);
             }
         });
-        return allShops;
+        return allShops.stream().filter(ChestShopEntry::isShop).collect(Collectors.toList());
     }
 }

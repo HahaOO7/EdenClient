@@ -174,8 +174,7 @@ public class ChestShopEntry {
         ChestShopEntry entry = (ChestShopEntry) o;
         return sellPrice == entry.sellPrice && buyPrice == entry.buyPrice
                 && amount == entry.amount && isShop == entry.isShop
-                && Objects.equals(pos, entry.pos) && Objects.equals(owner, entry.owner)
-                && Objects.equals(item, entry.item);
+                && Objects.equals(pos, entry.pos) && Objects.equals(owner, entry.owner);
     }
 
     @Override
