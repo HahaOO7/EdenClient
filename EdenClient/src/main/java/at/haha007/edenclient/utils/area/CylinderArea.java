@@ -6,6 +6,7 @@ import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
+import lombok.Getter;
 import net.minecraft.client.multiplayer.ClientSuggestionProvider;
 import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
 import net.minecraft.commands.arguments.coordinates.Coordinates;
@@ -20,9 +21,12 @@ import java.util.stream.Stream;
 
 public class CylinderArea implements BlockArea {
 
+    @Getter
     private final BlockPos bottomCenter;
+    @Getter
     private final int height;
     private final double radiusSquared;
+    @Getter
     private final double radius;
 
     public CylinderArea(BlockPos bottomCenter, int height, double radius) {
@@ -34,18 +38,6 @@ public class CylinderArea implements BlockArea {
 
     public CylinderArea(int x, int z, int minY, int maxY, double radius) {
         this(new BlockPos(x, minY, z), maxY - minY, radius);
-    }
-
-    public double getRadius() {
-        return radius;
-    }
-
-    public BlockPos getBottomCenter() {
-        return bottomCenter;
-    }
-
-    public int getHeight() {
-        return height;
     }
 
     @Override
