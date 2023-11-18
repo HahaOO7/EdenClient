@@ -3,7 +3,7 @@ package at.haha007.edenclient.mods;
 import at.haha007.edenclient.annotations.Mod;
 import at.haha007.edenclient.callbacks.AddChatMessageCallback;
 import at.haha007.edenclient.utils.ChatColor;
-import at.haha007.edenclient.utils.MathUtils;
+import at.haha007.edenclient.utils.Utils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -122,7 +122,7 @@ public class AntiSpam {
                         String oldSpamCounter =
                                 addedText.substring(3, addedText.length() - 1);
 
-                        if (MathUtils.isInteger(oldSpamCounter)) {
+                        if (Utils.isInteger(oldSpamCounter)) {
                             spamCounter += Integer.parseInt(oldSpamCounter);
                             matchingLines++;
                             continue;
@@ -141,7 +141,7 @@ public class AntiSpam {
 
                     String oldSpamCounter =
                             addedText.substring(3, addedText.length() - 1);
-                    if (!MathUtils.isInteger(oldSpamCounter)) {
+                    if (!Utils.isInteger(oldSpamCounter)) {
                         matchingLines = 0;
                         continue;
                     }

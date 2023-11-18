@@ -2,6 +2,7 @@ package at.haha007.edenclient.utils;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import lombok.Getter;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.ItemStack;
@@ -9,6 +10,7 @@ import net.minecraft.world.item.ItemStack;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+@Getter
 public class ContainerInfo {
     private static final Cache<Integer, ContainerInfo> cache = CacheBuilder.newBuilder().maximumSize(100).build();
 
@@ -50,15 +52,4 @@ public class ContainerInfo {
         this.title = title;
     }
 
-    public Component getTitle() {
-        return title;
-    }
-
-    public List<ItemStack> getItems() {
-        return items;
-    }
-
-    public MenuType<?> getType() {
-        return type;
-    }
 }

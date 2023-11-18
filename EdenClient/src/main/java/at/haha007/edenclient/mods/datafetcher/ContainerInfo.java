@@ -6,6 +6,8 @@ import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import at.haha007.edenclient.utils.config.loaders.ConfigLoader;
 import at.haha007.edenclient.utils.config.wrappers.ItemList;
+import lombok.Getter;
+import lombok.experimental.Accessors;
 import net.minecraft.client.multiplayer.ClientChunkCache;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
@@ -161,17 +163,11 @@ public class ContainerInfo {
     public static class ChestMap extends HashMap<Vec3i, ChestInfo> {
     }
 
+    @Accessors(fluent = true)
+    @Getter
     public static class ChestInfo {
         private ItemList items = new ItemList();
         private Direction face = Direction.NORTH;
-
-        public List<Item> items() {
-            return items;
-        }
-
-        public Direction face() {
-            return face;
-        }
     }
 
     private static class ChestInfoLoader implements ConfigLoader<CompoundTag, ChestInfo> {

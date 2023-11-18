@@ -1,6 +1,7 @@
 package at.haha007.edenclient.mods.chestshop;
 
-import at.haha007.edenclient.utils.MathUtils;
+import at.haha007.edenclient.utils.Utils;
+import lombok.Data;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.nbt.CompoundTag;
@@ -10,11 +11,12 @@ import net.minecraft.world.level.block.state.properties.ChestType;
 
 import java.util.Objects;
 
+@Data
 public class ChestShopEntry {
     private Vec3i pos;
     private Vec3i chestPos;
-    private int sellPrice = -1;
-    private int buyPrice = -1;
+    private int fullSellPrice = -1;
+    private int fullBuyPrice = -1;
     private int amount;
     private String owner;
     private boolean isShop = false;
@@ -31,7 +33,7 @@ public class ChestShopEntry {
         String player = linesFront[0];
         if (player.isEmpty()) return;
 
-        if (!MathUtils.isInteger(linesFront[1])) return;
+        if (!Utils.isInteger(linesFront[1])) return;
         int amount = Integer.parseInt(linesFront[1]);
 
         String item = linesFront[3];
@@ -41,12 +43,12 @@ public class ChestShopEntry {
         for (String priceString : prices) {
             if (priceString.contains("b")) {
                 priceString = priceString.replace("b", "");
-                if (!MathUtils.isInteger(priceString)) continue;
-                this.buyPrice = Integer.parseInt(priceString);
+                if (!Utils.isInteger(priceString)) continue;
+                this.fullBuyPrice = Integer.parseInt(priceString);
             } else if (priceString.contains("s")) {
                 priceString = priceString.replace("s", "");
-                if (!MathUtils.isInteger(priceString)) continue;
-                this.sellPrice = Integer.parseInt(priceString);
+                if (!Utils.isInteger(priceString)) continue;
+                this.fullSellPrice = Integer.parseInt(priceString);
             } else {
                 return;
             }
@@ -68,9 +70,9 @@ public class ChestShopEntry {
         owner = tag.getString("owner");
         item = tag.getString("item").toLowerCase();
         if (tag.contains("buyPrice"))
-            buyPrice = tag.getInt("buyPrice");
+            fullBuyPrice = tag.getInt("buyPrice");
         if (tag.contains("sellPrice"))
-            sellPrice = tag.getInt("sellPrice");
+            fullSellPrice = tag.getInt("sellPrice");
         stock = tag.getInt("stock");
         int chestTypeInt = tag.getInt("chestType");
         chestType = ChestType.values()[chestTypeInt];
@@ -84,87 +86,38 @@ public class ChestShopEntry {
         tag.putString("item", item);
         tag.putInt("amount", amount);
         if (canBuy())
-            tag.putInt("buyPrice", buyPrice);
+            tag.putInt("buyPrice", fullBuyPrice);
         if (canSell())
-            tag.putInt("sellPrice", sellPrice);
+            tag.putInt("sellPrice", fullSellPrice);
         tag.putInt("stock", stock);
         tag.putInt("chestType", this.chestType.ordinal());
         return tag;
     }
 
-    public boolean isShop() {
-        return isShop;
-    }
-
     public boolean canSell() {
-        return sellPrice >= 0;
+        return fullSellPrice >= 0;
     }
 
     public boolean canBuy() {
-        return buyPrice >= 0;
+        return fullBuyPrice >= 0;
     }
 
     public float getBuyPricePerItem() {
-        return ((float) buyPrice) / amount;
-    }
-
-    public int getFullBuyPrice() {
-        return buyPrice;
+        return ((float) fullBuyPrice) / amount;
     }
 
     public float getSellPricePerItem() {
-        return ((float) sellPrice) / amount;
+        return ((float) fullSellPrice) / amount;
     }
-
-    public int getFullSellPrice() {
-        return sellPrice;
-    }
-
-    public String getItem() {
-        return item;
-    }
-
-    public String getOwner() {
-        return owner;
-    }
-
-    public Vec3i getPos() {
-        return pos;
-    }
-
-    public Vec3i getChestPos() {
-        return chestPos;
-    }
-
-    public int getStock() {
-        return stock;
-    }
-
-    public void setStock(int stock) {
-        this.stock = stock;
-    }
-
-    public void setChestPos(Vec3i chestPos) {
-        this.chestPos = chestPos;
-    }
-
-    public int getAmount() {
-        return amount;
-    }
-
-    public void setChestBlockType(ChestType type) {
-        this.chestType = type;
-    }
-
-    public ChestType getChestBlockType() {
-        return this.chestType;
-    }
-
 
     public ChunkPos getChunkPos() {
         return new ChunkPos(new BlockPos(pos));
     }
 
+    public int getMaxStock() {
+        int slots = chestType == ChestType.SINGLE ? 27 : 54;
+        return slots * 64;
+    }
 
     public String toString() {
         if (!isShop) return String.format("[%s] Not a Shop", pos.toString());
@@ -174,10 +127,10 @@ public class ChestShopEntry {
         sb.append(String.format(", item:%s", item));
         sb.append(String.format(", amount:%d", amount));
         if (canBuy()) {
-            sb.append(String.format(", buy:%d$, bpi:%3f1$/i", buyPrice, getBuyPricePerItem()));
+            sb.append(String.format(", buy:%d$, bpi:%3f1$/i", fullBuyPrice, getBuyPricePerItem()));
         }
         if (canSell()) {
-            sb.append(String.format(", sell:%d$, spi:%3f1$/i", sellPrice, getSellPricePerItem()));
+            sb.append(String.format(", sell:%d$, spi:%3f1$/i", fullSellPrice, getSellPricePerItem()));
         }
         sb.append(String.format(", stock:%d", stock));
         return sb.toString();
@@ -198,18 +151,13 @@ public class ChestShopEntry {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         ChestShopEntry entry = (ChestShopEntry) o;
-        return sellPrice == entry.sellPrice && buyPrice == entry.buyPrice
+        return fullSellPrice == entry.fullSellPrice && fullBuyPrice == entry.fullBuyPrice
                 && amount == entry.amount && isShop == entry.isShop
                 && Objects.equals(pos, entry.pos) && Objects.equals(owner, entry.owner);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(pos, sellPrice, buyPrice, amount, owner, isShop, item);
-    }
-
-    public int getMaxStock() {
-        int slots = chestType == ChestType.SINGLE ? 27 : 54;
-        return slots * 64;
+        return Objects.hash(pos, fullSellPrice, fullBuyPrice, amount, owner, isShop, item);
     }
 }

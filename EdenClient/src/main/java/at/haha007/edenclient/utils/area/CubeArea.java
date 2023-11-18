@@ -4,6 +4,7 @@ import at.haha007.edenclient.command.CommandManager;
 import at.haha007.edenclient.utils.PlayerUtils;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
+import lombok.Getter;
 import net.minecraft.client.multiplayer.ClientSuggestionProvider;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
@@ -18,6 +19,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+@Getter
 public class CubeArea implements BlockArea {
     private final BoundingBox box;
 
@@ -27,10 +29,6 @@ public class CubeArea implements BlockArea {
 
     public CubeArea(Vec3i min, Vec3i max) {
         this(new BoundingBox(min.getX(), min.getY(), min.getZ(), max.getX(), max.getY(), max.getZ()));
-    }
-
-    public BoundingBox getBox() {
-        return box;
     }
 
     @Override

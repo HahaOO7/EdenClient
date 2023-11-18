@@ -1,11 +1,14 @@
 package at.haha007.edenclient.utils.area;
 
+import lombok.Getter;
 import net.minecraft.core.BlockPos;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.stream.Stream;
 
+@Getter
 public class SavableBlockArea implements BlockArea {
+
     private final BlockArea area;
     private final BlockAreaType type;
 
@@ -16,14 +19,6 @@ public class SavableBlockArea implements BlockArea {
         else if (clazz == SphereArea.class) this.type = BlockAreaType.SPHERE;
         else throw new IllegalArgumentException("Unknown area type");
         this.area = area;
-    }
-
-    public BlockArea getArea() {
-        return area;
-    }
-
-    public BlockAreaType getType() {
-        return type;
     }
 
     @Override

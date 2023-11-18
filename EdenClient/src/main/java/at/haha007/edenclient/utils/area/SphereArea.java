@@ -5,6 +5,7 @@ import at.haha007.edenclient.utils.PlayerUtils;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
+import lombok.Getter;
 import net.minecraft.client.multiplayer.ClientSuggestionProvider;
 import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
 import net.minecraft.commands.arguments.coordinates.Coordinates;
@@ -17,6 +18,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+@Getter
 public class SphereArea implements BlockArea {
     private final BlockPos center;
     private final double radius;
@@ -26,14 +28,6 @@ public class SphereArea implements BlockArea {
         this.center = center;
         this.radius = radius;
         this.radiusSquared = radius * radius;
-    }
-
-    public BlockPos getCenter() {
-        return center;
-    }
-
-    public double getRadius() {
-        return radius;
     }
 
     @Override
