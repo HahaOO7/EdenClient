@@ -22,6 +22,7 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.List;
 
@@ -41,6 +42,13 @@ public abstract class ClientPacketListenerMixin {
             return;
         CommandManager.execute(message, new ClientSuggestionProvider(minecraft.getConnection(), minecraft));
         ci.cancel();
+    }
+    @Inject(method = "sendUnsignedCommand", at = @At("HEAD"), cancellable = true)
+    private void onSendUnsignedCommand(String message, CallbackInfoReturnable<Boolean> ci) {
+        if (!CommandManager.isClientSideCommand(message.split(" ")[0]))
+            return;
+        CommandManager.execute(message, new ClientSuggestionProvider(minecraft.getConnection(), minecraft));
+        ci.setReturnValue(true);
     }
 
     @Inject(method = "sendChat", at = @At("HEAD"), cancellable = true)
