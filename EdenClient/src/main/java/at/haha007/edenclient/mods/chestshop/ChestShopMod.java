@@ -4,6 +4,7 @@ import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.annotations.Mod;
 import at.haha007.edenclient.callbacks.AddChatMessageCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
+import at.haha007.edenclient.mods.GetTo;
 import at.haha007.edenclient.mods.chestshop.pathing.ChestShopModPathing;
 import at.haha007.edenclient.mods.datafetcher.ChestShopItemNames;
 import at.haha007.edenclient.mods.datafetcher.DataFetcher;
@@ -24,6 +25,7 @@ import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.multiplayer.ClientSuggestionProvider;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
@@ -97,12 +99,17 @@ public class ChestShopMod {
         if (shopsSet == null) {
             shopsSet = new ChestShopSet();
         }
-        c.getBlockEntities().values().stream()
+
+        List<ChestShopEntry> entries = c.getBlockEntities().values().stream()
                 .filter(SignBlockEntity.class::isInstance)
                 .map(t -> (SignBlockEntity) t)
                 .map(ChestShopEntry::new)
                 .filter(ChestShopEntry::isShop)
-                .forEach(shopsSet::add);
+                .toList();
+
+        shopsSet.addAll(entries);
+        Set<Vec3i> allPos = entries.stream().map(ChestShopEntry::getPos).collect(Collectors.toSet());
+        shopsSet.removeIf(entry -> !allPos.contains(entry.getPos()));
         shops.put(chunk, shopsSet);
     }
 
@@ -260,7 +267,7 @@ public class ChestShopMod {
                         String cmd = "";
                         Component hoverText = Component.literal(opw.isPresent() ? opw.get().getKey() : "click me!").withStyle(ChatFormatting.GOLD);
                         style = style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hoverText));
-                        //style = style.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, cmd));
+                        style = style.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, cmd));
                         return Component.literal(cs.formattedString(false)).setStyle(style);
                     }).forEach(PlayerUtils::sendModMessage);
             return 1;
@@ -278,7 +285,7 @@ public class ChestShopMod {
                         Optional<Map.Entry<String, Vec3i>> opw = getNearestPlayerWarp(cs.getPos());
                         Style style = Style.EMPTY.withColor(ChatFormatting.GOLD);
                         Vec3i pos = cs.getPos();
-                        String cmd = "";
+                        //String cmd = EdenClient.getMod(GetTo.class).getToCommand(new BlockPos(pos));
                         Component hoverText = Component.literal(opw.isPresent() ? opw.get().getKey() : "click me!").withStyle(ChatFormatting.GOLD);
                         style = style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hoverText));
                         //style = style.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, cmd));

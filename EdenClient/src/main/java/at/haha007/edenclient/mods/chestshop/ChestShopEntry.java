@@ -6,18 +6,21 @@ import net.minecraft.core.Vec3i;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.entity.SignBlockEntity;
+import net.minecraft.world.level.block.state.properties.ChestType;
 
 import java.util.Objects;
 
 public class ChestShopEntry {
     private Vec3i pos;
-    private int sellPrice = -1, buyPrice = -1;
-
+    private Vec3i chestPos;
+    private int sellPrice = -1;
+    private int buyPrice = -1;
     private int amount;
     private String owner;
     private boolean isShop = false;
     private String item;
     private int stock = -1;
+    private ChestType chestType;
 
     public ChestShopEntry(SignBlockEntity sign) {
         String[] linesFront = new String[4];
@@ -60,6 +63,8 @@ public class ChestShopEntry {
         amount = tag.getInt("amount");
         int[] ints = tag.getIntArray("pos");
         pos = new Vec3i(ints[0], ints[1], ints[2]);
+        int[] ints2 = tag.getIntArray("chestpos");
+        chestPos = new Vec3i(ints2[0], ints2[1], ints2[2]);
         owner = tag.getString("owner");
         item = tag.getString("item").toLowerCase();
         if (tag.contains("buyPrice"))
@@ -67,11 +72,14 @@ public class ChestShopEntry {
         if (tag.contains("sellPrice"))
             sellPrice = tag.getInt("sellPrice");
         stock = tag.getInt("stock");
+        int chestTypeInt = tag.getInt("chestType");
+        chestType = ChestType.values()[chestTypeInt];
     }
 
     public CompoundTag toTag() {
         CompoundTag tag = new CompoundTag();
         tag.putIntArray("pos", new int[]{pos.getX(), pos.getY(), pos.getZ()});
+        tag.putIntArray("chestpos", new int[]{chestPos.getX(), chestPos.getY(), chestPos.getZ()});
         tag.putString("owner", owner);
         tag.putString("item", item);
         tag.putInt("amount", amount);
@@ -80,6 +88,7 @@ public class ChestShopEntry {
         if (canSell())
             tag.putInt("sellPrice", sellPrice);
         tag.putInt("stock", stock);
+        tag.putInt("chestType", this.chestType.ordinal());
         return tag;
     }
 
@@ -123,18 +132,39 @@ public class ChestShopEntry {
         return pos;
     }
 
+    public Vec3i getChestPos() {
+        return chestPos;
+    }
+
     public int getStock() {
         return stock;
     }
 
     public void setStock(int stock) {
-        System.out.println("STOCK SETTER");
         this.stock = stock;
+    }
+
+    public void setChestPos(Vec3i chestPos) {
+        this.chestPos = chestPos;
     }
 
     public int getAmount() {
         return amount;
     }
+
+    public void setChestBlockType(ChestType type) {
+        this.chestType = type;
+    }
+
+    public ChestType getChestBlockType() {
+        return this.chestType;
+    }
+
+
+    public ChunkPos getChunkPos() {
+        return new ChunkPos(new BlockPos(pos));
+    }
+
 
     public String toString() {
         if (!isShop) return String.format("[%s] Not a Shop", pos.toString());
@@ -151,10 +181,6 @@ public class ChestShopEntry {
         }
         sb.append(String.format(", stock:%d", stock));
         return sb.toString();
-    }
-
-    public ChunkPos getChunkPos() {
-        return new ChunkPos(new BlockPos(pos));
     }
 
     public String formattedString(boolean buy) {
@@ -180,5 +206,10 @@ public class ChestShopEntry {
     @Override
     public int hashCode() {
         return Objects.hash(pos, sellPrice, buyPrice, amount, owner, isShop, item);
+    }
+
+    public int getMaxStock() {
+        int slots = chestType == ChestType.SINGLE ? 27 : 54;
+        return slots * 64;
     }
 }

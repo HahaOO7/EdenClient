@@ -15,10 +15,9 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.block.SignBlock;
-import net.minecraft.world.level.block.StandingSignBlock;
-import net.minecraft.world.level.block.WallSignBlock;
+import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.ChestType;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
@@ -73,7 +72,9 @@ public class ChestShopModPathing implements Runnable {
 
     private void runEntryChestClick(ChestShopEntry entry) {
         LocalPlayer player = PlayerUtils.getPlayer();
+
         BlockState signBlockState = player.clientLevel.getBlockState(new BlockPos(entry.getPos().getX(), entry.getPos().getY(), entry.getPos().getZ()));
+        BlockPos signBlockPos = new BlockPos(entry.getPos().getX(), entry.getPos().getY(), entry.getPos().getZ());
 
         // Check if the block is a sign
         if (!(signBlockState.getBlock() instanceof SignBlock)) {
@@ -81,28 +82,34 @@ public class ChestShopModPathing implements Runnable {
             return;
         }
 
-        // It's a sign, now get the block it is attached to
-        BlockPos containerPos = null;
+        List<BlockPos> possibleContainerPositions = new ArrayList<>(List.of(
+                new BlockPos(signBlockPos.getX(), signBlockPos.getY() - 1, signBlockPos.getZ()), // Below the sign
+                new BlockPos(signBlockPos.getX(), signBlockPos.getY() + 1, signBlockPos.getZ()), // Above the sign
+                new BlockPos(signBlockPos.getX() + 1, signBlockPos.getY(), signBlockPos.getZ()), // To the east of the sign
+                new BlockPos(signBlockPos.getX(), signBlockPos.getY(), signBlockPos.getZ() - 1), // To the north of the sign
+                new BlockPos(signBlockPos.getX() - 1, signBlockPos.getY(), signBlockPos.getZ()), // To the west of the sign
+                new BlockPos(signBlockPos.getX(), signBlockPos.getY(), signBlockPos.getZ() + 1)  // To the south of the sign
+        ));
 
-        // TODO: problem --> sign can be on a wall, but the chest below it
-
+        // if it is directly behind the sign
         if (signBlockState.getBlock() instanceof WallSignBlock) {
             // For wall signs, find the block it's attached to based on its facing direction
             Direction facing = signBlockState.getValue(WallSignBlock.FACING);
-            containerPos = new BlockPos(entry.getPos().getX() - facing.getStepX(), entry.getPos().getY(), entry.getPos().getZ() - facing.getStepZ());
-        } else if (signBlockState.getBlock() instanceof StandingSignBlock) {
-            // For standing signs, the block below is what the sign is standing on
-            containerPos = new BlockPos(entry.getPos().getX(), entry.getPos().getY() - 1, entry.getPos().getZ());
+            BlockPos mostLikelyPos = new BlockPos(entry.getPos().getX() - facing.getStepX(), entry.getPos().getY(), entry.getPos().getZ() - facing.getStepZ());
+            possibleContainerPositions.add(0, mostLikelyPos);
         }
 
-        if (containerPos == null) {
-            sendModMessage("Couldn't find container the sign is attached to? " + entry);
-            return;
+        for (BlockPos pos : possibleContainerPositions) {
+            BlockState state = PlayerUtils.getPlayer().clientLevel.getBlockState(pos);
+            Block block = state.getBlock();
+            if (block == Blocks.CHEST || block == Blocks.TRAPPED_CHEST) {
+                MultiPlayerGameMode interactionManager = Objects.requireNonNull(Minecraft.getInstance().gameMode);
+                interactionManager.startDestroyBlock(pos, getFacingDirection(player, pos));
+                entry.setChestPos(pos);
+                entry.setChestBlockType(state.getValue(ChestBlock.TYPE));
+                break;
+            }
         }
-
-        MultiPlayerGameMode interactionManager = Objects.requireNonNull(Minecraft.getInstance().gameMode);
-
-        interactionManager.startDestroyBlock(new BlockPos(containerPos.getX(), containerPos.getY(), containerPos.getZ()), getFacingDirection(player, containerPos));
     }
 
     private Direction getFacingDirection(LocalPlayer player, BlockPos blockPos) {
