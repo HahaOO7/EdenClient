@@ -50,7 +50,7 @@ public enum ChestShopModPathingMode {
             Map<ChunkPos, List<ChestShopEntry>> map = entries.stream().collect(Collectors.groupingBy(ChestShopEntry::getChunkPos));
             List<ChunkPos> chunkTraverseOrder = getChunkTraverseOrder(map);
 
-            Vec3i lastEntryOfChunk = null;
+            Vec3i lastEntryOfChunk = new Vec3i(PlayerUtils.getPlayer().getBlockX(), PlayerUtils.getPlayer().getBlockY(), PlayerUtils.getPlayer().getBlockZ());
 
             for (ChunkPos chunkPos : chunkTraverseOrder) {
                 List<ChestShopEntry> shopsForChunk = map.get(chunkPos);
@@ -86,7 +86,7 @@ public enum ChestShopModPathingMode {
 
     /*
     Sorts the shops into an efficient order by starting at the shop closest to the startPos and always going to the next closest shop.
-   */
+    */
     private static List<ChestShopEntry> sortEntriesWithStartPos(List<ChestShopEntry> unsortedShops, Vec3i startPos) {
         unsortedShops = new ArrayList<>(unsortedShops); // make sure its mutable
         unsortedShops.sort(Comparator.comparingDouble(c -> c.getPos().distSqr(startPos))); // start with pos closest to the startPos!
