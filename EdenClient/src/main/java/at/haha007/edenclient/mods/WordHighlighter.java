@@ -14,7 +14,7 @@ import net.minecraft.client.multiplayer.ClientSuggestionProvider;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
-import net.minecraft.network.chat.contents.LiteralContents;
+import net.minecraft.network.chat.contents.PlainTextContents;
 import net.minecraft.network.chat.contents.TranslatableContents;
 
 import java.awt.*;
@@ -49,7 +49,7 @@ public class WordHighlighter {
     private void onChat(AddChatMessageCallback.ChatAddEvent event) {
         if (!enabled || event.getChatText() == null) return;
         for (String word : words) {
-            event.setChatText(highlight(event.getChatText(), word));
+            event.setChatText(highlight(event.getChatText().copy(), word));
         }
     }
 
@@ -187,14 +187,8 @@ public class WordHighlighter {
         sendUsageDebugMessage();
     }
 
-    private Component highlight(Component txt, String string) {
-        if (!(txt instanceof MutableComponent text)) {
-            txt.getSiblings().replaceAll(y -> highlight(y, string));
-            return txt;
-        }
-
-
-        if (text.getContents() instanceof LiteralContents t) {
+    private MutableComponent highlight(MutableComponent txt, String string) {
+        if (txt.getContents() instanceof PlainTextContents.LiteralContents t) {
             String s = t.text();
             Pattern pattern = Pattern.compile(string, Pattern.CASE_INSENSITIVE | Pattern.LITERAL);
             Matcher matcher = pattern.matcher(s);
@@ -213,28 +207,28 @@ public class WordHighlighter {
                 matcher = pattern.matcher(s);
             }
             if (subtext.isEmpty()) {
-                text.getSiblings().replaceAll(x -> highlight(x, string));
-                return text;
+                txt.getSiblings().replaceAll(x -> highlight(x.copy(), string));
+                return txt;
             }
             if (!s.isEmpty())
                 subtext.add(Component.literal(s).setStyle(baseStyle));
             MutableComponent nextText = Component.literal("");
             subtext.forEach(nextText::append);
-            txt.getSiblings().stream().map(sibling -> highlight(sibling, string)).forEach(nextText::append);
+            txt.getSiblings().stream().map(sibling -> highlight(sibling.copy(), string)).forEach(nextText::append);
             return nextText;
-        } else if (text.getContents() instanceof TranslatableContents t) {
+        } else if (txt.getContents() instanceof TranslatableContents t) {
             Object[] args = t.getArgs();
             for (int i = 0; i < args.length; i++) {
                 if (args[i] instanceof Component y)
-                    args[i] = highlight(y, string);
+                    args[i] = highlight(y.copy(), string);
                 else if (args[i] instanceof String y)
                     args[i] = highlight(Component.literal(y), string);
             }
-            txt.getSiblings().replaceAll(y -> highlight(y, string));
+            txt.getSiblings().replaceAll(y -> highlight(y.copy(), string));
             return txt;
         } else {
-            text.getSiblings().replaceAll(y -> highlight(y, string));
-            return text;
+            txt.getSiblings().replaceAll(y -> highlight(y.copy(), string));
+            return txt;
         }
     }
 

@@ -8,6 +8,7 @@ import at.haha007.edenclient.mods.MessageIgnorer;
 import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.Scheduler;
+import at.haha007.edenclient.utils.Utils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import at.haha007.edenclient.utils.config.wrappers.BiStringStringMap;
@@ -15,14 +16,19 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
+import net.kyori.adventure.platform.fabric.FabricAudiences;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.multiplayer.ClientSuggestionProvider;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.DefaultedRegistry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.contents.PlainTextContents;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
@@ -37,8 +43,8 @@ public class ChestShopItemNames {
 
     @ConfigSubscriber
     private final BiStringStringMap itemNameMap = new BiStringStringMap();
-    @ConfigSubscriber("itemdb")
-    private String command = "itemdb";
+    @ConfigSubscriber("iteminfo")
+    private String command = "iteminfo";
     @ConfigSubscriber("20")
     private int fetchDelay = 20;
     @ConfigSubscriber("Full Name:")
@@ -64,13 +70,13 @@ public class ChestShopItemNames {
 
         if (fullNameMatcher.matches()) {
             lastFullNameCached = fullNameMatcher.group("originalname").trim().toLowerCase().replace(' ', '_');
+            return;
         }
 
         if (lastFullNameCached != null && shortenedNameMatcher.matches()) {
             itemNameMap.put(shortenedNameMatcher.group("shortenedname").toLowerCase(), lastFullNameCached);
             lastFullNameCached = null;
         }
-
     }
 
     public String getLongName(String shortName) {
@@ -101,9 +107,7 @@ public class ChestShopItemNames {
 
         mapItemNames.then(literal("fetchcommand").executes(c -> {
             PlayerUtils.sendModMessage("Fetch command: " + command);
-            PlayerUtils.sendModMessage(Component.literal("Use ")
-                    .append(Component.literal("/datafetcher " + command).withStyle(ChatFormatting.LIGHT_PURPLE))
-                    .append(Component.literal(" for more info")));
+            PlayerUtils.sendModMessage(Component.literal("Use ").append(Component.literal("/datafetcher " + command).withStyle(ChatFormatting.LIGHT_PURPLE)).append(Component.literal(" for more info")));
             return 1;
         }).then(argument("command", StringArgumentType.word()).executes(c -> {
             command = StringArgumentType.getString(c, "command");
@@ -114,7 +118,7 @@ public class ChestShopItemNames {
         mapItemNames.then(literal("fullpattern").executes(c -> {
             PlayerUtils.sendModMessage("Full name pattern: " + fullNamePrefix);
             return 1;
-        }).then(argument("pattern", StringArgumentType.word()).executes(c -> {
+        }).then(argument("pattern", StringArgumentType.greedyString()).executes(c -> {
             fullNamePrefix = StringArgumentType.getString(c, "pattern");
             PlayerUtils.sendModMessage("Set full name pattern to: " + fullNamePrefix);
             return 1;
@@ -123,7 +127,7 @@ public class ChestShopItemNames {
         mapItemNames.then(literal("shortpattern").executes(c -> {
             PlayerUtils.sendModMessage("Short name pattern: " + shortNamePrefix);
             return 1;
-        }).then(argument("pattern", StringArgumentType.word()).executes(c -> {
+        }).then(argument("pattern", StringArgumentType.greedyString()).executes(c -> {
             shortNamePrefix = StringArgumentType.getString(c, "pattern");
             PlayerUtils.sendModMessage("Set short name pattern to: " + shortNamePrefix);
             return 1;
@@ -158,14 +162,7 @@ public class ChestShopItemNames {
 
 
         DefaultedRegistry<Item> itemRegistry = BuiltInRegistries.ITEM;
-        String[] minecraftIDs = itemRegistry.stream()
-                .map(itemRegistry::getKey)
-                .map(ResourceLocation::toString)
-                .map(itemName -> itemName.split(":")[1])
-                .map(itemName -> itemName.replace('_', ' '))
-                .map(String::toLowerCase)
-                .filter(Predicate.not(itemNameMap::containsValue))
-                .toList().toArray(new String[0]);
+        String[] minecraftIDs = itemRegistry.stream().map(itemRegistry::getKey).map(ResourceLocation::toString).map(itemName -> itemName.split(":")[1]).map(itemName -> itemName.replace('_', ' ')).map(String::toLowerCase).filter(Predicate.not(itemNameMap::containsValue)).toList().toArray(new String[0]);
         sendModMessage(ChatColor.GOLD + "Started Mapping. Mapping will take about " + ChatColor.AQUA + (minecraftIDs.length / 60 + 1) + " minutes");
 
         AtomicInteger index = new AtomicInteger();
@@ -182,7 +179,7 @@ public class ChestShopItemNames {
                 return false;
             }
             String item = minecraftIDs[i];
-            entityPlayer.connection.sendCommand( command + " " + item);
+            entityPlayer.connection.sendCommand(command + " " + item);
             if (i % 60 == 0) {
                 sendModMessage(ChatColor.GOLD + "Mapped " + ChatColor.AQUA + i + ChatColor.GOLD + " items of " + ChatColor.AQUA + minecraftIDs.length + ChatColor.GOLD + " this far.");
             }

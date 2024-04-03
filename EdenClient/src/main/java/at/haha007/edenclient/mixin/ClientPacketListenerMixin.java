@@ -22,6 +22,7 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.List;
 
@@ -37,10 +38,16 @@ public abstract class ClientPacketListenerMixin {
 
     @Inject(method = "sendCommand", at = @At("HEAD"), cancellable = true)
     private void onSendCommand(String message, CallbackInfo ci) {
-        if (!CommandManager.isClientSideCommand(message.split(" ")[0]))
-            return;
+        if (!CommandManager.isClientSideCommand(message.split(" ")[0])) return;
         CommandManager.execute(message, new ClientSuggestionProvider(minecraft.getConnection(), minecraft));
         ci.cancel();
+    }
+
+    @Inject(method = "sendUnsignedCommand", at = @At("HEAD"), cancellable = true)
+    private void onSendUnsignedCommand(String message, CallbackInfoReturnable<Boolean> ci) {
+        if (!CommandManager.isClientSideCommand(message.split(" ")[0])) return;
+        CommandManager.execute(message, new ClientSuggestionProvider(minecraft.getConnection(), minecraft));
+        ci.setReturnValue(true);
     }
 
     @Inject(method = "sendChat", at = @At("HEAD"), cancellable = true)
@@ -77,8 +84,7 @@ public abstract class ClientPacketListenerMixin {
         items = items.subList(0, items.size() - 36);
         int id = packet.getContainerId();
         ContainerInfo containerInfo = ContainerInfo.update(id, items);
-        if (containerInfo.isComplete())
-            InventoryOpenCallback.EVENT.invoker().open(containerInfo);
+        if (containerInfo.isComplete()) InventoryOpenCallback.EVENT.invoker().open(containerInfo);
     }
 
     @Inject(method = "handleOpenScreen", at = @At("HEAD"))
@@ -87,8 +93,7 @@ public abstract class ClientPacketListenerMixin {
         int id = packet.getContainerId();
         Component title = packet.getTitle();
         ContainerInfo containerInfo = ContainerInfo.update(id, type, title);
-        if (containerInfo.isComplete())
-            InventoryOpenCallback.EVENT.invoker().open(containerInfo);
+        if (containerInfo.isComplete()) InventoryOpenCallback.EVENT.invoker().open(containerInfo);
     }
 
     @Inject(method = "handleSystemChat", at = @At("HEAD"), cancellable = true)

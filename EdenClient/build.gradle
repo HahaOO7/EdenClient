@@ -1,5 +1,5 @@
 plugins {
-    id 'fabric-loom' version '1.4-SNAPSHOT'
+    id 'fabric-loom' version '1.5-SNAPSHOT'
     id 'maven-publish'
 }
 
@@ -16,7 +16,24 @@ repositories {
     // Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
     // See https://docs.gradle.org/current/userguide/declaring_repositories.html
     // for more information about repositories.
+    maven {
+        name = "meteorRepository"
+        url = uri("https://maven.meteordev.org/snapshots")
+    }
+
+    mavenCentral()
 }
+
+loom {
+    officialMojangMappings()
+
+    mods {
+        "edenclient" {
+            sourceSet sourceSets.main
+        }
+    }
+}
+
 
 dependencies {
     // To change the versions see the gradle.properties file
@@ -28,6 +45,10 @@ dependencies {
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
     implementation project(":EcAnnotations")
     annotationProcessor project(":EcProcessors")
+    compileOnly 'org.projectlombok:lombok:1.18.30'
+    annotationProcessor 'org.projectlombok:lombok:1.18.30'
+
+    modImplementation include("net.kyori:adventure-platform-fabric:5.12.0")
 }
 
 processResources {
@@ -59,10 +80,9 @@ jar {
         configurations
                 .runtimeClasspath
                 .collect {
-                    if(it.name.equalsIgnoreCase("EcAnnotations.jar")) {
+                    if (it.name.equalsIgnoreCase("EcAnnotations.jar")) {
                         zipTree(it)
-                    }
-                    else {
+                    } else {
                         null
                     }
                 }
@@ -72,8 +92,7 @@ jar {
 
 // configure the maven publication
 publishing {
-    publications {
-    }
+    publications {}
 
     // See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
     repositories {

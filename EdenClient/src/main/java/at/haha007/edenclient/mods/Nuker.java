@@ -70,7 +70,7 @@ public class Nuker {
     }
 
     private void configLoaded() {
-        if(area == null) {
+        if (area == null) {
             area = new SavableBlockArea(new CubeArea(new Vec3i(-1000000, -1000000, -1000000), new Vec3i(1000000, 1000000, 1000000)));
         }
     }

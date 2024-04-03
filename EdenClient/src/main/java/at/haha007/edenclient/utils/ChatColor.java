@@ -3,6 +3,9 @@ package at.haha007.edenclient.utils;
 import java.awt.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import com.mojang.datafixers.util.Either;
+import com.mojang.serialization.DataResult;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -62,7 +65,10 @@ public class ChatColor {
             int start = matcher.start();
             int end = matcher.end();
             text.append(Component.literal(string.substring(0, start)).setStyle(style));
-            style = style.withColor(TextColor.parseColor(string.substring(start + 1, end)));
+            Either<TextColor, DataResult.PartialResult<TextColor>> result = TextColor.parseColor(string.substring(start + 1, end)).get();
+            if (result.left().isPresent()) {
+                style = style.withColor(result.left().get());
+            }
             string = string.substring(end);
             matcher = hex.matcher(string);
         }

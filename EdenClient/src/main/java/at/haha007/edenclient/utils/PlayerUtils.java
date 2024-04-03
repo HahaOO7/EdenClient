@@ -46,7 +46,7 @@ public class PlayerUtils {
             return;
         }
         if (msg.startsWith("/"))
-            player.connection.sendCommand(msg);
+            player.connection.sendCommand(msg.substring(1));
         else
             player.connection.sendChat(msg);
     }

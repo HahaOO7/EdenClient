@@ -72,23 +72,18 @@ public class Excavator {
             }
             return;
         }
-        if (target.tick(player))
-            target = null;
+        if (target.tick(player)) target = null;
     }
 
     private Target dropDownTarget(LocalPlayer player) {
         BlockPos playerPos = player.blockPosition();
         int floorY = playerPos.getY() - 1;
-        BlockPos dropPos = area.stream().filter(p -> p.getY() == floorY)
-                .min(Comparator.comparingDouble(pos -> pos.distSqr(playerPos)))
-                .map(BlockPos::above)
-                .orElse(null);
+        BlockPos dropPos = area.stream().filter(p -> p.getY() == floorY).min(Comparator.comparingDouble(pos -> pos.distSqr(playerPos))).map(BlockPos::above).orElse(null);
         if (dropPos == null) return null;
         BlockPos dropFloor = dropPos.below().below();
         BlockState state = player.clientLevel.getBlockState(dropFloor);
         //if it is not safe to drop
-        if (!state.getShape(player.clientLevel, dropFloor).isEmpty() &&
-                !state.isFaceSturdy(player.clientLevel, dropFloor, Direction.UP)) {
+        if (!state.getShape(player.clientLevel, dropFloor).isEmpty() && !state.isFaceSturdy(player.clientLevel, dropFloor, Direction.UP)) {
             return new Target(dropFloor, 5, breakBlockTargetAction(dropFloor));
         }
         if (state.isFaceSturdy(player.clientLevel, dropFloor, Direction.UP)) {
@@ -132,9 +127,7 @@ public class Excavator {
     private Target areaTarget(BlockPos pos) {
         int minY = pos.getY() - 1;
         int maxY = pos.getY() + 4;
-        List<BlockPos> c = area.stream().filter(p -> filterMinY(minY, p))
-                .filter(p -> p.getY() < maxY)
-                .sorted(Comparator.comparingDouble(pos::distManhattan)).toList();
+        List<BlockPos> c = area.stream().filter(p -> filterMinY(minY, p)).filter(p -> p.getY() < maxY).sorted(Comparator.comparingDouble(pos::distManhattan)).toList();
 
         Optional<Target> placeTarget = c.stream().map(this::placeTarget).filter(Objects::nonNull).findFirst();
         c = c.stream().filter(p -> p.getY() > minY).toList();
@@ -148,9 +141,7 @@ public class Excavator {
     private Target ceilingTarget(BlockPos playerPos) {
         int minY = playerPos.getY() + 2;
         int maxY = playerPos.getY() + 4;
-        List<BlockPos> c = area.ceilingStream().filter(p -> filterMinY(minY, p))
-                .filter(p -> p.getY() < maxY)
-                .sorted(Comparator.comparingDouble(playerPos::distManhattan)).toList();
+        List<BlockPos> c = area.ceilingStream().filter(p -> filterMinY(minY, p)).filter(p -> p.getY() < maxY).sorted(Comparator.comparingDouble(playerPos::distManhattan)).toList();
         Optional<Target> target = c.stream().map(this::breakWaterloggedTarget).filter(Objects::nonNull).findFirst();
         if (target.isPresent()) return target.get();
 
@@ -161,9 +152,7 @@ public class Excavator {
     private Target floorTarget(BlockPos playerPos) {
         int minY = playerPos.getY() - 2;
         int maxY = playerPos.getY() + 2;
-        List<BlockPos> c = area.floorStream().filter(p -> filterMinY(minY, p))
-                .filter(p -> p.getY() < maxY)
-                .sorted(Comparator.comparingDouble(playerPos::distManhattan)).toList();
+        List<BlockPos> c = area.floorStream().filter(p -> filterMinY(minY, p)).filter(p -> p.getY() < maxY).sorted(Comparator.comparingDouble(playerPos::distManhattan)).toList();
         Optional<Target> target = c.stream().map(this::breakWaterloggedTarget).filter(Objects::nonNull).findFirst();
         if (target.isPresent()) return target.get();
 
@@ -174,9 +163,7 @@ public class Excavator {
     private Target wallTarget(BlockPos playerPos) {
         int minY = playerPos.getY();
         int maxY = playerPos.getY() + 2;
-        List<BlockPos> c = area.wallStream().filter(p -> filterMinY(minY, p))
-                .filter(p -> p.getY() < maxY)
-                .sorted(Comparator.comparingDouble(playerPos::distManhattan)).toList();
+        List<BlockPos> c = area.wallStream().filter(p -> filterMinY(minY, p)).filter(p -> p.getY() < maxY).sorted(Comparator.comparingDouble(playerPos::distManhattan)).toList();
         Optional<Target> target = c.stream().map(this::breakWaterloggedTarget).filter(Objects::nonNull).findFirst();
         if (target.isPresent()) return target.get();
 
@@ -214,12 +201,9 @@ public class Excavator {
         FluidState fluidState = level.getFluidState(pos);
         Target target = new Target(pos, 5, breakBlockTargetAction(pos));
         boolean hasCollisionShape = !blockState.getShape(level, pos).isEmpty();
-        if (!fluidState.isEmpty() && hasCollisionShape)
-            return target;
-        if (hasNeighboringFluids(pos, level))
-            return null;
-        if (hasCollisionShape)
-            return target;
+        if (!fluidState.isEmpty() && hasCollisionShape) return target;
+        if (hasNeighboringFluids(pos, level)) return null;
+        if (hasCollisionShape) return target;
         return null;
     }
 
@@ -230,8 +214,7 @@ public class Excavator {
         FluidState fluidState = level.getFluidState(pos);
         Target target = new Target(pos, 5, breakBlockTargetAction(pos));
         boolean hasCollisionShape = !blockState.getShape(level, pos).isEmpty();
-        if (!fluidState.isEmpty() && hasCollisionShape)
-            return target;
+        if (!fluidState.isEmpty() && hasCollisionShape) return target;
         return null;
     }
 
@@ -322,15 +305,14 @@ public class Excavator {
         cmd.then(CommandManager.literal("don't").executes(c -> {
             Scheduler scheduler = getMod(Scheduler.class);
             ClientLevel world = PlayerUtils.getPlayer().clientLevel;
-            scheduler.runAsync(
-                    () -> streamOut(PlayerUtils.getPlayer().blockPosition().below()).map(BlockPos::new).forEach(b -> {
-                        try {
-                            world.setBlockAndUpdate(b, Blocks.WATER.defaultBlockState());
-                            Thread.sleep(1);
-                        } catch (InterruptedException | IndexOutOfBoundsException e) {
-                            Utils.getLogger().error("Error while don't-ing.", e);
-                        }
-                    }));
+            scheduler.runAsync(() -> streamOut(PlayerUtils.getPlayer().blockPosition().below()).map(BlockPos::new).forEach(b -> {
+                try {
+                    world.setBlockAndUpdate(b, Blocks.WATER.defaultBlockState());
+                    Thread.sleep(1);
+                } catch (InterruptedException | IndexOutOfBoundsException e) {
+                    Utils.getLogger().error("Error while don't-ing.", e);
+                }
+            }));
             return 1;
         }));
 
@@ -377,11 +359,11 @@ public class Excavator {
     }
 
     private void setArea(BlockArea area) {
-        if(area == null){
+        if (area == null) {
             this.area = null;
             return;
         }
-        if(area instanceof SavableBlockArea savableBlockArea){
+        if (area instanceof SavableBlockArea savableBlockArea) {
             this.area = savableBlockArea;
             return;
         }
@@ -409,8 +391,7 @@ public class Excavator {
         }
 
         public boolean tick(LocalPlayer player) {
-            if (player.position().subtract(pos.getCenter()).horizontalDistance() > 2)
-                PlayerUtils.walkTowards(pos);
+            if (player.position().subtract(pos.getCenter()).horizontalDistance() > 2) PlayerUtils.walkTowards(pos);
             return performAction(player);
         }
 
@@ -428,9 +409,7 @@ public class Excavator {
             if (obj == this) return true;
             if (obj == null || obj.getClass() != this.getClass()) return false;
             var that = (Target) obj;
-            return Objects.equals(this.pos, that.pos) &&
-                    Double.doubleToLongBits(this.actionDistance) == Double.doubleToLongBits(that.actionDistance) &&
-                    Objects.equals(this.action, that.action);
+            return Objects.equals(this.pos, that.pos) && Double.doubleToLongBits(this.actionDistance) == Double.doubleToLongBits(that.actionDistance) && Objects.equals(this.action, that.action);
         }
 
         @Override
@@ -440,10 +419,7 @@ public class Excavator {
 
         @Override
         public String toString() {
-            return "Target[" +
-                    "pos=" + pos + ", " +
-                    "actionDistance=" + actionDistance + ", " +
-                    "action=" + action + ']';
+            return "Target[" + "pos=" + pos + ", " + "actionDistance=" + actionDistance + ", " + "action=" + action + ']';
         }
 
     }

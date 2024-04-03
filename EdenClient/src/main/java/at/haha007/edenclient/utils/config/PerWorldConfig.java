@@ -11,6 +11,7 @@ import at.haha007.edenclient.utils.config.loaders.*;
 import at.haha007.edenclient.utils.config.wrappers.*;
 import net.minecraft.core.Vec3i;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Style;
@@ -150,7 +151,7 @@ public class PerWorldConfig {
         }
         CompoundTag tag = new CompoundTag();
         try {
-            tag = file.exists() ? NbtIo.readCompressed(file) : new CompoundTag();
+            tag = file.exists() ? NbtIo.readCompressed(file.toPath(), NbtAccounter.unlimitedHeap()) : new CompoundTag();
         } catch (IOException e) {
             Utils.getLogger().error("Error while loading PerWorldConfig: " + worldName, e);
         }
@@ -172,7 +173,7 @@ public class PerWorldConfig {
             }
         }
         try {
-            NbtIo.writeCompressed(tag, file);
+            NbtIo.writeCompressed(tag, file.toPath());
         } catch (IOException e) {
             Utils.getLogger().error("Error while saving PerWorldConfig: " + worldName, e);
         }

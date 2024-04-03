@@ -17,6 +17,11 @@ public class ModInitializer {
         List<Class<?>> modClasses = getModClassesSorted();
         modClasses.forEach(this::registerMod);
     }
+    public void initializeMods(Collection<Class<?>> filter) {
+        List<Class<?>> modClasses = getModClassesSorted();
+        modClasses.stream().filter(filter::contains).forEach(this::registerMod);
+    }
+
 
     public <T> T getMod(Class<T> clazz) {
         //noinspection unchecked

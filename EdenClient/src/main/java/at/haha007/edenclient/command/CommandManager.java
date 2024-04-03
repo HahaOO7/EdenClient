@@ -15,7 +15,7 @@ import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.multiplayer.ClientSuggestionProvider;
 import net.minecraft.network.chat.*;
-import net.minecraft.network.chat.contents.LiteralContents;
+import net.minecraft.network.chat.contents.PlainTextContents;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -47,7 +47,7 @@ public class CommandManager {
                     map(Component::literal).
                     map(t -> t.withStyle(ChatFormatting.GOLD)
                             .withStyle(s -> s.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.nullToEmpty("Click for more info."))))
-                            .withStyle(s -> s.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/" + node.getLiteral() + " " + ((LiteralContents) t.getContents()).text())))).
+                            .withStyle(s -> s.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/" + node.getLiteral() + " " + ((PlainTextContents.LiteralContents) t.getContents()).text())))).
                     sorted(Comparator.comparing(Object::toString)).
                     toList().iterator();
 

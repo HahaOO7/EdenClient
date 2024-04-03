@@ -1,7 +1,7 @@
 package at.haha007.edenclient.mods;
 
-import at.haha007.edenclient.annotations.Mod;
 import at.haha007.edenclient.EdenClient;
+import at.haha007.edenclient.annotations.Mod;
 import at.haha007.edenclient.callbacks.GameRenderCallback;
 import at.haha007.edenclient.callbacks.JoinWorldCallback;
 import at.haha007.edenclient.callbacks.LeaveWorldCallback;
@@ -9,6 +9,7 @@ import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.mods.datafetcher.DataFetcher;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.RenderUtils;
+import at.haha007.edenclient.utils.Utils;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -115,8 +116,7 @@ public class GetTo {
             PlayerUtils.sendModMessage("Target disabled");
             return 1;
         }));
-        register(cmd,
-                "This mod is for internal use only.");
+        register(cmd, "This mod is for internal use only.");
     }
 
     public String getCommandTo(Vec3i target) {
@@ -127,12 +127,14 @@ public class GetTo {
         target = pos;
         this.tracer = tracer;
         this.box = box;
-        if (tp)
+        if (tp) {
             getNearestPlayerWarp(pos).map(pw -> "/pw " + pw).ifPresent(PlayerUtils::messageC2S);
+        }
     }
 
     private Optional<String> getNearestPlayerWarp(Vec3i pos) {
         Vec3i pp = PlayerUtils.getPlayer().blockPosition();
+        Utils.getLogger().info(EdenClient.getMod(DataFetcher.class).getPlayerWarps().getAll().toString());
         return EdenClient.getMod(DataFetcher.class).getPlayerWarps().getAll().entrySet().stream()
                 .min(Comparator.comparingDouble(e -> e.getValue().distSqr(pos)))
                 .map(e -> dist(pos, pp) < dist(e.getValue(), pos) ? null : e.getKey());
