@@ -1,10 +1,12 @@
 package at.haha007.edenclient.mods.datafetcher;
 
 import at.haha007.edenclient.annotations.Mod;
+import lombok.Getter;
 
 import static at.haha007.edenclient.command.CommandManager.literal;
 import static at.haha007.edenclient.command.CommandManager.register;
 
+@Getter
 @Mod
 public class DataFetcher {
     private final PlayerWarps playerWarps = new PlayerWarps();
@@ -16,15 +18,4 @@ public class DataFetcher {
                 "Enables fetching of playerwarp-data and abbreviated chestshop-itemnames.");
     }
 
-    public ContainerInfo getContainerInfo() {
-        return containerInfo;
-    }
-
-    public PlayerWarps getPlayerWarps() {
-        return playerWarps;
-    }
-
-    public ChestShopItemNames getChestShopItemNames() {
-        return chestShopItemNames;
-    }
 }

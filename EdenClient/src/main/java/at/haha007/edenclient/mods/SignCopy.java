@@ -3,7 +3,6 @@ package at.haha007.edenclient.mods;
 import at.haha007.edenclient.annotations.Mod;
 import at.haha007.edenclient.callbacks.PlayerAttackBlockCallback;
 import at.haha007.edenclient.callbacks.PlayerEditSignCallback;
-import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
@@ -46,14 +45,14 @@ public class SignCopy {
     }
 
     private void registerCommand() {
-        var node = literal("esigncopy");
+        var node = literal("esignedit");
         node.then(literal("toggle").executes(c -> {
             enabled = !enabled;
-            sendModMessage(ChatColor.GOLD + (enabled ? "SignCopy enabled" : "SignCopy disabled"));
+            sendModMessage((enabled ? "SignCopy enabled" : "SignCopy disabled"));
             return 1;
         }));
-        register(node,
-                "SignCopy lets you copy signs and place them again without opening the dialogue/having to type each line again.");
+        register(node, "SignCopy lets you copy signs and place them again without opening" +
+                " the dialogue/having to type each line again.");
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -70,13 +69,13 @@ public class SignCopy {
         shouldCopy = true;
         CompoundTag tag = new CompoundTag();
         sign.load(tag);
-        String[] copy = new String[4];
-        copy[0] = getString(tag.getString("Text1"));
-        copy[1] = getString(tag.getString("Text2"));
-        copy[2] = getString(tag.getString("Text3"));
-        copy[3] = getString(tag.getString("Text4"));
+        String[] copiedLines = new String[4];
+        copiedLines[0] = getString(tag.getString("Text1"));
+        copiedLines[1] = getString(tag.getString("Text2"));
+        copiedLines[2] = getString(tag.getString("Text3"));
+        copiedLines[3] = getString(tag.getString("Text4"));
         this.copy = new StringList();
-        this.copy.addAll(Arrays.asList(copy));
+        this.copy.addAll(Arrays.asList(copiedLines));
         return InteractionResult.FAIL;
     }
 

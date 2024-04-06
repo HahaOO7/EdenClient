@@ -34,7 +34,7 @@ public class Scheduler {
         delayedSync.clear();
         repeatingSync.clear();
         tick = 0;
-        Utils.getLogger().info("Scheduler tasks cleared");
+        EdenUtils.getLogger().info("Scheduler tasks cleared");
     }
 
     private synchronized void tick(LocalPlayer clientPlayerEntity) {

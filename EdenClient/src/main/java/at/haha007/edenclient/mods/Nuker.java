@@ -16,6 +16,8 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.ClientPacketListener;
@@ -36,6 +38,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.Vec3;
 
+import javax.naming.Name;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Predicate;
@@ -101,8 +104,8 @@ public class Nuker {
             PlayerUtils.sendModMessage("Nuke area updated.");
             return 1;
         }));
-        BlockArea.commands((c, area) -> {
-            this.area = new SavableBlockArea(area);
+        BlockArea.commands((c, blockArea) -> {
+            this.area = new SavableBlockArea(blockArea);
             PlayerUtils.sendModMessage("Nuke area updated.");
         }).forEach(areaCmd::then);
         cmd.then(areaCmd);
@@ -124,11 +127,13 @@ public class Nuker {
                     PlayerUtils.sendModMessage("List cleared.");
                     return 1;
                 })).executes(c -> {
-                    StringBuilder text = new StringBuilder(ChatColor.GOLD + "Nuke blocks: " + ChatColor.AQUA);
+                    Component text = Component.text("Nuke Blocks: ", NamedTextColor.GOLD);
+                    StringBuilder sb = new StringBuilder();
                     for (Block block : filter) {
-                        text.append(block.getName()).append(" ");
+                        sb.append(block.getName()).append(" ");
                     }
-                    PlayerUtils.sendModMessage(text.toString());
+                    text = text.append(Component.text(sb.toString().trim(), NamedTextColor.AQUA));
+                    PlayerUtils.sendModMessage(text);
                     return 1;
                 }));
 

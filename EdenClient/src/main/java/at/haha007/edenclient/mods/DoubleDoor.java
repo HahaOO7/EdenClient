@@ -2,7 +2,6 @@ package at.haha007.edenclient.mods;
 
 import at.haha007.edenclient.annotations.Mod;
 import at.haha007.edenclient.callbacks.PlayerInteractBlockCallback;
-import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import net.minecraft.client.Minecraft;
@@ -43,7 +42,7 @@ public class DoubleDoor {
         var node = literal("edoubledoor");
         node.then(literal("toggle").executes(c -> {
             enabled = !enabled;
-            sendModMessage(ChatColor.GOLD + (enabled ? "Enabled DoubleDoor." : "Disabled DoubleDoor."));
+            sendModMessage((enabled ? "Enabled DoubleDoor." : "Disabled DoubleDoor."));
             return 1;
         }));
 
@@ -52,16 +51,21 @@ public class DoubleDoor {
     }
 
     private InteractionResult onInteractBlock(LocalPlayer player, ClientLevel world, InteractionHand hand, BlockHitResult blockHitResult) {
-        if (!enabled) return InteractionResult.PASS;
-        if (player.isShiftKeyDown()) return InteractionResult.PASS;
-        if (hand != InteractionHand.MAIN_HAND) return InteractionResult.PASS;
+        onInteract(player, world, hand, blockHitResult);
+        return InteractionResult.PASS;
+    }
+
+    private void onInteract(LocalPlayer player, ClientLevel world, InteractionHand hand, BlockHitResult blockHitResult) {
+        if (!enabled) return;
+        if (player.isShiftKeyDown()) return;
+        if (hand != InteractionHand.MAIN_HAND) return;
         BlockPos bp = blockHitResult.getBlockPos();
 
         ResourceKey<? extends Registry<Block>> registryKey = BlockTags.DOORS.registry();
         RegistryAccess registryManager = world.registryAccess();
         Registry<?> registry = registryManager.registryOrThrow(registryKey);
 
-        if (noDoor(bp, registry, world)) return InteractionResult.PASS;
+        if (noDoor(bp, registry, world)) return;
 
 
         clickPos(bp.north(), registry, world);
@@ -69,7 +73,7 @@ public class DoubleDoor {
         clickPos(bp.west(), registry, world);
         clickPos(bp.east(), registry, world);
 
-        return InteractionResult.PASS;
+        return;
     }
 
     private boolean noDoor(BlockPos bp, Registry<?> registry, ClientLevel world) {
@@ -83,6 +87,6 @@ public class DoubleDoor {
         Direction dir = Direction.UP;
         var nh = Minecraft.getInstance().getConnection();
         if (nh == null) return;
-        nh.send(new ServerboundUseItemOnPacket(InteractionHand.MAIN_HAND, new BlockHitResult(Vec3.atLowerCornerOf(bp.relative(dir)), dir, bp, false),1));
+        nh.send(new ServerboundUseItemOnPacket(InteractionHand.MAIN_HAND, new BlockHitResult(Vec3.atLowerCornerOf(bp.relative(dir)), dir, bp, false), 1));
     }
 }

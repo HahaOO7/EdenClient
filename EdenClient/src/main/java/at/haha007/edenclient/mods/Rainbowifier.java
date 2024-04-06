@@ -1,13 +1,14 @@
 package at.haha007.edenclient.mods;
 
 import at.haha007.edenclient.annotations.Mod;
-import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import net.minecraft.client.multiplayer.ClientSuggestionProvider;
 import net.minecraft.client.player.LocalPlayer;
 
@@ -35,7 +36,7 @@ public class Rainbowifier {
             String input = c.getArgument("input", String.class);
             String message = rainbowifyMessageFancy(input);
             if (message.length() >= 256) {
-                sendModMessage(ChatColor.GOLD + "Your message is too long.");
+                sendModMessage("Your message is too long.");
                 return 0;
             }
             LocalPlayer entityPlayer = PlayerUtils.getPlayer();
@@ -47,7 +48,7 @@ public class Rainbowifier {
             String input = c.getArgument("input", String.class);
             String message = rainbowifyMessageSimple(input);
             if (message.length() >= 256) {
-                sendModMessage(ChatColor.GOLD + "Your message is too long.");
+                sendModMessage("Your message is too long.");
                 return 0;
             }
             LocalPlayer entityPlayer = PlayerUtils.getPlayer();
@@ -62,7 +63,7 @@ public class Rainbowifier {
             if (message.length() >= 256) {
                 message = "/msg " + player + " " + rainbowifyMessageSimple(originalMessage);
                 if (message.length() >= 256) {
-                    sendModMessage(ChatColor.GOLD + "Your message is too long.");
+                    sendModMessage("Your message is too long.");
                     return 0;
                 }
             }
@@ -77,7 +78,7 @@ public class Rainbowifier {
             if (message.length() >= 256) {
                 message = rainbowifyMessageSimple(input);
                 if (message.length() >= 256) {
-                    sendModMessage(ChatColor.GOLD + "Your message is too long.");
+                    sendModMessage("Your message is too long.");
                     return 0;
                 }
             }
@@ -88,7 +89,8 @@ public class Rainbowifier {
 
         node.then(literal("freq").then(argument("frequency", DoubleArgumentType.doubleArg(0.1, 1.0)).executes(c -> {
             this.freq = c.getArgument("frequency", Double.class);
-            sendModMessage(ChatColor.GOLD + "Frequency updated to " + ChatColor.AQUA + freq);
+            sendModMessage(Component.text("Frequency updated to ", NamedTextColor.GOLD)
+                    .append(Component.text(freq, NamedTextColor.AQUA)));
             return 1;
         })));
 
@@ -97,8 +99,7 @@ public class Rainbowifier {
             return 1;
         });
 
-        register(node,
-                "Rainbowifier enables you to send rainbow-colored messages into either the global chat or directly as a private message.");
+        register(node, "Rainbowifier enables you to send rainbow-colored messages into either the global chat or directly as a private message.");
     }
 
     private String rainbowifyMessageFancy(String input) {
@@ -151,6 +152,6 @@ public class Rainbowifier {
     }
 
     private void sendDebugMessage() {
-        sendModMessage(ChatColor.GOLD + "/rainbowify [simple, fancy, freq, auto, msg <recipient message>]");
+        sendModMessage("/rainbowify [simple, fancy, freq, auto, msg <recipient message>]");
     }
 }

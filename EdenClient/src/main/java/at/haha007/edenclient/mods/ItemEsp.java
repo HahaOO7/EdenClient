@@ -5,7 +5,6 @@ import at.haha007.edenclient.callbacks.GameRenderCallback;
 import at.haha007.edenclient.callbacks.JoinWorldCallback;
 import at.haha007.edenclient.callbacks.LeaveWorldCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
-import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.RenderUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
@@ -34,7 +33,11 @@ public class ItemEsp {
     @ConfigSubscriber("false")
     boolean enabled = false;
     @ConfigSubscriber("1")
-    float r, g, b;
+    float red;
+    @ConfigSubscriber("1")
+    float green;
+    @ConfigSubscriber("1")
+    float blue;
     @ConfigSubscriber("false")
     boolean solid;
     List<ItemEntity> items = new ArrayList<>();
@@ -58,7 +61,7 @@ public class ItemEsp {
     private void render(PoseStack matrixStack, MultiBufferSource.BufferSource vertexConsumerProvider, float tickDelta) {
         if (!enabled) return;
         RenderSystem.setShader(GameRenderer::getPositionShader);
-        RenderSystem.setShaderColor(r, g, b, 1);
+        RenderSystem.setShaderColor(red, green, blue, 1);
         RenderSystem.disableDepthTest();
         Runnable drawBoxTask = solid ? () -> draw(solidBox, matrixStack) : () -> draw(wireframeBox, matrixStack);
         for (ItemEntity target : items) {
@@ -99,13 +102,13 @@ public class ItemEsp {
 
         node.then(literal("toggle").executes(c -> {
             enabled = !enabled;
-            sendModMessage(ChatColor.GOLD + ("Item ESP " + (enabled ? "enabled" : "disabled")));
+            sendModMessage(("Item ESP " + (enabled ? "enabled" : "disabled")));
             return 1;
         }));
 
         node.then(literal("solid").executes(c -> {
             solid = !solid;
-            sendModMessage(ChatColor.GOLD + ("Item ESP " + (solid ? "solid" : "transparent")));
+            sendModMessage(("Item ESP " + (solid ? "solid" : "transparent")));
             return 1;
         }));
 
@@ -115,10 +118,10 @@ public class ItemEsp {
         })))));
 
         node.executes(c -> {
-            sendModMessage(ChatColor.GOLD + "/itemesp toggle");
-            sendModMessage(ChatColor.GOLD + "/itemesp solid");
-            sendModMessage(ChatColor.GOLD + "/itemesp size <size>");
-            sendModMessage(ChatColor.GOLD + "/itemesp color <r> <g> <b>");
+            sendModMessage("/itemesp toggle");
+            sendModMessage("/itemesp solid");
+            sendModMessage("/itemesp size <size>");
+            sendModMessage("/itemesp color <r> <g> <b>");
             return 1;
         });
 
@@ -131,9 +134,9 @@ public class ItemEsp {
     }
 
     private void setColor(CommandContext<ClientSuggestionProvider> c) {
-        this.r = c.getArgument("r", Integer.class) / 256f;
-        this.g = c.getArgument("g", Integer.class) / 256f;
-        this.b = c.getArgument("b", Integer.class) / 256f;
-        sendModMessage(ChatColor.GOLD + "Color updated.");
+        this.red = c.getArgument("r", Integer.class) / 256f;
+        this.green = c.getArgument("g", Integer.class) / 256f;
+        this.blue = c.getArgument("b", Integer.class) / 256f;
+        sendModMessage("Color updated.");
     }
 }

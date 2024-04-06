@@ -1,6 +1,7 @@
 package at.haha007.edenclient.mods.chestshop;
 
 import at.haha007.edenclient.utils.MathUtils;
+import lombok.Getter;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.nbt.CompoundTag;
@@ -8,11 +9,15 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.entity.SignBlockEntity;
 
 public class ChestShopEntry {
+    @Getter
     private Vec3i pos;
-    private int sellPrice = -1, buyPrice = -1;
+    private int sellPrice = -1;
+    private int buyPrice = -1;
     private int amount;
+    @Getter
     private String owner;
     private boolean isShop = false;
+    @Getter
     private String item;
 
     public ChestShopEntry(SignBlockEntity sign) {
@@ -25,10 +30,10 @@ public class ChestShopEntry {
         if (player.isEmpty()) return;
 
         if (!MathUtils.isInteger(linesFront[1])) return;
-        int amount = Integer.parseInt(linesFront[1]);
+        int signAmount = Integer.parseInt(linesFront[1]);
 
-        String item = linesFront[3];
-        if (item.isEmpty()) return;
+        String signItem = linesFront[3];
+        if (signItem.isEmpty()) return;
 
         String[] prices = linesFront[2].toLowerCase().replaceAll("\\s", "").split(":");
         for (String priceString : prices) {
@@ -45,10 +50,10 @@ public class ChestShopEntry {
             }
         }
         pos = sign.getBlockPos();
-        this.amount = amount;
+        this.amount = signAmount;
         this.isShop = canBuy() || canSell();
         this.owner = player;
-        this.item = item.toLowerCase();
+        this.item = signItem.toLowerCase();
     }
 
     public ChestShopEntry(CompoundTag tag) {
@@ -95,18 +100,6 @@ public class ChestShopEntry {
 
     public float getSellPricePerItem() {
         return ((float) sellPrice) / amount;
-    }
-
-    public String getItem() {
-        return item;
-    }
-
-    public String getOwner() {
-        return owner;
-    }
-
-    public Vec3i getPos() {
-        return pos;
     }
 
     public String toString() {

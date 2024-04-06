@@ -72,7 +72,7 @@ public class AntiAfk {
             case 2 -> startPos.offset(0, 0, 1);
             case 3 -> startPos.offset(-1, 0, 0);
             case 4 -> startPos.offset(0, 0, -1);
-            default -> null;
+            default -> throw new IllegalStateException("Unexpected value: " + r);
         };
     }
 

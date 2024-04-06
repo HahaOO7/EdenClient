@@ -4,8 +4,8 @@ import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.callbacks.ConfigLoadedCallback;
 import at.haha007.edenclient.callbacks.JoinWorldCallback;
 import at.haha007.edenclient.callbacks.LeaveWorldCallback;
+import at.haha007.edenclient.utils.EdenUtils;
 import at.haha007.edenclient.utils.Scheduler;
-import at.haha007.edenclient.utils.Utils;
 import at.haha007.edenclient.utils.area.*;
 import at.haha007.edenclient.utils.config.loaders.*;
 import at.haha007.edenclient.utils.config.wrappers.*;
@@ -25,16 +25,16 @@ import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.net.SocketAddress;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class PerWorldConfig {
 
-    private static PerWorldConfig INSTANCE;
+    private static final PerWorldConfig INSTANCE = new PerWorldConfig();
     private final Map<String, Object> registered = new HashMap<>();
     private final Map<Class<?>, ConfigLoader<Tag, ?>> loaders = new HashMap<>();
-    //    private NbtCompound tag = new NbtCompound();
     private String worldName = "null";
     private final File folder;
     private final Map<Class<?>, Class<?>> wrapperClasses = Map.of(
@@ -47,9 +47,6 @@ public class PerWorldConfig {
     );
 
     public static PerWorldConfig get() {
-        if (INSTANCE == null) {
-            INSTANCE = new PerWorldConfig();
-        }
         return INSTANCE;
     }
 
@@ -115,9 +112,9 @@ public class PerWorldConfig {
     private void onLeave() {
         if (worldName == null || worldName.equals("null")) return;
         long start = System.nanoTime();
-        Utils.getLogger().info("Start saving config: " + worldName);
+        EdenUtils.getLogger().info("Start saving config: {}", worldName);
         saveConfig();
-        Utils.getLogger().info(String.format("Saving done, this took %sms.", TimeUnit.NANOSECONDS.toMillis((System.nanoTime() - start))));
+        EdenUtils.getLogger().info(String.format("Saving done, this took %sms.", TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start)));
     }
 
     private void onJoin() {
@@ -126,14 +123,14 @@ public class PerWorldConfig {
         EdenClient.getMod(Scheduler.class).runAsync(() -> {
             try {
                 Thread.sleep(1000);
-                worldName = Utils.getWorldOrServerName();
+                worldName = getWorldOrServerName();
                 if (worldName == null || worldName.equals("null")) {
-                    Utils.getLogger().error("World is null!", new NullPointerException());
+                    EdenUtils.getLogger().error("World is null!", new NullPointerException());
                 }
-                Utils.getLogger().info("Start loading config: " + worldName);
+                EdenUtils.getLogger().info("Start loading config: {}", worldName);
                 loadConfig();
-                Utils.getLogger().info("Loading done, this took %sms.%n"
-                        .formatted(TimeUnit.NANOSECONDS.toMillis((System.nanoTime() - start))));
+                EdenUtils.getLogger().info("Loading done, this took %sms.%n"
+                        .formatted(TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start)));
                 ConfigLoadedCallback.EVENT.invoker().configLoaded();
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
@@ -143,17 +140,12 @@ public class PerWorldConfig {
 
     private void loadConfig() {
         File file = new File(folder, worldName + ".mca");
-        if (!folder.exists()) {
-            if (!folder.mkdirs()) {
-                Utils.getLogger().error("Failed to create config folder!");
-                return;
-            }
-        }
+        if (!ensureExistingConfigFolder()) return;
         CompoundTag tag = new CompoundTag();
         try {
             tag = file.exists() ? NbtIo.readCompressed(file.toPath(), NbtAccounter.unlimitedHeap()) : new CompoundTag();
         } catch (IOException e) {
-            Utils.getLogger().error("Error while loading PerWorldConfig: " + worldName, e);
+            EdenUtils.getLogger().error("Error while loading PerWorldConfig: {}", worldName, e);
         }
         CompoundTag finalTag = tag;
         registered.forEach((key, obj) -> load(getCompound(finalTag, key), obj));
@@ -166,17 +158,20 @@ public class PerWorldConfig {
             save(compound, obj);
         });
         File file = new File(folder, worldName + ".mca");
-        if (!folder.exists()) {
-            if (!folder.mkdirs()) {
-                Utils.getLogger().error("Failed to create config folder!");
-                return;
-            }
-        }
+        if (!ensureExistingConfigFolder()) return;
         try {
             NbtIo.writeCompressed(tag, file.toPath());
         } catch (IOException e) {
-            Utils.getLogger().error("Error while saving PerWorldConfig: " + worldName, e);
+            EdenUtils.getLogger().error("Error while saving PerWorldConfig: {}", worldName, e);
         }
+    }
+
+    private boolean ensureExistingConfigFolder() {
+        if (folder.exists() || folder.mkdirs()) {
+            return true;
+        }
+        EdenUtils.getLogger().error("Failed to create config folder!");
+        return false;
     }
 
 
@@ -187,7 +182,7 @@ public class PerWorldConfig {
             Class<?> c = getClass(field);
             ConfigLoader<Tag, ?> loader = getLoader(c);
             if (loader == null) {
-                Utils.getLogger().error("Error loading config: No loader found for class: " + c.getCanonicalName());
+                EdenUtils.getLogger().error("Error loading config: No loader found for class: {}", c.getCanonicalName());
                 continue;
             }
             try {
@@ -198,12 +193,12 @@ public class PerWorldConfig {
                 try {
                     value = loader.load(nbt);
                 } catch (ClassCastException | IllegalArgumentException e) {
-                    Utils.getLogger().error("Error while loading " + field.getName() + " in class " + obj.getClass().getSimpleName(), e);
+                    EdenUtils.getLogger().error("Error while loading {} in class {}", field.getName(), obj.getClass().getSimpleName(), e);
                     value = loader.load(loader.parse(annotation.value()));
                 }
                 field.set(obj, value);
             } catch (IllegalAccessException e) {
-                Utils.getLogger().error("Error loading config: Can't access field: " + c.getCanonicalName() + "." + field.getName(), e);
+                EdenUtils.getLogger().error("Error loading config: Can't access field: {}.{}", c.getCanonicalName(), field.getName(), e);
             }
         }
     }
@@ -215,7 +210,7 @@ public class PerWorldConfig {
             @SuppressWarnings("unchecked")
             ConfigLoader<Tag, Object> loader = (ConfigLoader<Tag, Object>) getLoader(c);
             if (loader == null) {
-                Utils.getLogger().error("Error loading config: No loader found for class: " + c.getCanonicalName(), new NullPointerException());
+                EdenUtils.getLogger().error("Error loading config: No loader found for class: {}", c.getCanonicalName(), new NullPointerException());
                 continue;
             }
             try {
@@ -223,10 +218,14 @@ public class PerWorldConfig {
                 Object value = field.get(obj);
                 if (value == null) continue;
                 Tag nbt = loader.save(value);
-                if (nbt == null) continue;
+                //noinspection ConstantValue
+                if (nbt == null) {
+                    EdenUtils.getLogger().error("Error while saving {} in class {}", field.getName(), obj.getClass().getSimpleName(), new NullPointerException());
+                    continue;
+                }
                 tag.put(field.getName(), nbt);
             } catch (IllegalAccessException e) {
-                Utils.getLogger().error("Error loading config: Can't access field: " + c.getCanonicalName() + "." + field.getName(), e);
+                EdenUtils.getLogger().error("Error loading config: Can't access field: {}.{}", c.getCanonicalName(), field.getName(), e);
             }
         }
     }
@@ -263,7 +262,7 @@ public class PerWorldConfig {
         //noinspection unchecked
         ConfigLoader<Tag, Object> loader = (ConfigLoader<Tag, Object>) getLoader(object.getClass());
         if (loader == null) {
-            Utils.getLogger().error("Error loading config: No loader found for class: " + object.getClass().getCanonicalName(), new NullPointerException());
+            EdenUtils.getLogger().error("Error loading config: No loader found for class: {}", object.getClass().getCanonicalName(), new NullPointerException());
             return null;
         }
         return loader.save(object);
@@ -272,10 +271,46 @@ public class PerWorldConfig {
     public <T> T toObject(Tag nbt, Class<T> type) {
         ConfigLoader<Tag, ?> loader = getLoader(type);
         if (loader == null) {
-            Utils.getLogger().error("Error loading config: No loader found for class: " + type.getCanonicalName(), new NullPointerException());
+            EdenUtils.getLogger().error("Error loading config: No loader found for class: {}", type.getCanonicalName(), new NullPointerException());
             return null;
         }
         //noinspection unchecked
         return (T) loader.load(nbt);
+    }
+
+
+    private String getWorldOrServerName() {
+        net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+
+        if (mc.hasSingleplayerServer()) {
+            net.minecraft.client.server.IntegratedServer server = mc.getSingleplayerServer();
+
+            if (server != null) {
+                return server.getWorldData().getLevelName();
+            }
+        }
+
+        net.minecraft.client.multiplayer.ServerData server = mc.getCurrentServer();
+        if (server != null) {
+            return server.ip.trim().replace(':', '_');
+        }
+
+        net.minecraft.client.multiplayer.ClientPacketListener handler = mc.getConnection();
+        net.minecraft.network.Connection connection = handler != null ? handler.getConnection() : null;
+        if (connection != null) {
+            return "realms_" + stringifyAddress(connection.getRemoteAddress());
+        }
+
+        return null;
+    }
+
+    private String stringifyAddress(SocketAddress address) {
+        String str = address.toString();
+
+        if (str.contains("/")) {
+            str = str.substring(str.indexOf('/') + 1);
+        }
+
+        return str.replace(':', '_');
     }
 }

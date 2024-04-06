@@ -52,11 +52,11 @@ public class CubeRenderer {
         RenderSystem.setShader(GameRenderer::getPositionShader);
         RenderSystem.setShaderColor(1, 1, 1, 1);
 
-        cubes.values().forEach(s -> s.forEach(box -> {
+        cubes.values().forEach(s -> s.forEach(boundingBox -> {
             matrixStack.pushPose();
-            Vec3 c = box.getCenter();
+            Vec3 c = boundingBox.getCenter();
             matrixStack.translate(c.x, c.y, c.z);
-            matrixStack.scale((float) (box.maxX - box.minX), (float) (box.maxY - box.minY), (float) (box.maxZ - box.minZ));
+            matrixStack.scale((float) (boundingBox.maxX - boundingBox.minX), (float) (boundingBox.maxY - boundingBox.minY), (float) (boundingBox.maxZ - boundingBox.minZ));
             this.box.bind();
             this.box.drawWithShader(matrixStack.last().pose(), RenderSystem.getProjectionMatrix(), RenderSystem.getShader());
             VertexBuffer.unbind();

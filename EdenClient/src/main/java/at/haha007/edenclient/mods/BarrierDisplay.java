@@ -2,7 +2,6 @@ package at.haha007.edenclient.mods;
 
 import at.haha007.edenclient.annotations.Mod;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
-import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
@@ -22,7 +21,7 @@ import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
 @Mod
 public class BarrierDisplay {
-    private static final int dist = 5;
+    private static final int DISTANCE = 5;
     private final Random rand = new Random();
     @ConfigSubscriber("0")
     private int counter = 20;
@@ -39,7 +38,7 @@ public class BarrierDisplay {
         if (!enabled) return;
         if (player.getInventory().getSelected().getItem() == Items.BARRIER) return;
         for (int i = 0; i < counter; i++) {
-            BlockPos pos = player.blockPosition().offset((int) (rand.nextGaussian() * dist), (int) (rand.nextGaussian() * dist), (int) (rand.nextGaussian() * dist));
+            BlockPos pos = player.blockPosition().offset((int) (rand.nextGaussian() * DISTANCE), (int) (rand.nextGaussian() * DISTANCE), (int) (rand.nextGaussian() * DISTANCE));
             if (player.clientLevel.getBlockState(pos).getBlock() != Blocks.BARRIER) continue;
             var effect = new BlockParticleOption(ParticleTypes.BLOCK_MARKER, Blocks.BARRIER.defaultBlockState());
             Minecraft.getInstance().particleEngine.add(new BlockMarker.Provider().createParticle(effect,
@@ -51,7 +50,7 @@ public class BarrierDisplay {
         var node = literal("ebarrierdisplay");
         node.then(literal("count").then(argument("count", IntegerArgumentType.integer(0, 100000)).executes(c -> {
             counter = c.getArgument("count", Integer.class);
-            sendModMessage(ChatColor.GOLD + ("Barrier display counter is " + counter));
+            sendModMessage(("Barrier display counter is " + counter));
             return 1;
         })));
         node.then(literal("toggle").executes(c -> {

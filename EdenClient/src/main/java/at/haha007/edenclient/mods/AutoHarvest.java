@@ -106,6 +106,7 @@ public class AutoHarvest {
                         limit(2).
                         forEach(this::clickPos);
             }
+            default -> throw new UnsupportedOperationException();
         }
         cycle = (cycle + 1) % 3;
     }

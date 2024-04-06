@@ -4,7 +4,7 @@ package at.haha007.edenclient.utils.tasks;
 import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.callbacks.LeaveWorldCallback;
 import at.haha007.edenclient.utils.Scheduler;
-import at.haha007.edenclient.utils.Utils;
+import at.haha007.edenclient.utils.EdenUtils;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -48,7 +48,7 @@ public class TaskManager implements Cloneable, Task {
             try {
                 run();
             } catch (InterruptedException e) {
-                Utils.getLogger().error("Task interrupted!",e);
+                EdenUtils.getLogger().error("Task interrupted!",e);
             }
         });
     }

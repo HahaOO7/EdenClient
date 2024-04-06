@@ -12,6 +12,7 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
 
+@Deprecated
 public class ChatColor {
 
     public static final String BLACK = ChatFormatting.BLACK.toString();

@@ -102,7 +102,7 @@ public class PlayerWarps {
         tm.then(new SyncTask(() -> PlayerUtils.messageC2S("/pwarp")));
         tm.then(new WaitForInventoryTask(Pattern.compile(".*")));
         tm.then(new SyncTask(() -> PlayerUtils.clickSlot(slot)));
-        tm.then(new WaitForInventoryTask(Pattern.compile(". PlayerWarps - Seite 1/[0-9]{1,2}")));
+        tm.then(new WaitForInventoryTask(Pattern.compile(". PlayerWarps - Seite 1/\\d{1,2}")));
         tm.then(new SyncTask(() -> {
             Pattern pattern = Pattern.compile(". PlayerWarps - Seite 1/(?<pages>[0-9]{1,2})");
             Screen screen = Minecraft.getInstance().screen;
@@ -133,7 +133,7 @@ public class PlayerWarps {
             ItemStack item = inventory.getItem(i);
             if (item.isEmpty()) continue;
             String name = item.getHoverName().getString();
-            item.getTooltipLines(null, TooltipFlag.Default.NORMAL)
+            item.getTooltipLines(null, TooltipFlag.NORMAL)
                     .stream().map(Component::getString)
                     .filter(s -> s.startsWith("Ort: world, "))
                     .findAny().ifPresent(s -> map.put(name, getPos(s)));
@@ -143,7 +143,7 @@ public class PlayerWarps {
     @NotNull
     private Vec3i getPos(String s) {
         s = s.substring(12);
-        Pattern pattern = Pattern.compile("(?<x>-?[0-9]+), (?<y>-?[0-9]+), (?<z>-?[0-9]+)");
+        Pattern pattern = Pattern.compile("(?<x>-?\\d+), (?<y>-?\\d+), (?<z>-?\\d+)");
         Matcher matcher = pattern.matcher(s);
         if (!matcher.matches()) return Vec3i.ZERO;
         return new Vec3i(Integer.parseInt(matcher.group("x")),

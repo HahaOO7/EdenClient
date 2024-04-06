@@ -9,9 +9,14 @@ import at.haha007.edenclient.utils.config.wrappers.StringList;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import net.minecraft.ChatFormatting;
+import lombok.Getter;
+import lombok.Setter;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.event.HoverEvent;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.Style;
 import net.minecraft.client.multiplayer.ClientSuggestionProvider;
-import net.minecraft.network.chat.*;
 
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -23,9 +28,12 @@ import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 public class MessageIgnorer {
     @ConfigSubscriber
     private final StringList regex = new StringList();
+    @Setter
+    @Getter
     @ConfigSubscriber("false")
     private boolean enabled;
 
+    @Getter
     public enum Predefined {
         SELL("sellmessages",
                 "Message ignoring for Sell Messages",
@@ -63,17 +71,6 @@ public class MessageIgnorer {
             this.message = message;
         }
 
-        public String getKey() {
-            return key;
-        }
-
-        public String getMessage() {
-            return message;
-        }
-
-        public String[] getRegexes() {
-            return regexes;
-        }
     }
 
     public MessageIgnorer() {
@@ -83,62 +80,56 @@ public class MessageIgnorer {
         PerWorldConfig.get().register(this, "MessageIgnorer");
     }
 
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
-    }
-
     private void registerCommand(String cmd) {
         LiteralArgumentBuilder<ClientSuggestionProvider> node = literal(cmd);
 
         node.then(literal("toggle").executes(c -> {
             enabled = !enabled;
             String msg = enabled ? "Message ignoring enabled" : "Message ignoring disabled";
-            sendModMessage(ChatColor.GOLD + msg);
+            sendModMessage(msg);
             return 1;
         }));
 
         node.then(literal("add").then(argument("regex", StringArgumentType.greedyString()).executes(c -> {
             String im = c.getArgument("regex", String.class);
             if (!isValidRegex(im)) {
-                sendModMessage(ChatColor.GOLD + "Invalid pattern syntax");
+                sendModMessage("Invalid pattern syntax");
                 return -1;
             }
             if (regex.contains(im)) {
-                sendModMessage(ChatColor.GOLD + "Already ignoring this pattern");
+                sendModMessage("Already ignoring this pattern");
                 return -1;
             }
             regex.add(im);
-            sendModMessage(ChatColor.GOLD + "Ignoring messages matching ");
+            sendModMessage("Ignoring messages matching ");
             return 1;
         })));
 
         node.then(literal("remove").then(argument("index", IntegerArgumentType.integer(1)).executes(c -> {
             int index = c.getArgument("index", Integer.class) - 1;
             if (index >= regex.size()) {
-                MutableComponent prefix = Component.literal("Index out of bounds. Use ").withStyle(ChatFormatting.GOLD);
-                MutableComponent suggestion = Component.literal("/" + cmd + " list").setStyle(Style.EMPTY.
-                        withColor(ChatFormatting.AQUA).
-                        withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("click to execute"))).
-                        withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/" + cmd + " list")));
-                MutableComponent suffix = Component.literal(" to see available indices.").withStyle(ChatFormatting.GOLD);
+                Component prefix = Component.text("Index out of bounds. Use ", NamedTextColor.GOLD);
+                Component suggestion = Component.text("/" + cmd + " list")
+                        .style(Style.style(NamedTextColor.AQUA)
+                                .hoverEvent(HoverEvent.hoverEvent(HoverEvent.Action.SHOW_TEXT, Component.text("click to execute")))
+                                .clickEvent(ClickEvent.runCommand("/" + cmd + " list")));
+                Component suffix = Component.text(" to see available indices.", NamedTextColor.GOLD);
                 sendModMessage(prefix.append(suggestion).append(suffix));
                 return -1;
             }
-            sendModMessage(ChatColor.GOLD + "Removed " + ChatColor.AQUA + regex.remove(index));
+            sendModMessage(Component.text("Removed " , NamedTextColor.GOLD)
+                    .append(Component.text(regex.remove(index), NamedTextColor.AQUA)));
             return 1;
         })));
 
         node.then(literal("list").executes(c -> {
             if (regex.isEmpty()) {
-                sendModMessage(ChatColor.GOLD + "No regexes registered!");
+                sendModMessage("No regexes registered!");
                 return 1;
             }
-            sendModMessage(ChatColor.GOLD + "List of ignored message-regexes:");
+            sendModMessage( "List of ignored message-regexes:");
             for (int i = 0; i < regex.size(); i++) {
+                sendModMessage(ChatColor.GOLD + "[" + (i + 1) + "] " + ChatColor.AQUA + regex.get(i));
                 sendModMessage(ChatColor.GOLD + "[" + (i + 1) + "] " + ChatColor.AQUA + regex.get(i));
             }
             return 1;
@@ -172,8 +163,8 @@ public class MessageIgnorer {
         });
 
         register(node,
-               "MessageIgnorer allows you to set specific Regular Expressions (also known as RegEX) which when matched are not displayed in your chat.",
-               "The predefined values contain useful types of messages like all messages sent by the adminshop when selling items or vote-rewards of other players.");
+                "MessageIgnorer allows you to set specific Regular Expressions (also known as RegEX) which when matched are not displayed in your chat.",
+                "The predefined values contain useful types of messages like all messages sent by the adminshop when selling items or vote-rewards of other players.");
     }
 
     private boolean isEnabled(Predefined pre) {

@@ -2,7 +2,6 @@ package at.haha007.edenclient.mods;
 
 import at.haha007.edenclient.annotations.Mod;
 import at.haha007.edenclient.callbacks.AddChatMessageCallback;
-import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import at.haha007.edenclient.utils.config.wrappers.StringList;
@@ -57,7 +56,7 @@ public class WordHighlighter {
         LiteralArgumentBuilder<ClientSuggestionProvider> node = literal(name);
         node.then(literal("toggle").executes(c -> {
             enabled = !enabled;
-            sendModMessage(ChatColor.GOLD + (enabled ? "Enabled WordHighlighter!" : "Disabled WordHighlighter!"));
+            sendModMessage(enabled ? "Enabled WordHighlighter!" : "Disabled WordHighlighter!");
             return 0;
         }));
         node.then(literal("add").then(argument("word", StringArgumentType.word()).executes(c -> {
@@ -113,123 +112,126 @@ public class WordHighlighter {
 
     private void setBold(boolean bold) {
         style = style.withBold(bold);
-        sendModMessage(ChatColor.GOLD + (bold ? "Words are now bold!" : "Words are no longer bold!"));
+        sendModMessage(bold ? "Words are now bold!" : "Words are no longer bold!");
     }
 
     public void setItalic(boolean italic) {
         style = style.withItalic(italic);
-        sendModMessage(ChatColor.GOLD + (italic ? "Words are now italic!" : "Words are no longer italic!"));
+        sendModMessage(italic ? "Words are now italic!" : "Words are no longer italic!");
     }
 
     public void setUnderlined(boolean underlined) {
         style = style.withUnderlined(underlined);
-        sendModMessage(ChatColor.GOLD + (underlined ? "Words are now underlined!" : "Words are no longer underlined!"));
+        sendModMessage(underlined ? "Words are now underlined!" : "Words are no longer underlined!");
     }
 
     private void setColor(int r, int g, int b) {
         style = style.withColor(new Color(r, g, b).getRGB());
-        sendModMessage(ChatColor.GOLD + "New color set from RGB values!");
+        sendModMessage("New color set from RGB values!");
     }
 
     private void setStyle(String s) {
         s = s.toLowerCase();
         if (s.equals("reset")) {
             style = Style.EMPTY.applyFormats(ChatFormatting.AQUA, ChatFormatting.BOLD);
-            sendModMessage(ChatColor.GOLD + "Style reset!");
+            sendModMessage("Style reset!");
             return;
         }
         style = getStyleFromFormattingCode(s);
-        sendModMessage(ChatColor.GOLD + "Style set from FormattingCodes!");
+        sendModMessage("Style set from FormattingCodes!");
     }
 
     private Style getStyleFromFormattingCode(String input) {
-        Style style = Style.EMPTY;
-        style = style.applyFormats(input.chars().mapToObj(c -> (char) c).
+        return Style.EMPTY.applyFormats(input.chars().mapToObj(c -> (char) c).
                 map(ChatFormatting::getByCode).filter(Objects::nonNull).toList().toArray(new ChatFormatting[0]));
-        return style;
     }
 
     private void listWords() {
-        sendModMessage(ChatColor.GOLD + "These words are currently highlighted:");
-        sendModMessage(ChatColor.GOLD + words);
+        sendModMessage("These words are currently highlighted:");
+        sendModMessage(words.toString());
     }
 
     private void clearWords() {
         words.clear();
-        sendModMessage(ChatColor.GOLD + "Cleared all words!");
+        sendModMessage("Cleared all words!");
     }
 
     private void addWord(String word) {
         word = word.toLowerCase();
         if (words.contains(word)) {
-            sendModMessage(ChatColor.GOLD + "Word is already highlighted!");
+            sendModMessage("Word is already highlighted!");
             return;
         }
-        sendModMessage(ChatColor.GOLD + "Added words!");
+        sendModMessage("Added words!");
         words.add(word);
         words.sort(Comparator.comparingInt(String::length).reversed());
     }
 
     private void removeWord(String input) {
         if (words.remove(input))
-            sendModMessage(ChatColor.GOLD + "Removed words");
+            sendModMessage("Removed words");
         else
-            sendModMessage(ChatColor.GOLD + "Word was not highlighted");
+            sendModMessage("Word was not highlighted");
     }
 
     private void sendUsageDebugMessage() {
-        sendModMessage(ChatColor.GOLD + "Command usage:");
-        sendModMessage(ChatColor.GOLD + "/hl [add,remove,toggle,clear,list,bold,italic,underline,style,color]");
+        sendModMessage("Command usage:");
+        sendModMessage("/hl [add,remove,toggle,clear,list,bold,italic,underline,style,color]");
     }
 
     private void sendDebugMessage() {
-        sendModMessage(ChatColor.GOLD + "Wrong use of command!");
+        sendModMessage("Wrong use of command!");
         sendUsageDebugMessage();
     }
 
-    private MutableComponent highlight(MutableComponent txt, String string) {
+    private MutableComponent highlight(MutableComponent txt, String filter) {
         if (txt.getContents() instanceof PlainTextContents.LiteralContents t) {
             String s = t.text();
-            Pattern pattern = Pattern.compile(string, Pattern.CASE_INSENSITIVE | Pattern.LITERAL);
-            Matcher matcher = pattern.matcher(s);
             List<MutableComponent> subtext = new ArrayList<>();
             Style baseStyle = txt.getStyle();
-            Style style = this.style.withHoverEvent(baseStyle.getHoverEvent()).withClickEvent(baseStyle.getClickEvent());
-            while (matcher.find()) {
-                int start = matcher.start();
-                int end = matcher.end();
-                String pre = s.substring(0, start);
-                String match = s.substring(start, end);
-                if (!pre.isEmpty())
-                    subtext.add(Component.literal(pre).setStyle(baseStyle));
-                subtext.add(getStyled(match, style));//replace with rainbow
-                s = s.substring(end);
-                matcher = pattern.matcher(s);
-            }
+            s = applyMatcher(filter, s, subtext, baseStyle);
             if (subtext.isEmpty()) {
-                txt.getSiblings().replaceAll(x -> highlight(x.copy(), string));
+                txt.getSiblings().replaceAll(x -> highlight(x.copy(), filter));
                 return txt;
             }
             if (!s.isEmpty())
                 subtext.add(Component.literal(s).setStyle(baseStyle));
             MutableComponent nextText = Component.literal("");
             subtext.forEach(nextText::append);
-            txt.getSiblings().stream().map(sibling -> highlight(sibling.copy(), string)).forEach(nextText::append);
+            txt.getSiblings().stream().map(sibling -> highlight(sibling.copy(), filter)).forEach(nextText::append);
             return nextText;
         } else if (txt.getContents() instanceof TranslatableContents t) {
             Object[] args = t.getArgs();
             for (int i = 0; i < args.length; i++) {
                 if (args[i] instanceof Component y)
-                    args[i] = highlight(y.copy(), string);
+                    args[i] = highlight(y.copy(), filter);
                 else if (args[i] instanceof String y)
-                    args[i] = highlight(Component.literal(y), string);
+                    args[i] = highlight(Component.literal(y), filter);
             }
-            txt.getSiblings().replaceAll(y -> highlight(y.copy(), string));
+            txt.getSiblings().replaceAll(y -> highlight(y.copy(), filter));
             return txt;
         } else {
-            txt.getSiblings().replaceAll(y -> highlight(y.copy(), string));
+            txt.getSiblings().replaceAll(y -> highlight(y.copy(), filter));
             return txt;
         }
+    }
+
+    private String applyMatcher(String string, String s, List<MutableComponent> subtext, Style baseStyle) {
+        Pattern pattern = Pattern.compile(string, Pattern.CASE_INSENSITIVE | Pattern.LITERAL);
+        Matcher matcher = pattern.matcher(s);
+        Style backupStyle = this.style.withHoverEvent(baseStyle.getHoverEvent()).withClickEvent(baseStyle.getClickEvent());
+        while (matcher.find()) {
+            int start = matcher.start();
+            int end = matcher.end();
+            String pre = s.substring(0, start);
+            String match = s.substring(start, end);
+            if (!pre.isEmpty())
+                subtext.add(Component.literal(pre).setStyle(baseStyle));
+            subtext.add(getStyled(match, backupStyle));//replace with rainbow
+            s = s.substring(end);
+            matcher = pattern.matcher(s);
+        }
+        return s;
     }
 
     private MutableComponent getStyled(String string, Style style) {

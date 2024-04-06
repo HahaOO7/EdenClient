@@ -2,7 +2,6 @@ package at.haha007.edenclient.mods;
 
 import at.haha007.edenclient.annotations.Mod;
 import at.haha007.edenclient.callbacks.AddChatMessageCallback;
-import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.MathUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
@@ -42,7 +41,7 @@ public class AntiSpam {
         LiteralArgumentBuilder<ClientSuggestionProvider> node = literal("eantispam");
         node.then(literal("toggle").executes(c -> {
             enabled = !enabled;
-            sendModMessage(ChatColor.GOLD + (enabled ? "Antispam enabled" : "Antispam disabled"));
+            sendModMessage((enabled ? "Antispam enabled" : "Antispam disabled"));
             return 1;
         }));
 

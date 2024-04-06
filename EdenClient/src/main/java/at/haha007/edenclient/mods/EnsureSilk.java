@@ -60,7 +60,7 @@ public class EnsureSilk {
         LiteralArgumentBuilder<ClientSuggestionProvider> node = literal("eensuresilk");
         node.then(literal("toggle").executes(c -> {
             enabled = !enabled;
-            PlayerUtils.sendModMessage(ChatColor.GOLD + (enabled ? "SilkTouch enabled" : "SilkTouch disabled"));
+            PlayerUtils.sendModMessage((enabled ? "SilkTouch enabled" : "SilkTouch disabled"));
             return 1;
         }));
         node.then(addCommand());

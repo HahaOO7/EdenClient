@@ -7,7 +7,7 @@ import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.command.CommandManager;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.Scheduler;
-import at.haha007.edenclient.utils.Utils;
+import at.haha007.edenclient.utils.EdenUtils;
 import at.haha007.edenclient.utils.area.BlockArea;
 import at.haha007.edenclient.utils.area.SavableBlockArea;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
@@ -310,7 +310,7 @@ public class Excavator {
                     world.setBlockAndUpdate(b, Blocks.WATER.defaultBlockState());
                     Thread.sleep(1);
                 } catch (InterruptedException | IndexOutOfBoundsException e) {
-                    Utils.getLogger().error("Error while don't-ing.", e);
+                    EdenUtils.getLogger().error("Error while don't-ing.", e);
                 }
             }));
             return 1;

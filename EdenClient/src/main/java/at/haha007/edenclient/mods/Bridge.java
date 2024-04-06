@@ -6,6 +6,8 @@ import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.utils.PlayerUtils;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import lombok.Getter;
+import lombok.Setter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.ClientSuggestionProvider;
@@ -31,6 +33,8 @@ import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
 @Mod
 public class Bridge {
+    @Setter
+    @Getter
     private boolean enabled;
     private int range;
 
@@ -92,13 +96,5 @@ public class Bridge {
         })));
 
         register(cmd, "Bridge is used to build bridges.");
-    }
-
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
     }
 }

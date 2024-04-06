@@ -3,7 +3,6 @@ package at.haha007.edenclient.mods;
 import at.haha007.edenclient.annotations.Mod;
 import at.haha007.edenclient.callbacks.JoinWorldCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
-import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.PlayerUtils;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
@@ -43,7 +42,7 @@ public class AotoGrindstone {
         LiteralArgumentBuilder<ClientSuggestionProvider> node = literal("eautogrindstone");
         node.then(literal("toggle").executes(c -> {
             enabled = !enabled;
-            PlayerUtils.sendModMessage(ChatColor.GOLD + (enabled ? "AutoGrindstone enabled" : "AutoGrindstone disabled"));
+            PlayerUtils.sendModMessage((enabled ? "AutoGrindstone enabled" : "AutoGrindstone disabled"));
             return 1;
         }));
         register(node, "AutoGrindstone automatically throws all items in your inventory into a grindstone.");

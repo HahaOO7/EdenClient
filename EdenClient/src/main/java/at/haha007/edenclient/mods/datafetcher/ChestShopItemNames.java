@@ -5,10 +5,8 @@ import at.haha007.edenclient.callbacks.AddChatMessageCallback;
 import at.haha007.edenclient.callbacks.JoinWorldCallback;
 import at.haha007.edenclient.callbacks.LeaveWorldCallback;
 import at.haha007.edenclient.mods.MessageIgnorer;
-import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.Scheduler;
-import at.haha007.edenclient.utils.Utils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import at.haha007.edenclient.utils.config.wrappers.BiStringStringMap;
@@ -16,19 +14,14 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
-import net.kyori.adventure.platform.fabric.FabricAudiences;
-import net.kyori.adventure.text.minimessage.MiniMessage;
-import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
-import net.minecraft.ChatFormatting;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import net.minecraft.client.multiplayer.ClientSuggestionProvider;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.DefaultedRegistry;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.contents.PlainTextContents;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
@@ -107,7 +100,9 @@ public class ChestShopItemNames {
 
         mapItemNames.then(literal("fetchcommand").executes(c -> {
             PlayerUtils.sendModMessage("Fetch command: " + command);
-            PlayerUtils.sendModMessage(Component.literal("Use ").append(Component.literal("/datafetcher " + command).withStyle(ChatFormatting.LIGHT_PURPLE)).append(Component.literal(" for more info")));
+            PlayerUtils.sendModMessage(Component.text("Use ", NamedTextColor.GOLD)
+                    .append(Component.text("/datafetcher " + command, NamedTextColor.LIGHT_PURPLE))
+                    .append(Component.text(" for more info", NamedTextColor.GOLD)));
             return 1;
         }).then(argument("command", StringArgumentType.word()).executes(c -> {
             command = StringArgumentType.getString(c, "command");
@@ -140,7 +135,8 @@ public class ChestShopItemNames {
         }));
 
         mapItemNames.then(literal("check").executes(c -> {
-            sendModMessage(ChatColor.GOLD + "Amount of items mapped: " + ChatColor.AQUA + itemNameMap.size());
+            sendModMessage(Component.text("Amount of items mapped: ", NamedTextColor.GOLD)
+                    .append(Component.text(itemNameMap.size(), NamedTextColor.AQUA)));
             return 1;
         }));
         return mapItemNames;
@@ -163,7 +159,8 @@ public class ChestShopItemNames {
 
         DefaultedRegistry<Item> itemRegistry = BuiltInRegistries.ITEM;
         String[] minecraftIDs = itemRegistry.stream().map(itemRegistry::getKey).map(ResourceLocation::toString).map(itemName -> itemName.split(":")[1]).map(itemName -> itemName.replace('_', ' ')).map(String::toLowerCase).filter(Predicate.not(itemNameMap::containsValue)).toList().toArray(new String[0]);
-        sendModMessage(ChatColor.GOLD + "Started Mapping. Mapping will take about " + ChatColor.AQUA + (minecraftIDs.length / 60 + 1) + " minutes");
+        sendModMessage(Component.text("Started Mapping. Mapping will take about ", NamedTextColor.GOLD)
+                .append(Component.text((minecraftIDs.length / 60 + 1) + " minutes", NamedTextColor.AQUA)));
 
         AtomicInteger index = new AtomicInteger();
         nameLookupRunning = true;
@@ -181,7 +178,11 @@ public class ChestShopItemNames {
             String item = minecraftIDs[i];
             entityPlayer.connection.sendCommand(command + " " + item);
             if (i % 60 == 0) {
-                sendModMessage(ChatColor.GOLD + "Mapped " + ChatColor.AQUA + i + ChatColor.GOLD + " items of " + ChatColor.AQUA + minecraftIDs.length + ChatColor.GOLD + " this far.");
+                sendModMessage(Component.text("Mapped ", NamedTextColor.GOLD)
+                        .append(Component.text(i, NamedTextColor.AQUA))
+                        .append(Component.text(" items of ", NamedTextColor.GOLD))
+                        .append(Component.text(minecraftIDs.length, NamedTextColor.AQUA))
+                        .append(Component.text(" this far.", NamedTextColor.GOLD)));
             }
             return true;
         }, fetchDelay, 0);

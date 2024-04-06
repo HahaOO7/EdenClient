@@ -2,7 +2,6 @@ package at.haha007.edenclient.mods;
 
 import at.haha007.edenclient.annotations.Mod;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
-import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
@@ -35,7 +34,7 @@ public class AutoSheer {
         LiteralArgumentBuilder<ClientSuggestionProvider> node = literal("eautoshear");
         node.then(literal("toggle").executes(c -> {
             enabled = !enabled;
-            PlayerUtils.sendModMessage(ChatColor.GOLD + (enabled ? "AutoShear enabled" : "AutoShear disabled"));
+            PlayerUtils.sendModMessage((enabled ? "AutoShear enabled" : "AutoShear disabled"));
             return 1;
         }));
         register(node,
@@ -56,20 +55,28 @@ public class AutoSheer {
         else
             return;
         if (shearHand == InteractionHand.MAIN_HAND) {
-            player.clientLevel.getEntitiesOfClass(Sheep.class, player.getBoundingBox().inflate(5), Sheep::readyForShearing).forEach(sheep -> {
-                if (!sheep.readyForShearing()) return;
-                if (sheep.position().distanceToSqr(pos) < 25) {
-                    interactionManager.interact(player, sheep, InteractionHand.MAIN_HAND);
-                }
-            });
+            interactMainHand(player, pos, interactionManager);
         } else {
-            player.clientLevel.getEntitiesOfClass(Sheep.class, player.getBoundingBox().inflate(5), Sheep::readyForShearing).forEach(sheep -> {
-                if (!sheep.readyForShearing()) return;
-                if (sheep.position().distanceToSqr(pos) < 25) {
-                    interactionManager.interact(player, sheep, InteractionHand.MAIN_HAND);
-                    interactionManager.interact(player, sheep, InteractionHand.OFF_HAND);
-                }
-            });
+            interactOffhand(player, pos, interactionManager);
         }
+    }
+
+    private static void interactOffhand(LocalPlayer player, Vec3 pos, MultiPlayerGameMode interactionManager) {
+        player.clientLevel.getEntitiesOfClass(Sheep.class, player.getBoundingBox().inflate(5), Sheep::readyForShearing).forEach(sheep -> {
+            if (!sheep.readyForShearing()) return;
+            if (sheep.position().distanceToSqr(pos) < 25) {
+                interactionManager.interact(player, sheep, InteractionHand.MAIN_HAND);
+                interactionManager.interact(player, sheep, InteractionHand.OFF_HAND);
+            }
+        });
+    }
+
+    private static void interactMainHand(LocalPlayer player, Vec3 pos, MultiPlayerGameMode interactionManager) {
+        player.clientLevel.getEntitiesOfClass(Sheep.class, player.getBoundingBox().inflate(5), Sheep::readyForShearing).forEach(sheep -> {
+            if (!sheep.readyForShearing()) return;
+            if (sheep.position().distanceToSqr(pos) < 25) {
+                interactionManager.interact(player, sheep, InteractionHand.MAIN_HAND);
+            }
+        });
     }
 }

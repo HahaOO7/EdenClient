@@ -49,7 +49,11 @@ public class EntityEsp {
     @ConfigSubscriber("true")
     boolean tracer;
     @ConfigSubscriber("1")
-    float r, g, b;
+    float red;
+    @ConfigSubscriber("1")
+    float green;
+    @ConfigSubscriber("1")
+    float blue;
     List<Entity> entities = new ArrayList<>();
     private VertexBuffer wireframeBox;
     private VertexBuffer solidBox;
@@ -151,10 +155,10 @@ public class EntityEsp {
     }
 
     private int setColor(CommandContext<ClientSuggestionProvider> c) {
-        this.r = c.getArgument("r", Integer.class) / 256f;
-        this.g = c.getArgument("g", Integer.class) / 256f;
-        this.b = c.getArgument("b", Integer.class) / 256f;
-        sendModMessage(ChatColor.GOLD + "Color updated.");
+        this.red = c.getArgument("r", Integer.class) / 256f;
+        this.green = c.getArgument("g", Integer.class) / 256f;
+        this.blue = c.getArgument("b", Integer.class) / 256f;
+        sendModMessage("Color updated.");
         return 1;
     }
 
@@ -169,7 +173,7 @@ public class EntityEsp {
     private void render(PoseStack matrixStack, MultiBufferSource.BufferSource vertexConsumerProvider, float tickDelta) {
         if (!enabled) return;
         RenderSystem.setShader(GameRenderer::getPositionShader);
-        RenderSystem.setShaderColor(r, g, b, 1);
+        RenderSystem.setShaderColor(red, green, blue, 1);
         RenderSystem.disableDepthTest();
         if (tracer) {
             Vec3 start = RenderUtils.getCameraPos().add(PlayerUtils.getClientLookVec());

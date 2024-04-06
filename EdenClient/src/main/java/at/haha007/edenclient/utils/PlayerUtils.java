@@ -1,6 +1,12 @@
 package at.haha007.edenclient.utils;
 
 import at.haha007.edenclient.mixinterface.IHandledScreen;
+import com.mojang.authlib.minecraft.client.MinecraftClient;
+import net.kyori.adventure.platform.AudienceProvider;
+import net.kyori.adventure.platform.fabric.FabricClientAudiences;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
+import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
@@ -13,6 +19,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.ComponentSerialization;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
 import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
@@ -38,6 +45,7 @@ import java.util.Optional;
 public class PlayerUtils {
 
     private static final Component prefix = Component.literal("[EC] ").setStyle(Style.EMPTY.applyFormats(ChatFormatting.LIGHT_PURPLE, ChatFormatting.BOLD));
+    private static final net.kyori.adventure.text.Component adventurePrefix = net.kyori.adventure.text.Component.text("[EC] ", NamedTextColor.LIGHT_PURPLE, TextDecoration.BOLD);
 
     public static void messageC2S(String msg) {
         LocalPlayer player = PlayerUtils.getPlayer();
@@ -61,22 +69,23 @@ public class PlayerUtils {
         Minecraft.getInstance().gui.setTimes(in, keep, out);
     }
 
-    public static void sendActionBar(Component text) {
-        Minecraft.getInstance().gui.setOverlayMessage(text, false);
+    public static void sendActionBar(net.kyori.adventure.text.Component text) {
+        FabricClientAudiences.of().audience().sendActionBar(net.kyori.adventure.text.Component.text().append(text));
     }
 
-    public static void sendModMessage(Component text) {
-        sendMessage(createModMessage(text));
+    public static void sendModMessage(net.kyori.adventure.text.Component text) {
+        FabricClientAudiences.of().audience().sendMessage(net.kyori.adventure.text.Component.text().append(text));
     }
 
     public static void sendModMessage(String text) {
-        sendModMessage(Component.literal(text));
+        sendModMessage(net.kyori.adventure.text.Component.text(text, NamedTextColor.GOLD));
     }
 
     public static Component createModMessage(String text) {
         return createModMessage(Component.literal(text));
     }
 
+   @Deprecated
     public static Component createModMessage(Component text) {
         return Component.empty().append(prefix).append(Component.empty().append(text).withStyle(ChatFormatting.GOLD));
     }

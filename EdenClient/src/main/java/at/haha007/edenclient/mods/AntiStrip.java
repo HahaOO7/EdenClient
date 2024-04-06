@@ -50,7 +50,7 @@ public class AntiStrip {
         var node = literal("eantistrip");
         node.then(literal("toggle").executes(c -> {
             enabled = !enabled;
-            sendModMessage(ChatColor.GOLD + (enabled ? "Enabled AntiStrip." : "Disabled AntiStrip."));
+            sendModMessage((enabled ? "Enabled AntiStrip." : "Disabled AntiStrip."));
             return 1;
         }));
 

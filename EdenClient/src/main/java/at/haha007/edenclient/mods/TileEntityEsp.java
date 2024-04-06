@@ -17,6 +17,8 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import net.minecraft.client.multiplayer.ClientChunkCache;
 import net.minecraft.client.multiplayer.ClientSuggestionProvider;
 import net.minecraft.client.player.LocalPlayer;
@@ -46,7 +48,11 @@ public class TileEntityEsp {
     @ConfigSubscriber("true")
     boolean tracer;
     @ConfigSubscriber("1")
-    float r, g, b;
+    float red;
+    @ConfigSubscriber("1")
+    float green;
+    @ConfigSubscriber("1")
+    float blue;
     @ConfigSubscriber("1000")
     int distance;
     @ConfigSubscriber("1000")
@@ -129,20 +135,25 @@ public class TileEntityEsp {
         }));
 
         cmd.then(literal("distance").executes(c -> {
-            sendModMessage(ChatColor.GOLD + "Distance: " + ChatColor.AQUA + distance);
+            sendModMessage(Component.text("Distance: ", NamedTextColor.GOLD)
+                    .append(Component.text(distance, NamedTextColor.AQUA)));
             return 1;
         }).then(argument("dist", IntegerArgumentType.integer(1)).executes(c -> {
             distance = c.getArgument("dist", Integer.class);
-            sendModMessage(ChatColor.GOLD + "Distance: " + ChatColor.AQUA + distance);
+            sendModMessage(Component.text("Distance: ", NamedTextColor.GOLD)
+                    .append(Component.text(distance, NamedTextColor.AQUA)));
             return 1;
         })));
 
         cmd.then(literal("count").executes(c -> {
-            sendModMessage(ChatColor.GOLD + "Max count: " + ChatColor.AQUA + maxCount);
+            sendModMessage(Component.text("Max count: ", NamedTextColor.GOLD)
+                    .append(Component.text(maxCount, NamedTextColor.AQUA)));
+
             return 1;
         }).then(argument("count", IntegerArgumentType.integer(1)).executes(c -> {
             maxCount = c.getArgument("count", Integer.class);
-            sendModMessage(ChatColor.GOLD + "Max count: " + ChatColor.AQUA + maxCount);
+            sendModMessage(Component.text("Max count: ", NamedTextColor.GOLD)
+                    .append(Component.text(maxCount, NamedTextColor.AQUA)));
             return 1;
         })));
 
@@ -182,9 +193,9 @@ public class TileEntityEsp {
     }
 
     private int setColor(CommandContext<ClientSuggestionProvider> c) {
-        this.r = c.getArgument("r", Integer.class) / 256f;
-        this.g = c.getArgument("g", Integer.class) / 256f;
-        this.b = c.getArgument("b", Integer.class) / 256f;
+        this.red = c.getArgument("r", Integer.class) / 256f;
+        this.green = c.getArgument("g", Integer.class) / 256f;
+        this.blue = c.getArgument("b", Integer.class) / 256f;
         sendModMessage(ChatColor.GOLD + "Color updated.");
         return 1;
     }
@@ -193,7 +204,7 @@ public class TileEntityEsp {
     private void render(PoseStack matrixStack, MultiBufferSource.BufferSource vertexConsumerProvider, float v) {
         if (!enabled) return;
         RenderSystem.setShader(GameRenderer::getPositionShader);
-        RenderSystem.setShaderColor(r, g, b, 1);
+        RenderSystem.setShaderColor(red, green, blue, 1);
         if (tracer) {
             matrixStack.pushPose();
             matrixStack.translate(.5, .5, .5);
