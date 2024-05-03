@@ -2,7 +2,6 @@ package at.haha007.edenclient.mods;
 
 import at.haha007.edenclient.annotations.Mod;
 import at.haha007.edenclient.callbacks.AddChatMessageCallback;
-import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import at.haha007.edenclient.utils.config.wrappers.StringList;
@@ -117,7 +116,7 @@ public class MessageIgnorer {
                 sendModMessage(prefix.append(suggestion).append(suffix));
                 return -1;
             }
-            sendModMessage(Component.text("Removed " , NamedTextColor.GOLD)
+            sendModMessage(Component.text("Removed ", NamedTextColor.GOLD)
                     .append(Component.text(regex.remove(index), NamedTextColor.AQUA)));
             return 1;
         })));
@@ -127,17 +126,17 @@ public class MessageIgnorer {
                 sendModMessage("No regexes registered!");
                 return 1;
             }
-            sendModMessage( "List of ignored message-regexes:");
+            sendModMessage("List of ignored message-regexes:");
             for (int i = 0; i < regex.size(); i++) {
-                sendModMessage(ChatColor.GOLD + "[" + (i + 1) + "] " + ChatColor.AQUA + regex.get(i));
-                sendModMessage(ChatColor.GOLD + "[" + (i + 1) + "] " + ChatColor.AQUA + regex.get(i));
+                sendModMessage(Component.text("[" + (i + 1) + "] ", NamedTextColor.GOLD)
+                        .append(Component.text(regex.get(i), NamedTextColor.AQUA)));
             }
             return 1;
         }));
 
         node.then(literal("clear").executes(c -> {
             regex.clear();
-            sendModMessage(ChatColor.GOLD + "Cleared ignored messages");
+            sendModMessage("Cleared ignored messages");
             return 1;
         }));
 
@@ -188,7 +187,7 @@ public class MessageIgnorer {
     }
 
     private void sendDebugMessage() {
-        sendModMessage(ChatColor.GOLD + "/ignoremessage [add,remove,clear,list,test,toggle]");
+        sendModMessage("/ignoremessage [add,remove,clear,list,test,toggle]");
     }
 
     private boolean isValidRegex(String s) {

@@ -6,7 +6,6 @@ import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.mods.GetTo;
 import at.haha007.edenclient.mods.datafetcher.ChestShopItemNames;
 import at.haha007.edenclient.mods.datafetcher.DataFetcher;
-import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.EdenUtils;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
@@ -24,7 +23,6 @@ import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.Style;
-import net.minecraft.ChatFormatting;
 import net.minecraft.client.multiplayer.ClientSuggestionProvider;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.Vec3i;
@@ -161,7 +159,30 @@ public class ChestShopMod {
 
                         Vec3i pos = cs.getPos();
                         String cmd = EdenClient.getMod(GetTo.class).getCommandTo(pos);
-                        Component hoverText = Component.text(opw.isPresent() ? opw.get().getKey() : "click me!",NamedTextColor.GOLD);
+                        Component hoverText = Component.text(opw.isPresent() ? opw.get().getKey() : "click me!", NamedTextColor.GOLD);
+                        style = style.hoverEvent(HoverEvent.hoverEvent(HoverEvent.Action.SHOW_TEXT, hoverText));
+                        style = style.clickEvent(ClickEvent.clickEvent(ClickEvent.Action.RUN_COMMAND, cmd));
+                        return Component.text(cs.formattedString(false)).style(style);
+                    }).forEach(PlayerUtils::sendModMessage);
+            return 1;
+        })));
+
+        node.then(literal("sellexact").then(argument("item", StringArgumentType.greedyString()).suggests(this::suggestSell).executes(c -> {
+            sendModMessage("Sell: ");
+            String item = c.getArgument("item", String.class);
+            List<ChestShopEntry> matching = new ArrayList<>();
+
+            shops.values().forEach(m -> m.stream().filter(ChestShopEntry::canSell).
+                    filter(e -> e.getItem().equals(item)).forEach(matching::add));
+            matching.stream().sorted(Comparator.comparingDouble(ChestShopEntry::getSellPricePerItem).reversed())
+                    .limit(10)
+                    .map(cs -> {
+                        Optional<Map.Entry<String, Vec3i>> opw = getNearestPlayerWarp(cs.getPos());
+                        Style style = Style.style(NamedTextColor.GOLD);
+
+                        Vec3i pos = cs.getPos();
+                        String cmd = EdenClient.getMod(GetTo.class).getCommandTo(pos);
+                        Component hoverText = Component.text(opw.isPresent() ? opw.get().getKey() : "click me!", NamedTextColor.GOLD);
                         style = style.hoverEvent(HoverEvent.hoverEvent(HoverEvent.Action.SHOW_TEXT, hoverText));
                         style = style.clickEvent(ClickEvent.clickEvent(ClickEvent.Action.RUN_COMMAND, cmd));
                         return Component.text(cs.formattedString(false)).style(style);
@@ -191,12 +212,34 @@ public class ChestShopMod {
             return 1;
         })));
 
+        node.then(literal("buyexact").then(argument("item", StringArgumentType.greedyString()).suggests(this::suggestBuy).executes(c -> {
+            String item = c.getArgument("item", String.class);
+            sendModMessage("Buy: ");
+            List<ChestShopEntry> matching = new ArrayList<>();
+            shops.values().forEach(m -> m.stream().filter(ChestShopEntry::canBuy).
+                    filter(e -> e.getItem().equals(item)).forEach(matching::add));
+            matching.stream().sorted(Comparator.comparingDouble(ChestShopEntry::getBuyPricePerItem))
+                    .limit(10)
+                    .map(cs -> {
+                        Optional<Map.Entry<String, Vec3i>> opw = getNearestPlayerWarp(cs.getPos());
+                        Style style = Style.style(NamedTextColor.GOLD);
+                        Vec3i pos = cs.getPos();
+                        String cmd = EdenClient.getMod(GetTo.class).getCommandTo(pos);
+                        Component hoverText = Component.text(opw.isPresent() ? opw.get().getKey() : "click me!", NamedTextColor.GOLD);
+                        style = style.hoverEvent(HoverEvent.hoverEvent(HoverEvent.Action.SHOW_TEXT, hoverText));
+                        style = style.clickEvent(ClickEvent.clickEvent(ClickEvent.Action.RUN_COMMAND, cmd));
+                        return Component.text(cs.formattedString(true)).style(style);
+                    })
+                    .forEach(PlayerUtils::sendModMessage);
+            return 1;
+        })));
+
         node.then(literal("exploitable").executes(c -> {
             List<String> exploitableItems = getExploitableShopsText();
 
             File folder = new File(EdenClient.getDataFolder(), "ChestShop_Exploitable");
             if (!folder.exists() && (!folder.mkdirs())) {
-                    EdenUtils.getLogger().error("Failed to create ChestShop folder!");
+                EdenUtils.getLogger().error("Failed to create ChestShop folder!");
 
             }
             SimpleDateFormat formatter = new SimpleDateFormat("yyyy_MM_dd_hh_mm_ss");
@@ -214,9 +257,9 @@ public class ChestShopMod {
                     bw.newLine();
                 }
                 sendModMessage(Component.text("Wrote file without errors. Saved at ", NamedTextColor.GOLD).
-                        append(Component.text(file.getAbsolutePath(),NamedTextColor.GOLD)
-                                .hoverEvent( HoverEvent.hoverEvent(HoverEvent.Action.SHOW_TEXT, Component.text("Click to copy")))
-                                .clickEvent( ClickEvent.clickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, file.getAbsolutePath()))));
+                        append(Component.text(file.getAbsolutePath(), NamedTextColor.GOLD)
+                                .hoverEvent(HoverEvent.hoverEvent(HoverEvent.Action.SHOW_TEXT, Component.text("Click to copy")))
+                                .clickEvent(ClickEvent.clickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, file.getAbsolutePath()))));
             } catch (IOException e) {
                 sendModMessage("Error while writing file. See console for more info.");
                 EdenUtils.getLogger().error("Couldn't write shop contents.", e);
@@ -264,7 +307,7 @@ public class ChestShopMod {
 
             File folder = new File(EdenClient.getDataFolder(), "ChestShopModEntries");
             if (!folder.exists() && (!folder.mkdirs())) {
-                    EdenUtils.getLogger().error("Failed to create ChestShop folder!");
+                EdenUtils.getLogger().error("Failed to create ChestShop folder!");
             }
             SimpleDateFormat formatter = new SimpleDateFormat("yyyy_MM_dd_hh_mm_ss");
             Date date = new Date();
@@ -287,8 +330,8 @@ public class ChestShopMod {
                 }
                 sendModMessage(Component.text("Wrote file without errors. Saved at ", NamedTextColor.GOLD).
                         append(Component.text(file.getAbsolutePath(), NamedTextColor.GOLD)
-                                .hoverEvent( HoverEvent.hoverEvent(HoverEvent.Action.SHOW_TEXT, Component.text("Click to copy path")))
-                                .clickEvent( ClickEvent.clickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, file.getAbsolutePath()))));
+                                .hoverEvent(HoverEvent.hoverEvent(HoverEvent.Action.SHOW_TEXT, Component.text("Click to copy path")))
+                                .clickEvent(ClickEvent.clickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, file.getAbsolutePath()))));
             } catch (IOException e) {
                 sendModMessage("Error while writing file. See console for more info.");
                 EdenUtils.getLogger().error("Couldn't write shop contents.", e);

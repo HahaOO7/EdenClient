@@ -1,5 +1,5 @@
 plugins {
-    id 'fabric-loom' version '1.5-SNAPSHOT'
+    id 'fabric-loom' version '1.6-SNAPSHOT'
     id 'maven-publish'
 }
 
@@ -19,6 +19,10 @@ repositories {
     maven {
         name = "meteorRepository"
         url = uri("https://maven.meteordev.org/snapshots")
+    }
+    maven {
+        name = "sonatype-oss-snapshots1"
+        url = "https://s01.oss.sonatype.org/content/repositories/snapshots/"
     }
 
     mavenCentral()
@@ -45,10 +49,11 @@ dependencies {
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
     implementation project(":EcAnnotations")
     annotationProcessor project(":EcProcessors")
-    compileOnly 'org.projectlombok:lombok:1.18.30'
-    annotationProcessor 'org.projectlombok:lombok:1.18.30'
+    compileOnly 'org.projectlombok:lombok:1.18.32'
+    annotationProcessor 'org.projectlombok:lombok:1.18.32'
 
-    modImplementation include("net.kyori:adventure-platform-fabric:5.12.0")
+    modImplementation include("net.kyori:adventure-api:4.16.0")
+    modImplementation include("net.kyori:adventure-text-serializer-gson:4.16.0")
 }
 
 processResources {
@@ -60,7 +65,7 @@ processResources {
 }
 
 tasks.withType(JavaCompile).configureEach {
-    it.options.release = 17
+    it.options.release = 21
 }
 
 java {
@@ -68,37 +73,12 @@ java {
     // if it is present.
     // If you remove this line, sources will not be generated.
     withSourcesJar()
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
 }
 
 jar {
     from("LICENSE") {
-        rename { "${it}_${project.base.archivesName.get()}" }
-    }
-    from {
-        configurations
-                .runtimeClasspath
-                .collect {
-                    if (it.name.equalsIgnoreCase("EcAnnotations.jar")) {
-                        zipTree(it)
-                    } else {
-                        null
-                    }
-                }
-    }
-}
-
-
-// configure the maven publication
-publishing {
-    publications {}
-
-    // See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
-    repositories {
-        // Add repositories to publish to here.
-        // Notice: This block does NOT have the same function as the block in the top level.
-        // The repositories here will be used for publishing your artifact, not for
-        // retrieving dependencies.
+        rename { "${it}_${project.base.archivesName.get()}"}
     }
 }

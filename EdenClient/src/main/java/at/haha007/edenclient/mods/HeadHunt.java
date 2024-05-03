@@ -5,7 +5,6 @@ import at.haha007.edenclient.callbacks.GameRenderCallback;
 import at.haha007.edenclient.callbacks.JoinWorldCallback;
 import at.haha007.edenclient.callbacks.LeaveWorldCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
-import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.RenderUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
@@ -49,7 +48,11 @@ public class HeadHunt {
     @ConfigSubscriber("true")
     boolean tracer;
     @ConfigSubscriber("1")
-    float r, g, b;
+    float red;
+    @ConfigSubscriber("1")
+    float green;
+    @ConfigSubscriber("1")
+    float blue;
     Set<Vec3i> heads = new HashSet<>();
     Set<Vec3i> foundHeads = new HashSet<>();
     private VertexBuffer wireframeBox;
@@ -142,10 +145,10 @@ public class HeadHunt {
     }
 
     private int setColor(CommandContext<ClientSuggestionProvider> c) {
-        this.r = c.getArgument("r", Integer.class) / 256f;
-        this.g = c.getArgument("g", Integer.class) / 256f;
-        this.b = c.getArgument("b", Integer.class) / 256f;
-        sendModMessage(ChatColor.GOLD + "Color updated.");
+        this.red = c.getArgument("r", Integer.class) / 256f;
+        this.green = c.getArgument("g", Integer.class) / 256f;
+        this.blue = c.getArgument("b", Integer.class) / 256f;
+        sendModMessage("Color updated.");
         return 1;
     }
 
@@ -153,7 +156,7 @@ public class HeadHunt {
     private void render(PoseStack matrixStack, MultiBufferSource.BufferSource vertexConsumerProvider, float v) {
         if (!enabled) return;
         RenderSystem.setShader(GameRenderer::getPositionShader);
-        RenderSystem.setShaderColor(r, g, b, 1);
+        RenderSystem.setShaderColor(red, green, blue, 1);
         if (tracer) {
             matrixStack.pushPose();
             matrixStack.translate(.5, .5, .5);

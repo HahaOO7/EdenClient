@@ -11,11 +11,13 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.GrindstoneScreen;
 import net.minecraft.client.multiplayer.ClientSuggestionProvider;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.Holder;
 import net.minecraft.network.protocol.game.ServerboundContainerClickPacket;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.GrindstoneMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.item.enchantment.ItemEnchantments;
 
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -77,8 +79,9 @@ public class AotoGrindstone {
     private boolean isItemEnchanted(ItemStack item) {
         if (!item.isEnchanted())
             return false;
-        if (item.getEnchantmentTags().isEmpty())
+        ItemEnchantments enchantments = item.getEnchantments();
+        if (enchantments.isEmpty())
             return false;
-        return EnchantmentHelper.getEnchantments(item).keySet().stream().distinct().anyMatch(e -> !e.isCurse());
+        return enchantments.keySet().stream().map(Holder::value).anyMatch(e -> !e.isCurse());
     }
 }

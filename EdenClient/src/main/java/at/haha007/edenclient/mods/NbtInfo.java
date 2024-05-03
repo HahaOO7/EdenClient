@@ -5,7 +5,9 @@ import at.haha007.edenclient.command.CommandManager;
 import at.haha007.edenclient.utils.PlayerUtils;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.nbt.TextComponentTagVisitor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
@@ -24,12 +26,8 @@ public class NbtInfo {
                     if (stack.isEmpty()) {
                         sendModMessage("Take an item in your hand!");
                     } else {
-                        CompoundTag tag = stack.getTag();
-                        if (tag == null) {
-                            sendModMessage("This item has no tag.");
-                            return 1;
-                        }
-                        String json = Component.Serializer.toJson(new TextComponentTagVisitor("", 1).visit(tag));
+                        Tag tag = stack.save(RegistryAccess.EMPTY);
+                        String json = Component.Serializer.toJson(new TextComponentTagVisitor("").visit(tag), RegistryAccess.EMPTY);
                         sendModMessage(GsonComponentSerializer.gson().deserialize(json));
                     }
                     return 1;

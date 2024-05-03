@@ -4,6 +4,7 @@ import at.haha007.edenclient.callbacks.CommandSuggestionCallback;
 import at.haha007.edenclient.callbacks.InventoryOpenCallback;
 import at.haha007.edenclient.command.CommandManager;
 import at.haha007.edenclient.utils.ContainerInfo;
+import at.haha007.edenclient.utils.EdenUtils;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.suggestion.Suggestions;
 import net.minecraft.client.Minecraft;
@@ -28,25 +29,24 @@ import java.util.List;
 
 @Mixin(ClientPacketListener.class)
 public abstract class ClientPacketListenerMixin {
-    @Shadow
-    private CommandDispatcher<SharedSuggestionProvider> commands;
-    @Unique
-    private Minecraft minecraft;
 
-    @Shadow
-    public abstract void sendCommand(String string2);
+    @Shadow public abstract boolean sendUnsignedCommand(String string);
+
+    @Shadow private CommandDispatcher<SharedSuggestionProvider> commands;
 
     @Inject(method = "sendCommand", at = @At("HEAD"), cancellable = true)
     private void onSendCommand(String message, CallbackInfo ci) {
         if (!CommandManager.isClientSideCommand(message.split(" ")[0])) return;
-        CommandManager.execute(message, new ClientSuggestionProvider(minecraft.getConnection(), minecraft));
+        CommandManager.execute(message, new ClientSuggestionProvider(
+                Minecraft.getInstance().getConnection(), Minecraft.getInstance()));
         ci.cancel();
     }
 
     @Inject(method = "sendUnsignedCommand", at = @At("HEAD"), cancellable = true)
     private void onSendUnsignedCommand(String message, CallbackInfoReturnable<Boolean> ci) {
         if (!CommandManager.isClientSideCommand(message.split(" ")[0])) return;
-        CommandManager.execute(message, new ClientSuggestionProvider(minecraft.getConnection(), minecraft));
+        CommandManager.execute(message, new ClientSuggestionProvider(
+                Minecraft.getInstance().getConnection(), Minecraft.getInstance()));
         ci.setReturnValue(true);
     }
 
@@ -54,26 +54,25 @@ public abstract class ClientPacketListenerMixin {
     private void onSendChat(String message, CallbackInfo ci) {
         if (!message.startsWith("/")) return;
         ci.cancel();
-        sendCommand(message.substring(1));
+        sendUnsignedCommand(message.substring(1));
     }
 
     @Inject(method = "handleCommandSuggestions", at = @At("HEAD"))
     private void onSuggestCommands(ClientboundCommandSuggestionsPacket packet, CallbackInfo ci) {
-        Suggestions sug = packet.getSuggestions();
-        int id = packet.getId();
+        Suggestions sug = packet.toSuggestions();
+        int id = packet.id();
         CommandSuggestionCallback.EVENT.invoker().suggest(sug, id);
     }
 
     @Inject(method = "handleCommands", at = @At("RETURN"))
     private void onCommandTree(ClientboundCommandsPacket packet, CallbackInfo info) {
-        addCommands();
+        ecAddCommands();
     }
 
     @SuppressWarnings("unchecked")
     @Inject(method = "<init>", at = @At("RETURN"))
     private void onConstruct(Minecraft minecraft, Connection connection, CommonListenerCookie commonListenerCookie, CallbackInfo ci) {
-        this.minecraft = Minecraft.getInstance();
-        addCommands();
+        ecAddCommands();
         CommandManager.register((CommandDispatcher<ClientSuggestionProvider>) (Object) commands);
     }
 
@@ -99,12 +98,12 @@ public abstract class ClientPacketListenerMixin {
     @Inject(method = "handleSystemChat", at = @At("HEAD"), cancellable = true)
     void onGameMessage(ClientboundSystemChatPacket packet, CallbackInfo ci) {
         ci.cancel();
-        minecraft.getChatListener().handleSystemMessage(packet.content(), packet.overlay());
+        Minecraft.getInstance().getChatListener().handleSystemMessage(packet.content(), packet.overlay());
     }
 
     @Unique
     @SuppressWarnings("unchecked")
-    private void addCommands() {
+    private void ecAddCommands() {
         CommandManager.register((CommandDispatcher<ClientSuggestionProvider>) (Object) commands);
     }
 }

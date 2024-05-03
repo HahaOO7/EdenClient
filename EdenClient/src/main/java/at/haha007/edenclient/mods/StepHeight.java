@@ -7,7 +7,11 @@ import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import com.mojang.brigadier.arguments.FloatArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import io.netty.util.DefaultAttributeMap;
 import net.minecraft.client.multiplayer.ClientSuggestionProvider;
+import net.minecraft.core.Registry;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.attributes.DefaultAttributes;
 
 import static at.haha007.edenclient.command.CommandManager.*;
 
@@ -41,6 +45,6 @@ public class StepHeight {
     }
 
     private void update() {
-        PlayerUtils.getPlayer().setMaxUpStep(height);
+        PlayerUtils.getPlayer().getAttribute(Attributes.STEP_HEIGHT).setBaseValue(height);
     }
 }

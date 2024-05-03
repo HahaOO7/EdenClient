@@ -1,12 +1,16 @@
 package at.haha007.edenclient;
 
+import at.haha007.edenclient.mods.*;
+import at.haha007.edenclient.mods.datafetcher.DataFetcher;
 import at.haha007.edenclient.utils.ModInitializer;
+import at.haha007.edenclient.utils.Scheduler;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import lombok.Getter;
 import net.fabricmc.api.ClientModInitializer;
 import net.minecraft.client.Minecraft;
 
 import java.io.File;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -25,7 +29,16 @@ public class EdenClient implements ClientModInitializer {
         setInstance(this);
         PerWorldConfig.get();
         modInitializer.initializeMods();
-        //For limited access EdenClient use: modInitializer.initializeMods(List.of(Scheduler.class));
+        //For limited access EdenClient use:
+//        modInitializer.initializeMods(List.of(
+//                Scheduler.class,
+//                EnsureSilk.class,
+//                WordHighlighter.class,
+//                Rainbowifier.class,
+//                ContainerDisplay.class,
+//                AntiSpam.class,
+//                MessageIgnorer.class,
+//                DataFetcher.class));
     }
 
     public static <T> T getMod(Class<T> clazz) {

@@ -20,6 +20,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.SignBlockEntity;
+import net.minecraft.world.level.block.entity.SignText;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -68,12 +69,12 @@ public class SignCopy {
         }
         shouldCopy = true;
         CompoundTag tag = new CompoundTag();
-        sign.load(tag);
+        SignText frontText = sign.getFrontText();
         String[] copiedLines = new String[4];
-        copiedLines[0] = getString(tag.getString("Text1"));
-        copiedLines[1] = getString(tag.getString("Text2"));
-        copiedLines[2] = getString(tag.getString("Text3"));
-        copiedLines[3] = getString(tag.getString("Text4"));
+        copiedLines[0] = frontText.getMessage(0,true).getString();
+        copiedLines[1] = frontText.getMessage(0,true).getString();
+        copiedLines[2] = frontText.getMessage(0,true).getString();
+        copiedLines[3] = frontText.getMessage(0,true).getString();
         this.copy = new StringList();
         this.copy.addAll(Arrays.asList(copiedLines));
         return InteractionResult.FAIL;

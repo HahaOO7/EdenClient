@@ -3,6 +3,7 @@ package at.haha007.edenclient.mixin;
 import at.haha007.edenclient.callbacks.JoinWorldCallback;
 import at.haha007.edenclient.callbacks.LeaveWorldCallback;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.ReceivingLevelScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.multiplayer.ClientLevel;
 import org.jetbrains.annotations.Nullable;
@@ -21,15 +22,15 @@ public class MinecraftClientMixin {
     boolean connected;
 
     @Inject(at = @At("TAIL"), method = "setLevel")
-    void onDisconnect(ClientLevel world, CallbackInfo ci) {
-        boolean connected = world != null;
-        if (connected == this.connected) return;
-        if (connected) {
+    void onDisconnect(ClientLevel clientLevel, ReceivingLevelScreen.Reason reason, CallbackInfo ci) {
+        boolean connect = clientLevel != null;
+        if (connect == this.connected) return;
+        if (connect) {
             JoinWorldCallback.EVENT.invoker().join();
         } else {
             LeaveWorldCallback.EVENT.invoker().leave();
         }
-        this.connected = connected;
+        this.connected = connect;
     }
 
     @Inject(at = @At("TAIL"), method = "disconnect(Lnet/minecraft/client/gui/screens/Screen;)V")

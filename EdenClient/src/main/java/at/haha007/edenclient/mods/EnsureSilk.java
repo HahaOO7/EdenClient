@@ -3,7 +3,6 @@ package at.haha007.edenclient.mods;
 import at.haha007.edenclient.annotations.Mod;
 import at.haha007.edenclient.callbacks.ConfigLoadedCallback;
 import at.haha007.edenclient.callbacks.PlayerAttackBlockCallback;
-import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
@@ -52,7 +51,7 @@ public class EnsureSilk {
         if (!filter.contains(block)) return InteractionResult.PASS;
         ItemStack tool = localPlayer.getMainHandItem();
         if (tool.isEmpty()) return InteractionResult.FAIL;
-        boolean hasSilkTouch = EnchantmentHelper.getEnchantments(tool).containsKey(Enchantments.SILK_TOUCH);
+        boolean hasSilkTouch = tool.getEnchantments().getLevel(Enchantments.SILK_TOUCH) > 0;
         return hasSilkTouch ? InteractionResult.PASS : InteractionResult.FAIL;
     }
 

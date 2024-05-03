@@ -33,7 +33,9 @@ public class GameRendererMixin {
                     opcode = Opcodes.GETFIELD,
                     ordinal = 0
             ))
-    private void renderWorld(float tickDelta, long limitTime, PoseStack matrix, CallbackInfo ci) {
+    private void renderWorld(float tickDelta, long limitTime, CallbackInfo ci) {
+        PoseStack matrix = new PoseStack();
+
         matrix.pushPose();
         Vec3 cameraPos = mainCamera.getPosition();
         matrix.translate(-cameraPos.x, -cameraPos.y, -cameraPos.z);

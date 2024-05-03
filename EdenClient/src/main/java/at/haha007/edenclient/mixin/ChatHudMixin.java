@@ -9,6 +9,8 @@ import net.minecraft.client.GuiMessage;
 import net.minecraft.client.GuiMessageTag;
 import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MessageSignature;
 import org.jetbrains.annotations.Nullable;
@@ -47,7 +49,7 @@ public abstract class ChatHudMixin implements IVisibleMessageAccessor {
             chatText = event.getChatText();
             if (chatText != null && !chatText.getString().isBlank()) {
                 addMessage(chatText, null, GuiMessageTag.system());
-                EdenUtils.getLogger().info("Chat: " + Component.Serializer.toJson(chatText));
+                EdenUtils.getLogger().info("Chat: " + Component.Serializer.toJson(chatText, RegistryAccess.EMPTY));
             }
         });
     }

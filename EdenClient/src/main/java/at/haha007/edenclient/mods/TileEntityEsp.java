@@ -5,7 +5,6 @@ import at.haha007.edenclient.callbacks.GameRenderCallback;
 import at.haha007.edenclient.callbacks.JoinWorldCallback;
 import at.haha007.edenclient.callbacks.LeaveWorldCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
-import at.haha007.edenclient.utils.ChatColor;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.RenderUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
@@ -196,7 +195,7 @@ public class TileEntityEsp {
         this.red = c.getArgument("r", Integer.class) / 256f;
         this.green = c.getArgument("g", Integer.class) / 256f;
         this.blue = c.getArgument("b", Integer.class) / 256f;
-        sendModMessage(ChatColor.GOLD + "Color updated.");
+        sendModMessage("Color updated.");
         return 1;
     }
 

@@ -10,6 +10,7 @@ import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.RenderBuffers;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
+import org.joml.Matrix4fStack;
 import org.lwjgl.opengl.GL11;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -26,10 +27,11 @@ public class WorldRendererMixin {
     private RenderBuffers renderBuffers;
 
     @Inject(method = "renderLevel", at = @At("HEAD"))
-    private void renderWorld(PoseStack matrix, float tickDelta, long limitTime, boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer, LightTexture lightmapTextureManager, Matrix4f positionMatrix, CallbackInfo ci) {
-        matrix.pushPose();
+    private void renderWorld(float tickDelta, long l, boolean bl, Camera camera, GameRenderer gameRenderer, LightTexture lightTexture, Matrix4f matrix4f, Matrix4f matrix4f2, CallbackInfo ci) {
+        PoseStack matrix = new PoseStack();
+        matrix.mulPose(matrix4f2);
         Vec3 cameraPos = camera.getPosition();
-        matrix.translate(-cameraPos.x, -cameraPos.y, -cameraPos.z);
+        matrix.translate((float) -cameraPos.x, (float) -cameraPos.y, (float) -cameraPos.z);
         float[] color = RenderSystem.getShaderColor();
 
         GL11.glEnable(GL11.GL_LINE_SMOOTH);

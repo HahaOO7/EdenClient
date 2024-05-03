@@ -1,9 +1,6 @@
 package at.haha007.edenclient.utils;
 
 import at.haha007.edenclient.mixinterface.IHandledScreen;
-import com.mojang.authlib.minecraft.client.MinecraftClient;
-import net.kyori.adventure.platform.AudienceProvider;
-import net.kyori.adventure.platform.fabric.FabricClientAudiences;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
@@ -17,9 +14,10 @@ import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.Vec3i;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.ComponentSerialization;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
 import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
@@ -70,11 +68,15 @@ public class PlayerUtils {
     }
 
     public static void sendActionBar(net.kyori.adventure.text.Component text) {
-        FabricClientAudiences.of().audience().sendActionBar(net.kyori.adventure.text.Component.text().append(text));
+        String json = GsonComponentSerializer.gson().serialize(text);
+        MutableComponent component = Component.Serializer.fromJson(json, RegistryAccess.EMPTY);
+        Minecraft.getInstance().gui.setOverlayMessage(component, true);
     }
 
     public static void sendModMessage(net.kyori.adventure.text.Component text) {
-        FabricClientAudiences.of().audience().sendMessage(net.kyori.adventure.text.Component.text().append(text));
+        String json = GsonComponentSerializer.gson().serialize(text);
+        MutableComponent component = Component.Serializer.fromJson(json, RegistryAccess.EMPTY);
+        Minecraft.getInstance().gui.getChat().addMessage(component);
     }
 
     public static void sendModMessage(String text) {
@@ -85,7 +87,7 @@ public class PlayerUtils {
         return createModMessage(Component.literal(text));
     }
 
-   @Deprecated
+    @Deprecated
     public static Component createModMessage(Component text) {
         return Component.empty().append(prefix).append(Component.empty().append(text).withStyle(ChatFormatting.GOLD));
     }

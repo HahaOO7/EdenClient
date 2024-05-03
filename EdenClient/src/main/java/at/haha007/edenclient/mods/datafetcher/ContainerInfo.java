@@ -13,6 +13,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Registry;
 import net.minecraft.core.Vec3i;
+import net.minecraft.core.component.DataComponentType;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -29,6 +31,7 @@ import net.minecraft.world.inventory.ShulkerBoxMenu;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.component.ItemContainerContents;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -107,11 +110,9 @@ public class ContainerInfo {
     }
 
     private Stream<ItemStack> mapShulkerBox(ItemStack stack) {
-        CompoundTag tag = stack.getOrCreateTag();
-        ListTag list = tag.getCompound("BlockEntityTag").getList("Items", Tag.TAG_COMPOUND);
-        if (list.isEmpty())
-            return Stream.of(stack);
-        return list.stream().map(CompoundTag.class::cast).map(this::getStackFromCompound);
+        ItemContainerContents containerContents = stack.getComponents().get(DataComponents.CONTAINER);
+        if(containerContents == null) return Stream.of(stack);
+        return containerContents.stream();
     }
 
     private ItemStack getStackFromCompound(CompoundTag tag) {

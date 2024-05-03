@@ -2,10 +2,9 @@ package at.haha007.edenclient.mods;
 
 import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.annotations.Mod;
-import at.haha007.edenclient.utils.ChatColor;
+import at.haha007.edenclient.utils.EdenUtils;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.Scheduler;
-import at.haha007.edenclient.utils.EdenUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
@@ -14,13 +13,18 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import net.minecraft.client.multiplayer.ClientSuggestionProvider;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.DefaultedRegistry;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.*;
 
 import java.util.*;
@@ -101,7 +105,9 @@ public class WorldEditReplaceHelper {
 
         node.then(literal("delay").then(argument("delay", IntegerArgumentType.integer(0, 40)).executes(c -> {
             this.delay = c.getArgument("delay", Integer.class);
-            sendModMessage(ChatColor.GOLD + "Set delay to " + ChatColor.AQUA + delay + ChatColor.GOLD + " ticks.");
+            sendModMessage(Component.text("Set delay to ", NamedTextColor.GOLD)
+                    .append(Component.text(delay, NamedTextColor.AQUA))
+                    .append(Component.text(" ticks.", NamedTextColor.GOLD)));
             return 1;
         })));
 
@@ -163,17 +169,20 @@ public class WorldEditReplaceHelper {
             return 0;
         }
         if (sendMessage)
-            sendModMessage(ChatColor.GOLD + "Replacing " + ChatColor.AQUA + getBlockIDFromBlock(fromBlock) + ChatColor.GOLD + " with " + ChatColor.AQUA + getBlockIDFromBlock(toBlock));
+            sendModMessage(Component.text("Replacing ", NamedTextColor.GOLD)
+                    .append(Component.text(getBlockIDFromBlock(fromBlock), NamedTextColor.AQUA))
+                    .append(Component.text(" with ", NamedTextColor.GOLD))
+                    .append(Component.text(getBlockIDFromBlock(toBlock), NamedTextColor.AQUA)));
         return 1;
     }
 
     private void replaceUndoRequest(Block fromBlock, Block toBlock, int delay) {
-        sendModMessage(ChatColor.AQUA + "Undoing " + ChatColor.GOLD + " last request.");
+        sendModMessage("Undoing last request");
         replaceCommandRequest(fromBlock, toBlock, delay, false);
     }
 
     private void replaceRedoRequest(Block fromBlock, Block toBlock, int delay) {
-        sendModMessage(ChatColor.AQUA + "Redoing " + ChatColor.GOLD + " last request.");
+        sendModMessage("Redoing  last request.");
 
         replaceCommandRequest(fromBlock, toBlock, delay, false);
     }

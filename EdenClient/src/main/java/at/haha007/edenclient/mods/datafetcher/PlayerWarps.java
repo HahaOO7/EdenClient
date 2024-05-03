@@ -133,7 +133,7 @@ public class PlayerWarps {
             ItemStack item = inventory.getItem(i);
             if (item.isEmpty()) continue;
             String name = item.getHoverName().getString();
-            item.getTooltipLines(null, TooltipFlag.NORMAL)
+            item.getTooltipLines(null,PlayerUtils.getPlayer(), TooltipFlag.NORMAL)
                     .stream().map(Component::getString)
                     .filter(s -> s.startsWith("Ort: world, "))
                     .findAny().ifPresent(s -> map.put(name, getPos(s)));
