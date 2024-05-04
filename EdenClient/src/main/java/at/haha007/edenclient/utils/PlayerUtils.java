@@ -70,6 +70,7 @@ public class PlayerUtils {
     public static void sendActionBar(net.kyori.adventure.text.Component text) {
         String json = GsonComponentSerializer.gson().serialize(text);
         MutableComponent component = Component.Serializer.fromJson(json, RegistryAccess.EMPTY);
+        component = Component.empty().append(prefix).append(Component.empty().append(component).withStyle(ChatFormatting.GOLD));
         Minecraft.getInstance().gui.setOverlayMessage(component, true);
     }
 
@@ -81,15 +82,6 @@ public class PlayerUtils {
 
     public static void sendModMessage(String text) {
         sendModMessage(net.kyori.adventure.text.Component.text(text, NamedTextColor.GOLD));
-    }
-
-    public static Component createModMessage(String text) {
-        return createModMessage(Component.literal(text));
-    }
-
-    @Deprecated
-    public static Component createModMessage(Component text) {
-        return Component.empty().append(prefix).append(Component.empty().append(text).withStyle(ChatFormatting.GOLD));
     }
 
     public static void walkTowards(Vec3 target) {
