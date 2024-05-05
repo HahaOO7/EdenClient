@@ -1,5 +1,6 @@
 package at.haha007.edenclient.render;
 
+import at.haha007.edenclient.annotations.Mod;
 import at.haha007.edenclient.callbacks.GameRenderCallback;
 import at.haha007.edenclient.callbacks.LeaveWorldCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
@@ -17,6 +18,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeMap;
 
+@Mod
 public class TracerRenderer {
     private final TreeMap<Integer, Set<Vec3>> tracers = new TreeMap<>();
     private long tick = 0;

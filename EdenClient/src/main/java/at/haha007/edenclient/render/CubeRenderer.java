@@ -1,9 +1,7 @@
 package at.haha007.edenclient.render;
 
-import at.haha007.edenclient.callbacks.GameRenderCallback;
-import at.haha007.edenclient.callbacks.JoinWorldCallback;
-import at.haha007.edenclient.callbacks.LeaveWorldCallback;
-import at.haha007.edenclient.callbacks.PlayerTickCallback;
+import at.haha007.edenclient.annotations.Mod;
+import at.haha007.edenclient.callbacks.*;
 import at.haha007.edenclient.utils.RenderUtils;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -17,6 +15,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
+@Mod
 public class CubeRenderer {
     private final TreeMap<Integer, Set<AABB>> cubes = new TreeMap<>();
     private long tick = 0;

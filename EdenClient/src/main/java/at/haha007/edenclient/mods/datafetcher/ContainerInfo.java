@@ -13,13 +13,11 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Registry;
 import net.minecraft.core.Vec3i;
-import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.Container;
 import net.minecraft.world.InteractionHand;
@@ -111,15 +109,8 @@ public class ContainerInfo {
 
     private Stream<ItemStack> mapShulkerBox(ItemStack stack) {
         ItemContainerContents containerContents = stack.getComponents().get(DataComponents.CONTAINER);
-        if(containerContents == null) return Stream.of(stack);
+        if(containerContents == null || containerContents.copyOne() == ItemStack.EMPTY) return Stream.of(stack);
         return containerContents.stream();
-    }
-
-    private ItemStack getStackFromCompound(CompoundTag tag) {
-        Item item = BuiltInRegistries.ITEM.get(new ResourceLocation(tag.getString("id")));
-        ItemStack stack = item.getDefaultInstance();
-        stack.setCount(tag.getByte("Count"));
-        return stack;
     }
 
     private InteractionResult attackBlock(LocalPlayer player, BlockPos blockPos, Direction direction) {

@@ -35,18 +35,18 @@ public class GameRendererMixin {
             ))
     private void renderWorld(float tickDelta, long limitTime, CallbackInfo ci) {
         PoseStack matrix = new PoseStack();
-
-        matrix.pushPose();
         Vec3 cameraPos = mainCamera.getPosition();
+        matrix.mulPose(mainCamera.rotation().rotateY((float) (Math.PI)).invert());
         matrix.translate(-cameraPos.x, -cameraPos.y, -cameraPos.z);
         float[] color = RenderSystem.getShaderColor();
         RenderSystem.disableDepthTest();
+
         GL11.glEnable(GL11.GL_LINE_SMOOTH);
         GameRenderCallback.EVENT.invoker().render(matrix, renderBuffers.bufferSource(), tickDelta);
         GL11.glDisable(GL11.GL_LINE_SMOOTH);
+
         RenderSystem.enableDepthTest();
         RenderSystem.setShaderColor(1,1,1,1);
         RenderSystem.setShaderColor(color[0], color[1], color[2], color[3]);
-        matrix.popPose();
     }
 }

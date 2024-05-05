@@ -1,17 +1,20 @@
 package at.haha007.edenclient.mods;
 
-import at.haha007.edenclient.annotations.Mod;
 import at.haha007.edenclient.EdenClient;
+import at.haha007.edenclient.annotations.Mod;
+import at.haha007.edenclient.callbacks.GameRenderCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
-import at.haha007.edenclient.callbacks.WorldRenderCallback;
 import at.haha007.edenclient.command.CommandManager;
 import at.haha007.edenclient.mods.datafetcher.ContainerInfo;
 import at.haha007.edenclient.mods.datafetcher.DataFetcher;
+import at.haha007.edenclient.utils.EdenUtils;
+import at.haha007.edenclient.utils.RenderUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientSuggestionProvider;
 import net.minecraft.client.player.LocalPlayer;
@@ -23,6 +26,7 @@ import net.minecraft.core.Vec3i;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Quaternionf;
@@ -45,7 +49,7 @@ public class ContainerDisplay {
 
 
     public ContainerDisplay() {
-        WorldRenderCallback.EVENT.register(this::renderWorld);
+        GameRenderCallback.EVENT.register(this::renderWorld);
         PlayerTickCallback.EVENT.register(this::tick);
         PerWorldConfig.get().register(this, "ContainerDisplay");
         registerCommand();
@@ -84,19 +88,15 @@ public class ContainerDisplay {
         CommandManager.register(cmd, "Displays icons on top of containers.");
     }
 
+
     private void renderWorld(PoseStack matrixStack, MultiBufferSource.BufferSource vertexConsumerProvider, float v) {
         if (!enabled)
             return;
 
         RenderSystem.enableDepthTest();
-
-        //get the item renderer
         ItemRenderer itemRenderer = Minecraft.getInstance().getItemRenderer();
-
-        //rendering
         entries.forEach((pos, chestInfo) -> {
             matrixStack.pushPose();
-
             //calculate looking direction, rendering offset and rendering angle
             final Direction direction = chestInfo.face();
             final Vec3 offset = Vec3.atLowerCornerOf(direction.getNormal().offset(1, 1, 1)).scale(.5);
@@ -158,5 +158,6 @@ public class ContainerDisplay {
             }
             matrixStack.popPose();
         });
+        vertexConsumerProvider.endBatch();
     }
 }
