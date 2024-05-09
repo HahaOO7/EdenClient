@@ -9,12 +9,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.DirectionalBlock;
-import net.minecraft.world.level.block.SlabBlock;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.minecraft.world.level.block.state.properties.SlabType;
 import net.minecraft.world.phys.BlockHitResult;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -38,6 +32,18 @@ public class PlayerControllerMixin {
     @Inject(method = "startDestroyBlock", at = @At("HEAD"), cancellable = true)
     private void onAttackBlock(BlockPos pos, Direction side, CallbackInfoReturnable<Boolean> cir) {
         InteractionResult result = PlayerAttackBlockCallback.EVENT.invoker().interact(PlayerUtils.getPlayer(), pos, side);
+        if (result == InteractionResult.FAIL) cir.setReturnValue(false);
+    }
+
+    @Inject(method = "continueDestroyBlock", at = @At("HEAD"), cancellable = true)
+    private void onContinueDestroyBlock(BlockPos pos, Direction side, CallbackInfoReturnable<Boolean> cir) {
+        InteractionResult result = PlayerAttackBlockCallback.EVENT.invoker().interact(PlayerUtils.getPlayer(), pos, side);
+        if (result == InteractionResult.FAIL) cir.setReturnValue(false);
+    }
+
+    @Inject(method = "destroyBlock", at = @At("HEAD"), cancellable = true)
+    private void onDestroyBlock(BlockPos blockPos, CallbackInfoReturnable<Boolean> cir) {
+        InteractionResult result = PlayerAttackBlockCallback.EVENT.invoker().interact(PlayerUtils.getPlayer(), blockPos, Direction.UP);
         if (result == InteractionResult.FAIL) cir.setReturnValue(false);
     }
 
