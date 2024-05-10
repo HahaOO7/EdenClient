@@ -1,14 +1,13 @@
 package at.haha007.edenclient.callbacks;
 
-import net.fabricmc.fabric.api.event.Event;
-import net.fabricmc.fabric.api.event.EventFactory;
 import net.minecraft.client.GuiMessage;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
+
 import java.util.List;
 
 public interface AddChatMessageCallback {
-    Event<AddChatMessageCallback> EVENT = EventFactory.createArrayBacked(AddChatMessageCallback.class,
+    Event<AddChatMessageCallback> EVENT = new Event<>(
             listeners -> event -> {
                 for (AddChatMessageCallback listener : listeners) {
                     listener.interact(event);

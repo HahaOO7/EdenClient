@@ -45,13 +45,13 @@ dependencies {
     mappings loom.officialMojangMappings()
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
-    // Fabric API. This is technically optional, but you probably want it anyway.
-    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+    //Annotations
     implementation project(":EcAnnotations")
     annotationProcessor project(":EcProcessors")
     compileOnly 'org.projectlombok:lombok:1.18.32'
     annotationProcessor 'org.projectlombok:lombok:1.18.32'
 
+    //Chat Component API
     modImplementation include("net.kyori:adventure-api:4.16.0")
     modImplementation include("net.kyori:adventure-text-serializer-gson:4.16.0")
 }

@@ -1,10 +1,8 @@
 package at.haha007.edenclient.callbacks;
 
-import net.fabricmc.fabric.api.event.Event;
-import net.fabricmc.fabric.api.event.EventFactory;
 
 public interface JoinWorldCallback {
-    Event<JoinWorldCallback> EVENT = EventFactory.createArrayBacked(JoinWorldCallback.class,
+    Event<JoinWorldCallback> EVENT = new Event<>(
             listeners -> () -> {
                 for (JoinWorldCallback listener : listeners) {
                     listener.join();

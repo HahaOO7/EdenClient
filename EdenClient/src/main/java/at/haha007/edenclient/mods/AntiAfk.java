@@ -31,8 +31,7 @@ public class AntiAfk {
             return 1;
         }));
 
-        register(node,
-                "AntiAfk stops you from getting kicked for being afk. ");
+        register(node, "AntiAfk stops you from getting kicked for being afk. ");
     }
 
     private boolean moveAround() {

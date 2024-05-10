@@ -45,9 +45,9 @@ public class AntiSpam {
             return 1;
         }));
 
-        register(node,
-                "AntiSpam compresses the chat to eliminate all types of unnecessary spam.",
-                "The newest instance of the message will still be displayed, all older ones removed. The number in the square brackets shows how often a message was repeated.");
+        register(node, "AntiSpam compresses the chat to eliminate all types of unnecessary spam.",
+                "The newest instance of the message will still be displayed, all older ones removed.",
+                "The number in the square brackets shows how often a message was repeated.");
     }
 
     private void onChat(AddChatMessageCallback.ChatAddEvent event) {

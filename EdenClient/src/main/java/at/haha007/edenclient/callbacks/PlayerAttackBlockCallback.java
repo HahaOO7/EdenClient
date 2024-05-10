@@ -1,14 +1,12 @@
 package at.haha007.edenclient.callbacks;
 
-import net.fabricmc.fabric.api.event.Event;
-import net.fabricmc.fabric.api.event.EventFactory;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionResult;
 
 public interface PlayerAttackBlockCallback {
-    Event<PlayerAttackBlockCallback> EVENT = EventFactory.createArrayBacked(PlayerAttackBlockCallback.class,
+    Event<PlayerAttackBlockCallback> EVENT = new Event<>(
             listeners -> (player, pos, side) -> {
                 InteractionResult result = InteractionResult.PASS;
                 for (PlayerAttackBlockCallback listener : listeners) {
