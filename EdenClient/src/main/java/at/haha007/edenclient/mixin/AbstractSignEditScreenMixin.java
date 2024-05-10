@@ -1,5 +1,6 @@
 package at.haha007.edenclient.mixin;
 
+import at.haha007.edenclient.callbacks.SignWidthCallback;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.font.TextFieldHelper;
@@ -19,26 +20,43 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(AbstractSignEditScreen.class)
 public abstract class AbstractSignEditScreenMixin extends Screen {
-    @Shadow protected abstract void onDone();
+    @Shadow
+    protected abstract void onDone();
 
-    @Shadow @Nullable private TextFieldHelper signField;
+    @Shadow
+    @Nullable
+    private TextFieldHelper signField;
 
-    @Shadow @Final private String[] messages;
+    @Shadow
+    @Final
+    private String[] messages;
 
-    @Shadow private int line;
+    @Shadow
+    private int line;
 
-    @Shadow protected abstract void setMessage(String string);
+    @Shadow
+    protected abstract void setMessage(String string);
+
+    @Shadow
+    @Final
+    private SignBlockEntity sign;
 
     protected AbstractSignEditScreenMixin(Component component) {
         super(component);
     }
 
     @Inject(at = @At("HEAD"), method = "init", cancellable = true)
-    private void onKeyPressed( CallbackInfo ci) {
+    private void onKeyPressed(CallbackInfo ci) {
         addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, button -> this.onDone()).bounds(this.width / 2 - 100, this.height / 4 + 144, 200, 20).build());
         this.signField = new TextFieldHelper(() -> this.messages[this.line],
                 this::setMessage, TextFieldHelper.createClipboardGetter(Minecraft.getInstance()),
-                TextFieldHelper.createClipboardSetter(Minecraft.getInstance()), string -> true);
+                TextFieldHelper.createClipboardSetter(Minecraft.getInstance()),
+                string -> {
+                    if (this.minecraft == null) return false;
+                    int textWidth = this.minecraft.font.width(string);
+                    int maxTextLineWidth = this.sign.getMaxTextLineWidth();
+                    return SignWidthCallback.EVENT.invoker().canContinueWriting(textWidth, maxTextLineWidth, textWidth <= maxTextLineWidth);
+                });
         ci.cancel();
     }
 }

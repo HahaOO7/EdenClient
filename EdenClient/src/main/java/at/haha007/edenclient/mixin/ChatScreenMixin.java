@@ -1,5 +1,7 @@
 package at.haha007.edenclient.mixin;
 
+import at.haha007.edenclient.callbacks.ChatKeyCallback;
+import at.haha007.edenclient.mods.PageKeyChatCompletion;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.ChatScreen;
@@ -23,44 +25,12 @@ public abstract class ChatScreenMixin {
     private int historyPos;
 
     @Inject(at = @At("HEAD"), method = "keyPressed", cancellable = true)
-    private void onKeyPressed(int i, int j, int k, CallbackInfoReturnable<Boolean> cir) {
-        if (266 == i) {
-            scrollBack();
-            cir.setReturnValue(true);
-        }
-        if (267 == i) {
-            scrollForward();
-            cir.setReturnValue(true);
-        }
-    }
-
-    @Unique
-    private void scrollBack() {
+    private void onKeyPressed(int key, int j, int k, CallbackInfoReturnable<Boolean> cir) {
         ArrayListDeque<String> recentChat = Minecraft.getInstance().gui.getChat().getRecentChat();
         String prefix = input.getValue().substring(0, input.getCursorPosition());
-        int posInHistory = historyPos;
-        if (posInHistory == 0) return;
-        for (int i = posInHistory - 1; i >= 0; i--) {
-            if (recentChat.get(i).startsWith(prefix)) {
-                moveInHistory(i - posInHistory);
-                input.setCursorPosition(prefix.length());
-                return;
-            }
-        }
-    }
-
-    @Unique
-    private void scrollForward() {
-        ArrayListDeque<String> recentChat = Minecraft.getInstance().gui.getChat().getRecentChat();
-        String prefix = input.getValue().substring(0, input.getCursorPosition());
-        int posInHistory = historyPos;
-        if (posInHistory > recentChat.size() - 2) return;
-        for (int i = posInHistory + 1; i < recentChat.size(); i++) {
-            if (recentChat.get(i).startsWith(prefix)) {
-                moveInHistory(i - posInHistory);
-                input.setCursorPosition(prefix.length());
-                return;
-            }
-        }
+        int newPos = ChatKeyCallback.EVENT.invoker().getNewPosInHistory(key, recentChat, prefix, historyPos);
+        if(newPos < 0 || newPos > recentChat.size() - 1 || historyPos == newPos) return;
+        moveInHistory(newPos - historyPos);
+        input.setCursorPosition(prefix.length());
     }
 }

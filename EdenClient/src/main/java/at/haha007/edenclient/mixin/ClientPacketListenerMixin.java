@@ -69,11 +69,9 @@ public abstract class ClientPacketListenerMixin {
         ecAddCommands();
     }
 
-    @SuppressWarnings("unchecked")
     @Inject(method = "<init>", at = @At("RETURN"))
     private void onConstruct(Minecraft minecraft, Connection connection, CommonListenerCookie commonListenerCookie, CallbackInfo ci) {
         ecAddCommands();
-        CommandManager.register((CommandDispatcher<ClientSuggestionProvider>) (Object) commands);
     }
 
     @Inject(method = "handleContainerContent", at = @At("HEAD"))

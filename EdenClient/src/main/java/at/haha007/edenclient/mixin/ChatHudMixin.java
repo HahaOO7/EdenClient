@@ -2,14 +2,12 @@ package at.haha007.edenclient.mixin;
 
 import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.callbacks.AddChatMessageCallback;
-import at.haha007.edenclient.mixinterface.IVisibleMessageAccessor;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.EdenUtils;
 import net.minecraft.client.GuiMessage;
 import net.minecraft.client.GuiMessageTag;
 import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MessageSignature;
@@ -25,7 +23,7 @@ import java.util.List;
 
 
 @Mixin(ChatComponent.class)
-public abstract class ChatHudMixin implements IVisibleMessageAccessor {
+public abstract class ChatHudMixin {
 
     @Final
     @Shadow
@@ -49,7 +47,7 @@ public abstract class ChatHudMixin implements IVisibleMessageAccessor {
             chatText = event.getChatText();
             if (chatText != null && !chatText.getString().isBlank()) {
                 addMessage(chatText, null, GuiMessageTag.system());
-                EdenUtils.getLogger().info("Chat: " + Component.Serializer.toJson(chatText, RegistryAccess.EMPTY));
+                EdenUtils.getLogger().info("Chat: {}", Component.Serializer.toJson(chatText, RegistryAccess.EMPTY));
             }
         });
     }
