@@ -8,20 +8,24 @@ import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class ModInitializer {
     private final Map<Class<?>, Object> registeredMods = new HashMap<>();
 
     public void initializeMods() {
-        List<Class<?>> modClasses = getModClassesSorted();
-        modClasses.forEach(this::registerMod);
-    }
-    public void initializeMods(Collection<Class<?>> filter) {
-        List<Class<?>> modClasses = getModClassesSorted();
-        modClasses.stream().filter(filter::contains).forEach(this::registerMod);
+        initializeMods(c -> true);
     }
 
+    public void initializeMods(Collection<Class<?>> filter) {
+        initializeMods(filter::contains);
+    }
+
+    public void initializeMods(Predicate<Class<?>> filter) {
+        List<Class<?>> modClasses = getModClassesSorted(filter.or(c -> c.getAnnotation(Mod.class).required()));
+        modClasses.forEach(this::registerMod);
+    }
 
     public <T> T getMod(Class<T> clazz) {
         //noinspection unchecked
@@ -39,20 +43,53 @@ public class ModInitializer {
                  IllegalAccessException |
                  InvocationTargetException |
                  NoSuchMethodException e) {
-            EdenUtils.getLogger().error("Error while enabling mod: " + clazz.getCanonicalName(), e);
+            EdenUtils.getLogger().error("Error while enabling mod: {}", clazz.getCanonicalName(), e);
         }
     }
 
-    private List<Class<?>> getModClassesSorted() {
+    private List<Class<?>> getModClassesSorted(Predicate<Class<?>> filter) {
         List<AnnotatedClass> annotatedClasses = getAnnotatedClassesFromFile();
         //CONFIRM DAG
         annotatedClasses.forEach(c -> c.dependencies.add(EdenClient.class));
+        annotatedClasses = applyFilter(annotatedClasses, filter);
         annotatedClasses.add(new AnnotatedClass(EdenClient.class, new ArrayList<>()));
         ClassDAG dag = new ClassDAG(annotatedClasses);
         List<Class<?>> sorted = dag.topologicallySorted();
         sorted.remove(EdenClient.class);
         return sorted;
     }
+
+    private List<AnnotatedClass> applyFilter(List<AnnotatedClass> annotatedClasses, Predicate<Class<?>> filter) {
+        Map<Class<?>, Set<Class<?>>> deepDependencies = new HashMap<>();
+        for (AnnotatedClass annotatedClass : annotatedClasses) {
+            deepDependencies.put(annotatedClass.clazz, getDependencies(annotatedClass, annotatedClasses));
+        }
+
+        List<AnnotatedClass> filteredClasses = new ArrayList<>();
+        Predicate<Class<?>> ff = filter;
+        filter = c -> ff.test(c) || deepDependencies.entrySet().stream().filter(e -> e.getValue().contains(c))
+                .anyMatch(e -> ff.test(e.getKey()));
+        for (AnnotatedClass annotatedClass : annotatedClasses) {
+            Class<?> clazz = annotatedClass.clazz;
+            if(!filter.test(clazz)) continue;
+            filteredClasses.add(annotatedClass);
+        }
+        return filteredClasses;
+    }
+
+    private Set<Class<?>> getDependencies(AnnotatedClass annotatedClass, List<AnnotatedClass> annotatedClasses) {
+        Set<Class<?>> dependencies = new HashSet<>();
+        for (Class<?> dependency : annotatedClass.dependencies) {
+            dependencies.add(dependency);
+            AnnotatedClass annotatedDependency = annotatedClasses.stream()
+                    .filter(c -> c.clazz == dependency).findFirst().orElse(null);
+            if (annotatedDependency == null) continue;
+            dependencies.addAll(getDependencies(annotatedDependency, annotatedClasses));
+        }
+        dependencies.add(annotatedClass.clazz);
+        return dependencies;
+    }
+
 
     private List<AnnotatedClass> getAnnotatedClassesFromFile() {
         try (InputStream is = getClass().getClassLoader().getResourceAsStream("mods.txt")) {

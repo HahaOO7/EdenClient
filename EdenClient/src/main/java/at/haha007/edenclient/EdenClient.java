@@ -28,17 +28,15 @@ public class EdenClient implements ClientModInitializer {
     public void onInitializeClient() {
         setInstance(this);
         PerWorldConfig.get();
-        modInitializer.initializeMods();
+//        modInitializer.initializeMods();
         //For limited access EdenClient use:
-//        modInitializer.initializeMods(List.of(
-//                Scheduler.class,
-//                EnsureSilk.class,
-//                WordHighlighter.class,
-//                Rainbowifier.class,
-//                ContainerDisplay.class,
-//                AntiSpam.class,
-//                MessageIgnorer.class,
-//                DataFetcher.class));
+        modInitializer.initializeMods(List.of(
+                EnsureSilk.class,
+                WordHighlighter.class,
+                Rainbowifier.class,
+                ContainerDisplay.class,
+                AntiSpam.class,
+                MessageIgnorer.class));
     }
 
     public static <T> T getMod(Class<T> clazz) {

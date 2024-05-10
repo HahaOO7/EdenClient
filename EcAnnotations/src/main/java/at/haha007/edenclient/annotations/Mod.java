@@ -10,4 +10,7 @@ import java.lang.annotation.Target;
 public @interface Mod {
     //If some mod has to be loaded before this one
     Class<?>[] dependencies() default {};
+    //True if it is allways considered enabled
+    boolean required() default false;
+
 }

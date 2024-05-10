@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
-@Mod
+@Mod(required = true)
 public class Scheduler {
 
     private final Set<Runnable> sync = Collections.synchronizedSet(new HashSet<>());

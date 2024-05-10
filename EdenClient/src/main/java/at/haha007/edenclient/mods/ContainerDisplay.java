@@ -41,7 +41,7 @@ import static at.haha007.edenclient.command.CommandManager.literal;
 import static at.haha007.edenclient.utils.PlayerUtils.getPlayer;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
-@Mod
+@Mod(dependencies = DataFetcher.class)
 public class ContainerDisplay {
     @ConfigSubscriber("false")
     private boolean enabled;
