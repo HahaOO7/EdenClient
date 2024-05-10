@@ -32,7 +32,7 @@ public class SignWidthOverride {
     private boolean enabled = true;
 
     public SignWidthOverride() {
-        SignWidthCallback.EVENT.register(this::onSignWidth);
+        SignWidthCallback.EVENT.register(this::onSignWidth, getClass());
         PerWorldConfig.get().register(this, "signWidth");
         registerCommand();
     }

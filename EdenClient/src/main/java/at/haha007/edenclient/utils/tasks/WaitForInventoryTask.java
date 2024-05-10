@@ -14,8 +14,8 @@ public class WaitForInventoryTask implements Task {
     private static final Set<WaitForInventoryTask> listeners = new HashSet<>();
 
     static {
-        InventoryOpenCallback.EVENT.register(i -> listeners.removeIf(r -> r.onInventoryOpen(i.getTitle())));
-        LeaveWorldCallback.EVENT.register(listeners::clear);
+        InventoryOpenCallback.EVENT.register(i -> listeners.removeIf(r -> r.onInventoryOpen(i.getTitle())), WaitForInventoryTask.class);
+        LeaveWorldCallback.EVENT.register(listeners::clear, WaitForInventoryTask.class);
     }
 
     private final Predicate<Component> matcher;

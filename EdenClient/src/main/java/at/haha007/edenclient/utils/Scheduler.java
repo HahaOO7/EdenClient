@@ -25,8 +25,8 @@ public class Scheduler {
     }
 
     private Scheduler() {
-        LeaveWorldCallback.EVENT.register(this::cleanup);
-        PlayerTickCallback.EVENT.register(this::tick);
+        LeaveWorldCallback.EVENT.register(this::cleanup, Scheduler.class);
+        PlayerTickCallback.EVENT.register(this::tick, Scheduler.class);
     }
 
     private synchronized void cleanup() {

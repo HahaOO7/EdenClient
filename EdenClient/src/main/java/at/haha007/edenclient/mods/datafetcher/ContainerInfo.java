@@ -53,11 +53,11 @@ public class ContainerInfo {
     ContainerInfo() {
         chunkMap = new ChunkChestMap();
 
-        PlayerTickCallback.EVENT.register(this::tick);
-        PlayerAttackBlockCallback.EVENT.register(this::attackBlock);
-        PlayerInteractBlockCallback.EVENT.register(this::interactBlock);
-        ContainerCloseCallback.EVENT.register(this::onCloseInventory);
-        PlayerInvChangeCallback.EVENT.register(this::onInventoryChange);
+        PlayerTickCallback.EVENT.register(this::tick, getClass());
+        PlayerAttackBlockCallback.EVENT.register(this::attackBlock, getClass());
+        PlayerInteractBlockCallback.EVENT.register(this::interactBlock, getClass());
+        ContainerCloseCallback.EVENT.register(this::onCloseInventory, getClass());
+        PlayerInvChangeCallback.EVENT.register(this::onInventoryChange, getClass());
 
         PerWorldConfig.get().register(new ContainerConfigLoader(), ChunkChestMap.class);
         PerWorldConfig.get().register(new ChestMapLoader(), ChestMap.class);

@@ -35,8 +35,8 @@ public class AutoMoss {
     private int tick = 0;
 
     public AutoMoss() {
-        PlayerTickCallback.EVENT.register(this::tick);
-        JoinWorldCallback.EVENT.register(this::build);
+        PlayerTickCallback.EVENT.register(this::tick, getClass());
+        JoinWorldCallback.EVENT.register(this::build, getClass());
         registerCommand();
     }
 

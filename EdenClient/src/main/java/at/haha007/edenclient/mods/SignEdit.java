@@ -46,8 +46,8 @@ public class SignEdit {
     private boolean enabled = false;
 
     public SignEdit() {
-        PlayerEditSignCallback.EVENT.register(this::onEditSign);
-        PlayerAttackBlockCallback.EVENT.register(this::onAttackBlock);
+        PlayerEditSignCallback.EVENT.register(this::onEditSign, getClass());
+        PlayerAttackBlockCallback.EVENT.register(this::onAttackBlock, getClass());
         registerCommand();
         PerWorldConfig.get().register(this, "signEdit");
     }

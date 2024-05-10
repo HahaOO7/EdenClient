@@ -48,9 +48,9 @@ public class Excavator {
 
     private Excavator() {
         PerWorldConfig.get().register(this, "excavator");
-        JoinWorldCallback.EVENT.register(this::onJoinWorld);
-        PlayerTickCallback.EVENT.register(this::tick);
-        ConfigLoadedCallback.EVENT.register(this::onConfigLoaded);
+        JoinWorldCallback.EVENT.register(this::onJoinWorld, getClass());
+        PlayerTickCallback.EVENT.register(this::tick, getClass());
+        ConfigLoadedCallback.EVENT.register(this::onConfigLoaded, getClass());
         registerCommand();
     }
 

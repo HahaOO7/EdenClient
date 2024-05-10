@@ -31,8 +31,8 @@ public class AotoGrindstone {
 
     public AotoGrindstone() {
         registerCommand();
-        PlayerTickCallback.EVENT.register(this::onTick);
-        JoinWorldCallback.EVENT.register(this::onJoin);
+        PlayerTickCallback.EVENT.register(this::onTick, getClass());
+        JoinWorldCallback.EVENT.register(this::onJoin, getClass());
     }
 
     private void onJoin() {

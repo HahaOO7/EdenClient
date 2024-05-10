@@ -35,8 +35,8 @@ public class EnsureSilk {
     public EnsureSilk() {
         registerCommand();
         PerWorldConfig.get().register(this, "EnsureSilk");
-        PlayerAttackBlockCallback.EVENT.register(this::onAttackBlock);
-        ConfigLoadedCallback.EVENT.register(this::configLoaded);
+        PlayerAttackBlockCallback.EVENT.register(this::onAttackBlock, getClass());
+        ConfigLoadedCallback.EVENT.register(this::configLoaded, getClass());
     }
 
     private void configLoaded() {

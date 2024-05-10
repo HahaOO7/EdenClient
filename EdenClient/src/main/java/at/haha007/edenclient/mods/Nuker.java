@@ -65,8 +65,8 @@ public class Nuker {
 
     public Nuker() {
         registerCommand();
-        PlayerTickCallback.EVENT.register(this::onTick);
-        ConfigLoadedCallback.EVENT.register(this::configLoaded);
+        PlayerTickCallback.EVENT.register(this::onTick, getClass());
+        ConfigLoadedCallback.EVENT.register(this::configLoaded, getClass());
         PerWorldConfig.get().register(this, "nuker");
     }
 

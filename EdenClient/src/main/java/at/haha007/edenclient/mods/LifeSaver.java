@@ -30,7 +30,7 @@ public class LifeSaver {
 
     public LifeSaver() {
         registerCommand();
-        PlayerTickCallback.EVENT.register(this::tick);
+        PlayerTickCallback.EVENT.register(this::tick, getClass());
         PerWorldConfig.get().register(this, "lifesaver");
     }
 

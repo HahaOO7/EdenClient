@@ -48,10 +48,10 @@ public class ItemEsp {
     public ItemEsp() {
         registerCommand();
         PerWorldConfig.get().register(this, "itemEsp");
-        LeaveWorldCallback.EVENT.register(this::destroy);
-        JoinWorldCallback.EVENT.register(this::build);
-        GameRenderCallback.EVENT.register(this::render);
-        PlayerTickCallback.EVENT.register(this::tick);
+        LeaveWorldCallback.EVENT.register(this::destroy, getClass());
+        JoinWorldCallback.EVENT.register(this::build, getClass());
+        GameRenderCallback.EVENT.register(this::render, getClass());
+        PlayerTickCallback.EVENT.register(this::tick, getClass());
     }
 
     private void tick(LocalPlayer player) {

@@ -17,7 +17,7 @@ import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 public class PageKeyChatCompletion {
 
     public PageKeyChatCompletion() {
-        ChatKeyCallback.EVENT.register(this::onChatKey);
+        ChatKeyCallback.EVENT.register(this::onChatKey, getClass());
     }
 
     private int onChatKey(int key, List<String> history, String prefix, int posInHistory) {

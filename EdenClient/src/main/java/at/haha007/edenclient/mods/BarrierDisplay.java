@@ -30,7 +30,7 @@ public class BarrierDisplay {
 
     public BarrierDisplay() {
         registerCommand();
-        PlayerTickCallback.EVENT.register(this::onTick);
+        PlayerTickCallback.EVENT.register(this::onTick, getClass());
         PerWorldConfig.get().register(this, "barrierDisplay");
     }
 

@@ -58,10 +58,10 @@ public class EntityEsp {
     private VertexBuffer solidBox;
 
     public EntityEsp() {
-        GameRenderCallback.EVENT.register(this::render);
-        PlayerTickCallback.EVENT.register(this::tick);
-        JoinWorldCallback.EVENT.register(this::build);
-        LeaveWorldCallback.EVENT.register(this::destroy);
+        GameRenderCallback.EVENT.register(this::render, getClass());
+        PlayerTickCallback.EVENT.register(this::tick, getClass());
+        JoinWorldCallback.EVENT.register(this::build, getClass());
+        LeaveWorldCallback.EVENT.register(this::destroy, getClass());
         PerWorldConfig.get().register(this, "entityEsp");
         registerCommand();
     }

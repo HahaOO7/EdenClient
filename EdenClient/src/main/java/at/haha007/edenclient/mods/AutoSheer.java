@@ -25,7 +25,7 @@ public class AutoSheer {
     boolean enabled = false;
 
     public AutoSheer() {
-        PlayerTickCallback.EVENT.register(this::onTick);
+        PlayerTickCallback.EVENT.register(this::onTick, getClass());
         PerWorldConfig.get().register(this, "autoShear");
         registerCommand();
     }

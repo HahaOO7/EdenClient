@@ -22,7 +22,7 @@ public class StepHeight {
 
     public StepHeight() {
         PerWorldConfig.get().register(this, "stepHeight");
-        ConfigLoadedCallback.EVENT.register(this::update);
+        ConfigLoadedCallback.EVENT.register(this::update, getClass());
         registerCommand();
     }
 

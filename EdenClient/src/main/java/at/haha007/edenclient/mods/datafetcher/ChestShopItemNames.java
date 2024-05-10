@@ -49,10 +49,10 @@ public class ChestShopItemNames {
     private boolean nameLookupRunning = false;
 
     ChestShopItemNames() {
-        AddChatMessageCallback.EVENT.register(this::onChat);
+        AddChatMessageCallback.EVENT.register(this::onChat, DataFetcher.class);
         PerWorldConfig.get().register(this, "dataFetcher.chestShopItemNames");
-        JoinWorldCallback.EVENT.register(() -> nameLookupRunning = false);
-        LeaveWorldCallback.EVENT.register(() -> nameLookupRunning = false);
+        JoinWorldCallback.EVENT.register(() -> nameLookupRunning = false, DataFetcher.class);
+        LeaveWorldCallback.EVENT.register(() -> nameLookupRunning = false, DataFetcher.class);
     }
 
     private void onChat(AddChatMessageCallback.ChatAddEvent event) {

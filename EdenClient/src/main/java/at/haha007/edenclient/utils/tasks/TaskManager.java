@@ -21,7 +21,7 @@ public class TaskManager implements Cloneable, Task {
         LeaveWorldCallback.EVENT.register(() -> {
             running.forEach(TaskManager::cancel);
             running.clear();
-        });
+        }, TaskManager.class);
 
     }
 

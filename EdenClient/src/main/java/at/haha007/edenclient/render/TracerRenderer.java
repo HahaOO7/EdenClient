@@ -24,9 +24,9 @@ public class TracerRenderer {
     private long tick = 0;
 
     public TracerRenderer() {
-        GameRenderCallback.EVENT.register(this::render);
-        PlayerTickCallback.EVENT.register(this::tick);
-        LeaveWorldCallback.EVENT.register(tracers::clear);
+        GameRenderCallback.EVENT.register(this::render, getClass());
+        PlayerTickCallback.EVENT.register(this::tick, getClass());
+        LeaveWorldCallback.EVENT.register(tracers::clear, getClass());
     }
 
     private void tick(LocalPlayer player) {

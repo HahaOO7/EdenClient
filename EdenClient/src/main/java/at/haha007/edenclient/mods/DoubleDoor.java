@@ -33,7 +33,7 @@ public class DoubleDoor {
     private boolean enabled = true;
 
     public DoubleDoor() {
-        PlayerInteractBlockCallback.EVENT.register(this::onInteractBlock);
+        PlayerInteractBlockCallback.EVENT.register(this::onInteractBlock, getClass());
         PerWorldConfig.get().register(this, "doubleDoor");
         registerCommand();
     }

@@ -40,10 +40,10 @@ public class GetTo {
 
     public GetTo() {
         registerCommand();
-        JoinWorldCallback.EVENT.register(this::build);
-        LeaveWorldCallback.EVENT.register(this::destroy);
-        GameRenderCallback.EVENT.register(this::render);
-        PlayerTickCallback.EVENT.register(this::tick);
+        JoinWorldCallback.EVENT.register(this::build, getClass());
+        LeaveWorldCallback.EVENT.register(this::destroy, getClass());
+        GameRenderCallback.EVENT.register(this::render, getClass());
+        PlayerTickCallback.EVENT.register(this::tick, getClass());
     }
 
     private void destroy() {

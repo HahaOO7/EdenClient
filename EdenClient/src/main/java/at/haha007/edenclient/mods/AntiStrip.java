@@ -40,7 +40,7 @@ public class AntiStrip {
     private boolean enabled = true;
 
     public AntiStrip() {
-        PlayerInteractBlockCallback.EVENT.register(this::onInteractBlock);
+        PlayerInteractBlockCallback.EVENT.register(this::onInteractBlock, getClass());
         PerWorldConfig.get().register(this, "antiStrip");
         registerCommand();
     }

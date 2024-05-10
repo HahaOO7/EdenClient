@@ -16,8 +16,8 @@ public class CompleteCommandTask implements Task {
     private static final Set<CompleteCommandTask> listeners = new HashSet<>();
 
     static {
-        CommandSuggestionCallback.EVENT.register((s, i) -> listeners.removeIf(r -> r.onCommandSuggestion(s, i)));
-        LeaveWorldCallback.EVENT.register(listeners::clear);
+        CommandSuggestionCallback.EVENT.register((s, i) -> listeners.removeIf(r -> r.onCommandSuggestion(s, i)), CompleteCommandTask.class);
+        LeaveWorldCallback.EVENT.register(listeners::clear, CompleteCommandTask.class);
     }
 
     private final String command;

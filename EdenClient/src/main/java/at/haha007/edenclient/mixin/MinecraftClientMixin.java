@@ -1,5 +1,6 @@
 package at.haha007.edenclient.mixin;
 
+import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.callbacks.JoinWorldCallback;
 import at.haha007.edenclient.callbacks.LeaveWorldCallback;
 import net.minecraft.client.Minecraft;
@@ -26,9 +27,11 @@ public class MinecraftClientMixin {
         boolean connect = clientLevel != null;
         if (connect == this.connected) return;
         if (connect) {
+            EdenClient.onJoin();
             JoinWorldCallback.EVENT.invoker().join();
         } else {
             LeaveWorldCallback.EVENT.invoker().leave();
+            EdenClient.onQuit();
         }
         this.connected = connect;
     }
@@ -38,5 +41,6 @@ public class MinecraftClientMixin {
         if (!this.connected) return;
         connected = false;
         LeaveWorldCallback.EVENT.invoker().leave();
+        EdenClient.onQuit();
     }
 }

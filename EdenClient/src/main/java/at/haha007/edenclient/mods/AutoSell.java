@@ -39,7 +39,7 @@ public class AutoSell {
 
     public AutoSell() {
         PerWorldConfig.get().register(this, "autoSell");
-        PlayerInvChangeCallback.EVENT.register(this::onInventoryChange);
+        PlayerInvChangeCallback.EVENT.register(this::onInventoryChange, getClass());
         registerCommand("eautosell");
         registerCommand("eas");
     }

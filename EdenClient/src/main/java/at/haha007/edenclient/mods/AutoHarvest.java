@@ -50,7 +50,7 @@ public class AutoHarvest {
 
     public AutoHarvest() {
         PerWorldConfig.get().register(this, "autoHarvest");
-        PlayerTickCallback.EVENT.register(this::tick);
+        PlayerTickCallback.EVENT.register(this::tick, getClass());
         LiteralArgumentBuilder<ClientSuggestionProvider> cmd = CommandManager.literal("eautoharvest");
         cmd.executes(c -> {
             enabled = !enabled;

@@ -57,7 +57,7 @@ public class ChestShopMod {
     public ChestShopMod() {
         registerCommand("echestshop");
         registerCommand("ecs");
-        PlayerTickCallback.EVENT.register(this::tick);
+        PlayerTickCallback.EVENT.register(this::tick, getClass());
         PerWorldConfig.get().register(this, "chestShop");
         PerWorldConfig.get().register(new ChestShopLoader(), ChestShopMap.class);
         PerWorldConfig.get().register(new ChestShopEntryLoader(), ChestShopEntry.class);

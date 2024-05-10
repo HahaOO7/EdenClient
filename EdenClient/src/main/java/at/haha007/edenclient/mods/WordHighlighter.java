@@ -41,7 +41,7 @@ public class WordHighlighter {
     public WordHighlighter() {
         registerCommand("ehighlight");
         registerCommand("ehl");
-        AddChatMessageCallback.EVENT.register(this::onChat);
+        AddChatMessageCallback.EVENT.register(this::onChat, getClass());
         PerWorldConfig.get().register(this, "wordhighlighter");
     }
 

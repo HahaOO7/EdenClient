@@ -9,11 +9,12 @@ import at.haha007.edenclient.utils.Scheduler;
 import at.haha007.edenclient.utils.area.*;
 import at.haha007.edenclient.utils.config.loaders.*;
 import at.haha007.edenclient.utils.config.wrappers.*;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.Vec3i;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtAccounter;
-import net.minecraft.nbt.NbtIo;
-import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.*;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
@@ -60,8 +61,8 @@ public class PerWorldConfig {
 
     private PerWorldConfig() {
         folder = new File(EdenClient.getDataFolder(), "PerWorldCfg");
-        JoinWorldCallback.EVENT.register(this::onJoin);
-        LeaveWorldCallback.EVENT.register(this::onLeave);
+        JoinWorldCallback.EVENT.register(this::onJoin, getClass());
+        LeaveWorldCallback.EVENT.register(this::onLeave, getClass());
         register(new IntegerLoader(), Integer.class);
         register(new BooleanLoader(), Boolean.class);
 
@@ -140,13 +141,17 @@ public class PerWorldConfig {
 
     private void loadConfig() {
         File file = new File(folder, worldName + ".mca");
-        if (!ensureExistingConfigFolder()) return;
+        if (ensureExistingConfigFolder()) return;
         CompoundTag tag = new CompoundTag();
         try {
             tag = file.exists() ? NbtIo.readCompressed(file.toPath(), NbtAccounter.unlimitedHeap()) : new CompoundTag();
         } catch (IOException e) {
             EdenUtils.getLogger().error("Error while loading PerWorldConfig: {}", worldName, e);
         }
+        System.out.println("loading config: " + worldName);
+        String json = tag.getAsString();
+        System.out.println(json);
+        System.out.println(file);
         CompoundTag finalTag = tag;
         registered.forEach((key, obj) -> load(getCompound(finalTag, key), obj));
     }
@@ -157,10 +162,15 @@ public class PerWorldConfig {
             CompoundTag compound = getCompound(tag, key);
             save(compound, obj);
         });
+        System.out.println("saving config: " + worldName);
+        String json = tag.getAsString();
+        System.out.println(json);
         File file = new File(folder, worldName + ".mca");
-        if (!ensureExistingConfigFolder()) return;
+        System.out.println(file);
+        if (ensureExistingConfigFolder()) return;
         try {
             NbtIo.writeCompressed(tag, file.toPath());
+            worldName = null;
         } catch (IOException e) {
             EdenUtils.getLogger().error("Error while saving PerWorldConfig: {}", worldName, e);
         }
@@ -168,10 +178,10 @@ public class PerWorldConfig {
 
     private boolean ensureExistingConfigFolder() {
         if (folder.exists() || folder.mkdirs()) {
-            return true;
+            return false;
         }
         EdenUtils.getLogger().error("Failed to create config folder!");
-        return false;
+        return true;
     }
 
 
@@ -189,6 +199,13 @@ public class PerWorldConfig {
                 field.setAccessible(true);
                 String fieldName = field.getName();
                 Tag nbt = tag.contains(fieldName) ? tag.get(fieldName) : loader.parse(annotation.value());
+                if(nbt == null) {
+                    EdenUtils.getLogger().error("Error loading config: Field is null: {} in class {} of type {}",
+                            fieldName,
+                            field.getDeclaringClass().getSimpleName(),
+                            loader.getClass().getSimpleName());
+                    continue;
+                }
                 Object value;
                 try {
                     value = loader.load(nbt);

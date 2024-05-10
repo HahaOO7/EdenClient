@@ -1,5 +1,9 @@
 package at.haha007.edenclient;
 
+import at.haha007.edenclient.annotations.Mod;
+import at.haha007.edenclient.callbacks.Event;
+import at.haha007.edenclient.callbacks.JoinWorldCallback;
+import at.haha007.edenclient.callbacks.LeaveWorldCallback;
 import at.haha007.edenclient.mods.*;
 import at.haha007.edenclient.mods.datafetcher.DataFetcher;
 import at.haha007.edenclient.utils.ModInitializer;
@@ -13,6 +17,7 @@ import java.io.File;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Predicate;
 
 public class EdenClient implements ClientModInitializer {
     private static final ModInitializer modInitializer = new ModInitializer();
@@ -28,7 +33,12 @@ public class EdenClient implements ClientModInitializer {
     public void onInitializeClient() {
         setInstance(this);
         PerWorldConfig.get();
-        modInitializer.initializeMods();
+        modInitializer.initializeMods(c -> c.getAnnotation(Mod.class).required());
+    }
+
+    public static void onJoin() {
+//        modInitializer.initializeMods();
+        modInitializer.initializeMods(List.of(EntityEsp.class));
         //For limited access EdenClient use:
 //        modInitializer.initializeMods(List.of(
 //                EnsureSilk.class,
@@ -37,6 +47,12 @@ public class EdenClient implements ClientModInitializer {
 //                ContainerDisplay.class,
 //                AntiSpam.class,
 //                MessageIgnorer.class));
+    }
+
+    public static void onQuit() {
+        Predicate<Class<?>> predicate = c -> c.isAnnotationPresent(Mod.class) &&
+                !c.getAnnotation(Mod.class).required();
+        Event.unregisterAll(predicate);
     }
 
     public static <T> T getMod(Class<T> clazz) {

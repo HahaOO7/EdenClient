@@ -49,8 +49,8 @@ public class ContainerDisplay {
 
 
     public ContainerDisplay() {
-        GameRenderCallback.EVENT.register(this::renderWorld);
-        PlayerTickCallback.EVENT.register(this::tick);
+        GameRenderCallback.EVENT.register(this::renderWorld, getClass());
+        PlayerTickCallback.EVENT.register(this::tick, getClass());
         PerWorldConfig.get().register(this, "ContainerDisplay");
         registerCommand();
     }

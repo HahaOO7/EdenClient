@@ -33,7 +33,7 @@ public class AntiSpam {
 
     public AntiSpam() {
         registerCommand();
-        AddChatMessageCallback.EVENT.register(this::onChat);
+        AddChatMessageCallback.EVENT.register(this::onChat, getClass());
         PerWorldConfig.get().register(this, "antiSpam");
     }
 

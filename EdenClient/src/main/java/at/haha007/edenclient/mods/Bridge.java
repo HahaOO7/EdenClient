@@ -39,8 +39,8 @@ public class Bridge {
     private int range;
 
     public Bridge() {
-        PlayerTickCallback.EVENT.register(this::tick);
-        JoinWorldCallback.EVENT.register(this::build);
+        PlayerTickCallback.EVENT.register(this::tick, getClass());
+        JoinWorldCallback.EVENT.register(this::build, getClass());
         registerCommand();
     }
 
