@@ -13,6 +13,8 @@ import net.minecraft.core.Registry;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.attributes.DefaultAttributes;
 
+import java.util.Objects;
+
 import static at.haha007.edenclient.command.CommandManager.*;
 
 @Mod
@@ -45,6 +47,6 @@ public class StepHeight {
     }
 
     private void update() {
-        PlayerUtils.getPlayer().getAttribute(Attributes.STEP_HEIGHT).setBaseValue(height);
+        Objects.requireNonNull(PlayerUtils.getPlayer().getAttribute(Attributes.STEP_HEIGHT)).setBaseValue(height);
     }
 }

@@ -6,6 +6,7 @@ import at.haha007.edenclient.callbacks.JoinWorldCallback;
 import at.haha007.edenclient.callbacks.LeaveWorldCallback;
 import at.haha007.edenclient.mods.MessageIgnorer;
 import at.haha007.edenclient.utils.PlayerUtils;
+import at.haha007.edenclient.utils.PluginSignature;
 import at.haha007.edenclient.utils.Scheduler;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
@@ -139,6 +140,8 @@ public class ChestShopItemNames {
                     .append(Component.text(itemNameMap.size(), NamedTextColor.AQUA)));
             return 1;
         }));
+
+        mapItemNames.requires(c -> PluginSignature.CHESTSHOP.isPluginPresent());
         return mapItemNames;
     }
 

@@ -8,6 +8,7 @@ import at.haha007.edenclient.mods.datafetcher.ChestShopItemNames;
 import at.haha007.edenclient.mods.datafetcher.DataFetcher;
 import at.haha007.edenclient.utils.EdenUtils;
 import at.haha007.edenclient.utils.PlayerUtils;
+import at.haha007.edenclient.utils.PluginSignature;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import at.haha007.edenclient.utils.tasks.SyncTask;
@@ -57,7 +58,7 @@ public class ChestShopMod {
     public ChestShopMod() {
         registerCommand("echestshop");
         registerCommand("ecs");
-        PlayerTickCallback.EVENT.register(this::tick, getClass());
+        PlayerTickCallback.EVENT.register(this::tick, getClass(), PluginSignature.CHESTSHOP::isPluginPresent);
         PerWorldConfig.get().register(this, "chestShop");
         PerWorldConfig.get().register(new ChestShopLoader(), ChestShopMap.class);
         PerWorldConfig.get().register(new ChestShopEntryLoader(), ChestShopEntry.class);
@@ -239,8 +240,7 @@ public class ChestShopMod {
 
             File folder = new File(EdenClient.getDataFolder(), "ChestShop_Exploitable");
             if (!folder.exists() && (!folder.mkdirs())) {
-                EdenUtils.getLogger().error("Failed to create ChestShop folder!");
-
+                EdenUtils.getLogger().error("Failed to create ChestShop_Exploitable folder!");
             }
             SimpleDateFormat formatter = new SimpleDateFormat("yyyy_MM_dd_hh_mm_ss");
             File file = new File(folder, formatter.format(new Date()) + ".txt");
@@ -248,7 +248,7 @@ public class ChestShopMod {
             try {
                 if (!file.exists() && (!file.createNewFile())) return -1;
             } catch (IOException e) {
-                EdenUtils.getLogger().error("Error while creating file: " + file.getAbsolutePath(), e);
+                EdenUtils.getLogger().error("Error while creating file: {}", file.getAbsolutePath(), e);
             }
 
             try (FileWriter writer = new FileWriter(file); BufferedWriter bw = new BufferedWriter(writer)) {
@@ -307,7 +307,7 @@ public class ChestShopMod {
 
             File folder = new File(EdenClient.getDataFolder(), "ChestShopModEntries");
             if (!folder.exists() && (!folder.mkdirs())) {
-                EdenUtils.getLogger().error("Failed to create ChestShop folder!");
+                EdenUtils.getLogger().error("Failed to create ChestShopModEntries folder!");
             }
             SimpleDateFormat formatter = new SimpleDateFormat("yyyy_MM_dd_hh_mm_ss");
             Date date = new Date();
@@ -316,7 +316,7 @@ public class ChestShopMod {
             try {
                 if (!file.exists() && (!file.createNewFile())) return -1;
             } catch (IOException e) {
-                EdenUtils.getLogger().error("Error while creating file: " + file.getAbsolutePath(), e);
+                EdenUtils.getLogger().error("Error while creating file: {}", file.getAbsolutePath(), e);
             }
 
             try (FileWriter writer = new FileWriter(file); BufferedWriter bw = new BufferedWriter(writer)) {
@@ -339,6 +339,7 @@ public class ChestShopMod {
             return 1;
         }));
 
+        node.requires(c -> PluginSignature.CHESTSHOP.isPluginPresent());
         node.executes(c -> {
             sendModMessage("/chestshop sell itemtype");
             sendModMessage("/chestshop buy itemtype");
@@ -347,9 +348,12 @@ public class ChestShopMod {
             sendModMessage("/chestshop list");
             return 1;
         });
+
         register(node,
                 "ChestShop item find/sell/buy helper.",
-                "Automatically stores all ChestShops in all chunks you load. You can search specific items to get their buy/sell options. Other features include automatic searching for shops which sell items cheaper than other shops buy them, writing all shops to a file and automatically updating all shops via their playerwarps.");
+                "Automatically stores all ChestShops in all chunks you load. You can search specific items to get their buy/sell options." +
+                        " Other features include automatic searching for shops which sell items cheaper than other shops buy them," +
+                        " writing all shops to a file and automatically updating all shops via their playerwarps.");
     }
 
     private List<String> getExploitableShopsText() {
@@ -362,8 +366,8 @@ public class ChestShopMod {
             List<ChestShopEntry> currentSellEntries = sellEntries.get(entry.getKey()).stream().sorted(Comparator.comparingDouble(ChestShopEntry::getSellPricePerItem).reversed()).toList();
             List<ChestShopEntry> currentBuyEntries = entry.getValue().stream().sorted(Comparator.comparingDouble(ChestShopEntry::getBuyPricePerItem)).toList();
 
-            ChestShopEntry currentSellEntry = currentSellEntries.get(0);
-            ChestShopEntry currentBuyEntry = currentBuyEntries.get(0);
+            ChestShopEntry currentSellEntry = currentSellEntries.getFirst();
+            ChestShopEntry currentBuyEntry = currentBuyEntries.getFirst();
             int i = 0;
 
             if (currentSellEntry.getSellPricePerItem() <= currentBuyEntry.getBuyPricePerItem())

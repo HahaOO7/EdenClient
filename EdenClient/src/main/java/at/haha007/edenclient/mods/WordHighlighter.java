@@ -176,7 +176,7 @@ public class WordHighlighter {
 
     private void sendUsageDebugMessage() {
         sendModMessage("Command usage:");
-        sendModMessage("/hl [add,remove,toggle,clear,list,bold,italic,underline,style,color]");
+        sendModMessage("/ehl [add,remove,toggle,clear,list,bold,italic,underline,style,color]");
     }
 
     private void sendDebugMessage() {

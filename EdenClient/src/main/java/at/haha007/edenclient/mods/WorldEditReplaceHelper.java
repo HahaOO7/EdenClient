@@ -4,6 +4,7 @@ import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.annotations.Mod;
 import at.haha007.edenclient.utils.EdenUtils;
 import at.haha007.edenclient.utils.PlayerUtils;
+import at.haha007.edenclient.utils.PluginSignature;
 import at.haha007.edenclient.utils.Scheduler;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
@@ -17,14 +18,11 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.minecraft.client.multiplayer.ClientSuggestionProvider;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.DefaultedRegistry;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.*;
-import net.minecraft.world.level.block.state.BlockBehaviour;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.*;
 
 import java.util.*;
@@ -85,8 +83,8 @@ public class WorldEditReplaceHelper {
                 return 0;
             }
 
-            replaceUndoRequest(BuiltInRegistries.BLOCK.get(new ResourceLocation(undoCommandStack.peek()[0])), BuiltInRegistries.BLOCK.get(new ResourceLocation(undoCommandStack.peek()[1])), delay);
-            redoCommandStack.add(new String[]{undoCommandStack.peek()[1], undoCommandStack.peek()[0]});
+            replaceUndoRequest(BuiltInRegistries.BLOCK.get(new ResourceLocation(undoCommandStack.peek()[0])), BuiltInRegistries.BLOCK.get(new ResourceLocation(Objects.requireNonNull(undoCommandStack.peek())[1])), delay);
+            redoCommandStack.add(new String[]{Objects.requireNonNull(undoCommandStack.peek())[1], Objects.requireNonNull(undoCommandStack.peek())[0]});
             undoCommandStack.pop();
             return 1;
         }));
@@ -97,8 +95,8 @@ public class WorldEditReplaceHelper {
                 return 0;
             }
 
-            replaceRedoRequest(BuiltInRegistries.BLOCK.get(new ResourceLocation(redoCommandStack.peek()[0])), BuiltInRegistries.BLOCK.get(new ResourceLocation(redoCommandStack.peek()[1])), delay);
-            undoCommandStack.add(new String[]{redoCommandStack.peek()[1], redoCommandStack.peek()[0]});
+            replaceRedoRequest(BuiltInRegistries.BLOCK.get(new ResourceLocation(redoCommandStack.peek()[0])), BuiltInRegistries.BLOCK.get(new ResourceLocation(Objects.requireNonNull(redoCommandStack.peek())[1])), delay);
+            undoCommandStack.add(new String[]{Objects.requireNonNull(redoCommandStack.peek())[1], Objects.requireNonNull(redoCommandStack.peek())[0]});
             redoCommandStack.pop();
             return 1;
         }));
@@ -120,6 +118,8 @@ public class WorldEditReplaceHelper {
             return 1;
         }));
 
+        node.requires(c -> PluginSignature.WORLDEDIT.isPluginPresent());
+
         register(node,
                 "The WorldEditReplaceHelper helps you replace blocks that have specific properties which normal WorldEdit doesn't take into consideration when replacing blocks.",
                 "Blocks like stairs, slabs, panes, walls, trapdoors, etc. can be replaced by other blocks of their type with their properties (waterlogged, shape, direction, etc.) unaffected.");
@@ -140,33 +140,35 @@ public class WorldEditReplaceHelper {
      */
 
     private int replaceCommandRequest(Block fromBlock, Block toBlock, int delay, boolean sendMessage) {
-        if (fromBlock instanceof StairBlock && toBlock instanceof StairBlock) {
-            sendReplaceStairCommand((StairBlock) fromBlock, (StairBlock) toBlock, delay);
-        } else if (fromBlock instanceof SlabBlock && toBlock instanceof SlabBlock) {
-            sendReplaceSlabCommand((SlabBlock) fromBlock, (SlabBlock) toBlock, delay);
-        } else if (fromBlock instanceof TrapDoorBlock && toBlock instanceof TrapDoorBlock) {
-            sendReplaceTrapdoorBlockCommand((TrapDoorBlock) fromBlock, (TrapDoorBlock) toBlock, delay);
-        } else if (fromBlock instanceof DoorBlock && toBlock instanceof DoorBlock) {
-            sendReplaceDoorBlockCommand((DoorBlock) fromBlock, (DoorBlock) toBlock, delay);
-        } else if (fromBlock instanceof StandingSignBlock && toBlock instanceof StandingSignBlock) {
-            sendReplaceSignBlockCommand((StandingSignBlock) fromBlock, (StandingSignBlock) toBlock, delay);
-        } else if (fromBlock instanceof WallSignBlock && toBlock instanceof WallSignBlock) {
-            sendReplaceWallSignBlockCommand((WallSignBlock) fromBlock, (WallSignBlock) toBlock, delay);
-        } else if (fromBlock instanceof FenceBlock && toBlock instanceof FenceBlock) {
-            sendReplaceFenceBlockCommand((FenceBlock) fromBlock, (FenceBlock) toBlock, delay);
-        } else if (fromBlock instanceof FenceGateBlock && toBlock instanceof FenceGateBlock) {
-            sendReplaceFenceGateBlockCommand((FenceGateBlock) fromBlock, (FenceGateBlock) toBlock, delay);
-        } else if (fromBlock instanceof WallBlock && toBlock instanceof WallBlock) {
-            sendReplaceWallBlockCommand((WallBlock) fromBlock, (WallBlock) toBlock, delay);
-        } else if (fromBlock instanceof RotatedPillarBlock && toBlock instanceof RotatedPillarBlock) {
-            sendReplacePillarBlockCommand((RotatedPillarBlock) fromBlock, (RotatedPillarBlock) toBlock, delay);
-        } else if (fromBlock instanceof LanternBlock && toBlock instanceof LanternBlock) {
-            sendReplaceLanternBlockCommand((LanternBlock) fromBlock, (LanternBlock) toBlock, delay);
-        } else if (fromBlock instanceof HorizontalDirectionalBlock && toBlock instanceof HorizontalDirectionalBlock) {
-            sendReplaceHorizontalFacingBlockCommand((HorizontalDirectionalBlock) fromBlock, (HorizontalDirectionalBlock) toBlock, delay);
-        } else {
-            sendModMessage("Can't replace these blocks with Eden-WE.");
-            return 0;
+        switch (fromBlock) {
+            case StairBlock stairBlock when toBlock instanceof StairBlock ->
+                    sendReplaceStairCommand(stairBlock, (StairBlock) toBlock, delay);
+            case SlabBlock slabBlock when toBlock instanceof SlabBlock ->
+                    sendReplaceSlabCommand(slabBlock, (SlabBlock) toBlock, delay);
+            case TrapDoorBlock trapDoorBlock when toBlock instanceof TrapDoorBlock ->
+                    sendReplaceTrapdoorBlockCommand(trapDoorBlock, (TrapDoorBlock) toBlock, delay);
+            case DoorBlock doorBlock when toBlock instanceof DoorBlock ->
+                    sendReplaceDoorBlockCommand(doorBlock, (DoorBlock) toBlock, delay);
+            case StandingSignBlock standingSignBlock when toBlock instanceof StandingSignBlock ->
+                    sendReplaceSignBlockCommand(standingSignBlock, (StandingSignBlock) toBlock, delay);
+            case WallSignBlock wallSignBlock when toBlock instanceof WallSignBlock ->
+                    sendReplaceWallSignBlockCommand(wallSignBlock, (WallSignBlock) toBlock, delay);
+            case FenceBlock fenceBlock when toBlock instanceof FenceBlock ->
+                    sendReplaceFenceBlockCommand(fenceBlock, (FenceBlock) toBlock, delay);
+            case FenceGateBlock fenceGateBlock when toBlock instanceof FenceGateBlock ->
+                    sendReplaceFenceGateBlockCommand(fenceGateBlock, (FenceGateBlock) toBlock, delay);
+            case WallBlock wallBlock when toBlock instanceof WallBlock ->
+                    sendReplaceWallBlockCommand(wallBlock, (WallBlock) toBlock, delay);
+            case RotatedPillarBlock rotatedPillarBlock when toBlock instanceof RotatedPillarBlock ->
+                    sendReplacePillarBlockCommand(rotatedPillarBlock, (RotatedPillarBlock) toBlock, delay);
+            case LanternBlock lanternBlock when toBlock instanceof LanternBlock ->
+                    sendReplaceLanternBlockCommand(lanternBlock, (LanternBlock) toBlock, delay);
+            case HorizontalDirectionalBlock horizontalDirectionalBlock when toBlock instanceof HorizontalDirectionalBlock ->
+                    sendReplaceHorizontalFacingBlockCommand(horizontalDirectionalBlock, (HorizontalDirectionalBlock) toBlock, delay);
+            case null, default -> {
+                sendModMessage("Can't replace these blocks with Eden-WE.");
+                return 0;
+            }
         }
         if (sendMessage)
             sendModMessage(Component.text("Replacing ", NamedTextColor.GOLD)
@@ -348,7 +350,7 @@ public class WorldEditReplaceHelper {
 
     private void generatePermutations(List<List<String>> lists, List<String> result, int depth, String current) {
         if (depth == lists.size()) {
-            EdenUtils.getLogger().info("Permutation created: " + current);
+            EdenUtils.getLogger().info("Permutation created: {}", current);
             result.add(current);
             return;
         }
@@ -365,7 +367,7 @@ public class WorldEditReplaceHelper {
         if (message.length() > 256)
             sendModMessage("Cannot execute: " + message + " because this command too long.");
         entityPlayer.connection.sendChat(message);
-        EdenUtils.getLogger().info("Sent command: " + message);
+        EdenUtils.getLogger().info("Sent command: {}", message);
     }
 
     private String getBlockIDFromBlock(Block block) {

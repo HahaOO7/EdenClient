@@ -37,8 +37,7 @@ public class EdenClient implements ClientModInitializer {
     }
 
     public static void onJoin() {
-//        modInitializer.initializeMods();
-        modInitializer.initializeMods(List.of(EntityEsp.class));
+        modInitializer.initializeMods();
         //For limited access EdenClient use:
 //        modInitializer.initializeMods(List.of(
 //                EnsureSilk.class,

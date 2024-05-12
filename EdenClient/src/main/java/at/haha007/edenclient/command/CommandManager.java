@@ -115,11 +115,11 @@ public enum CommandManager {
         return cmds.keySet().stream().anyMatch(c -> c.getLiteral().equalsIgnoreCase(command));
     }
 
-
     public static void execute(String command, ClientSuggestionProvider clientCommandSource) {
         try {
             dispatcher.execute(command, clientCommandSource);
         } catch (CommandSyntaxException e) {
+            PlayerUtils.sendModMessage(e.getMessage());
             EdenUtils.getLogger().error(e.getMessage(), e);
         }
     }

@@ -7,6 +7,7 @@ import at.haha007.edenclient.callbacks.PlayerEditSignCallback;
 import at.haha007.edenclient.mods.datafetcher.ContainerInfo;
 import at.haha007.edenclient.mods.datafetcher.DataFetcher;
 import at.haha007.edenclient.utils.PlayerUtils;
+import at.haha007.edenclient.utils.PluginSignature;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import at.haha007.edenclient.utils.config.wrappers.StringList;
@@ -102,6 +103,7 @@ public class SignEdit {
     }
 
     private @NotNull InteractionResult handlePipeSignCreation(LocalPlayer entity, BlockPos pos) {
+        if (!PluginSignature.CRAFTBOOK.isPluginPresent()) return InteractionResult.PASS;
         DataFetcher dataFetcher = EdenClient.getMod(DataFetcher.class);
         ContainerInfo containerInfoMod = dataFetcher.getContainerInfo();
         if (containerInfoMod == null) return InteractionResult.PASS;
