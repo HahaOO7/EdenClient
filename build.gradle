@@ -1,0 +1,41 @@
+plugins {
+    id 'java'
+}
+
+repositories {
+    maven {
+        name = 'Fabric'
+        url = 'https://maven.fabricmc.net/'
+    }
+    mavenCentral()
+}
+
+dependencies {
+    implementation project(':EcAnnotations')
+    implementation project(':EdenClient')
+}
+
+tasks.jar {
+    dependsOn ':EdenClient:remapJar'
+    dependsOn ':EcAnnotations:jar'
+}
+
+jar {
+    // Configure to exclude specific files or folders
+    exclude('assets/fabricloader/**')
+    exclude('net/fabricmc/**')
+    exclude('ui/**')
+    exclude('META-INF/**')
+    exclude('fabric-installer.json')
+    exclude('fabric-installer.lauchwrapper.json')
+
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    archiveBaseName.set('EdenClient')
+    archiveVersion.set(project.properties.get("mod_version") as String)
+}
+
+

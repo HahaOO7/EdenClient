@@ -13,4 +13,3 @@ rootProject.name = 'EdenClient'
 include 'EcAnnotations'
 include 'EdenClient'
 include 'EcProcessors'
-
