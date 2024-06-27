@@ -55,8 +55,8 @@ public class WorldEditReplaceHelper {
 
         node.then(literal("replace").then(argument("from", StringArgumentType.word()).suggests(this::suggestValidBlocks).then(argument("to", StringArgumentType.word()).suggests(this::suggestValidBlocks)
                 .executes(c -> {
-                    Optional<Block> fromBlockOpt = BuiltInRegistries.BLOCK.getOptional(new ResourceLocation(c.getArgument("from", String.class)));
-                    Optional<Block> toBlockOpt = BuiltInRegistries.BLOCK.getOptional(new ResourceLocation(c.getArgument("to", String.class)));
+                    Optional<Block> fromBlockOpt = BuiltInRegistries.BLOCK.getOptional(ResourceLocation.parse(c.getArgument("from", String.class)));
+                    Optional<Block> toBlockOpt = BuiltInRegistries.BLOCK.getOptional(ResourceLocation.parse(c.getArgument("to", String.class)));
 
                     if (fromBlockOpt.isEmpty() || toBlockOpt.isEmpty()) {
                         sendModMessage("One of your block-inputs doesn't exist.");
@@ -83,7 +83,8 @@ public class WorldEditReplaceHelper {
                 return 0;
             }
 
-            replaceUndoRequest(BuiltInRegistries.BLOCK.get(new ResourceLocation(undoCommandStack.peek()[0])), BuiltInRegistries.BLOCK.get(new ResourceLocation(Objects.requireNonNull(undoCommandStack.peek())[1])), delay);
+            replaceUndoRequest(BuiltInRegistries.BLOCK.get(ResourceLocation.parse(undoCommandStack.peek()[0])),
+                    BuiltInRegistries.BLOCK.get( ResourceLocation.parse(Objects.requireNonNull(undoCommandStack.peek())[1])), delay);
             redoCommandStack.add(new String[]{Objects.requireNonNull(undoCommandStack.peek())[1], Objects.requireNonNull(undoCommandStack.peek())[0]});
             undoCommandStack.pop();
             return 1;
@@ -95,7 +96,8 @@ public class WorldEditReplaceHelper {
                 return 0;
             }
 
-            replaceRedoRequest(BuiltInRegistries.BLOCK.get(new ResourceLocation(redoCommandStack.peek()[0])), BuiltInRegistries.BLOCK.get(new ResourceLocation(Objects.requireNonNull(redoCommandStack.peek())[1])), delay);
+            replaceRedoRequest(BuiltInRegistries.BLOCK.get(ResourceLocation.parse(redoCommandStack.peek()[0])),
+                    BuiltInRegistries.BLOCK.get( ResourceLocation.parse(Objects.requireNonNull(redoCommandStack.peek())[1])), delay);
             undoCommandStack.add(new String[]{Objects.requireNonNull(redoCommandStack.peek())[1], Objects.requireNonNull(redoCommandStack.peek())[0]});
             redoCommandStack.pop();
             return 1;
@@ -272,11 +274,11 @@ public class WorldEditReplaceHelper {
 
     private void sendReplaceFenceGateBlockCommand(FenceGateBlock fromBlock, FenceGateBlock toBlock, int delay) {
         List<String> facing = FenceGateBlock.FACING.getPossibleValues().stream().map(Direction::getName).toList();
-        List<String> in_wall = FenceGateBlock.IN_WALL.getPossibleValues().stream().map(Object::toString).toList();
+        List<String> inWall = FenceGateBlock.IN_WALL.getPossibleValues().stream().map(Object::toString).toList();
         List<String> open = FenceGateBlock.OPEN.getPossibleValues().stream().map(Object::toString).toList();
         List<String> powered = FenceGateBlock.POWERED.getPossibleValues().stream().map(Object::toString).toList();
 
-        List<List<String>> inputs = List.of(facing, in_wall, open, powered);
+        List<List<String>> inputs = List.of(facing, inWall, open, powered);
         List<String> names = List.of("facing", "in_wall", "open", "powered");
 
         sendAllReplacementCommandsForParameters(fromBlock, toBlock, inputs, names, delay);

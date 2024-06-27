@@ -52,8 +52,8 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok:1.18.32'
 
     //Chat Component API
-    modImplementation include("net.kyori:adventure-api:4.16.0")
-    modImplementation include("net.kyori:adventure-text-serializer-gson:4.16.0")
+    modImplementation include("net.kyori:adventure-api:4.17.0")
+    modImplementation include("net.kyori:adventure-text-serializer-gson:4.17.0")
 }
 
 processResources {

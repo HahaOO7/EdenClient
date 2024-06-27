@@ -162,14 +162,13 @@ public class HeadHunt {
             matrixStack.translate(.5, .5, .5);
             Vector3f start = new Vector3f(RenderUtils.getCameraPos().add(PlayerUtils.getClientLookVec()).add(-.5, -.5, -.5).toVector3f());
             Matrix4f matrix = matrixStack.last().pose();
-            BufferBuilder bb = Tesselator.getInstance().getBuilder();
+            BufferBuilder bb = Tesselator.getInstance().begin(VertexFormat.Mode.DEBUG_LINES, DefaultVertexFormat.POSITION);
 
-            bb.begin(VertexFormat.Mode.DEBUG_LINES, DefaultVertexFormat.POSITION);
             for (Vec3i t : heads) {
-                bb.vertex(matrix, t.getX(), t.getY(), t.getZ()).endVertex();
-                bb.vertex(matrix, start.x(), start.y(), start.z()).endVertex();
+                bb.addVertex(matrix, t.getX(), t.getY(), t.getZ());
+                bb.addVertex(matrix, start.x(), start.y(), start.z());
             }
-            BufferUploader.drawWithShader(Objects.requireNonNull(bb.end()));
+            BufferUploader.drawWithShader(bb.buildOrThrow());
             matrixStack.popPose();
         }
 

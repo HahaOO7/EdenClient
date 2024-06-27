@@ -12,7 +12,9 @@ import net.minecraft.client.gui.screens.inventory.GrindstoneScreen;
 import net.minecraft.client.multiplayer.ClientSuggestionProvider;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.Holder;
+import net.minecraft.data.tags.EnchantmentTagsProvider;
 import net.minecraft.network.protocol.game.ServerboundContainerClickPacket;
+import net.minecraft.tags.EnchantmentTags;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.GrindstoneMenu;
 import net.minecraft.world.item.ItemStack;
@@ -81,6 +83,6 @@ public class AotoGrindstone {
         ItemEnchantments enchantments = item.getEnchantments();
         if (enchantments.isEmpty())
             return false;
-        return enchantments.keySet().stream().map(Holder::value).anyMatch(e -> !e.isCurse());
+        return enchantments.keySet().stream().anyMatch(e -> e.is(EnchantmentTags.CURSE));
     }
 }

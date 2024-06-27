@@ -38,19 +38,19 @@ public class TracerRenderer {
     }
 
     private void render(PoseStack matrixStack, MultiBufferSource.BufferSource vertexConsumerProvider, float delta) {
+        if (tracers.isEmpty()) return;
         RenderSystem.setShader(GameRenderer::getPositionShader);
         RenderSystem.disableDepthTest();
         Matrix4f matrix = matrixStack.last().pose();
         Vec3 start = RenderUtils.getCameraPos().add(PlayerUtils.getClientLookVec());
 
-        BufferBuilder bb = Tesselator.getInstance().getBuilder();
-        bb.begin(VertexFormat.Mode.DEBUG_LINES, DefaultVertexFormat.POSITION);
+        BufferBuilder bb = Tesselator.getInstance().begin(VertexFormat.Mode.DEBUG_LINES, DefaultVertexFormat.POSITION);
         tracers.values().forEach(s -> s.forEach(target -> {
-            bb.vertex(matrix, (float) target.x, (float) target.y, (float) target.z).endVertex();
-            bb.vertex(matrix, (float) start.x, (float) start.y, (float) start.z).endVertex();
+            bb.addVertex(matrix, (float) target.x, (float) target.y, (float) target.z);
+            bb.addVertex(matrix, (float) start.x, (float) start.y, (float) start.z);
         }));
         RenderSystem.setShaderColor(1, 1, 1, 1);
-        BufferUploader.drawWithShader(bb.end());
+        BufferUploader.drawWithShader(bb.buildOrThrow());
     }
 
     public void add(Vec3 target, int ticks) {

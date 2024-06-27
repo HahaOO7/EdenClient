@@ -74,7 +74,7 @@ public class AutoSell {
         }
 
         node.then(literal("remove").then(argument("item", StringArgumentType.greedyString()).suggests(this::suggestRemoveItems).executes(c -> {
-            Optional<Item> opt = BuiltInRegistries.ITEM.getOptional(new ResourceLocation(c.getArgument("item", String.class).replace(" ", "_")));
+            Optional<Item> opt = BuiltInRegistries.ITEM.getOptional( ResourceLocation.parse(c.getArgument("item", String.class).replace(" ", "_")));
             if (opt.isEmpty()) {
                 sendModMessage("No item with this name exists.");
                 return 1;

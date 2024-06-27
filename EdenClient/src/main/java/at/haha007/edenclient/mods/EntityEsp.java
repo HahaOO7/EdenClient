@@ -174,22 +174,16 @@ public class EntityEsp {
         RenderSystem.setShader(GameRenderer::getPositionShader);
         RenderSystem.setShaderColor(red, green, blue, 1);
         RenderSystem.disableDepthTest();
-        if (tracer) {
+        if (tracer && !entities.isEmpty()) {
             Vec3 start = RenderUtils.getCameraPos().add(PlayerUtils.getClientLookVec());
             Matrix4f matrix = matrixStack.last().pose();
-            BufferBuilder bb = Tesselator.getInstance().getBuilder();
-
-            bb.begin(VertexFormat.Mode.DEBUG_LINES, DefaultVertexFormat.POSITION);
+            BufferBuilder bb = Tesselator.getInstance().begin(VertexFormat.Mode.DEBUG_LINES, DefaultVertexFormat.POSITION);
             for (Entity target : entities) {
-                Vec3 t = new Vec3(
-                        target.xo + (target.getX() - target.xo) * tickDelta,
-                        target.yo + (target.getY() - target.yo) * tickDelta,
-                        target.zo + (target.getZ() - target.zo) * tickDelta
-                );
-                bb.vertex(matrix, (float) t.x, (float) t.y, (float) t.z).endVertex();
-                bb.vertex(matrix, (float) start.x, (float) start.y, (float) start.z).endVertex();
+                Vec3 t = target.getPosition(tickDelta);
+                bb.addVertex(matrix, (float) t.x, (float) t.y, (float) t.z);
+                bb.addVertex(matrix, (float) start.x, (float) start.y, (float) start.z);
             }
-            BufferUploader.drawWithShader(Objects.requireNonNull(bb.end()));
+            BufferUploader.drawWithShader(bb.buildOrThrow());
         }
         Runnable drawBoxTask = solid ? () -> draw(solidBox, matrixStack) : () -> draw(wireframeBox, matrixStack);
         for (Entity target : entities) {

@@ -35,7 +35,8 @@ import static at.haha007.edenclient.command.CommandManager.*;
 public class GetTo {
     private Vec3i target;
     private VertexBuffer vb;
-    private boolean tracer, box;
+    private boolean tracer;
+    private boolean box;
     private final String commandName = "egetto";
 
     public GetTo() {
@@ -76,12 +77,11 @@ public class GetTo {
         if (tracer) {
             Matrix4f matrix = matrixStack.last().pose();
             Vec3 start = RenderUtils.getCameraPos().add(PlayerUtils.getClientLookVec());
-            BufferBuilder bb = Tesselator.getInstance().getBuilder();
-            bb.begin(VertexFormat.Mode.DEBUG_LINES, DefaultVertexFormat.POSITION);
-            bb.vertex(matrix, target.getX() + .5f, target.getY() + .5f, target.getZ() + .5f).endVertex();
-            bb.vertex(matrix, (float) start.x, (float) start.y, (float) start.z).endVertex();
+            BufferBuilder bb = Tesselator.getInstance().begin(VertexFormat.Mode.DEBUG_LINES, DefaultVertexFormat.POSITION);
+            bb.addVertex(matrix, target.getX() + .5f, target.getY() + .5f, target.getZ() + .5f);
+            bb.addVertex(matrix, (float) start.x, (float) start.y, (float) start.z);
             RenderSystem.setShaderColor(1, 1, 1, 1);
-            BufferUploader.drawWithShader(bb.end());
+            BufferUploader.drawWithShader(bb.buildOrThrow());
         }
     }
 

@@ -161,7 +161,7 @@ public class Nuker {
             return builder.buildFuture();
         }).executes(context -> {
             String name = context.getArgument("type", String.class);
-            ResourceLocation identifier = new ResourceLocation(name);
+            ResourceLocation identifier = ResourceLocation.parse(name);
             filter.remove(BuiltInRegistries.BLOCK.get(identifier));
             PlayerUtils.sendModMessage("Removed " + name);
             return 1;

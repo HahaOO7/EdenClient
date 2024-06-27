@@ -21,6 +21,7 @@ import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -66,11 +67,8 @@ public class ItemEsp {
         Runnable drawBoxTask = solid ? () -> draw(solidBox, matrixStack) : () -> draw(wireframeBox, matrixStack);
         for (ItemEntity target : items) {
             matrixStack.pushPose();
-            matrixStack.translate(
-                    target.xo + (target.getX() - target.xo) * tickDelta,
-                    target.yo + (target.getY() - target.yo) * tickDelta,
-                    target.zo + (target.getZ() - target.zo) * tickDelta
-            );
+            Vec3 position = target.getPosition(tickDelta);
+            matrixStack.translate(position.x, position.y, position.z);
             drawBoxTask.run();
             matrixStack.popPose();
         }

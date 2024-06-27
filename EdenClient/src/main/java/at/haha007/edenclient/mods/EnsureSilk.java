@@ -14,13 +14,22 @@ import net.minecraft.client.multiplayer.ClientSuggestionProvider;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.data.tags.EnchantmentTagsProvider;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.inventory.EnchantmentMenu;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.item.enchantment.ItemEnchantments;
+import net.minecraft.world.item.enchantment.providers.EnchantmentProvider;
+import net.minecraft.world.item.enchantment.providers.SingleEnchantment;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.storage.loot.providers.number.EnchantmentLevelProvider;
 
 import static at.haha007.edenclient.command.CommandManager.*;
 
@@ -51,7 +60,8 @@ public class EnsureSilk {
         if (!filter.contains(block)) return InteractionResult.PASS;
         ItemStack tool = localPlayer.getMainHandItem();
         if (tool.isEmpty()) return InteractionResult.FAIL;
-        boolean hasSilkTouch = tool.getEnchantments().getLevel(Enchantments.SILK_TOUCH) > 0;
+        Enchantment silk = localPlayer.clientLevel.registryAccess().registry(Registries.ENCHANTMENT).orElseThrow().get(Enchantments.SILK_TOUCH);
+        boolean hasSilkTouch = tool.getEnchantments().getLevel(Holder.direct(silk)) > 0;
         return hasSilkTouch ? InteractionResult.PASS : InteractionResult.FAIL;
     }
 
@@ -95,7 +105,7 @@ public class EnsureSilk {
             return builder.buildFuture();
         }).executes(context -> {
             String name = context.getArgument("type", String.class);
-            ResourceLocation identifier = new ResourceLocation(name);
+            ResourceLocation identifier = ResourceLocation.parse(name);
             filter.remove(BuiltInRegistries.BLOCK.get(identifier));
             PlayerUtils.sendModMessage("Removed " + name);
             return 1;
