@@ -2,6 +2,7 @@ package at.haha007.edenclient.utils;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.mojang.logging.LogUtils;
 import lombok.Getter;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.inventory.MenuType;
@@ -18,7 +19,7 @@ public class ContainerInfo {
         try {
             return cache.get(id, ContainerInfo::new);
         } catch (ExecutionException e) {
-            EdenUtils.getLogger().error("Failed to get ContainerInfo for id: {}", id, e);
+            LogUtils.getLogger().error("Failed to get ContainerInfo for id: {}", id, e);
             return new ContainerInfo();
         }
     }

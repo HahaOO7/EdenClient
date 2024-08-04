@@ -4,17 +4,13 @@ import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.callbacks.ConfigLoadedCallback;
 import at.haha007.edenclient.callbacks.JoinWorldCallback;
 import at.haha007.edenclient.callbacks.LeaveWorldCallback;
-import at.haha007.edenclient.utils.EdenUtils;
 import at.haha007.edenclient.utils.Scheduler;
 import at.haha007.edenclient.utils.area.*;
 import at.haha007.edenclient.utils.config.loaders.*;
 import at.haha007.edenclient.utils.config.wrappers.*;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import net.minecraft.core.RegistryAccess;
+import com.mojang.logging.LogUtils;
 import net.minecraft.core.Vec3i;
 import net.minecraft.nbt.*;
-import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
@@ -113,9 +109,9 @@ public class PerWorldConfig {
     private void onLeave() {
         if (worldName == null || worldName.equals("null")) return;
         long start = System.nanoTime();
-        EdenUtils.getLogger().info("Start saving config: {}", worldName);
+        LogUtils.getLogger().info("Start saving config: {}", worldName);
         saveConfig();
-        EdenUtils.getLogger().info(String.format("Saving done, this took %sms.", TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start)));
+        LogUtils.getLogger().info(String.format("Saving done, this took %sms.", TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start)));
     }
 
     private void onJoin() {
@@ -126,11 +122,11 @@ public class PerWorldConfig {
                 Thread.sleep(1000);
                 worldName = getWorldOrServerName();
                 if (worldName == null || worldName.equals("null")) {
-                    EdenUtils.getLogger().error("World is null!", new NullPointerException());
+                    LogUtils.getLogger().error("World is null!", new NullPointerException());
                 }
-                EdenUtils.getLogger().info("Start loading config: {}", worldName);
+                LogUtils.getLogger().info("Start loading config: {}", worldName);
                 loadConfig();
-                EdenUtils.getLogger().info("Loading done, this took %sms.%n"
+                LogUtils.getLogger().info("Loading done, this took %sms.%n"
                         .formatted(TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start)));
                 ConfigLoadedCallback.EVENT.invoker().configLoaded();
             } catch (InterruptedException e) {
@@ -146,7 +142,7 @@ public class PerWorldConfig {
         try {
             tag = file.exists() ? NbtIo.readCompressed(file.toPath(), NbtAccounter.unlimitedHeap()) : new CompoundTag();
         } catch (IOException e) {
-            EdenUtils.getLogger().error("Error while loading PerWorldConfig: {}", worldName, e);
+            LogUtils.getLogger().error("Error while loading PerWorldConfig: {}", worldName, e);
         }
         System.out.println("loading config: " + worldName);
         String json = tag.getAsString();
@@ -172,7 +168,7 @@ public class PerWorldConfig {
             NbtIo.writeCompressed(tag, file.toPath());
             worldName = null;
         } catch (IOException e) {
-            EdenUtils.getLogger().error("Error while saving PerWorldConfig: {}", worldName, e);
+            LogUtils.getLogger().error("Error while saving PerWorldConfig: {}", worldName, e);
         }
     }
 
@@ -180,7 +176,7 @@ public class PerWorldConfig {
         if (folder.exists() || folder.mkdirs()) {
             return false;
         }
-        EdenUtils.getLogger().error("Failed to create config folder!");
+        LogUtils.getLogger().error("Failed to create config folder!");
         return true;
     }
 
@@ -192,7 +188,7 @@ public class PerWorldConfig {
             Class<?> c = getClass(field);
             ConfigLoader<Tag, ?> loader = getLoader(c);
             if (loader == null) {
-                EdenUtils.getLogger().error("Error loading config: No loader found for class: {}", c.getCanonicalName());
+                LogUtils.getLogger().error("Error loading config: No loader found for class: {}", c.getCanonicalName());
                 continue;
             }
             try {
@@ -200,7 +196,7 @@ public class PerWorldConfig {
                 String fieldName = field.getName();
                 Tag nbt = tag.contains(fieldName) ? tag.get(fieldName) : loader.parse(annotation.value());
                 if(nbt == null) {
-                    EdenUtils.getLogger().error("Error loading config: Field is null: {} in class {} of type {}",
+                    LogUtils.getLogger().error("Error loading config: Field is null: {} in class {} of type {}",
                             fieldName,
                             field.getDeclaringClass().getSimpleName(),
                             loader.getClass().getSimpleName());
@@ -210,12 +206,12 @@ public class PerWorldConfig {
                 try {
                     value = loader.load(nbt);
                 } catch (ClassCastException | IllegalArgumentException e) {
-                    EdenUtils.getLogger().error("Error while loading {} in class {}", field.getName(), obj.getClass().getSimpleName(), e);
+                    LogUtils.getLogger().error("Error while loading {} in class {}", field.getName(), obj.getClass().getSimpleName(), e);
                     value = loader.load(loader.parse(annotation.value()));
                 }
                 field.set(obj, value);
             } catch (IllegalAccessException e) {
-                EdenUtils.getLogger().error("Error loading config: Can't access field: {}.{}", c.getCanonicalName(), field.getName(), e);
+                LogUtils.getLogger().error("Error loading config: Can't access field: {}.{}", c.getCanonicalName(), field.getName(), e);
             }
         }
     }
@@ -227,7 +223,7 @@ public class PerWorldConfig {
             @SuppressWarnings("unchecked")
             ConfigLoader<Tag, Object> loader = (ConfigLoader<Tag, Object>) getLoader(c);
             if (loader == null) {
-                EdenUtils.getLogger().error("Error loading config: No loader found for class: {}", c.getCanonicalName(), new NullPointerException());
+                LogUtils.getLogger().error("Error loading config: No loader found for class: {}", c.getCanonicalName(), new NullPointerException());
                 continue;
             }
             try {
@@ -237,12 +233,12 @@ public class PerWorldConfig {
                 Tag nbt = loader.save(value);
                 //noinspection ConstantValue
                 if (nbt == null) {
-                    EdenUtils.getLogger().error("Error while saving {} in class {}", field.getName(), obj.getClass().getSimpleName(), new NullPointerException());
+                    LogUtils.getLogger().error("Error while saving {} in class {}", field.getName(), obj.getClass().getSimpleName(), new NullPointerException());
                     continue;
                 }
                 tag.put(field.getName(), nbt);
             } catch (IllegalAccessException e) {
-                EdenUtils.getLogger().error("Error loading config: Can't access field: {}.{}", c.getCanonicalName(), field.getName(), e);
+                LogUtils.getLogger().error("Error loading config: Can't access field: {}.{}", c.getCanonicalName(), field.getName(), e);
             }
         }
     }
@@ -279,7 +275,7 @@ public class PerWorldConfig {
         //noinspection unchecked
         ConfigLoader<Tag, Object> loader = (ConfigLoader<Tag, Object>) getLoader(object.getClass());
         if (loader == null) {
-            EdenUtils.getLogger().error("Error loading config: No loader found for class: {}", object.getClass().getCanonicalName(), new NullPointerException());
+            LogUtils.getLogger().error("Error loading config: No loader found for class: {}", object.getClass().getCanonicalName(), new NullPointerException());
             return null;
         }
         return loader.save(object);
@@ -288,7 +284,7 @@ public class PerWorldConfig {
     public <T> T toObject(Tag nbt, Class<T> type) {
         ConfigLoader<Tag, ?> loader = getLoader(type);
         if (loader == null) {
-            EdenUtils.getLogger().error("Error loading config: No loader found for class: {}", type.getCanonicalName(), new NullPointerException());
+            LogUtils.getLogger().error("Error loading config: No loader found for class: {}", type.getCanonicalName(), new NullPointerException());
             return null;
         }
         //noinspection unchecked

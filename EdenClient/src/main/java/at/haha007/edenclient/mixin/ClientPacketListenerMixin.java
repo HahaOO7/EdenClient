@@ -1,13 +1,16 @@
 package at.haha007.edenclient.mixin;
 
+import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.callbacks.CommandSuggestionCallback;
 import at.haha007.edenclient.callbacks.InventoryOpenCallback;
+import at.haha007.edenclient.callbacks.JoinWorldCallback;
+import at.haha007.edenclient.callbacks.LeaveWorldCallback;
 import at.haha007.edenclient.command.CommandManager;
 import at.haha007.edenclient.utils.ContainerInfo;
-import at.haha007.edenclient.utils.EdenUtils;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.suggestion.Suggestions;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.multiplayer.ClientSuggestionProvider;
 import net.minecraft.client.multiplayer.CommonListenerCookie;
@@ -17,6 +20,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.*;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.ItemStack;
+import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -30,9 +34,24 @@ import java.util.List;
 @Mixin(ClientPacketListener.class)
 public abstract class ClientPacketListenerMixin {
 
+    @Shadow @Nullable
+    public ClientLevel level;
+
     @Shadow public abstract boolean sendUnsignedCommand(String string);
 
     @Shadow private CommandDispatcher<SharedSuggestionProvider> commands;
+
+    @Inject(method = "handleLogin", at = @At("RETURN"), cancellable = true)
+    private void onLogin(ClientboundLoginPacket clientboundLoginPacket, CallbackInfo ci) {
+        boolean connect = level != null;
+        if (connect) {
+            EdenClient.onJoin();
+            JoinWorldCallback.EVENT.invoker().join();
+        } else {
+            LeaveWorldCallback.EVENT.invoker().leave();
+            EdenClient.onQuit();
+        }
+    }
 
     @Inject(method = "sendCommand", at = @At("HEAD"), cancellable = true)
     private void onSendCommand(String message, CallbackInfo ci) {

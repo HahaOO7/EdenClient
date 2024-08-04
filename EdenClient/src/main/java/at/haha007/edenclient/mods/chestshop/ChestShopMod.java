@@ -6,7 +6,6 @@ import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.mods.GetTo;
 import at.haha007.edenclient.mods.datafetcher.ChestShopItemNames;
 import at.haha007.edenclient.mods.datafetcher.DataFetcher;
-import at.haha007.edenclient.utils.EdenUtils;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.PluginSignature;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
@@ -19,6 +18,7 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import com.mojang.logging.LogUtils;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
@@ -240,7 +240,7 @@ public class ChestShopMod {
 
             File folder = new File(EdenClient.getDataFolder(), "ChestShop_Exploitable");
             if (!folder.exists() && (!folder.mkdirs())) {
-                EdenUtils.getLogger().error("Failed to create ChestShop_Exploitable folder!");
+                LogUtils.getLogger().error("Failed to create ChestShop_Exploitable folder!");
             }
             SimpleDateFormat formatter = new SimpleDateFormat("yyyy_MM_dd_hh_mm_ss");
             File file = new File(folder, formatter.format(new Date()) + ".txt");
@@ -248,7 +248,7 @@ public class ChestShopMod {
             try {
                 if (!file.exists() && (!file.createNewFile())) return -1;
             } catch (IOException e) {
-                EdenUtils.getLogger().error("Error while creating file: {}", file.getAbsolutePath(), e);
+                LogUtils.getLogger().error("Error while creating file: {}", file.getAbsolutePath(), e);
             }
 
             try (FileWriter writer = new FileWriter(file); BufferedWriter bw = new BufferedWriter(writer)) {
@@ -262,7 +262,7 @@ public class ChestShopMod {
                                 .clickEvent(ClickEvent.clickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, file.getAbsolutePath()))));
             } catch (IOException e) {
                 sendModMessage("Error while writing file. See console for more info.");
-                EdenUtils.getLogger().error("Couldn't write shop contents.", e);
+                LogUtils.getLogger().error("Couldn't write shop contents.", e);
             }
             return 1;
         }));
@@ -307,7 +307,7 @@ public class ChestShopMod {
 
             File folder = new File(EdenClient.getDataFolder(), "ChestShopModEntries");
             if (!folder.exists() && (!folder.mkdirs())) {
-                EdenUtils.getLogger().error("Failed to create ChestShopModEntries folder!");
+                LogUtils.getLogger().error("Failed to create ChestShopModEntries folder!");
             }
             SimpleDateFormat formatter = new SimpleDateFormat("yyyy_MM_dd_hh_mm_ss");
             Date date = new Date();
@@ -316,7 +316,7 @@ public class ChestShopMod {
             try {
                 if (!file.exists() && (!file.createNewFile())) return -1;
             } catch (IOException e) {
-                EdenUtils.getLogger().error("Error while creating file: {}", file.getAbsolutePath(), e);
+                LogUtils.getLogger().error("Error while creating file: {}", file.getAbsolutePath(), e);
             }
 
             try (FileWriter writer = new FileWriter(file); BufferedWriter bw = new BufferedWriter(writer)) {
@@ -334,7 +334,7 @@ public class ChestShopMod {
                                 .clickEvent(ClickEvent.clickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, file.getAbsolutePath()))));
             } catch (IOException e) {
                 sendModMessage("Error while writing file. See console for more info.");
-                EdenUtils.getLogger().error("Couldn't write shop contents.", e);
+                LogUtils.getLogger().error("Couldn't write shop contents.", e);
             }
             return 1;
         }));

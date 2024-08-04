@@ -3,7 +3,7 @@ package at.haha007.edenclient.mixin;
 import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.callbacks.AddChatMessageCallback;
 import at.haha007.edenclient.utils.PlayerUtils;
-import at.haha007.edenclient.utils.EdenUtils;
+import com.mojang.logging.LogUtils;
 import net.minecraft.client.GuiMessage;
 import net.minecraft.client.GuiMessageTag;
 import net.minecraft.client.gui.components.ChatComponent;
@@ -42,12 +42,12 @@ public abstract class ChatHudMixin {
             try {
                 AddChatMessageCallback.EVENT.invoker().interact(event);
             } catch (Throwable t) {
-                EdenUtils.getLogger().error("Error while processing chat message", t);
+                LogUtils.getLogger().error("Error while processing chat message", t);
             }
             chatText = event.getChatText();
             if (chatText != null && !chatText.getString().isBlank()) {
                 addMessage(chatText, null, GuiMessageTag.system());
-                EdenUtils.getLogger().info("Chat: {}", Component.Serializer.toJson(chatText, RegistryAccess.EMPTY));
+                LogUtils.getLogger().info("Chat: {}", Component.Serializer.toJson(chatText, RegistryAccess.EMPTY));
             }
         });
     }

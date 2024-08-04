@@ -9,11 +9,11 @@ import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.mods.datafetcher.DataFetcher;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.RenderUtils;
-import at.haha007.edenclient.utils.EdenUtils;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.logging.LogUtils;
 import net.minecraft.client.multiplayer.ClientSuggestionProvider;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.GameRenderer;
@@ -134,7 +134,7 @@ public class GetTo {
 
     private Optional<String> getNearestPlayerWarp(Vec3i pos) {
         Vec3i pp = PlayerUtils.getPlayer().blockPosition();
-        EdenUtils.getLogger().info(EdenClient.getMod(DataFetcher.class).getPlayerWarps().getAll().toString());
+        LogUtils.getLogger().info(EdenClient.getMod(DataFetcher.class).getPlayerWarps().getAll().toString());
         return EdenClient.getMod(DataFetcher.class).getPlayerWarps().getAll().entrySet().stream()
                 .min(Comparator.comparingDouble(e -> e.getValue().distSqr(pos)))
                 .map(e -> dist(pos, pp) < dist(e.getValue(), pos) ? null : e.getKey());

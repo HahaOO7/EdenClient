@@ -2,7 +2,6 @@ package at.haha007.edenclient.mods;
 
 import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.annotations.Mod;
-import at.haha007.edenclient.utils.EdenUtils;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.PluginSignature;
 import at.haha007.edenclient.utils.Scheduler;
@@ -14,6 +13,7 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import com.mojang.logging.LogUtils;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.minecraft.client.multiplayer.ClientSuggestionProvider;
@@ -352,7 +352,7 @@ public class WorldEditReplaceHelper {
 
     private void generatePermutations(List<List<String>> lists, List<String> result, int depth, String current) {
         if (depth == lists.size()) {
-            EdenUtils.getLogger().info("Permutation created: {}", current);
+            LogUtils.getLogger().info("Permutation created: {}", current);
             result.add(current);
             return;
         }
@@ -369,7 +369,7 @@ public class WorldEditReplaceHelper {
         if (message.length() > 256)
             sendModMessage("Cannot execute: " + message + " because this command too long.");
         entityPlayer.connection.sendChat(message);
-        EdenUtils.getLogger().info("Sent command: {}", message);
+        LogUtils.getLogger().info("Sent command: {}", message);
     }
 
     private String getBlockIDFromBlock(Block block) {

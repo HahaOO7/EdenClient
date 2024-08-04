@@ -4,6 +4,7 @@ import at.haha007.edenclient.annotations.Mod;
 import at.haha007.edenclient.callbacks.ConfigLoadedCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.utils.PlayerUtils;
+import at.haha007.edenclient.utils.RenderUtils;
 import at.haha007.edenclient.utils.area.BlockArea;
 import at.haha007.edenclient.utils.area.CubeArea;
 import at.haha007.edenclient.utils.area.SavableBlockArea;
@@ -145,6 +146,7 @@ public class Nuker {
             String name = BuiltInRegistries.BLOCK.getKey(block).getPath();
             cmd.then(literal(name).executes(context -> {
                 filter.add(block);
+
                 PlayerUtils.sendModMessage("Added " + name);
                 return 1;
             }));

@@ -1,14 +1,10 @@
 package at.haha007.edenclient.callbacks;
 
-import at.haha007.edenclient.utils.EdenUtils;
-
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 public class Event<T> {
     private static final List<Event<?>> EVENTS = new ArrayList<>();

@@ -2,6 +2,7 @@ package at.haha007.edenclient.utils;
 
 import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.annotations.Mod;
+import com.mojang.logging.LogUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,7 +35,7 @@ public class ModInitializer {
 
     private void registerMod(Class<?> clazz) {
         try {
-            EdenUtils.getLogger().info("Registering mod: %s".formatted(clazz.getCanonicalName()));
+            LogUtils.getLogger().info("Registering mod: %s".formatted(clazz.getCanonicalName()));
             Constructor<?> constructor = clazz.getDeclaredConstructor();
             constructor.setAccessible(true);
             Object object = constructor.newInstance();
@@ -43,7 +44,7 @@ public class ModInitializer {
                  IllegalAccessException |
                  InvocationTargetException |
                  NoSuchMethodException e) {
-            EdenUtils.getLogger().error("Error while enabling mod: {}", clazz.getCanonicalName(), e);
+            LogUtils.getLogger().error("Error while enabling mod: {}", clazz.getCanonicalName(), e);
         }
     }
 
@@ -105,7 +106,7 @@ public class ModInitializer {
             }
             return annotatedClasses;
         } catch (IOException | ClassNotFoundException e) {
-            EdenUtils.getLogger().trace("Error while loading mod.txt", e);
+            LogUtils.getLogger().trace("Error while loading mod.txt", e);
         }
         return new ArrayList<>();
     }

@@ -3,6 +3,7 @@ package at.haha007.edenclient.utils;
 import at.haha007.edenclient.annotations.Mod;
 import at.haha007.edenclient.callbacks.LeaveWorldCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
+import com.mojang.logging.LogUtils;
 import net.minecraft.client.player.LocalPlayer;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,7 +35,7 @@ public class Scheduler {
         delayedSync.clear();
         repeatingSync.clear();
         tick = 0;
-        EdenUtils.getLogger().info("Scheduler tasks cleared");
+        LogUtils.getLogger().info("Scheduler tasks cleared");
     }
 
     private synchronized void tick(LocalPlayer clientPlayerEntity) {

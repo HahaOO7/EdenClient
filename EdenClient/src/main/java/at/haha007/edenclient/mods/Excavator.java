@@ -7,12 +7,12 @@ import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.command.CommandManager;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.Scheduler;
-import at.haha007.edenclient.utils.EdenUtils;
 import at.haha007.edenclient.utils.area.BlockArea;
 import at.haha007.edenclient.utils.area.SavableBlockArea;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.logging.LogUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.ClientSuggestionProvider;
@@ -310,7 +310,7 @@ public class Excavator {
                     world.setBlockAndUpdate(b, Blocks.WATER.defaultBlockState());
                     Thread.sleep(1);
                 } catch (InterruptedException | IndexOutOfBoundsException e) {
-                    EdenUtils.getLogger().error("Error while don't-ing.", e);
+                    LogUtils.getLogger().error("Error while don't-ing.", e);
                 }
             }));
             return 1;
