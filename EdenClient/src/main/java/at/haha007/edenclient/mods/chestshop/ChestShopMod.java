@@ -6,6 +6,7 @@ import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.mods.GetTo;
 import at.haha007.edenclient.mods.datafetcher.ChestShopItemNames;
 import at.haha007.edenclient.mods.datafetcher.DataFetcher;
+import at.haha007.edenclient.mods.datafetcher.PlayerWarps;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.PluginSignature;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
@@ -106,15 +107,19 @@ public class ChestShopMod {
         }));
 
         node.then(literal("visitshops").executes(c -> {
-            Map<String, Vec3i> knownShops = EdenClient.getMod(DataFetcher.class).getPlayerWarps().getShops();
+            List<PlayerWarps.PlayerWarp> knownShops = EdenClient.getMod(DataFetcher.class).getPlayerWarps().getWarps()
+                    .stream()
+                    .filter(shop -> shop.categories().stream().noneMatch(category -> category.toLowerCase().contains("shop")))
+                    .toList();
             TaskManager tm = new TaskManager();
             sendModMessage(Component.text("Teleporting to all player warps, this will take about ", NamedTextColor.GOLD)
                     .append(Component.text(knownShops.size() * 6, NamedTextColor.AQUA))
                     .append(Component.text(" seconds.", NamedTextColor.GOLD)));
             int count = knownShops.size();
             AtomicInteger i = new AtomicInteger(1);
-            for (String shop : knownShops.keySet()) {
-                tm.then(new SyncTask(() -> PlayerUtils.messageC2S("/pwarp " + shop)));
+            for (PlayerWarps.PlayerWarp shop : knownShops) {
+                if (shop.categories().stream().noneMatch(category -> category.toLowerCase().contains("shop"))) continue;
+                tm.then(new SyncTask(() -> PlayerUtils.messageC2S("/pwarp " + shop.name())));
                 tm.then(new WaitForTicksTask(120)); //wait for chunks to load
                 tm.then(new SyncTask(() ->
                         sendModMessage(Component.text("Shop ", NamedTextColor.GOLD)
@@ -155,12 +160,12 @@ public class ChestShopMod {
             matching.stream().sorted(Comparator.comparingDouble(ChestShopEntry::getSellPricePerItem).reversed())
                     .limit(10)
                     .map(cs -> {
-                        Optional<Map.Entry<String, Vec3i>> opw = getNearestPlayerWarp(cs.getPos());
+                        Optional<PlayerWarps.PlayerWarp> opw = getNearestPlayerWarp(cs.getPos());
                         Style style = Style.style(NamedTextColor.GOLD);
 
                         Vec3i pos = cs.getPos();
                         String cmd = EdenClient.getMod(GetTo.class).getCommandTo(pos);
-                        Component hoverText = Component.text(opw.isPresent() ? opw.get().getKey() : "click me!", NamedTextColor.GOLD);
+                        Component hoverText = Component.text(opw.isPresent() ? opw.get().name() : "click me!", NamedTextColor.GOLD);
                         style = style.hoverEvent(HoverEvent.hoverEvent(HoverEvent.Action.SHOW_TEXT, hoverText));
                         style = style.clickEvent(ClickEvent.clickEvent(ClickEvent.Action.RUN_COMMAND, cmd));
                         return Component.text(cs.formattedString(false)).style(style);
@@ -178,12 +183,12 @@ public class ChestShopMod {
             matching.stream().sorted(Comparator.comparingDouble(ChestShopEntry::getSellPricePerItem).reversed())
                     .limit(10)
                     .map(cs -> {
-                        Optional<Map.Entry<String, Vec3i>> opw = getNearestPlayerWarp(cs.getPos());
+                        Optional<PlayerWarps.PlayerWarp> opw = getNearestPlayerWarp(cs.getPos());
                         Style style = Style.style(NamedTextColor.GOLD);
 
                         Vec3i pos = cs.getPos();
                         String cmd = EdenClient.getMod(GetTo.class).getCommandTo(pos);
-                        Component hoverText = Component.text(opw.isPresent() ? opw.get().getKey() : "click me!", NamedTextColor.GOLD);
+                        Component hoverText = Component.text(opw.isPresent() ? opw.get().name() : "click me!", NamedTextColor.GOLD);
                         style = style.hoverEvent(HoverEvent.hoverEvent(HoverEvent.Action.SHOW_TEXT, hoverText));
                         style = style.clickEvent(ClickEvent.clickEvent(ClickEvent.Action.RUN_COMMAND, cmd));
                         return Component.text(cs.formattedString(false)).style(style);
@@ -200,11 +205,11 @@ public class ChestShopMod {
             matching.stream().sorted(Comparator.comparingDouble(ChestShopEntry::getBuyPricePerItem))
                     .limit(10)
                     .map(cs -> {
-                        Optional<Map.Entry<String, Vec3i>> opw = getNearestPlayerWarp(cs.getPos());
+                        Optional<PlayerWarps.PlayerWarp> opw = getNearestPlayerWarp(cs.getPos());
                         Style style = Style.style(NamedTextColor.GOLD);
                         Vec3i pos = cs.getPos();
                         String cmd = EdenClient.getMod(GetTo.class).getCommandTo(pos);
-                        Component hoverText = Component.text(opw.isPresent() ? opw.get().getKey() : "click me!", NamedTextColor.GOLD);
+                        Component hoverText = Component.text(opw.isPresent() ? opw.get().name() : "click me!", NamedTextColor.GOLD);
                         style = style.hoverEvent(HoverEvent.hoverEvent(HoverEvent.Action.SHOW_TEXT, hoverText));
                         style = style.clickEvent(ClickEvent.clickEvent(ClickEvent.Action.RUN_COMMAND, cmd));
                         return Component.text(cs.formattedString(true)).style(style);
@@ -222,11 +227,11 @@ public class ChestShopMod {
             matching.stream().sorted(Comparator.comparingDouble(ChestShopEntry::getBuyPricePerItem))
                     .limit(10)
                     .map(cs -> {
-                        Optional<Map.Entry<String, Vec3i>> opw = getNearestPlayerWarp(cs.getPos());
+                        Optional<PlayerWarps.PlayerWarp> opw = getNearestPlayerWarp(cs.getPos());
                         Style style = Style.style(NamedTextColor.GOLD);
                         Vec3i pos = cs.getPos();
                         String cmd = EdenClient.getMod(GetTo.class).getCommandTo(pos);
-                        Component hoverText = Component.text(opw.isPresent() ? opw.get().getKey() : "click me!", NamedTextColor.GOLD);
+                        Component hoverText = Component.text(opw.isPresent() ? opw.get().name() : "click me!", NamedTextColor.GOLD);
                         style = style.hoverEvent(HoverEvent.hoverEvent(HoverEvent.Action.SHOW_TEXT, hoverText));
                         style = style.clickEvent(ClickEvent.clickEvent(ClickEvent.Action.RUN_COMMAND, cmd));
                         return Component.text(cs.formattedString(true)).style(style);
@@ -419,8 +424,8 @@ public class ChestShopMod {
         return buyEntries;
     }
 
-    private Optional<Map.Entry<String, Vec3i>> getNearestPlayerWarp(Vec3i pos) {
-        return EdenClient.getMod(DataFetcher.class).getPlayerWarps().getAll().entrySet().stream().min(Comparator.comparingDouble(e -> e.getValue().distSqr(pos)));
+    private Optional<PlayerWarps.PlayerWarp> getNearestPlayerWarp(Vec3i pos) {
+        return EdenClient.getMod(DataFetcher.class).getPlayerWarps().getWarps().stream().min(Comparator.comparingDouble(e -> e.pos().distSqr(pos)));
     }
 
     private CompletableFuture<Suggestions> suggestSell(CommandContext<ClientSuggestionProvider> context, SuggestionsBuilder suggestionsBuilder) {

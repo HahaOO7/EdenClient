@@ -8,7 +8,10 @@ import at.haha007.edenclient.utils.tasks.WaitForTicksTask;
 import com.mojang.brigadier.tree.CommandNode;
 import net.minecraft.client.Minecraft;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -17,7 +20,7 @@ public enum PluginSignature {
     CHESTSHOP(Set.of("chestshop:iteminfo"), Map.of(), () -> false),
     CRAFTBOOK(Set.of("craftbook:sign"), Map.of(), () -> false),
     PWARP(Set.of("pwg", "pw", "pwarp", "pww"), Map.of(), () -> false),
-    PLAYER_WARPS(Set.of("pwarp"), Map.of("pwarp am", "pwarp amount", "pwarp ab", "pwarp about"), PWARP::isPluginPresent),
+    PLAYER_WARPS(Set.of("pwarp"), Map.of("pwarp am", "pwarp amount"), PWARP::isPluginPresent),
     WORLDEDIT(Set.of("/", "/replace"), Map.of(), () -> false);
 
     static {
@@ -55,7 +58,7 @@ public enum PluginSignature {
             matches = true;
             return;
         }
-        if(customDisable.get()) {
+        if (customDisable.get()) {
             matches = false;
             return;
         }

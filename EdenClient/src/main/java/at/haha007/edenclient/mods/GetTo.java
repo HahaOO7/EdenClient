@@ -128,16 +128,16 @@ public class GetTo {
         this.tracer = tracer;
         this.box = box;
         if (tp) {
-            getNearestPlayerWarp(pos).map(pw -> "/pw " + pw).ifPresent(PlayerUtils::messageC2S);
+            getNearestPlayerWarp(pos).map(pw -> "/pwarp " + pw).ifPresent(PlayerUtils::messageC2S);
         }
     }
 
     private Optional<String> getNearestPlayerWarp(Vec3i pos) {
         Vec3i pp = PlayerUtils.getPlayer().blockPosition();
-        LogUtils.getLogger().info(EdenClient.getMod(DataFetcher.class).getPlayerWarps().getAll().toString());
-        return EdenClient.getMod(DataFetcher.class).getPlayerWarps().getAll().entrySet().stream()
-                .min(Comparator.comparingDouble(e -> e.getValue().distSqr(pos)))
-                .map(e -> dist(pos, pp) < dist(e.getValue(), pos) ? null : e.getKey());
+        LogUtils.getLogger().info(EdenClient.getMod(DataFetcher.class).getPlayerWarps().getWarps().toString());
+        return EdenClient.getMod(DataFetcher.class).getPlayerWarps().getWarps().stream()
+                .min(Comparator.comparingDouble(e -> e.pos().distSqr(pos)))
+                .map(e -> dist(pos, pp) < dist(e.pos(), pos) ? null : e.name());
     }
 
     private double dist(Vec3i a, Vec3i b) {

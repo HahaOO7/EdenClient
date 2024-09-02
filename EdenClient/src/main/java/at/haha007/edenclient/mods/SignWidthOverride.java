@@ -12,7 +12,7 @@ import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 @Mod
 public class SignWidthOverride {
     @ConfigSubscriber("false")
-    private boolean enabled = true;
+    private boolean enabled = false;
 
     public SignWidthOverride() {
         SignWidthCallback.EVENT.register(this::onSignWidth, getClass());

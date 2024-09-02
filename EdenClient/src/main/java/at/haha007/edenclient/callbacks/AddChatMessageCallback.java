@@ -1,5 +1,7 @@
 package at.haha007.edenclient.callbacks;
 
+import lombok.Getter;
+import lombok.Setter;
 import net.minecraft.client.GuiMessage;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
@@ -16,10 +18,14 @@ public interface AddChatMessageCallback {
 
     void interact(ChatAddEvent event);
 
+    @Getter
     class ChatAddEvent {
         private final LocalPlayer player;
+        @Setter
         private Component chatText;
         private final List<GuiMessage.Line> chatLines;
+        @Setter
+        private boolean canceled = false;
 
         public ChatAddEvent(LocalPlayer player, Component chatText, List<GuiMessage.Line> chatLines) {
             this.player = player;
@@ -27,20 +33,5 @@ public interface AddChatMessageCallback {
             this.chatLines = chatLines;
         }
 
-        public Component getChatText() {
-            return chatText;
-        }
-
-        public List<GuiMessage.Line> getChatLines() {
-            return chatLines;
-        }
-
-        public LocalPlayer getPlayer() {
-            return player;
-        }
-
-        public void setChatText(Component chatText) {
-            this.chatText = chatText;
-        }
     }
 }

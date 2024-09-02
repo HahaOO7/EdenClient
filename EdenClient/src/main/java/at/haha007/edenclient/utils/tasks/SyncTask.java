@@ -22,7 +22,7 @@ public class SyncTask implements Task {
         try {
             future.get();
         } catch ( ExecutionException e) {
-            throw new RuntimeException(e);
+            throw new InterruptedException(e.getMessage());
         }
     }
 }

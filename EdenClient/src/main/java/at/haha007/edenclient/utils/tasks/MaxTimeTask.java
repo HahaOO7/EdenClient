@@ -2,6 +2,7 @@ package at.haha007.edenclient.utils.tasks;
 
 import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.utils.Scheduler;
+import com.mojang.logging.LogUtils;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -30,5 +31,6 @@ public class MaxTimeTask implements Task {
             }
         });
         task.run();
+        done.set(true);
     }
 }

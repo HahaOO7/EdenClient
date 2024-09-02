@@ -2,12 +2,14 @@ package at.haha007.edenclient.mods;
 
 import at.haha007.edenclient.annotations.Mod;
 import at.haha007.edenclient.callbacks.AddChatMessageCallback;
+import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import at.haha007.edenclient.utils.config.wrappers.StringList;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.logging.LogUtils;
 import lombok.Getter;
 import lombok.Setter;
 import net.kyori.adventure.text.Component;
@@ -203,10 +205,10 @@ public class MessageIgnorer {
         if (!enabled) {
             return;
         }
-        String s = event.getChatText().getString();
+        String s = PlayerUtils.removeColorCodes(event.getChatText().getString());
         for (String match : regex) {
             if (s.matches(match)) {
-                event.setChatText(null);
+                event.setCanceled(true);
                 return;
             }
         }

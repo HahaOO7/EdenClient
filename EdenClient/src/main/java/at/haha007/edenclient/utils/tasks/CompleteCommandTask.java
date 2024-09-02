@@ -4,11 +4,11 @@ import at.haha007.edenclient.callbacks.CommandSuggestionCallback;
 import at.haha007.edenclient.callbacks.LeaveWorldCallback;
 import at.haha007.edenclient.utils.PlayerUtils;
 import com.mojang.brigadier.suggestion.Suggestions;
+import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.network.protocol.game.ServerboundCommandSuggestionPacket;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Random;
 import java.util.Set;
 
 public class CompleteCommandTask implements Task {
@@ -22,7 +22,7 @@ public class CompleteCommandTask implements Task {
 
     private final String command;
     private final Object lock = new Object();
-    private final int id = new Random().nextInt(100, 10000);
+    private static final int COMPLETION_ID = 0;
     private List<String> suggestions;
     private boolean started = false;
 
@@ -34,9 +34,10 @@ public class CompleteCommandTask implements Task {
 
     private boolean onCommandSuggestion(Suggestions suggestions, int id) {
         synchronized (lock) {
-            if (id != this.id)
+            if (id != COMPLETION_ID)
                 return false;
-            this.suggestions = suggestions.getList().stream().map(s -> s.apply(command)).toList();
+            this.suggestions = suggestions.getList().stream().map(s -> s.apply(command))
+                    .map(s -> s.substring(1)).toList();
             lock.notifyAll();
             return true;
         }
@@ -48,11 +49,13 @@ public class CompleteCommandTask implements Task {
             started = true;
             try {
                 listeners.add(this);
-                var con = PlayerUtils.getPlayer().connection;
+                ClientPacketListener con = PlayerUtils.getPlayer().connection;
                 //unsafe if the server connection is faster than your cpu!
-                con.send(new ServerboundCommandSuggestionPacket(id, command));
+                con.send(new ServerboundCommandSuggestionPacket(COMPLETION_ID, command));
                 lock.wait();
             } catch (InterruptedException ignored) {
+                Thread.currentThread().interrupt();
+                listeners.remove(this);
             }
         }
     }
@@ -64,6 +67,8 @@ public class CompleteCommandTask implements Task {
                 lock.wait();
                 return suggestions;
             } catch (InterruptedException ignored) {
+                Thread.currentThread().interrupt();
+                listeners.remove(this);
                 return List.of();
             }
         }

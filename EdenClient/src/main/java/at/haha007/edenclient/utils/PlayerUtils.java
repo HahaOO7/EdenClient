@@ -294,4 +294,9 @@ public class PlayerUtils {
         gameMode.handlePickItem(slot);
         return Optional.of(select);
     }
+
+    public static String removeColorCodes(String msg) {
+        msg = msg.replaceAll("§[0-9a-fk-or]", "");
+        return msg;
+    }
 }

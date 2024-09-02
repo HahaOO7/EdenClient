@@ -45,9 +45,9 @@ public abstract class ChatHudMixin {
                 LogUtils.getLogger().error("Error while processing chat message", t);
             }
             chatText = event.getChatText();
-            if (chatText != null && !chatText.getString().isBlank()) {
-                addMessage(chatText, null, GuiMessageTag.system());
+            if (chatText != null && !chatText.getString().isBlank() && !event.isCanceled()) {
                 LogUtils.getLogger().info("Chat: {}", Component.Serializer.toJson(chatText, RegistryAccess.EMPTY));
+                addMessage(chatText, null, GuiMessageTag.system());
             }
         });
     }

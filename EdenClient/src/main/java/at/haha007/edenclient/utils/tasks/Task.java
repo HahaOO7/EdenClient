@@ -7,8 +7,9 @@ public interface Task {
     void run() throws InterruptedException;
 
     default Task then(Task other) {
+        Task self = this;
         return () -> {
-            Task.this.run();
+            self.run();
             other.run();
         };
     }

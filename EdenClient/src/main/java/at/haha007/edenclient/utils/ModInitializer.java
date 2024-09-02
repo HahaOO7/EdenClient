@@ -2,6 +2,8 @@ package at.haha007.edenclient.utils;
 
 import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.annotations.Mod;
+import at.haha007.edenclient.mods.AntiSpam;
+import at.haha007.edenclient.mods.MessageIgnorer;
 import com.mojang.logging.LogUtils;
 
 import java.io.IOException;
@@ -137,6 +139,15 @@ public class ModInitializer {
                 }
                 if (clazz == null) throw new IllegalStateException("Error while sorting mod dependencies");
                 toVisit.remove(clazz);
+            }
+            //dirty hack, should have proper priorities
+            if(list.contains(MessageIgnorer.class)){
+                list.remove(MessageIgnorer.class);
+                list.add(MessageIgnorer.class);
+            }
+            if(list.contains(AntiSpam.class)){
+                list.remove(AntiSpam.class);
+                list.add(AntiSpam.class);
             }
             return list;
         }
