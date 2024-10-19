@@ -1,27 +1,22 @@
 package at.haha007.edenclient.utils;
 
 import at.haha007.edenclient.callbacks.JoinWorldCallback;
-import at.haha007.edenclient.utils.tasks.CompleteCommandTask;
-import at.haha007.edenclient.utils.tasks.Task;
-import at.haha007.edenclient.utils.tasks.TaskManager;
-import at.haha007.edenclient.utils.tasks.WaitForTicksTask;
 import com.mojang.brigadier.tree.CommandNode;
+import com.mojang.logging.LogUtils;
 import net.minecraft.client.Minecraft;
 
 import java.util.Arrays;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public enum PluginSignature {
-    CHESTSHOP(Set.of("chestshop:iteminfo"), Map.of(), () -> false),
-    CRAFTBOOK(Set.of("craftbook:sign"), Map.of(), () -> false),
-    PWARP(Set.of("pwg", "pw", "pwarp", "pww"), Map.of(), () -> false),
-    PLAYER_WARPS(Set.of("pwarp"), Map.of("pwarp am", "pwarp amount"), PWARP::isPluginPresent),
-    WORLDEDIT(Set.of("/", "/replace"), Map.of(), () -> false);
+    CHESTSHOP(Set.of("chestshop:iteminfo"), () -> false),
+    CRAFTBOOK(Set.of("craftbook:sign"), () -> false),
+    PWARP(Set.of("pwg", "pw", "pwarp", "pww"), () -> false),
+    PLAYER_WARPS(Set.of("pwarp"), PWARP::isPluginPresent),
+    WORLDEDIT(Set.of("/", "/replace"), () -> false);
 
     static {
         JoinWorldCallback.EVENT.register(() -> Arrays.stream(values()).forEach(p -> p.lastCheck = 0), PluginSignature.class);
@@ -30,12 +25,10 @@ public enum PluginSignature {
     private long lastCheck = 0;
     private boolean matches = false;
     private final Set<String> commands;
-    private final Map<String, String> tabCompletions;
     private final Supplier<Boolean> customDisable;
 
-    PluginSignature(Set<String> commands, Map<String, String> tabCompletions, Supplier<Boolean> customDisable) {
+    PluginSignature(Set<String> commands, Supplier<Boolean> customDisable) {
         this.commands = commands;
-        this.tabCompletions = tabCompletions;
         this.customDisable = customDisable;
     }
 
@@ -50,31 +43,8 @@ public enum PluginSignature {
         lastCheck = System.currentTimeMillis();
         Set<String> registered = Objects.requireNonNull(Minecraft.getInstance().getConnection()).getCommands().getRoot()
                 .getChildren().stream().map(CommandNode::getName).collect(Collectors.toSet());
-        if (!registered.containsAll(commands)) {
-            matches = false;
-            return;
-        }
-        if (tabCompletions.isEmpty()) {
-            matches = true;
-            return;
-        }
-        if (customDisable.get()) {
-            matches = false;
-            return;
-        }
-        TaskManager taskManager = new TaskManager();
-        AtomicBoolean found = new AtomicBoolean(true);
-        for (Map.Entry<String, String> entry : tabCompletions.entrySet()) {
-            CompleteCommandTask completeCommandTask = new CompleteCommandTask(entry.getKey());
-            Task task = completeCommandTask.then(() -> {
-                if (completeCommandTask.getSuggestions().contains(entry.getValue())) return;
-                found.set(false);
-            });
-            taskManager.then(task);
-            taskManager.then(new WaitForTicksTask(1));
-        }
-        taskManager.then(() -> matches = found.get());
-        taskManager.start();
+        matches = registered.containsAll(commands) && !Boolean.TRUE.equals(customDisable.get());
+        LogUtils.getLogger().info("Plugin signature for {} is {}", this, matches);
     }
 
 

@@ -112,8 +112,15 @@ public class CommandManager {
         register(command, (Component) null);
     }
 
-    public static LiteralArgumentBuilder<ClientSuggestionProvider> literal(String s) {
-        return LiteralArgumentBuilder.literal(s);
+    public static LiteralArgumentBuilder<ClientSuggestionProvider> literal(String name) {
+        return LiteralArgumentBuilder.literal(name);
+    }
+
+    public static RequiredArgumentBuilder<ClientSuggestionProvider, String> fakeLiteral(String name) {
+        return RequiredArgumentBuilder.<ClientSuggestionProvider, String>argument(name, StringArgumentType.word()).suggests((c, b) -> {
+            b.suggest(name);
+            return b.buildFuture();
+        });
     }
 
     public static <T> RequiredArgumentBuilder<ClientSuggestionProvider, T> argument(String name, ArgumentType<T> type) {

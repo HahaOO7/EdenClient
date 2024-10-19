@@ -118,7 +118,6 @@ public class ChestShopMod {
             int count = knownShops.size();
             AtomicInteger i = new AtomicInteger(1);
             for (PlayerWarps.PlayerWarp shop : knownShops) {
-                if (shop.categories().stream().noneMatch(category -> category.toLowerCase().contains("shop"))) continue;
                 tm.then(new SyncTask(() -> PlayerUtils.messageC2S("/pwarp " + shop.name())));
                 tm.then(new WaitForTicksTask(120)); //wait for chunks to load
                 tm.then(new SyncTask(() ->
@@ -240,7 +239,7 @@ public class ChestShopMod {
             return 1;
         })));
 
-        node.then(literal("exploitable").executes(c -> {
+        node.then(fakeLiteral("exploitable").executes(c -> {
             List<String> exploitableItems = getExploitableShopsText();
 
             File folder = new File(EdenClient.getDataFolder(), "ChestShop_Exploitable");

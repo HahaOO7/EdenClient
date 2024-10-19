@@ -48,18 +48,18 @@ public class PlayerWarps {
     LiteralArgumentBuilder<ClientSuggestionProvider> registerCommand() {
         LiteralArgumentBuilder<ClientSuggestionProvider> cmd = CommandManager.literal("playerwarps");
         //PWARP
-        cmd.then(CommandManager.literal("shops").executes(c -> fetchPwarpData(warps, "warps", 10)).requires(c -> PluginSignature.PWARP.isPluginPresent()));
-        cmd.then(CommandManager.literal("builds").executes(c -> fetchPwarpData(warps, "builds", 12)).requires(c -> PluginSignature.PWARP.isPluginPresent()));
-        cmd.then(CommandManager.literal("farms").executes(c -> fetchPwarpData(warps, "farms", 14)).requires(c -> PluginSignature.PWARP.isPluginPresent()));
-        cmd.then(CommandManager.literal("other").executes(c -> fetchPwarpData(warps, "other", 16)).requires(c -> PluginSignature.PWARP.isPluginPresent()));
-        cmd.then(CommandManager.literal("all").executes(c -> fetchPwarpData(warps, "all", 4)).requires(c -> PluginSignature.PWARP.isPluginPresent()));
-        cmd.then(CommandManager.literal("hidden").executes(c -> fetchPwarpData(warps, "hidden", 22)).requires(c -> PluginSignature.PWARP.isPluginPresent()));
-        cmd.then(CommandManager.literal("*").executes(c -> fetchPwarpData()).requires(c -> PluginSignature.PWARP.isPluginPresent()));
+        cmd.then(CommandManager.fakeLiteral("shops").executes(c -> fetchPwarpData(warps, "warps", 10)).requires(c -> PluginSignature.PWARP.isPluginPresent()));
+        cmd.then(CommandManager.fakeLiteral("builds").executes(c -> fetchPwarpData(warps, "builds", 12)).requires(c -> PluginSignature.PWARP.isPluginPresent()));
+        cmd.then(CommandManager.fakeLiteral("farms").executes(c -> fetchPwarpData(warps, "farms", 14)).requires(c -> PluginSignature.PWARP.isPluginPresent()));
+        cmd.then(CommandManager.fakeLiteral("other").executes(c -> fetchPwarpData(warps, "other", 16)).requires(c -> PluginSignature.PWARP.isPluginPresent()));
+        cmd.then(CommandManager.fakeLiteral("all").executes(c -> fetchPwarpData(warps, "all", 4)).requires(c -> PluginSignature.PWARP.isPluginPresent()));
+        cmd.then(CommandManager.fakeLiteral("hidden").executes(c -> fetchPwarpData(warps, "hidden", 22)).requires(c -> PluginSignature.PWARP.isPluginPresent()));
+        cmd.then(CommandManager.fakeLiteral("*").executes(c -> fetchPwarpData()).requires(c -> PluginSignature.PWARP.isPluginPresent()));
 
         //PLAYER_WARPS
-        cmd.then(CommandManager.literal("fetch").executes(c -> fetchPlayerWarpData()).requires(c -> PluginSignature.PLAYER_WARPS.isPluginPresent()));
+        cmd.then(CommandManager.fakeLiteral("fetch").executes(c -> fetchPlayerWarpData()).requires(c -> PluginSignature.PLAYER_WARPS.isPluginPresent()));
 
-        cmd.then(CommandManager.literal("clear").executes(c -> clearData()));
+        cmd.then(CommandManager.fakeLiteral("clear").executes(c -> clearData()));
         return cmd;
     }
 
