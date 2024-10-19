@@ -3,6 +3,7 @@ package at.haha007.edenclient.mixin;
 import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.callbacks.JoinWorldCallback;
 import at.haha007.edenclient.callbacks.LeaveWorldCallback;
+import at.haha007.edenclient.command.CommandManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.ReceivingLevelScreen;
 import net.minecraft.client.gui.screens.Screen;
@@ -25,5 +26,6 @@ public class MinecraftClientMixin {
     void onDisconnect(Screen screen, boolean bl, CallbackInfo ci) {
         LeaveWorldCallback.EVENT.invoker().leave();
         EdenClient.onQuit();
+        CommandManager.reset();
     }
 }

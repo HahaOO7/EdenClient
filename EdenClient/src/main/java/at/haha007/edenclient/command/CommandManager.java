@@ -21,14 +21,16 @@ import net.minecraft.client.multiplayer.ClientSuggestionProvider;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
-public enum CommandManager {
-    ;
+public class CommandManager {
+    private CommandManager() {
+        throw new IllegalStateException("Utility class");
+    }
+
     private static final Map<LiteralArgumentBuilder<ClientSuggestionProvider>, Component[]> cmds = new HashMap<>();
-    private static final CommandDispatcher<ClientSuggestionProvider> dispatcher = new CommandDispatcher<>();
+    private static CommandDispatcher<ClientSuggestionProvider> dispatcher = new CommandDispatcher<>();
 
     static {
-        registerCommand("ecmds");
-        registerCommand("ehelp");
+        reset();
     }
 
     private static void registerCommand(String literal) {
@@ -92,6 +94,13 @@ public enum CommandManager {
     public static void register(LiteralArgumentBuilder<ClientSuggestionProvider> command, Component... usage) {
         cmds.put(command, usage);
         dispatcher.register(command);
+    }
+
+    public static void reset() {
+        dispatcher = new CommandDispatcher<>();
+        registerCommand("ecmds");
+        registerCommand("ehelp");
+        cmds.clear();
     }
 
     public static void register(LiteralArgumentBuilder<ClientSuggestionProvider> command, String... usage) {
