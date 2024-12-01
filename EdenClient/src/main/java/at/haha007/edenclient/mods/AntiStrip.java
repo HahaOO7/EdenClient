@@ -65,6 +65,6 @@ public class AntiStrip {
         ResourceLocation id = BuiltInRegistries.BLOCK.getKey(world.getBlockState(blockHitResult.getBlockPos()).getBlock());
         RegistryAccess registryManager = world.registryAccess();
         ResourceKey<? extends Registry<Block>> logsRegistry = BlockTags.LOGS.registry();
-        return registryManager.registryOrThrow(logsRegistry).containsKey(id) ? InteractionResult.FAIL : InteractionResult.PASS;
+        return registryManager.lookupOrThrow(logsRegistry).containsKey(id) ? InteractionResult.FAIL : InteractionResult.PASS;
     }
 }

@@ -10,7 +10,10 @@ import at.haha007.edenclient.utils.config.loaders.*;
 import at.haha007.edenclient.utils.config.wrappers.*;
 import com.mojang.logging.LogUtils;
 import net.minecraft.core.Vec3i;
-import net.minecraft.nbt.*;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtAccounter;
+import net.minecraft.nbt.NbtIo;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Style;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
@@ -111,7 +114,7 @@ public class PerWorldConfig {
         long start = System.nanoTime();
         LogUtils.getLogger().info("Start saving config: {}", worldName);
         saveConfig();
-        LogUtils.getLogger().info(String.format("Saving done, this took %sms.", TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start)));
+        LogUtils.getLogger().info("Saving done, this took {}ms.", TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start));
     }
 
     private void onJoin() {
@@ -130,7 +133,8 @@ public class PerWorldConfig {
                         .formatted(TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start)));
                 ConfigLoadedCallback.EVENT.invoker().configLoaded();
             } catch (InterruptedException e) {
-                throw new RuntimeException(e);
+                LogUtils.getLogger().error("Error while loading PerWorldConfig: {}", worldName, e);
+                Thread.currentThread().interrupt();
             }
         });
     }
@@ -144,10 +148,10 @@ public class PerWorldConfig {
         } catch (IOException e) {
             LogUtils.getLogger().error("Error while loading PerWorldConfig: {}", worldName, e);
         }
-        System.out.println("loading config: " + worldName);
+        LogUtils.getLogger().info("LOADING CONFIG: {}", worldName);
         String json = tag.getAsString();
-        System.out.println(json);
-        System.out.println(file);
+        LogUtils.getLogger().info("LOADED VALUES: {}", json);
+        LogUtils.getLogger().info("FROM: {}", file);
         CompoundTag finalTag = tag;
         registered.forEach((key, obj) -> load(getCompound(finalTag, key), obj));
     }
@@ -158,11 +162,11 @@ public class PerWorldConfig {
             CompoundTag compound = getCompound(tag, key);
             save(compound, obj);
         });
-        System.out.println("saving config: " + worldName);
+        LogUtils.getLogger().info("SAVING CONFIG: {}", tag);
         String json = tag.getAsString();
-        System.out.println(json);
         File file = new File(folder, worldName + ".mca");
-        System.out.println(file);
+        LogUtils.getLogger().info("SAVED VALUES: {}", json);
+        LogUtils.getLogger().info("TO: {}", file);
         if (ensureExistingConfigFolder()) return;
         try {
             NbtIo.writeCompressed(tag, file.toPath());
@@ -195,7 +199,7 @@ public class PerWorldConfig {
                 field.setAccessible(true);
                 String fieldName = field.getName();
                 Tag nbt = tag.contains(fieldName) ? tag.get(fieldName) : loader.parse(annotation.value());
-                if(nbt == null) {
+                if (nbt == null) {
                     LogUtils.getLogger().error("Error loading config: Field is null: {} in class {} of type {}",
                             fieldName,
                             field.getDeclaringClass().getSimpleName(),

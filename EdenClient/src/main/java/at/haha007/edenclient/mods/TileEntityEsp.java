@@ -10,18 +10,20 @@ import at.haha007.edenclient.utils.RenderUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import at.haha007.edenclient.utils.config.wrappers.BlockEntityTypeSet;
+import com.mojang.blaze3d.buffers.BufferUsage;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientChunkCache;
-import net.minecraft.client.multiplayer.ClientSuggestionProvider;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.CoreShaders;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Registry;
@@ -92,7 +94,7 @@ public class TileEntityEsp {
     }
 
     private void build() {
-        wireframeBox = new VertexBuffer(VertexBuffer.Usage.STATIC);
+        wireframeBox = new VertexBuffer(BufferUsage.STATIC_WRITE);
         AABB bb = new AABB(0, 0, 0, 1, 1, 1);
         RenderUtils.drawOutlinedBox(bb, wireframeBox);
     }
@@ -103,8 +105,8 @@ public class TileEntityEsp {
     }
 
     private void registerCommand() {
-        LiteralArgumentBuilder<ClientSuggestionProvider> cmd = literal("etileentityesp");
-        LiteralArgumentBuilder<ClientSuggestionProvider> toggle = literal("toggle");
+        LiteralArgumentBuilder<FabricClientCommandSource> cmd = literal("etileentityesp");
+        LiteralArgumentBuilder<FabricClientCommandSource> toggle = literal("toggle");
         toggle.executes(c -> {
             enabled = !enabled;
             sendModMessage(enabled ? "TileEntityEsp enabled" : "TileEntityEsp disabled");
@@ -187,11 +189,11 @@ public class TileEntityEsp {
                 "It is also possible to enable tracers and to switch between solid/transparent rendering.");
     }
 
-    RequiredArgumentBuilder<ClientSuggestionProvider, Integer> arg(String key) {
+    RequiredArgumentBuilder<FabricClientCommandSource, Integer> arg(String key) {
         return argument(key, IntegerArgumentType.integer(0, 255));
     }
 
-    private int setColor(CommandContext<ClientSuggestionProvider> c) {
+    private int setColor(CommandContext<FabricClientCommandSource> c) {
         this.red = c.getArgument("r", Integer.class) / 256f;
         this.green = c.getArgument("g", Integer.class) / 256f;
         this.blue = c.getArgument("b", Integer.class) / 256f;
@@ -202,7 +204,7 @@ public class TileEntityEsp {
 
     private void render(PoseStack matrixStack, MultiBufferSource.BufferSource vertexConsumerProvider, float v) {
         if (!enabled) return;
-        RenderSystem.setShader(GameRenderer::getPositionShader);
+        RenderSystem.setShader(Minecraft.getInstance().getShaderManager().getProgram(CoreShaders.POSITION));
         RenderSystem.setShaderColor(red, green, blue, 1);
         if (tracer && !tileEntities.isEmpty()) {
             matrixStack.pushPose();

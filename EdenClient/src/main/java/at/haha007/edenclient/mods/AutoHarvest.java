@@ -7,9 +7,9 @@ import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
-import net.minecraft.client.multiplayer.ClientSuggestionProvider;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
@@ -51,7 +51,7 @@ public class AutoHarvest {
     public AutoHarvest() {
         PerWorldConfig.get().register(this, "autoHarvest");
         PlayerTickCallback.EVENT.register(this::tick, getClass());
-        LiteralArgumentBuilder<ClientSuggestionProvider> cmd = CommandManager.literal("eautoharvest");
+        LiteralArgumentBuilder<FabricClientCommandSource> cmd = CommandManager.literal("eautoharvest");
         cmd.executes(c -> {
             enabled = !enabled;
             PlayerUtils.sendModMessage(enabled ? "AutoHarvest enabled" : "AutoHarvest disabled");

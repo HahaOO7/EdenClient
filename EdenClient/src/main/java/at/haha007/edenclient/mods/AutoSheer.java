@@ -6,8 +6,8 @@ import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.ClientSuggestionProvider;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.InteractionHand;
@@ -31,7 +31,7 @@ public class AutoSheer {
     }
 
     private void registerCommand() {
-        LiteralArgumentBuilder<ClientSuggestionProvider> node = literal("eautoshear");
+        LiteralArgumentBuilder<FabricClientCommandSource> node = literal("eautoshear");
         node.then(literal("toggle").executes(c -> {
             enabled = !enabled;
             PlayerUtils.sendModMessage((enabled ? "AutoShear enabled" : "AutoShear disabled"));

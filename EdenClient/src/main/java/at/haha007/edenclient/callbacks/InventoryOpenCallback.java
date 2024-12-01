@@ -4,7 +4,7 @@ import at.haha007.edenclient.utils.ContainerInfo;
 
 public interface InventoryOpenCallback {
     Event<InventoryOpenCallback> EVENT = new Event<>(
-            listeners -> (items) -> {
+            listeners -> items -> {
                 for (InventoryOpenCallback listener : listeners) {
                     listener.open(items);
                 }

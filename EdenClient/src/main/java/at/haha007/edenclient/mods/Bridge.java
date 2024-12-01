@@ -8,9 +8,9 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import lombok.Getter;
 import lombok.Setter;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.multiplayer.ClientSuggestionProvider;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
@@ -83,7 +83,7 @@ public class Bridge {
     }
 
     private void registerCommand() {
-        LiteralArgumentBuilder<ClientSuggestionProvider> cmd = literal("ebridge");
+        LiteralArgumentBuilder<FabricClientCommandSource> cmd = literal("ebridge");
         cmd.then(literal("toggle").executes(c -> {
             enabled = !enabled;
             sendModMessage(enabled ? "Bridge enabled" : "Bridge disabled");

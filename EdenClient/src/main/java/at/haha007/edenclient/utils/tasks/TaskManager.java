@@ -10,7 +10,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 
-public class TaskManager implements Cloneable, Task {
+public class TaskManager implements  Task {
     private static final Set<TaskManager> running = Collections.synchronizedSet(new HashSet<>());
 
     private final Queue<Task> tasks = new LinkedList<>();
@@ -28,6 +28,7 @@ public class TaskManager implements Cloneable, Task {
     public TaskManager() {
     }
 
+    @Override
     public TaskManager then(Task task) {
         tasks.add(task);
         return this;
@@ -49,17 +50,9 @@ public class TaskManager implements Cloneable, Task {
                 run();
             } catch (InterruptedException e) {
                 LogUtils.getLogger().error("Task interrupted!",e);
+                Thread.currentThread().interrupt();
             }
         });
-    }
-
-    @Override
-    public TaskManager clone() {
-        try {
-            return (TaskManager) super.clone();
-        } catch (CloneNotSupportedException e) {
-            throw new AssertionError();
-        }
     }
 
     public void cancel() {

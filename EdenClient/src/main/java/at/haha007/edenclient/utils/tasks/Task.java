@@ -1,6 +1,6 @@
 package at.haha007.edenclient.utils.tasks;
 
-import java.util.function.Supplier;
+import java.util.function.BooleanSupplier;
 
 public interface Task {
     //return true if the task is finished
@@ -14,10 +14,10 @@ public interface Task {
         };
     }
 
-    default Task then(Task other, Supplier<Boolean> requirement) {
+    default Task then(Task other, BooleanSupplier requirement) {
         return () -> {
             Task.this.run();
-            if (!requirement.get()) return;
+            if (!requirement.getAsBoolean()) return;
             other.run();
         };
     }

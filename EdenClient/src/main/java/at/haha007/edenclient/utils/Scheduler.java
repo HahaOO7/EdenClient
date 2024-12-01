@@ -57,7 +57,7 @@ public class Scheduler {
             Map.Entry<Long, Set<RepeatingRunnable>> entry = repeatingSync.pollFirstEntry();
             entry.getValue().forEach(run -> {
                 if (run.runnable().getAsBoolean()) {
-                    Set<RepeatingRunnable> set = repeatingSync.computeIfAbsent(tick + run.delta(), (l) -> new HashSet<>());
+                    Set<RepeatingRunnable> set = repeatingSync.computeIfAbsent(tick + run.delta(), l -> new HashSet<>());
                     set.add(run);
                 }
             });
@@ -71,7 +71,7 @@ public class Scheduler {
     // stops running if return value is FALSE
     public synchronized void scheduleSyncRepeating(@NotNull BooleanSupplier runnable, int tickDelta, int startDelay) {
         if (tickDelta <= 0) throw new IllegalArgumentException("tickDelta has to be >= 1");
-        Set<RepeatingRunnable> set = repeatingSync.computeIfAbsent(tick + startDelay, (l) -> new HashSet<>());
+        Set<RepeatingRunnable> set = repeatingSync.computeIfAbsent(tick + startDelay, l -> new HashSet<>());
         set.add(new RepeatingRunnable(tickDelta, runnable));
     }
 

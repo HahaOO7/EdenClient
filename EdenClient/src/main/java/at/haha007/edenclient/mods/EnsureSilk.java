@@ -10,26 +10,19 @@ import at.haha007.edenclient.utils.config.wrappers.BlockSet;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import net.minecraft.client.multiplayer.ClientSuggestionProvider;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.data.tags.EnchantmentTagsProvider;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.inventory.EnchantmentMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantment;
-import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
-import net.minecraft.world.item.enchantment.ItemEnchantments;
-import net.minecraft.world.item.enchantment.providers.EnchantmentProvider;
-import net.minecraft.world.item.enchantment.providers.SingleEnchantment;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.storage.loot.providers.number.EnchantmentLevelProvider;
 
 import static at.haha007.edenclient.command.CommandManager.*;
 
@@ -60,13 +53,13 @@ public class EnsureSilk {
         if (!filter.contains(block)) return InteractionResult.PASS;
         ItemStack tool = localPlayer.getMainHandItem();
         if (tool.isEmpty()) return InteractionResult.FAIL;
-        Enchantment silk = localPlayer.clientLevel.registryAccess().registry(Registries.ENCHANTMENT).orElseThrow().get(Enchantments.SILK_TOUCH);
-        boolean hasSilkTouch = tool.getEnchantments().getLevel(Holder.direct(silk)) > 0;
+        Holder.Reference<Enchantment> silk = localPlayer.clientLevel.registryAccess().lookup(Registries.ENCHANTMENT).orElseThrow().get(Enchantments.SILK_TOUCH).orElseThrow();
+        boolean hasSilkTouch = tool.getEnchantments().getLevel(silk) > 0;
         return hasSilkTouch ? InteractionResult.PASS : InteractionResult.FAIL;
     }
 
     private void registerCommand() {
-        LiteralArgumentBuilder<ClientSuggestionProvider> node = literal("eensuresilk");
+        LiteralArgumentBuilder<FabricClientCommandSource> node = literal("eensuresilk");
         node.then(literal("toggle").executes(c -> {
             enabled = !enabled;
             PlayerUtils.sendModMessage((enabled ? "SilkTouch enabled" : "SilkTouch disabled"));
@@ -83,8 +76,8 @@ public class EnsureSilk {
     }
 
 
-    private ArgumentBuilder<ClientSuggestionProvider, ?> addCommand() {
-        LiteralArgumentBuilder<ClientSuggestionProvider> cmd = literal("add");
+    private ArgumentBuilder<FabricClientCommandSource, ?> addCommand() {
+        LiteralArgumentBuilder<FabricClientCommandSource> cmd = literal("add");
         BuiltInRegistries.BLOCK.forEach(block -> {
             String name = BuiltInRegistries.BLOCK.getKey(block).getPath();
             cmd.then(literal(name).executes(context -> {
@@ -96,8 +89,8 @@ public class EnsureSilk {
         return cmd;
     }
 
-    private ArgumentBuilder<ClientSuggestionProvider, ?> removeCommand() {
-        LiteralArgumentBuilder<ClientSuggestionProvider> cmd = literal("remove");
+    private ArgumentBuilder<FabricClientCommandSource, ?> removeCommand() {
+        LiteralArgumentBuilder<FabricClientCommandSource> cmd = literal("remove");
         cmd.then(argument("type", StringArgumentType.word()).suggests((context, builder) -> {
             for (Block block : filter) {
                 builder.suggest(BuiltInRegistries.BLOCK.getKey(block).getPath());
@@ -106,7 +99,7 @@ public class EnsureSilk {
         }).executes(context -> {
             String name = context.getArgument("type", String.class);
             ResourceLocation identifier = ResourceLocation.parse(name);
-            filter.remove(BuiltInRegistries.BLOCK.get(identifier));
+            filter.remove(BuiltInRegistries.BLOCK.getValue(identifier));
             PlayerUtils.sendModMessage("Removed " + name);
             return 1;
         }));

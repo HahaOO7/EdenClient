@@ -3,7 +3,7 @@ package at.haha007.edenclient.utils.area;
 import at.haha007.edenclient.command.CommandManager;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
-import net.minecraft.client.multiplayer.ClientSuggestionProvider;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.core.BlockPos;
 
 import java.util.List;
@@ -12,10 +12,10 @@ import java.util.stream.Stream;
 
 public interface BlockArea {
 
-    static List<ArgumentBuilder<ClientSuggestionProvider, ?>> commands(BiConsumer<CommandContext<ClientSuggestionProvider>, BlockArea> executor) {
-        ArgumentBuilder<ClientSuggestionProvider, ?> cube = CubeArea.command("corner1", "corner2", executor::accept);
-        ArgumentBuilder<ClientSuggestionProvider, ?> cylinder = CylinderArea.command("bottomCenter", "radius", "height", executor::accept);
-        ArgumentBuilder<ClientSuggestionProvider, ?> sphere = SphereArea.command("center", "radius", executor::accept);
+    static List<ArgumentBuilder<FabricClientCommandSource, ?>> commands(BiConsumer<CommandContext<FabricClientCommandSource>, BlockArea> executor) {
+        ArgumentBuilder<FabricClientCommandSource, ?> cube = CubeArea.command("corner1", "corner2", executor::accept);
+        ArgumentBuilder<FabricClientCommandSource, ?> cylinder = CylinderArea.command("bottomCenter", "radius", "height", executor::accept);
+        ArgumentBuilder<FabricClientCommandSource, ?> sphere = SphereArea.command("center", "radius", executor::accept);
         cube = CommandManager.literal("cube").then(cube);
         cylinder = CommandManager.literal("cylinder").then(cylinder);
         sphere = CommandManager.literal("sphere").then(sphere);

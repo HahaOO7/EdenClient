@@ -6,11 +6,11 @@ import at.haha007.edenclient.utils.MathUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.GuiMessage;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.client.gui.components.ComponentRenderUtils;
-import net.minecraft.client.multiplayer.ClientSuggestionProvider;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.Style;
@@ -38,7 +38,7 @@ public class AntiSpam {
     }
 
     private void registerCommand() {
-        LiteralArgumentBuilder<ClientSuggestionProvider> node = literal("eantispam");
+        LiteralArgumentBuilder<FabricClientCommandSource> node = literal("eantispam");
         node.then(literal("toggle").executes(c -> {
             enabled = !enabled;
             sendModMessage((enabled ? "Antispam enabled" : "Antispam disabled"));

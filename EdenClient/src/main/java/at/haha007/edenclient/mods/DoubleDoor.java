@@ -63,17 +63,14 @@ public class DoubleDoor {
 
         ResourceKey<? extends Registry<Block>> registryKey = BlockTags.DOORS.registry();
         RegistryAccess registryManager = world.registryAccess();
-        Registry<?> registry = registryManager.registryOrThrow(registryKey);
+        Registry<?> registry = registryManager.lookupOrThrow(registryKey);
 
         if (noDoor(bp, registry, world)) return;
-
 
         clickPos(bp.north(), registry, world);
         clickPos(bp.south(), registry, world);
         clickPos(bp.west(), registry, world);
         clickPos(bp.east(), registry, world);
-
-        return;
     }
 
     private boolean noDoor(BlockPos bp, Registry<?> registry, ClientLevel world) {

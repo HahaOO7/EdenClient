@@ -14,9 +14,9 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.mojang.logging.LogUtils;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import net.minecraft.client.multiplayer.ClientSuggestionProvider;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.DefaultedRegistry;
 import net.minecraft.core.Direction;
@@ -51,7 +51,7 @@ public class WorldEditReplaceHelper {
     }
 
     private void registerCommand(String command) {
-        LiteralArgumentBuilder<ClientSuggestionProvider> node = literal(command);
+        LiteralArgumentBuilder<FabricClientCommandSource> node = literal(command);
 
         node.then(literal("replace").then(argument("from", StringArgumentType.word()).suggests(this::suggestValidBlocks).then(argument("to", StringArgumentType.word()).suggests(this::suggestValidBlocks)
                 .executes(c -> {
@@ -83,8 +83,8 @@ public class WorldEditReplaceHelper {
                 return 0;
             }
 
-            replaceUndoRequest(BuiltInRegistries.BLOCK.get(ResourceLocation.parse(undoCommandStack.peek()[0])),
-                    BuiltInRegistries.BLOCK.get( ResourceLocation.parse(Objects.requireNonNull(undoCommandStack.peek())[1])), delay);
+            replaceUndoRequest(BuiltInRegistries.BLOCK.getValue(ResourceLocation.parse(undoCommandStack.peek()[0])),
+                    BuiltInRegistries.BLOCK.getValue( ResourceLocation.parse(Objects.requireNonNull(undoCommandStack.peek())[1])), delay);
             redoCommandStack.add(new String[]{Objects.requireNonNull(undoCommandStack.peek())[1], Objects.requireNonNull(undoCommandStack.peek())[0]});
             undoCommandStack.pop();
             return 1;
@@ -96,8 +96,8 @@ public class WorldEditReplaceHelper {
                 return 0;
             }
 
-            replaceRedoRequest(BuiltInRegistries.BLOCK.get(ResourceLocation.parse(redoCommandStack.peek()[0])),
-                    BuiltInRegistries.BLOCK.get( ResourceLocation.parse(Objects.requireNonNull(redoCommandStack.peek())[1])), delay);
+            replaceRedoRequest(BuiltInRegistries.BLOCK.getValue(ResourceLocation.parse(redoCommandStack.peek()[0])),
+                    BuiltInRegistries.BLOCK.getValue( ResourceLocation.parse(Objects.requireNonNull(redoCommandStack.peek())[1])), delay);
             undoCommandStack.add(new String[]{Objects.requireNonNull(redoCommandStack.peek())[1], Objects.requireNonNull(redoCommandStack.peek())[0]});
             redoCommandStack.pop();
             return 1;
@@ -127,7 +127,7 @@ public class WorldEditReplaceHelper {
                 "Blocks like stairs, slabs, panes, walls, trapdoors, etc. can be replaced by other blocks of their type with their properties (waterlogged, shape, direction, etc.) unaffected.");
     }
 
-    private CompletableFuture<Suggestions> suggestValidBlocks(CommandContext<ClientSuggestionProvider> clientCommandSourceCommandContext, SuggestionsBuilder suggestionsBuilder) {
+    private CompletableFuture<Suggestions> suggestValidBlocks(CommandContext<FabricClientCommandSource> clientCommandSourceCommandContext, SuggestionsBuilder suggestionsBuilder) {
         DefaultedRegistry<Block> blockRegistry = BuiltInRegistries.BLOCK;
         blockRegistry.stream()
                 .map(blockRegistry::getKey)

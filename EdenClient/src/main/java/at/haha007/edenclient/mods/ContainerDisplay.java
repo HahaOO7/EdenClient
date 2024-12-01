@@ -12,8 +12,8 @@ import at.haha007.edenclient.utils.config.PerWorldConfig;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.ClientSuggestionProvider;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.ItemRenderer;
@@ -21,9 +21,11 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Quaternionf;
 
@@ -66,8 +68,8 @@ public class ContainerDisplay {
     }
 
     private void registerCommand() {
-        LiteralArgumentBuilder<ClientSuggestionProvider> cmd = literal("econtainerdisplay");
-        LiteralArgumentBuilder<ClientSuggestionProvider> toggle = literal("toggle");
+        LiteralArgumentBuilder<FabricClientCommandSource> cmd = literal("econtainerdisplay");
+        LiteralArgumentBuilder<FabricClientCommandSource> toggle = literal("toggle");
         toggle.executes(c -> {
             enabled = !enabled;
             sendModMessage(enabled ? "TileEntityEsp enabled" : "TileEntityEsp disabled");
@@ -88,6 +90,8 @@ public class ContainerDisplay {
     private void renderWorld(PoseStack matrixStack, MultiBufferSource.BufferSource vertexConsumerProvider, float v) {
         if (!enabled)
             return;
+        Player player = getPlayer();
+        Level level = player.level();
 
         RenderSystem.enableDepthTest();
         ItemRenderer itemRenderer = Minecraft.getInstance().getItemRenderer();
@@ -95,7 +99,7 @@ public class ContainerDisplay {
             matrixStack.pushPose();
             //calculate looking direction, rendering offset and rendering angle
             final Direction direction = chestInfo.face();
-            final Vec3 offset = Vec3.atLowerCornerOf(direction.getNormal().offset(1, 1, 1)).scale(.5);
+            final Vec3 offset = Vec3.atLowerCornerOf(direction.getUnitVec3i().offset(1, 1, 1)).scale(.5);
             final Quaternionf rotation = direction.getRotation();
             if (direction.getAxis() == Direction.Axis.Y) {
                 Quaternionf horizontal = getPlayer().getDirection().getRotation();
@@ -121,10 +125,10 @@ public class ContainerDisplay {
                 //loop over items, max 9 times
                 for (int i = 0; i < loopCount; i++) {
                     Item item = items.get(i);
-                    int x = i / 3;
-                    int y = i % 3;
+                    int x = 1 - i / 3;
+                    int y = 1 - i % 3;
                     matrixStack.pushPose();
-                    matrixStack.translate(1 - y, 1 - x, 0);
+                    matrixStack.translate(y, x, 0);
                     matrixStack.scale(.8f, .8f, .8f);
                     itemRenderer.render(
                             item.getDefaultInstance(),
@@ -134,13 +138,13 @@ public class ContainerDisplay {
                             vertexConsumerProvider,
                             255,
                             OverlayTexture.NO_OVERLAY,
-                            itemRenderer.getItemModelShaper().getItemModel(item));
+                            itemRenderer.getModel(item.getDefaultInstance(), level, player, 1));
                     matrixStack.popPose();
                 }
             } else {
                 //one item -> render it BIG!
                 matrixStack.scale(.6f, .6f, .6f);
-                Item item = items.get(0);
+                Item item = items.getFirst();
 
                 itemRenderer.render(
                         item.getDefaultInstance(),
@@ -150,7 +154,7 @@ public class ContainerDisplay {
                         vertexConsumerProvider,
                         255,
                         OverlayTexture.NO_OVERLAY,
-                        itemRenderer.getItemModelShaper().getItemModel(item));
+                        itemRenderer.getModel(item.getDefaultInstance(), level, player, 1));
             }
             matrixStack.popPose();
         });

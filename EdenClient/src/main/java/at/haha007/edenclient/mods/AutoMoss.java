@@ -4,9 +4,9 @@ import at.haha007.edenclient.annotations.Mod;
 import at.haha007.edenclient.callbacks.JoinWorldCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.multiplayer.ClientSuggestionProvider;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.*;
@@ -62,7 +62,7 @@ public class AutoMoss {
         RegistryAccess manager = world.registryAccess();
         for (BlockPos pos : BlockPos.betweenClosed(blockPos.offset(-1, -1, -1), blockPos.offset(1, 1, 1))) {
             ResourceLocation id = BuiltInRegistries.BLOCK.getKey(world.getBlockState(pos).getBlock());
-            if (manager.registryOrThrow(registry).containsKey(id) && world.getBlockState(pos.offset(0, 1, 0)).getBlock() == Blocks.AIR)
+            if (manager.lookupOrThrow(registry).containsKey(id) && world.getBlockState(pos.offset(0, 1, 0)).getBlock() == Blocks.AIR)
                 return true;
         }
         return false;
@@ -87,7 +87,7 @@ public class AutoMoss {
     }
 
     private void registerCommand() {
-        LiteralArgumentBuilder<ClientSuggestionProvider> cmd = literal("eautomoss");
+        LiteralArgumentBuilder<FabricClientCommandSource> cmd = literal("eautomoss");
         cmd.executes(c -> {
             enabled = !enabled;
             sendModMessage(enabled ? "AutoMoss enabled" : "AutoMoss disabled");

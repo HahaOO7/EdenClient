@@ -7,11 +7,8 @@ import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import com.mojang.brigadier.arguments.FloatArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import io.netty.util.DefaultAttributeMap;
-import net.minecraft.client.multiplayer.ClientSuggestionProvider;
-import net.minecraft.core.Registry;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.ai.attributes.DefaultAttributes;
 
 import java.util.Objects;
 
@@ -29,7 +26,7 @@ public class StepHeight {
     }
 
     private void registerCommand() {
-        LiteralArgumentBuilder<ClientSuggestionProvider> node = literal("estepheight");
+        LiteralArgumentBuilder<FabricClientCommandSource> node = literal("estepheight");
         node.then(argument("height", FloatArgumentType.floatArg(0))
                         .executes(c -> {
                             height = c.getArgument("height", Float.class);

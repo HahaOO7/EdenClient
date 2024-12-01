@@ -37,7 +37,7 @@ public class ModInitializer {
 
     private void registerMod(Class<?> clazz) {
         try {
-            LogUtils.getLogger().info("Registering mod: %s".formatted(clazz.getCanonicalName()));
+            LogUtils.getLogger().info("Registering mod: {}", clazz.getCanonicalName());
             Constructor<?> constructor = clazz.getDeclaredConstructor();
             constructor.setAccessible(true);
             Object object = constructor.newInstance();
@@ -74,7 +74,7 @@ public class ModInitializer {
                 .anyMatch(e -> ff.test(e.getKey()));
         for (AnnotatedClass annotatedClass : annotatedClasses) {
             Class<?> clazz = annotatedClass.clazz;
-            if(!filter.test(clazz)) continue;
+            if (!filter.test(clazz)) continue;
             filteredClasses.add(annotatedClass);
         }
         return filteredClasses;
@@ -122,8 +122,8 @@ public class ModInitializer {
                 this.classes.add(aClass.clazz);
             }
             for (AnnotatedClass aClass : annotatedClasses) {
-                List<Integer> edges = aClass.dependencies.stream().map(classes::indexOf).toList();
-                this.edges.add(edges);
+                List<Integer> aEdges = aClass.dependencies.stream().map(classes::indexOf).toList();
+                this.edges.add(aEdges);
             }
         }
 
@@ -141,11 +141,11 @@ public class ModInitializer {
                 toVisit.remove(clazz);
             }
             //dirty hack, should have proper priorities
-            if(list.contains(MessageIgnorer.class)){
+            if (list.contains(MessageIgnorer.class)) {
                 list.remove(MessageIgnorer.class);
                 list.add(MessageIgnorer.class);
             }
-            if(list.contains(AntiSpam.class)){
+            if (list.contains(AntiSpam.class)) {
                 list.remove(AntiSpam.class);
                 list.add(AntiSpam.class);
             }
@@ -154,8 +154,8 @@ public class ModInitializer {
 
         private boolean tryToAdd(ArrayList<Class<?>> list, Class<?> clazz) {
             int index = classes.indexOf(clazz);
-            List<Integer> edges = this.edges.get(index);
-            List<Class<?>> dependencies = edges.stream().map(classes::get).collect(Collectors.toList());
+            List<Integer> edgeList = this.edges.get(index);
+            List<Class<?>> dependencies = edgeList.stream().map(classes::get).collect(Collectors.toList());
             if (!list.containsAll(dependencies)) return false;
             list.add(clazz);
             return true;

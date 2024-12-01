@@ -18,7 +18,7 @@ public class ItemLoader implements ConfigLoader<StringTag, Item> {
 
     @NotNull
     public Item load(@NotNull StringTag nbtElement) {
-        return registry.get(ResourceLocation.parse(nbtElement.getAsString()));
+        return registry.getValue(ResourceLocation.parse(nbtElement.getAsString()));
     }
 
     @NotNull

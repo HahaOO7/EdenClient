@@ -4,7 +4,7 @@ import net.minecraft.world.entity.player.Inventory;
 
 public interface PlayerInvChangeCallback {
     Event<PlayerInvChangeCallback> EVENT = new Event<>(
-            listeners -> (inv) -> {
+            listeners -> inv -> {
                 for (PlayerInvChangeCallback listener : listeners) {
                     listener.onInvChange(inv);
                 }

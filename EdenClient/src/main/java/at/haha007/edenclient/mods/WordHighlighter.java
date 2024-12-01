@@ -8,8 +8,8 @@ import at.haha007.edenclient.utils.config.wrappers.StringList;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.multiplayer.ClientSuggestionProvider;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
@@ -53,7 +53,7 @@ public class WordHighlighter {
     }
 
     private void registerCommand(String name) {
-        LiteralArgumentBuilder<ClientSuggestionProvider> node = literal(name);
+        LiteralArgumentBuilder<FabricClientCommandSource> node = literal(name);
         node.then(literal("toggle").executes(c -> {
             enabled = !enabled;
             sendModMessage(enabled ? "Enabled WordHighlighter!" : "Disabled WordHighlighter!");
@@ -185,17 +185,16 @@ public class WordHighlighter {
     }
 
     private MutableComponent highlight(MutableComponent txt, String filter) {
-        if (txt.getContents() instanceof PlainTextContents.LiteralContents t) {
-            String s = t.text();
+        if (txt.getContents() instanceof PlainTextContents.LiteralContents(String text)) {
             List<MutableComponent> subtext = new ArrayList<>();
             Style baseStyle = txt.getStyle();
-            s = applyMatcher(filter, s, subtext, baseStyle);
+            text = applyMatcher(filter, text, subtext, baseStyle);
             if (subtext.isEmpty()) {
                 txt.getSiblings().replaceAll(x -> highlight(x.copy(), filter));
                 return txt;
             }
-            if (!s.isEmpty())
-                subtext.add(Component.literal(s).setStyle(baseStyle));
+            if (!text.isEmpty())
+                subtext.add(Component.literal(text).setStyle(baseStyle));
             MutableComponent nextText = Component.literal("");
             subtext.forEach(nextText::append);
             txt.getSiblings().stream().map(sibling -> highlight(sibling.copy(), filter)).forEach(nextText::append);

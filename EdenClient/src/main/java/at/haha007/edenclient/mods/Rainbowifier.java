@@ -7,9 +7,9 @@ import at.haha007.edenclient.utils.config.PerWorldConfig;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import net.minecraft.client.multiplayer.ClientSuggestionProvider;
 import net.minecraft.client.player.LocalPlayer;
 
 import java.util.List;
@@ -30,7 +30,7 @@ public class Rainbowifier {
     }
 
     private void registerCommand() {
-        LiteralArgumentBuilder<ClientSuggestionProvider> node = literal("erainbowify");
+        LiteralArgumentBuilder<FabricClientCommandSource> node = literal("erainbowify");
 
         node.then(literal("fancy").then(argument("input", StringArgumentType.greedyString()).executes(c -> {
             String input = c.getArgument("input", String.class);

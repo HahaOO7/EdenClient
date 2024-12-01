@@ -9,9 +9,9 @@ import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import net.minecraft.client.multiplayer.ClientSuggestionProvider;
 import net.minecraft.client.player.LocalPlayer;
 
 import static at.haha007.edenclient.command.CommandManager.*;
@@ -35,7 +35,7 @@ public class LifeSaver {
     }
 
     private void registerCommand() {
-        LiteralArgumentBuilder<ClientSuggestionProvider> node = literal("elifesaver");
+        LiteralArgumentBuilder<FabricClientCommandSource> node = literal("elifesaver");
 
         node.then(literal("toggle").executes(c -> {
             enabled = !enabled;

@@ -36,7 +36,7 @@ public class WaitForInventoryTask implements Task {
     private boolean onInventoryOpen(Component name) {
         synchronized (lock) {
             if (matcher.test(name)) {
-                lock.notify();
+                lock.notifyAll();
                 return true;
             }
             return false;

@@ -8,8 +8,9 @@ import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.RenderUtils;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.CoreShaders;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
@@ -39,7 +40,7 @@ public class TracerRenderer {
 
     private void render(PoseStack matrixStack, MultiBufferSource.BufferSource vertexConsumerProvider, float delta) {
         if (tracers.isEmpty()) return;
-        RenderSystem.setShader(GameRenderer::getPositionShader);
+        RenderSystem.setShader(Minecraft.getInstance().getShaderManager().getProgram(CoreShaders.POSITION));
         RenderSystem.disableDepthTest();
         Matrix4f matrix = matrixStack.last().pose();
         Vec3 start = RenderUtils.getCameraPos().add(PlayerUtils.getClientLookVec());

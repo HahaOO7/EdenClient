@@ -11,30 +11,31 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.mojang.logging.LogUtils;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.Style;
-import net.minecraft.client.multiplayer.ClientSuggestionProvider;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Predicate;
 
 public class CommandManager {
     private CommandManager() {
         throw new IllegalStateException("Utility class");
     }
 
-    private static final Map<LiteralArgumentBuilder<ClientSuggestionProvider>, Component[]> cmds = new HashMap<>();
-    private static CommandDispatcher<ClientSuggestionProvider> dispatcher = new CommandDispatcher<>();
+    private static final Map<LiteralArgumentBuilder<FabricClientCommandSource>, Component[]> cmds = new HashMap<>();
+    private static CommandDispatcher<FabricClientCommandSource> dispatcher = new CommandDispatcher<>();
 
     static {
         reset();
     }
 
     private static void registerCommand(String literal) {
-        LiteralArgumentBuilder<ClientSuggestionProvider> node = literal(literal);
+        LiteralArgumentBuilder<FabricClientCommandSource> node = literal(literal);
 
         node.executes(a -> {
             PlayerUtils.sendModMessage(Component.text("Click on the mod you need help for to receive help. To get all information for each feature use the github-wiki: ", NamedTextColor.GOLD)
@@ -70,7 +71,7 @@ public class CommandManager {
         register(node, "Help for EdenClient command", "/ecmds <command> or /ehelp <command>");
     }
 
-    private static int sendCommandHelp(CommandContext<ClientSuggestionProvider> c) {
+    private static int sendCommandHelp(CommandContext<FabricClientCommandSource> c) {
         String cmdName = c.getArgument("cmd", String.class);
         cmds.entrySet().stream()
                 .filter(e -> cmdName.equalsIgnoreCase(e.getKey().getLiteral()))
@@ -82,16 +83,16 @@ public class CommandManager {
         return 0;
     }
 
-    private static CompletableFuture<Suggestions> suggestCommands(CommandContext<ClientSuggestionProvider> c, SuggestionsBuilder b) {
+    private static CompletableFuture<Suggestions> suggestCommands(CommandContext<FabricClientCommandSource> c, SuggestionsBuilder b) {
         cmds.keySet().forEach(cmd -> b.suggest(cmd.getLiteral()));
         return b.buildFuture();
     }
 
-    public static void register(CommandDispatcher<ClientSuggestionProvider> dispatcher) {
+    public static void register(CommandDispatcher<FabricClientCommandSource> dispatcher) {
         cmds.keySet().forEach(dispatcher::register);
     }
 
-    public static void register(LiteralArgumentBuilder<ClientSuggestionProvider> command, Component... usage) {
+    public static void register(LiteralArgumentBuilder<FabricClientCommandSource> command, Component... usage) {
         cmds.put(command, usage);
         dispatcher.register(command);
     }
@@ -103,27 +104,28 @@ public class CommandManager {
         cmds.clear();
     }
 
-    public static void register(LiteralArgumentBuilder<ClientSuggestionProvider> command, String... usage) {
+    public static void register(LiteralArgumentBuilder<FabricClientCommandSource> command, String... usage) {
         Component[] usg = usage == null ? null : Arrays.stream(usage).map(Component::text).toArray(Component[]::new);
         register(command, usg);
     }
 
-    public static void register(LiteralArgumentBuilder<ClientSuggestionProvider> command) {
+    public static void register(LiteralArgumentBuilder<FabricClientCommandSource> command) {
         register(command, (Component) null);
     }
 
-    public static LiteralArgumentBuilder<ClientSuggestionProvider> literal(String name) {
+    public static LiteralArgumentBuilder<FabricClientCommandSource> literal(String name) {
         return LiteralArgumentBuilder.literal(name);
     }
 
-    public static RequiredArgumentBuilder<ClientSuggestionProvider, String> fakeLiteral(String name) {
-        return RequiredArgumentBuilder.<ClientSuggestionProvider, String>argument(name, StringArgumentType.word()).suggests((c, b) -> {
-            b.suggest(name);
+    public static RequiredArgumentBuilder<FabricClientCommandSource, String> fakeLiteral(String name, Predicate<CommandContext<FabricClientCommandSource>> condition) {
+        return RequiredArgumentBuilder.<FabricClientCommandSource, String>argument(name, StringArgumentType.word()).suggests((c, b) -> {
+            if (condition.test(c))
+                b.suggest(name);
             return b.buildFuture();
         });
     }
 
-    public static <T> RequiredArgumentBuilder<ClientSuggestionProvider, T> argument(String name, ArgumentType<T> type) {
+    public static <T> RequiredArgumentBuilder<FabricClientCommandSource, T> argument(String name, ArgumentType<T> type) {
         return RequiredArgumentBuilder.argument(name, type);
     }
 
@@ -131,7 +133,7 @@ public class CommandManager {
         return cmds.keySet().stream().anyMatch(c -> c.getLiteral().equalsIgnoreCase(command));
     }
 
-    public static void execute(String command, ClientSuggestionProvider clientCommandSource) {
+    public static void execute(String command, FabricClientCommandSource clientCommandSource) {
         try {
             dispatcher.execute(command, clientCommandSource);
         } catch (CommandSyntaxException e) {

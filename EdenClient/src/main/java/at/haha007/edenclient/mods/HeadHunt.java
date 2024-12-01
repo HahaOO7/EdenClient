@@ -9,18 +9,19 @@ import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.RenderUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
+import com.mojang.blaze3d.buffers.BufferUsage;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientChunkCache;
-import net.minecraft.client.multiplayer.ClientSuggestionProvider;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.CoreShaders;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -35,7 +36,10 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
-import java.util.*;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static at.haha007.edenclient.command.CommandManager.*;
@@ -102,7 +106,7 @@ public class HeadHunt {
     private void build() {
         foundHeads.clear();
         enabled = false;
-        wireframeBox = new VertexBuffer(VertexBuffer.Usage.STATIC);
+        wireframeBox = new VertexBuffer(BufferUsage.STATIC_WRITE);
         AABB bb = new AABB(0, 0, 0, 1, 1, 1);
         RenderUtils.drawOutlinedBox(bb, wireframeBox);
     }
@@ -114,8 +118,8 @@ public class HeadHunt {
     }
 
     private void registerCommand() {
-        LiteralArgumentBuilder<ClientSuggestionProvider> cmd = literal("eheadhunt");
-        LiteralArgumentBuilder<ClientSuggestionProvider> toggle = literal("toggle");
+        LiteralArgumentBuilder<FabricClientCommandSource> cmd = literal("eheadhunt");
+        LiteralArgumentBuilder<FabricClientCommandSource> toggle = literal("toggle");
         toggle.executes(c -> {
             enabled = !enabled;
             sendModMessage(enabled ? "HeadHunt enabled" : "HeadHunt disabled");
@@ -140,11 +144,11 @@ public class HeadHunt {
         register(cmd, "HeadHunt is a hack for head searching games.");
     }
 
-    RequiredArgumentBuilder<ClientSuggestionProvider, Integer> arg(String key) {
+    RequiredArgumentBuilder<FabricClientCommandSource, Integer> arg(String key) {
         return argument(key, IntegerArgumentType.integer(0, 255));
     }
 
-    private int setColor(CommandContext<ClientSuggestionProvider> c) {
+    private int setColor(CommandContext<FabricClientCommandSource> c) {
         this.red = c.getArgument("r", Integer.class) / 256f;
         this.green = c.getArgument("g", Integer.class) / 256f;
         this.blue = c.getArgument("b", Integer.class) / 256f;
@@ -155,7 +159,8 @@ public class HeadHunt {
 
     private void render(PoseStack matrixStack, MultiBufferSource.BufferSource vertexConsumerProvider, float v) {
         if (!enabled) return;
-        RenderSystem.setShader(GameRenderer::getPositionShader);
+        if(heads.isEmpty()) return;
+        RenderSystem.setShader(Minecraft.getInstance().getShaderManager().getProgram(CoreShaders.POSITION));
         RenderSystem.setShaderColor(red, green, blue, 1);
         if (tracer) {
             matrixStack.pushPose();

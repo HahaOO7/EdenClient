@@ -7,6 +7,11 @@ repositories {
         name = 'Fabric'
         url = 'https://maven.fabricmc.net/'
     }
+    maven {
+        name = "xpple"
+        url = uri("https://maven.xpple.dev/maven2")
+    }
+
     mavenCentral()
 }
 

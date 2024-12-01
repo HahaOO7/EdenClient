@@ -12,12 +12,14 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.logging.LogUtils;
 import lombok.Getter;
 import lombok.Setter;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.Style;
-import net.minecraft.client.multiplayer.ClientSuggestionProvider;
+import net.minecraft.commands.CommandSourceStack;
+
 
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -82,7 +84,7 @@ public class MessageIgnorer {
     }
 
     private void registerCommand(String cmd) {
-        LiteralArgumentBuilder<ClientSuggestionProvider> node = literal(cmd);
+        LiteralArgumentBuilder<FabricClientCommandSource> node = literal(cmd);
 
         node.then(literal("toggle").executes(c -> {
             enabled = !enabled;
@@ -142,7 +144,7 @@ public class MessageIgnorer {
             return 1;
         }));
 
-        LiteralArgumentBuilder<ClientSuggestionProvider> predefined = literal("predefined");
+        LiteralArgumentBuilder<FabricClientCommandSource> predefined = literal("predefined");
         for (Predefined pre : Predefined.values()) {
             predefined.then(literal(pre.getKey()).executes(c -> {
                 boolean disable = isEnabled(pre);

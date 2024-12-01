@@ -86,7 +86,7 @@ public class ContainerInfo {
         ChunkPos cp = new ChunkPos(new BlockPos(lastInteractedBlock));
         @SuppressWarnings("resource")
         Level level = PlayerUtils.getPlayer().level();
-        Registry<Block> registry = level.registryAccess().registryOrThrow(BlockTags.SHULKER_BOXES.registry());
+        Registry<Block> registry = level.registryAccess().lookupOrThrow(BlockTags.SHULKER_BOXES.registry());
         Map<Item, List<ItemStack>> items = itemStacks.stream().
                 flatMap(stack -> registry.containsKey(BuiltInRegistries.BLOCK.getKey(Block.byItem(stack.getItem()))) ?
                         mapShulkerBox(stack) : Stream.of(stack)).collect(Collectors.groupingBy(ItemStack::getItem));

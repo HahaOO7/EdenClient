@@ -20,12 +20,12 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.mojang.logging.LogUtils;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.Style;
-import net.minecraft.client.multiplayer.ClientSuggestionProvider;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.Vec3i;
 import net.minecraft.world.level.ChunkPos;
@@ -98,7 +98,7 @@ public class ChestShopMod {
     }
 
     private void registerCommand(String name) {
-        LiteralArgumentBuilder<ClientSuggestionProvider> node = literal(name);
+        LiteralArgumentBuilder<FabricClientCommandSource> node = literal(name);
 
         node.then(literal("clear").executes(c -> {
             shops.clear();
@@ -239,7 +239,7 @@ public class ChestShopMod {
             return 1;
         })));
 
-        node.then(fakeLiteral("exploitable").executes(c -> {
+        node.then(literal("exploitable").executes(c -> {
             List<String> exploitableItems = getExploitableShopsText();
 
             File folder = new File(EdenClient.getDataFolder(), "ChestShop_Exploitable");
@@ -427,13 +427,13 @@ public class ChestShopMod {
         return EdenClient.getMod(DataFetcher.class).getPlayerWarps().getWarps().stream().min(Comparator.comparingDouble(e -> e.pos().distSqr(pos)));
     }
 
-    private CompletableFuture<Suggestions> suggestSell(CommandContext<ClientSuggestionProvider> context, SuggestionsBuilder suggestionsBuilder) {
+    private CompletableFuture<Suggestions> suggestSell(CommandContext<FabricClientCommandSource> context, SuggestionsBuilder suggestionsBuilder) {
         ChestShopItemNames itemNameMap = EdenClient.getMod(DataFetcher.class).getChestShopItemNames();
         shops.values().forEach(s -> s.stream().filter(ChestShopEntry::canSell).map(entry -> itemNameMap.getLongName(entry.getItem())).filter(Objects::nonNull).forEach(suggestionsBuilder::suggest));
         return suggestionsBuilder.buildFuture();
     }
 
-    private CompletableFuture<Suggestions> suggestBuy(CommandContext<ClientSuggestionProvider> context, SuggestionsBuilder suggestionsBuilder) {
+    private CompletableFuture<Suggestions> suggestBuy(CommandContext<FabricClientCommandSource> context, SuggestionsBuilder suggestionsBuilder) {
         ChestShopItemNames itemNameMap = EdenClient.getMod(DataFetcher.class).getChestShopItemNames();
         shops.values().forEach(s -> s.stream().filter(ChestShopEntry::canBuy)
                 .map(entry -> itemNameMap.getLongName(entry.getItem()))

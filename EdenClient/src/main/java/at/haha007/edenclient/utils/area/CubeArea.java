@@ -4,7 +4,7 @@ import at.haha007.edenclient.command.CommandManager;
 import at.haha007.edenclient.utils.PlayerUtils;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
-import net.minecraft.client.multiplayer.ClientSuggestionProvider;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
 import net.minecraft.commands.arguments.coordinates.Coordinates;
@@ -82,8 +82,9 @@ public class CubeArea implements BlockArea {
         Vec3i max = new Vec3i(box.maxX(), box.maxY(), box.maxZ());
         Vec3i size = max.subtract(min).offset(1, 1, 1);
 
-        Stream<BlockPos> stream =  Stream.generate(new Supplier<>() {
+        Stream<BlockPos> stream = Stream.generate(new Supplier<>() {
             private long i = 0;
+
             public BlockPos get() {
                 int x = (int) (i % size.getX());
                 int y = (int) ((i / size.getX()) % size.getY());
@@ -106,10 +107,10 @@ public class CubeArea implements BlockArea {
      * @param key2    the key of the second position
      * @return the parsed CubeArea
      */
-    private static CubeArea fromCommand(CommandContext<ClientSuggestionProvider> context, String key1, String key2) {
+    private static CubeArea fromCommand(CommandContext<FabricClientCommandSource> context, String key1, String key2) {
         Coordinates pos1 = context.getArgument(key1, Coordinates.class);
         Coordinates pos2 = context.getArgument(key2, Coordinates.class);
-        CommandSourceStack stack = PlayerUtils.getPlayer().createCommandSourceStack();
+        CommandSourceStack stack = PlayerUtils.getPlayer().createCommandSourceStackForNameResolution(null);
         return new CubeArea(pos1.getBlockPos(stack), pos2.getBlockPos(stack));
 
     }
@@ -122,9 +123,9 @@ public class CubeArea implements BlockArea {
      * @param executor a consumer that accepts a CommandContext object and performs some action
      * @return the generated RequiredArgumentBuilder object
      */
-    public static RequiredArgumentBuilder<ClientSuggestionProvider, Coordinates> command(String pos1, String pos2, BiConsumer<CommandContext<ClientSuggestionProvider>, CubeArea> executor) {
-        RequiredArgumentBuilder<ClientSuggestionProvider, Coordinates> a = CommandManager.argument(pos1, BlockPosArgument.blockPos());
-        RequiredArgumentBuilder<ClientSuggestionProvider, Coordinates> b = CommandManager.argument(pos2, BlockPosArgument.blockPos());
+    public static RequiredArgumentBuilder<FabricClientCommandSource, Coordinates> command(String pos1, String pos2, BiConsumer<CommandContext<FabricClientCommandSource>, CubeArea> executor) {
+        RequiredArgumentBuilder<FabricClientCommandSource, Coordinates> a = CommandManager.argument(pos1, BlockPosArgument.blockPos());
+        RequiredArgumentBuilder<FabricClientCommandSource, Coordinates> b = CommandManager.argument(pos2, BlockPosArgument.blockPos());
         b = b.executes(c -> {
             CubeArea area = fromCommand(c, pos1, pos2);
             executor.accept(c, area);

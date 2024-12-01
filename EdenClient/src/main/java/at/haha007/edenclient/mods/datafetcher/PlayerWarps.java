@@ -12,10 +12,10 @@ import at.haha007.edenclient.utils.tasks.*;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.logging.LogUtils;
 import lombok.Getter;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.ContainerScreen;
-import net.minecraft.client.multiplayer.ClientSuggestionProvider;
 import net.minecraft.core.Vec3i;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -45,21 +45,21 @@ public class PlayerWarps {
         PerWorldConfig.get().register(new PlayerWarpListLoader(), PlayerWarpList.class);
     }
 
-    LiteralArgumentBuilder<ClientSuggestionProvider> registerCommand() {
-        LiteralArgumentBuilder<ClientSuggestionProvider> cmd = CommandManager.literal("playerwarps");
+    LiteralArgumentBuilder<FabricClientCommandSource> registerCommand() {
+        LiteralArgumentBuilder<FabricClientCommandSource> cmd = CommandManager.literal("playerwarps");
         //PWARP
-        cmd.then(CommandManager.fakeLiteral("shops").executes(c -> fetchPwarpData(warps, "warps", 10)).requires(c -> PluginSignature.PWARP.isPluginPresent()));
-        cmd.then(CommandManager.fakeLiteral("builds").executes(c -> fetchPwarpData(warps, "builds", 12)).requires(c -> PluginSignature.PWARP.isPluginPresent()));
-        cmd.then(CommandManager.fakeLiteral("farms").executes(c -> fetchPwarpData(warps, "farms", 14)).requires(c -> PluginSignature.PWARP.isPluginPresent()));
-        cmd.then(CommandManager.fakeLiteral("other").executes(c -> fetchPwarpData(warps, "other", 16)).requires(c -> PluginSignature.PWARP.isPluginPresent()));
-        cmd.then(CommandManager.fakeLiteral("all").executes(c -> fetchPwarpData(warps, "all", 4)).requires(c -> PluginSignature.PWARP.isPluginPresent()));
-        cmd.then(CommandManager.fakeLiteral("hidden").executes(c -> fetchPwarpData(warps, "hidden", 22)).requires(c -> PluginSignature.PWARP.isPluginPresent()));
-        cmd.then(CommandManager.fakeLiteral("*").executes(c -> fetchPwarpData()).requires(c -> PluginSignature.PWARP.isPluginPresent()));
+        cmd.then(CommandManager.fakeLiteral("shops", c -> PluginSignature.PWARP.isPluginPresent()).executes(c -> fetchPwarpData(warps, "warps", 10)).requires(c -> PluginSignature.PWARP.isPluginPresent()));
+        cmd.then(CommandManager.fakeLiteral("builds", c -> PluginSignature.PWARP.isPluginPresent()).executes(c -> fetchPwarpData(warps, "builds", 12)).requires(c -> PluginSignature.PWARP.isPluginPresent()));
+        cmd.then(CommandManager.fakeLiteral("farms", c -> PluginSignature.PWARP.isPluginPresent()).executes(c -> fetchPwarpData(warps, "farms", 14)).requires(c -> PluginSignature.PWARP.isPluginPresent()));
+        cmd.then(CommandManager.fakeLiteral("other", c -> PluginSignature.PWARP.isPluginPresent()).executes(c -> fetchPwarpData(warps, "other", 16)).requires(c -> PluginSignature.PWARP.isPluginPresent()));
+        cmd.then(CommandManager.fakeLiteral("all", c -> PluginSignature.PWARP.isPluginPresent()).executes(c -> fetchPwarpData(warps, "all", 4)).requires(c -> PluginSignature.PWARP.isPluginPresent()));
+        cmd.then(CommandManager.fakeLiteral("hidden", c -> PluginSignature.PWARP.isPluginPresent()).executes(c -> fetchPwarpData(warps, "hidden", 22)).requires(c -> PluginSignature.PWARP.isPluginPresent()));
+        cmd.then(CommandManager.fakeLiteral("*", c -> PluginSignature.PWARP.isPluginPresent()).executes(c -> fetchPwarpData()).requires(c -> PluginSignature.PWARP.isPluginPresent()));
 
         //PLAYER_WARPS
-        cmd.then(CommandManager.fakeLiteral("fetch").executes(c -> fetchPlayerWarpData()).requires(c -> PluginSignature.PLAYER_WARPS.isPluginPresent()));
+        cmd.then(CommandManager.fakeLiteral("fetch", c -> PluginSignature.PLAYER_WARPS.isPluginPresent()).executes(c -> fetchPlayerWarpData()).requires(c -> PluginSignature.PLAYER_WARPS.isPluginPresent()));
 
-        cmd.then(CommandManager.fakeLiteral("clear").executes(c -> clearData()));
+        cmd.then(CommandManager.literal("clear").executes(c -> clearData()));
         return cmd;
     }
 
@@ -183,7 +183,7 @@ public class PlayerWarps {
         tm.then(new SyncTask(() -> PlayerUtils.clickSlot(slot)));
         tm.then(new WaitForInventoryTask(Pattern.compile(". PlayerWarps - Seite 1/\\d{1,2}")));
         tm.then(new SyncTask(() -> {
-            Pattern pattern = Pattern.compile(". PlayerWarps - Seite 1/(?<pages>[0-9]{1,2})");
+            Pattern pattern = Pattern.compile(". PlayerWarps - Seite 1/(?<pages>\\d{1,2})");
             Screen screen = Minecraft.getInstance().screen;
             if (screen == null) return;
             Matcher matcher = pattern.matcher(screen.getTitle().getString());

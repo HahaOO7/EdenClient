@@ -1,14 +1,12 @@
 package at.haha007.edenclient.mixin;
 
 import at.haha007.edenclient.callbacks.ChatKeyCallback;
-import at.haha007.edenclient.mods.PageKeyChatCompletion;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.util.ArrayListDeque;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
@@ -29,7 +27,7 @@ public abstract class ChatScreenMixin {
         ArrayListDeque<String> recentChat = Minecraft.getInstance().gui.getChat().getRecentChat();
         String prefix = input.getValue().substring(0, input.getCursorPosition());
         int newPos = ChatKeyCallback.EVENT.invoker().getNewPosInHistory(key, recentChat, prefix, historyPos);
-        if(newPos < 0 || newPos > recentChat.size() - 1 || historyPos == newPos) return;
+        if (newPos < 0 || newPos > recentChat.size() - 1 || historyPos == newPos) return;
         moveInHistory(newPos - historyPos);
         input.setCursorPosition(prefix.length());
     }

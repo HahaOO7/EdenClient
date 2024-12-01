@@ -9,14 +9,16 @@ import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.mods.datafetcher.DataFetcher;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.RenderUtils;
+import com.mojang.blaze3d.buffers.BufferUsage;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.logging.LogUtils;
-import net.minecraft.client.multiplayer.ClientSuggestionProvider;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.CoreShaders;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
 import net.minecraft.commands.arguments.coordinates.Coordinates;
@@ -37,7 +39,7 @@ public class GetTo {
     private VertexBuffer vb;
     private boolean tracer;
     private boolean box;
-    private final String commandName = "egetto";
+    private static final String COMMAND_NAME = "egetto";
 
     public GetTo() {
         registerCommand();
@@ -52,7 +54,7 @@ public class GetTo {
     }
 
     private void build() {
-        vb = new VertexBuffer(VertexBuffer.Usage.STATIC);
+        vb = new VertexBuffer(BufferUsage.STATIC_WRITE);
         AABB bb = new AABB(0, 0, 0, 1, 1, 1);
         RenderUtils.drawOutlinedBox(bb, vb);
     }
@@ -64,7 +66,7 @@ public class GetTo {
 
     private void render(PoseStack matrixStack, MultiBufferSource.BufferSource vertexConsumerProvider, float deltaTick) {
         if (target == null) return;
-        RenderSystem.setShader(GameRenderer::getPositionShader);
+        RenderSystem.setShader(Minecraft.getInstance().getShaderManager().getProgram(CoreShaders.POSITION));
         RenderSystem.setShaderColor(1, 1, 1, 1);
         RenderSystem.disableDepthTest();
 
@@ -86,9 +88,9 @@ public class GetTo {
     }
 
     private void registerCommand() {
-        LiteralArgumentBuilder<ClientSuggestionProvider> cmd = literal(commandName);
+        LiteralArgumentBuilder<FabricClientCommandSource> cmd = literal(COMMAND_NAME);
         cmd.then(argument("target", BlockPosArgument.blockPos()).executes(c -> {
-            BlockPos pos = c.getArgument("target", Coordinates.class).getBlockPos(PlayerUtils.getPlayer().createCommandSourceStack());
+            BlockPos pos = c.getArgument("target", Coordinates.class).getBlockPos(PlayerUtils.getPlayer().createCommandSourceStackForNameResolution(null));
             getTo(pos, true, true, true);
             return 1;
         }).then(argument("tags", StringArgumentType.word()).suggests((c, b) -> {
@@ -98,7 +100,7 @@ public class GetTo {
             b.suggest("-tbp");
             return b.buildFuture();
         }).executes(c -> {
-            BlockPos pos = c.getArgument("target", Coordinates.class).getBlockPos(PlayerUtils.getPlayer().createCommandSourceStack());
+            BlockPos pos = c.getArgument("target", Coordinates.class).getBlockPos(PlayerUtils.getPlayer().createCommandSourceStackForNameResolution(null));
             String tags = c.getArgument("tags", String.class);
             if (!tags.startsWith("-")) {
                 PlayerUtils.sendModMessage("/getto <target> -[t,b,p]");
@@ -120,7 +122,7 @@ public class GetTo {
     }
 
     public String getCommandTo(Vec3i target) {
-        return String.format("/%s %d %d %d", commandName, target.getX(), target.getY(), target.getZ());
+        return String.format("/%s %d %d %d", COMMAND_NAME, target.getX(), target.getY(), target.getZ());
     }
 
     private void getTo(BlockPos pos, boolean tracer, boolean box, boolean tp) {
@@ -134,7 +136,6 @@ public class GetTo {
 
     private Optional<String> getNearestPlayerWarp(Vec3i pos) {
         Vec3i pp = PlayerUtils.getPlayer().blockPosition();
-        LogUtils.getLogger().info(EdenClient.getMod(DataFetcher.class).getPlayerWarps().getWarps().toString());
         return EdenClient.getMod(DataFetcher.class).getPlayerWarps().getWarps().stream()
                 .min(Comparator.comparingDouble(e -> e.pos().distSqr(pos)))
                 .map(e -> dist(pos, pp) < dist(e.pos(), pos) ? null : e.name());

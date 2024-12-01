@@ -5,7 +5,7 @@ import at.haha007.edenclient.callbacks.PlayerTickCallback;
 public class WaitForTicksTask implements Task {
 
     static {
-        PlayerTickCallback.EVENT.register((e) -> tick(), WaitForTicksTask.class);
+        PlayerTickCallback.EVENT.register(e -> tick(), WaitForTicksTask.class);
     }
 
     static long tick = 0;

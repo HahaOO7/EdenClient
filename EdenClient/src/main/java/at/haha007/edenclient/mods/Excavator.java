@@ -13,9 +13,9 @@ import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.logging.LogUtils;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.multiplayer.ClientSuggestionProvider;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
@@ -114,14 +114,14 @@ public class Excavator {
 
     private Target findTarget(LocalPlayer player) {
         BlockPos playerPos = player.blockPosition();
-        Target target = areaTarget(playerPos);
-        if (target != null) return target;
-        target = ceilingTarget(playerPos);
-        if (target != null) return target;
-        target = floorTarget(playerPos);
-        if (target != null) return target;
-        target = wallTarget(playerPos);
-        return target;
+        Target foundTarget = areaTarget(playerPos);
+        if (foundTarget != null) return foundTarget;
+        foundTarget = ceilingTarget(playerPos);
+        if (foundTarget != null) return foundTarget;
+        foundTarget = floorTarget(playerPos);
+        if (foundTarget != null) return foundTarget;
+        foundTarget = wallTarget(playerPos);
+        return foundTarget;
     }
 
     private Target areaTarget(BlockPos pos) {
@@ -153,22 +153,22 @@ public class Excavator {
         int minY = playerPos.getY() - 2;
         int maxY = playerPos.getY() + 2;
         List<BlockPos> c = area.floorStream().filter(p -> filterMinY(minY, p)).filter(p -> p.getY() < maxY).sorted(Comparator.comparingDouble(playerPos::distManhattan)).toList();
-        Optional<Target> target = c.stream().map(this::breakWaterloggedTarget).filter(Objects::nonNull).findFirst();
-        if (target.isPresent()) return target.get();
+        Optional<Target> foundTarget = c.stream().map(this::breakWaterloggedTarget).filter(Objects::nonNull).findFirst();
+        if (foundTarget.isPresent()) return foundTarget.get();
 
-        target = c.stream().map(this::placeTarget).filter(Objects::nonNull).findFirst();
-        return target.orElse(null);
+        foundTarget = c.stream().map(this::placeTarget).filter(Objects::nonNull).findFirst();
+        return foundTarget.orElse(null);
     }
 
     private Target wallTarget(BlockPos playerPos) {
         int minY = playerPos.getY();
         int maxY = playerPos.getY() + 2;
         List<BlockPos> c = area.wallStream().filter(p -> filterMinY(minY, p)).filter(p -> p.getY() < maxY).sorted(Comparator.comparingDouble(playerPos::distManhattan)).toList();
-        Optional<Target> target = c.stream().map(this::breakWaterloggedTarget).filter(Objects::nonNull).findFirst();
-        if (target.isPresent()) return target.get();
+        Optional<Target> foundTarget = c.stream().map(this::breakWaterloggedTarget).filter(Objects::nonNull).findFirst();
+        if (foundTarget.isPresent()) return foundTarget.get();
 
-        target = c.stream().map(this::placeTarget).filter(Objects::nonNull).findFirst();
-        return target.orElse(null);
+        foundTarget = c.stream().map(this::placeTarget).filter(Objects::nonNull).findFirst();
+        return foundTarget.orElse(null);
     }
 
     private boolean filterMinY(int y, BlockPos pos) {
@@ -178,18 +178,18 @@ public class Excavator {
     private Target placeTarget(BlockPos pos) {
         LocalPlayer player = PlayerUtils.getPlayer();
         ClientLevel level = player.clientLevel;
-        Target target = new Target(pos, 4.5, placeBlockTargetAction(pos));
+        Target foundTarget = new Target(pos, 4.5, placeBlockTargetAction(pos));
         BlockState blockState = level.getBlockState(pos);
         FluidState fluidState = level.getFluidState(pos);
         int floorY = player.getBlockY() - 1;
         if (!fluidState.isEmpty() && blockState.getShape(level, pos).isEmpty()) {
-            return target;
+            return foundTarget;
         }
         if ((blockState.isAir() || blockState.canBeReplaced()) && pos.getY() == floorY) {
-            return target;
+            return foundTarget;
         }
         if ((area.isWall(pos) || area.isCeiling(pos) || area.isFloor(pos)) && (blockState.isAir() || blockState.canBeReplaced())) {
-            return target;
+            return foundTarget;
         }
         return null;
     }
@@ -212,9 +212,9 @@ public class Excavator {
         ClientLevel level = player.clientLevel;
         BlockState blockState = level.getBlockState(pos);
         FluidState fluidState = level.getFluidState(pos);
-        Target target = new Target(pos, 5, breakBlockTargetAction(pos));
+        Target foundTarget = new Target(pos, 5, breakBlockTargetAction(pos));
         boolean hasCollisionShape = !blockState.getShape(level, pos).isEmpty();
-        if (!fluidState.isEmpty() && hasCollisionShape) return target;
+        if (!fluidState.isEmpty() && hasCollisionShape) return foundTarget;
         return null;
     }
 
@@ -297,7 +297,7 @@ public class Excavator {
     }
 
     private void registerCommand() {
-        LiteralArgumentBuilder<ClientSuggestionProvider> cmd = CommandManager.literal("eexcavate");
+        LiteralArgumentBuilder<FabricClientCommandSource> cmd = CommandManager.literal("eexcavate");
         var off = CommandManager.literal("off");
         var on = CommandManager.literal("on");
         var toggle = CommandManager.literal("toggle");
@@ -347,7 +347,7 @@ public class Excavator {
         cmd.then(on);
         cmd.then(toggle);
 
-        LiteralArgumentBuilder<ClientSuggestionProvider> areaCmd = CommandManager.literal("area");
+        LiteralArgumentBuilder<FabricClientCommandSource> areaCmd = CommandManager.literal("area");
         var cmds = BlockArea.commands((c, a) -> {
             setArea(a);
             PlayerUtils.sendModMessage("Updated area. Use '/eexcavate on' to start.");

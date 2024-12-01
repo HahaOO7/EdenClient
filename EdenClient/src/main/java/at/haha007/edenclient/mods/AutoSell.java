@@ -11,9 +11,9 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
-import net.minecraft.client.multiplayer.ClientSuggestionProvider;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.DefaultedRegistry;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -45,7 +45,7 @@ public class AutoSell {
     }
 
     private void registerCommand(String cmd) {
-        LiteralArgumentBuilder<ClientSuggestionProvider> node = literal(cmd);
+        LiteralArgumentBuilder<FabricClientCommandSource> node = literal(cmd);
 
         node.then(literal("toggle").executes(c -> {
             enabled = !enabled;
@@ -68,21 +68,21 @@ public class AutoSell {
         for (Item item : registry) {
             node.then(literal("add").then(literal(registry.getKey(item).toString().replace("minecraft:", "")).executes(c -> {
                 autoSellItems.add(item);
-                sendModMessage("Added /sell " + item.getDescription().getString());
+                sendModMessage("Added /sell " + registry.getKey(item).getPath());
                 return 1;
             })));
         }
 
         node.then(literal("remove").then(argument("item", StringArgumentType.greedyString()).suggests(this::suggestRemoveItems).executes(c -> {
-            Optional<Item> opt = BuiltInRegistries.ITEM.getOptional( ResourceLocation.parse(c.getArgument("item", String.class).replace(" ", "_")));
+            Optional<Item> opt = BuiltInRegistries.ITEM.getOptional(ResourceLocation.parse(c.getArgument("item", String.class).replace(" ", "_")));
             if (opt.isEmpty()) {
                 sendModMessage("No item with this name exists.");
                 return 1;
             }
             if (autoSellItems.remove(opt.get()))
-                sendModMessage("Removed /sell " + opt.get().getDescription().getString());
+                sendModMessage("Removed /sell " +registry.getKey(opt.get()).getPath());
             else {
-                sendModMessage("Couldn't remove /sell " + opt.get().getDescription().getString() + " because it wasn't in your sell list.");
+                sendModMessage("Couldn't remove /sell " + registry.getKey(opt.get()).getPath() + " because it wasn't in your sell list.");
             }
             return 1;
         })));
@@ -109,9 +109,9 @@ public class AutoSell {
                 "It will always toggle when your inventory is full and execute the sell-command. You can select the items you want to sell yourself.");
     }
 
-    private CompletableFuture<Suggestions> suggestRemoveItems(CommandContext<ClientSuggestionProvider> clientCommandSourceCommandContext, SuggestionsBuilder suggestionsBuilder) {
+    private CompletableFuture<Suggestions> suggestRemoveItems(CommandContext<FabricClientCommandSource> clientCommandSourceCommandContext, SuggestionsBuilder suggestionsBuilder) {
         DefaultedRegistry<Item> itemRegistry = BuiltInRegistries.ITEM;
-        autoSellItems.stream().sorted(Comparator.comparing(s -> s.getDescription().getString()))
+        autoSellItems.stream().sorted(Comparator.comparing(i -> itemRegistry.getKey(i).getPath()))
                 .map(itemRegistry::getKey)
                 .map(ResourceLocation::toString)
                 .map(itemName -> itemName.split(":")[1])
@@ -127,13 +127,13 @@ public class AutoSell {
     private void executeAutoSell() {
         LocalPlayer player = PlayerUtils.getPlayer();
         ClientPacketListener networkHandler = Minecraft.getInstance().getConnection();
-        if(networkHandler == null) return;
+        if (networkHandler == null) return;
         long time = System.currentTimeMillis();
         if (time - 200 < lastSell) return;
         autoSellItems
                 .stream()
                 .filter(item -> player.getInventory().hasAnyOf(Collections.singleton(item)))
-                .forEach(item -> networkHandler.sendChat("/sell " + item.getDescription().getString().replace(' ', '_')));
+                .forEach(item -> networkHandler.sendChat("/sell " + BuiltInRegistries.ITEM.getKey(item).getPath().replace(' ', '_')));
         lastSell = time;
     }
 

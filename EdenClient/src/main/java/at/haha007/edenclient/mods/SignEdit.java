@@ -82,7 +82,7 @@ public class SignEdit {
     private InteractionResult onAttackBlock(LocalPlayer entity, BlockPos pos, Direction side) {
         if (!enabled) return InteractionResult.PASS;
         BlockEntity b = Minecraft.getInstance().level.getBlockEntity(pos);
-        Registry<Item> registry = entity.clientLevel.registryAccess().registryOrThrow(ItemTags.SIGNS.registry());
+        Registry<Item> registry = entity.clientLevel.registryAccess().lookupOrThrow(ItemTags.SIGNS.registry());
         if (!registry.containsKey(BuiltInRegistries.ITEM.getKey(PlayerUtils.getPlayer().getInventory().getSelected().getItem())))
             return InteractionResult.PASS;
         if (b instanceof SignBlockEntity sign) {

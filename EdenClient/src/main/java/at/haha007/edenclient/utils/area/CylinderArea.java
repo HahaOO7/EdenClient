@@ -6,7 +6,7 @@ import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
-import net.minecraft.client.multiplayer.ClientSuggestionProvider;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
 import net.minecraft.commands.arguments.coordinates.Coordinates;
 import net.minecraft.core.BlockPos;
@@ -104,8 +104,9 @@ public class CylinderArea implements BlockArea {
         Vec3i max = new Vec3i(box.maxX(), box.maxY(), box.maxZ());
         Vec3i size = max.subtract(min);
 
-        Stream<BlockPos> stream =  Stream.generate(new Supplier<>() {
+        Stream<BlockPos> stream = Stream.generate(new Supplier<>() {
             private long i = 0;
+
             public BlockPos get() {
                 int x = (int) (i % size.getX());
                 int y = (int) ((i / size.getX()) % size.getY());
@@ -120,18 +121,18 @@ public class CylinderArea implements BlockArea {
         return stream.limit((long) box.getXSpan() * box.getYSpan() * box.getZSpan()).filter(Objects::nonNull);
     }
 
-    private static CylinderArea fromCommand(CommandContext<ClientSuggestionProvider> context, String keyCenter, String keyRadius, String keyHeight) {
+    private static CylinderArea fromCommand(CommandContext<FabricClientCommandSource> context, String keyCenter, String keyRadius, String keyHeight) {
         double radius = context.getArgument(keyRadius, Double.class);
         Coordinates center = context.getArgument(keyCenter, Coordinates.class);
         int height = context.getArgument(keyHeight, Integer.class);
-        return new CylinderArea(center.getBlockPos(PlayerUtils.getPlayer().createCommandSourceStack()), height, radius);
+        return new CylinderArea(center.getBlockPos(PlayerUtils.getPlayer().createCommandSourceStackForNameResolution(null)), height, radius);
     }
 
-    public static RequiredArgumentBuilder<ClientSuggestionProvider, Coordinates> command(
+    public static RequiredArgumentBuilder<FabricClientCommandSource, Coordinates> command(
             String keyCenter,
             String keyRadius,
             String keyHeight,
-            BiConsumer<CommandContext<ClientSuggestionProvider>, CylinderArea> executor) {
+            BiConsumer<CommandContext<FabricClientCommandSource>, CylinderArea> executor) {
         var center = CommandManager.argument(keyCenter, BlockPosArgument.blockPos());
         var radius = CommandManager.argument(keyRadius, DoubleArgumentType.doubleArg());
         var height = CommandManager.argument(keyHeight, IntegerArgumentType.integer());

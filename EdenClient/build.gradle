@@ -1,5 +1,5 @@
 plugins {
-    id 'fabric-loom' version '1.7-SNAPSHOT'
+    id 'fabric-loom' version '1.8-SNAPSHOT'
     id 'maven-publish'
 }
 
@@ -17,14 +17,13 @@ repositories {
     // See https://docs.gradle.org/current/userguide/declaring_repositories.html
     // for more information about repositories.
     maven {
-        name = "meteorRepository"
-        url = uri("https://maven.meteordev.org/snapshots")
-    }
-    maven {
         name = "sonatype-oss-snapshots1"
         url = "https://s01.oss.sonatype.org/content/repositories/snapshots/"
     }
-
+    maven {
+        name = "xpple"
+        url = uri("https://maven.xpple.dev/maven2")
+    }
     mavenCentral()
 }
 
@@ -44,6 +43,7 @@ dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
     mappings loom.officialMojangMappings()
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
     //Annotations
     implementation project(":EcAnnotations")
@@ -54,6 +54,8 @@ dependencies {
     //Chat Component API
     modImplementation include("net.kyori:adventure-api:4.17.0")
     modImplementation include("net.kyori:adventure-text-serializer-gson:4.17.0")
+
+    include modImplementation("dev.xpple:clientarguments:${project.clientarguments_version}")
 }
 
 processResources {

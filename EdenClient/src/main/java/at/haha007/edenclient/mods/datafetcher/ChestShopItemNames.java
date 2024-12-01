@@ -15,9 +15,9 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import net.minecraft.client.multiplayer.ClientSuggestionProvider;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.DefaultedRegistry;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -81,8 +81,8 @@ public class ChestShopItemNames {
         return itemNameMap.getKey(longName);
     }
 
-    public LiteralArgumentBuilder<ClientSuggestionProvider> registerCommand() {
-        LiteralArgumentBuilder<ClientSuggestionProvider> mapItemNames = literal("mapitemnames");
+    public LiteralArgumentBuilder<FabricClientCommandSource> registerCommand() {
+        LiteralArgumentBuilder<FabricClientCommandSource> mapItemNames = literal("mapitemnames");
         mapItemNames.executes(c -> {
             sendModMessage("/datafetcher mapitemnames <start/check>");
             return 1;
@@ -145,7 +145,7 @@ public class ChestShopItemNames {
         return mapItemNames;
     }
 
-    private int executeFetchCommand(CommandContext<ClientSuggestionProvider> clientSuggestionProviderCommandContext) {
+    private int executeFetchCommand(CommandContext<FabricClientCommandSource> context) {
         LocalPlayer entityPlayer = PlayerUtils.getPlayer();
 
         if (nameLookupRunning) {

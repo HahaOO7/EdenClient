@@ -4,7 +4,6 @@ import at.haha007.edenclient.annotations.Mod;
 import at.haha007.edenclient.callbacks.ConfigLoadedCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.utils.PlayerUtils;
-import at.haha007.edenclient.utils.RenderUtils;
 import at.haha007.edenclient.utils.area.BlockArea;
 import at.haha007.edenclient.utils.area.CubeArea;
 import at.haha007.edenclient.utils.area.SavableBlockArea;
@@ -16,12 +15,12 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.ClientPacketListener;
-import net.minecraft.client.multiplayer.ClientSuggestionProvider;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
@@ -78,7 +77,7 @@ public class Nuker {
     }
 
     private void registerCommand() {
-        LiteralArgumentBuilder<ClientSuggestionProvider> cmd = literal("enuker");
+        LiteralArgumentBuilder<FabricClientCommandSource> cmd = literal("enuker");
         cmd.then(literal("distance").then(argument("distance", DoubleArgumentType.doubleArg(0, 20)).executes(c -> {
                     distance = c.getArgument("distance", Double.class);
                     PlayerUtils.sendModMessage("Nuker distance is " + distance);
@@ -140,8 +139,8 @@ public class Nuker {
                 "Nuker destroys all blocks in reach (above your feet) in minimal time.");
     }
 
-    private ArgumentBuilder<ClientSuggestionProvider, ?> addCommand() {
-        LiteralArgumentBuilder<ClientSuggestionProvider> cmd = literal("add");
+    private ArgumentBuilder<FabricClientCommandSource, ?> addCommand() {
+        LiteralArgumentBuilder<FabricClientCommandSource> cmd = literal("add");
         BuiltInRegistries.BLOCK.forEach(block -> {
             String name = BuiltInRegistries.BLOCK.getKey(block).getPath();
             cmd.then(literal(name).executes(context -> {
@@ -154,8 +153,8 @@ public class Nuker {
         return cmd;
     }
 
-    private ArgumentBuilder<ClientSuggestionProvider, ?> removeCommand() {
-        LiteralArgumentBuilder<ClientSuggestionProvider> cmd = literal("remove");
+    private ArgumentBuilder<FabricClientCommandSource, ?> removeCommand() {
+        LiteralArgumentBuilder<FabricClientCommandSource> cmd = literal("remove");
         cmd.then(argument("type", StringArgumentType.word()).suggests((context, builder) -> {
             for (Block block : filter) {
                 builder.suggest(BuiltInRegistries.BLOCK.getKey(block).getPath());
@@ -164,7 +163,7 @@ public class Nuker {
         }).executes(context -> {
             String name = context.getArgument("type", String.class);
             ResourceLocation identifier = ResourceLocation.parse(name);
-            filter.remove(BuiltInRegistries.BLOCK.get(identifier));
+            filter.remove(BuiltInRegistries.BLOCK.getValue(identifier));
             PlayerUtils.sendModMessage("Removed " + name);
             return 1;
         }));

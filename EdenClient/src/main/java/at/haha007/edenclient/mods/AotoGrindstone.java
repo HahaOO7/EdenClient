@@ -6,13 +6,11 @@ import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.utils.PlayerUtils;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.GrindstoneScreen;
-import net.minecraft.client.multiplayer.ClientSuggestionProvider;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.core.Holder;
-import net.minecraft.data.tags.EnchantmentTagsProvider;
 import net.minecraft.network.protocol.game.ServerboundContainerClickPacket;
 import net.minecraft.tags.EnchantmentTags;
 import net.minecraft.world.inventory.ClickType;
@@ -42,7 +40,7 @@ public class AotoGrindstone {
     }
 
     private void registerCommand() {
-        LiteralArgumentBuilder<ClientSuggestionProvider> node = literal("eautogrindstone");
+        LiteralArgumentBuilder<FabricClientCommandSource> node = literal("eautogrindstone");
         node.then(literal("toggle").executes(c -> {
             enabled = !enabled;
             PlayerUtils.sendModMessage((enabled ? "AutoGrindstone enabled" : "AutoGrindstone disabled"));

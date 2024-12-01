@@ -8,6 +8,7 @@ import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.utils.RenderUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
+import com.mojang.blaze3d.buffers.BufferUsage;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexBuffer;
@@ -15,9 +16,10 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
-import net.minecraft.client.multiplayer.ClientSuggestionProvider;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.CoreShaders;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.phys.AABB;
@@ -61,7 +63,7 @@ public class ItemEsp {
 
     private void render(PoseStack matrixStack, MultiBufferSource.BufferSource vertexConsumerProvider, float tickDelta) {
         if (!enabled) return;
-        RenderSystem.setShader(GameRenderer::getPositionShader);
+        RenderSystem.setShader(Minecraft.getInstance().getShaderManager().getProgram(CoreShaders.POSITION));
         RenderSystem.setShaderColor(red, green, blue, 1);
         RenderSystem.disableDepthTest();
         Runnable drawBoxTask = solid ? () -> draw(solidBox, matrixStack) : () -> draw(wireframeBox, matrixStack);
@@ -74,18 +76,18 @@ public class ItemEsp {
         }
     }
 
-    private void draw(VertexBuffer solidBox, PoseStack matrixStack) {
-        solidBox.bind();
-        solidBox.drawWithShader(matrixStack.last().pose(), RenderSystem.getProjectionMatrix(), RenderSystem.getShader());
+    private void draw(VertexBuffer buffer, PoseStack matrixStack) {
+        buffer.bind();
+        buffer.drawWithShader(matrixStack.last().pose(), RenderSystem.getProjectionMatrix(), Minecraft.getInstance().getShaderManager().getProgram(CoreShaders.POSITION));
         VertexBuffer.unbind();
     }
 
     private void build() {
-        wireframeBox = new VertexBuffer(VertexBuffer.Usage.STATIC);
+        wireframeBox = new VertexBuffer(BufferUsage.STATIC_WRITE);
         AABB bb = new AABB(-0.25, -0.0, -0.25, 0.25, 0.5, 0.25);
         RenderUtils.drawOutlinedBox(bb, wireframeBox);
 
-        solidBox = new VertexBuffer(VertexBuffer.Usage.STATIC);
+        solidBox = new VertexBuffer(BufferUsage.STATIC_WRITE);
         RenderUtils.drawSolidBox(bb, solidBox);
     }
 
@@ -96,7 +98,7 @@ public class ItemEsp {
     }
 
     private void registerCommand() {
-        LiteralArgumentBuilder<ClientSuggestionProvider> node = literal("eitemesp");
+        LiteralArgumentBuilder<FabricClientCommandSource> node = literal("eitemesp");
 
         node.then(literal("toggle").executes(c -> {
             enabled = !enabled;
@@ -127,11 +129,11 @@ public class ItemEsp {
                 "ItemESP allows for all items lying on the ground to be surrounded with their respective x-ray bounding boxes.");
     }
 
-    RequiredArgumentBuilder<ClientSuggestionProvider, Integer> arg(String key) {
+    RequiredArgumentBuilder<FabricClientCommandSource, Integer> arg(String key) {
         return argument(key, IntegerArgumentType.integer(0, 256));
     }
 
-    private void setColor(CommandContext<ClientSuggestionProvider> c) {
+    private void setColor(CommandContext<FabricClientCommandSource> c) {
         this.red = c.getArgument("r", Integer.class) / 256f;
         this.green = c.getArgument("g", Integer.class) / 256f;
         this.blue = c.getArgument("b", Integer.class) / 256f;

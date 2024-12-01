@@ -1,19 +1,25 @@
 package at.haha007.edenclient.render;
 
 import at.haha007.edenclient.annotations.Mod;
-import at.haha007.edenclient.callbacks.*;
+import at.haha007.edenclient.callbacks.GameRenderCallback;
+import at.haha007.edenclient.callbacks.JoinWorldCallback;
+import at.haha007.edenclient.callbacks.LeaveWorldCallback;
+import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.utils.RenderUtils;
+import com.mojang.blaze3d.buffers.BufferUsage;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexBuffer;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.TreeMap;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.CoreShaders;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+
+import java.util.HashSet;
+import java.util.Set;
+import java.util.TreeMap;
 
 @Mod
 public class CubeRenderer {
@@ -42,13 +48,13 @@ public class CubeRenderer {
     }
 
     private void build() {
-        box = new VertexBuffer(VertexBuffer.Usage.STATIC);
+        box = new VertexBuffer(BufferUsage.STATIC_WRITE);
         AABB bb = new AABB(-0.5, -0.5, -0.5, 0.5, 0.5, 0.5);
         RenderUtils.drawOutlinedBox(bb, box);
     }
 
     private void render(PoseStack matrixStack, MultiBufferSource.BufferSource vertexConsumerProvider, float v) {
-        RenderSystem.setShader(GameRenderer::getPositionShader);
+        RenderSystem.setShader(Minecraft.getInstance().getShaderManager().getProgram(CoreShaders.POSITION));
         RenderSystem.setShaderColor(1, 1, 1, 1);
 
         cubes.values().forEach(s -> s.forEach(boundingBox -> {

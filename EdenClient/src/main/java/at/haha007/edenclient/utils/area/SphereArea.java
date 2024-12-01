@@ -5,7 +5,7 @@ import at.haha007.edenclient.utils.PlayerUtils;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
-import net.minecraft.client.multiplayer.ClientSuggestionProvider;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
 import net.minecraft.commands.arguments.coordinates.Coordinates;
 import net.minecraft.core.BlockPos;
@@ -78,17 +78,17 @@ public class SphereArea implements BlockArea {
         return streamArea(bb).filter(this::isCeiling);
     }
 
-    private static SphereArea fromCommand(CommandContext<ClientSuggestionProvider> context, String keyCenter, String keyRadius) {
+    private static SphereArea fromCommand(CommandContext<FabricClientCommandSource> context, String keyCenter, String keyRadius) {
         double radius = context.getArgument(keyRadius, Double.class);
         Coordinates center = context.getArgument(keyCenter, Coordinates.class);
-        return new SphereArea(center.getBlockPos(PlayerUtils.getPlayer().createCommandSourceStack()), radius);
+        return new SphereArea(center.getBlockPos(PlayerUtils.getPlayer().createCommandSourceStackForNameResolution(null)), radius);
     }
 
 
-    public static RequiredArgumentBuilder<ClientSuggestionProvider, Coordinates> command(
+    public static RequiredArgumentBuilder<FabricClientCommandSource, Coordinates> command(
             String keyCenter,
             String keyRadius,
-            BiConsumer<CommandContext<ClientSuggestionProvider>, SphereArea> executor) {
+            BiConsumer<CommandContext<FabricClientCommandSource>, SphereArea> executor) {
         var center = CommandManager.argument(keyCenter, BlockPosArgument.blockPos());
         var radius = CommandManager.argument(keyRadius, DoubleArgumentType.doubleArg());
         radius.executes(c -> {

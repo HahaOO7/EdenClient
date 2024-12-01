@@ -9,10 +9,10 @@ import at.haha007.edenclient.command.CommandManager;
 import at.haha007.edenclient.utils.ContainerInfo;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.suggestion.Suggestions;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.ClientPacketListener;
-import net.minecraft.client.multiplayer.ClientSuggestionProvider;
 import net.minecraft.client.multiplayer.CommonListenerCookie;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.network.Connection;
@@ -34,14 +34,17 @@ import java.util.List;
 @Mixin(ClientPacketListener.class)
 public abstract class ClientPacketListenerMixin {
 
-    @Shadow @Nullable
-    public ClientLevel level;
+    @Shadow
+    @Nullable
+    private ClientLevel level;
 
-    @Shadow public abstract boolean sendUnsignedCommand(String string);
+    @Shadow
+    public abstract boolean sendUnsignedCommand(String string);
 
-    @Shadow private CommandDispatcher<SharedSuggestionProvider> commands;
+    @Shadow
+    private CommandDispatcher<SharedSuggestionProvider> commands;
 
-    @Inject(method = "handleLogin", at = @At("RETURN"), cancellable = true)
+    @Inject(method = "handleLogin", at = @At("RETURN"))
     private void onLogin(ClientboundLoginPacket clientboundLoginPacket, CallbackInfo ci) {
         boolean connect = level != null;
         if (connect) {
@@ -56,16 +59,20 @@ public abstract class ClientPacketListenerMixin {
     @Inject(method = "sendCommand", at = @At("HEAD"), cancellable = true)
     private void onSendCommand(String message, CallbackInfo ci) {
         if (!CommandManager.isClientSideCommand(message.split(" ")[0])) return;
-        CommandManager.execute(message, new ClientSuggestionProvider(
-                Minecraft.getInstance().getConnection(), Minecraft.getInstance()));
+        ClientPacketListener connection = Minecraft.getInstance().getConnection();
+        if (connection == null) return;
+        FabricClientCommandSource suggestionsProvider = (FabricClientCommandSource) connection.getSuggestionsProvider();
+        CommandManager.execute(message, suggestionsProvider);
         ci.cancel();
     }
 
     @Inject(method = "sendUnsignedCommand", at = @At("HEAD"), cancellable = true)
     private void onSendUnsignedCommand(String message, CallbackInfoReturnable<Boolean> ci) {
         if (!CommandManager.isClientSideCommand(message.split(" ")[0])) return;
-        CommandManager.execute(message, new ClientSuggestionProvider(
-                Minecraft.getInstance().getConnection(), Minecraft.getInstance()));
+        ClientPacketListener connection = Minecraft.getInstance().getConnection();
+        if (connection == null) return;
+        FabricClientCommandSource suggestionsProvider = (FabricClientCommandSource) connection.getSuggestionsProvider();
+        CommandManager.execute(message, suggestionsProvider);
         ci.setReturnValue(true);
     }
 
@@ -121,6 +128,6 @@ public abstract class ClientPacketListenerMixin {
     @Unique
     @SuppressWarnings("unchecked")
     private void ecAddCommands() {
-        CommandManager.register((CommandDispatcher<ClientSuggestionProvider>) (Object) commands);
+        CommandManager.register((CommandDispatcher<FabricClientCommandSource>) (Object) commands);
     }
 }

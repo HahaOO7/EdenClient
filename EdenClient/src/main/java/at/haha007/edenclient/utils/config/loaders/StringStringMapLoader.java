@@ -23,15 +23,21 @@ public class StringStringMapLoader implements ConfigLoader<CompoundTag, StringSt
     }
 
     @NotNull
-    public CompoundTag parse(@NotNull String s) {
+    public CompoundTag parse(@NotNull String inputString) {
         CompoundTag tag = new CompoundTag();
-        if (s.isEmpty()) return tag;
-        String[] a = s.split(";");
-        for (int i = 0; i < a.length; i++) {
-            String k = a[i];
-            i++;
-            tag.putString(k, a[i]);
+
+        if (inputString.isEmpty())
+            return tag;
+
+        String[] entries = inputString.split(";");
+
+        for (int i = 0; i < entries.length; i += 2) {
+            String key = entries[i];
+            String value = entries[i + 1];
+
+            tag.putString(key, value);
         }
+
         return tag;
     }
 }

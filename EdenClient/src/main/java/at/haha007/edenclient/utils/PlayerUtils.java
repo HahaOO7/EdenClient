@@ -2,7 +2,6 @@ package at.haha007.edenclient.utils;
 
 import at.haha007.edenclient.mixinterface.IHandledScreen;
 import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -43,7 +42,9 @@ import java.util.Optional;
 public class PlayerUtils {
 
     private static final Component prefix = Component.literal("[EC] ").setStyle(Style.EMPTY.applyFormats(ChatFormatting.LIGHT_PURPLE, ChatFormatting.BOLD));
-    private static final net.kyori.adventure.text.Component adventurePrefix = net.kyori.adventure.text.Component.text("[EC] ", NamedTextColor.LIGHT_PURPLE, TextDecoration.BOLD);
+
+    private PlayerUtils() {
+    }
 
     public static void messageC2S(String msg) {
         LocalPlayer player = PlayerUtils.getPlayer();
@@ -51,10 +52,8 @@ public class PlayerUtils {
             sendModMessage("Tried sending message longer than 256 characters: " + msg);
             return;
         }
-        if (msg.startsWith("/"))
-            player.connection.sendCommand(msg.substring(1));
-        else
-            player.connection.sendChat(msg);
+        if (msg.startsWith("/")) player.connection.sendCommand(msg.substring(1));
+        else player.connection.sendChat(msg);
     }
 
     public static void sendMessage(Component text) {
@@ -95,8 +94,8 @@ public class PlayerUtils {
 
         //calculate the movement speed
         double genericMovementSpeed = player.getSpeed();
-        double speed = Optional.ofNullable(player.getEffect(MobEffects.MOVEMENT_SPEED)).map(MobEffectInstance::getAmplifier).orElse(-1) + 1;
-        double slow = Optional.ofNullable(player.getEffect(MobEffects.MOVEMENT_SLOWDOWN)).map(MobEffectInstance::getAmplifier).orElse(-1) + 1;
+        double speed = Optional.ofNullable(player.getEffect(MobEffects.MOVEMENT_SPEED)).map(MobEffectInstance::getAmplifier).orElse(-1) + 1d;
+        double slow = Optional.ofNullable(player.getEffect(MobEffects.MOVEMENT_SLOWDOWN)).map(MobEffectInstance::getAmplifier).orElse(-1) + 1d;
         //this formula is not exact, but close enough
         double movementSpeed = genericMovementSpeed * 10 * (5.612 + speed * 1.123 - slow * 0.841);
         movementSpeed /= 20;
@@ -138,16 +137,13 @@ public class PlayerUtils {
 
     public static LocalPlayer getPlayer() {
         LocalPlayer player = Minecraft.getInstance().player;
-        if (player == null)
-            throw new IllegalStateException("Player is null.");
+        if (player == null) throw new IllegalStateException("Player is null.");
         return player;
     }
 
     public static Direction getHitDirectionForBlock(LocalPlayer player, BlockPos target) {
         Vec3 playerPos = player.getEyePosition();
-        Optional<Direction> direction = Arrays.stream(Direction.values())
-                .min(Comparator.comparingDouble(
-                        dir -> Vec3.atLowerCornerOf(dir.getNormal()).multiply(.5, .5, .5).add(Vec3.atLowerCornerOf(target)).distanceTo(playerPos)));
+        Optional<Direction> direction = Arrays.stream(Direction.values()).min(Comparator.comparingDouble(dir -> Vec3.atLowerCornerOf(dir.getUnitVec3i()).multiply(.5, .5, .5).add(Vec3.atLowerCornerOf(target)).distanceTo(playerPos)));
 
         return direction.orElse(null);
     }
@@ -197,15 +193,13 @@ public class PlayerUtils {
             if (!(item instanceof BlockItem blockItem)) continue;
             Block block = blockItem.getBlock();
             BlockState defaultState = block.defaultBlockState();
-            if (!defaultState.isCollisionShapeFullBlock(level, BlockPos.ZERO))
-                continue;
+            if (!defaultState.isCollisionShapeFullBlock(level, BlockPos.ZERO)) continue;
             slot = i;
             break;
         }
         if (slot < 0) return false;
 
-        if (slot < 9 && inventory.selected == slot)
-            return true;
+        if (slot < 9 && inventory.selected == slot) return true;
 
         if (slot < 9) {
             inventory.selected = slot;
@@ -233,15 +227,13 @@ public class PlayerUtils {
         for (int i = 0; i < 36; i++) {
             ItemStack stack = inventory.getItem(i);
             if (stack.isEmpty()) continue;
-            if (!item.equals(inventory.getItem(i).getItem()))
-                continue;
+            if (!item.equals(inventory.getItem(i).getItem())) continue;
             slot = i;
             break;
         }
         if (slot < 0) return false;
 
-        if (slot < 9 && inventory.selected == slot)
-            return true;
+        if (slot < 9 && inventory.selected == slot) return true;
 
         if (slot < 9) {
             inventory.selected = slot;
@@ -271,16 +263,14 @@ public class PlayerUtils {
             ItemStack stack = inventory.getItem(i);
             if (stack.isEmpty()) continue;
             Item item = stack.getItem();
-            if (!options.contains(item))
-                continue;
+            if (!options.contains(item)) continue;
             slot = i;
             select = item;
             break;
         }
         if (slot < 0) return Optional.empty();
 
-        if (slot < 9 && inventory.selected == slot)
-            return Optional.of(select);
+        if (slot < 9 && inventory.selected == slot) return Optional.of(select);
 
         if (slot < 9) {
             inventory.selected = slot;

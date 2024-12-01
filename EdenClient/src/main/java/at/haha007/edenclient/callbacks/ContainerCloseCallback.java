@@ -6,7 +6,7 @@ import java.util.List;
 
 public interface ContainerCloseCallback {
     Event<ContainerCloseCallback> EVENT = new Event<>(
-            listeners -> (items) -> {
+            listeners -> items -> {
                 for (ContainerCloseCallback listener : listeners) {
                     listener.close(items);
                 }

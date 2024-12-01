@@ -18,7 +18,7 @@ public class BlockLoader implements ConfigLoader<StringTag, Block> {
 
     @NotNull
     public Block load(@NotNull StringTag nbtElement) {
-        return registry.get(ResourceLocation.parse(nbtElement.getAsString()));
+        return registry.getValue(ResourceLocation.parse(nbtElement.getAsString()));
     }
 
     @NotNull
