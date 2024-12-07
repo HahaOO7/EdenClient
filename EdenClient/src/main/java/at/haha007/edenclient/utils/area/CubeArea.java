@@ -4,6 +4,8 @@ import at.haha007.edenclient.command.CommandManager;
 import at.haha007.edenclient.utils.PlayerUtils;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
+import dev.xpple.clientarguments.arguments.CBlockPosArgument;
+import dev.xpple.clientarguments.arguments.CCoordinates;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
@@ -108,11 +110,9 @@ public class CubeArea implements BlockArea {
      * @return the parsed CubeArea
      */
     private static CubeArea fromCommand(CommandContext<FabricClientCommandSource> context, String key1, String key2) {
-        Coordinates pos1 = context.getArgument(key1, Coordinates.class);
-        Coordinates pos2 = context.getArgument(key2, Coordinates.class);
-        CommandSourceStack stack = PlayerUtils.getPlayer().createCommandSourceStackForNameResolution(null);
-        return new CubeArea(pos1.getBlockPos(stack), pos2.getBlockPos(stack));
-
+        BlockPos pos1 = CBlockPosArgument.getBlockPos(context, key1);
+        BlockPos pos2 = CBlockPosArgument.getBlockPos(context, key2);
+        return new CubeArea(pos1, pos2);
     }
 
     /**
@@ -123,9 +123,9 @@ public class CubeArea implements BlockArea {
      * @param executor a consumer that accepts a CommandContext object and performs some action
      * @return the generated RequiredArgumentBuilder object
      */
-    public static RequiredArgumentBuilder<FabricClientCommandSource, Coordinates> command(String pos1, String pos2, BiConsumer<CommandContext<FabricClientCommandSource>, CubeArea> executor) {
-        RequiredArgumentBuilder<FabricClientCommandSource, Coordinates> a = CommandManager.argument(pos1, BlockPosArgument.blockPos());
-        RequiredArgumentBuilder<FabricClientCommandSource, Coordinates> b = CommandManager.argument(pos2, BlockPosArgument.blockPos());
+    public static RequiredArgumentBuilder<FabricClientCommandSource, CCoordinates> command(String pos1, String pos2, BiConsumer<CommandContext<FabricClientCommandSource>, CubeArea> executor) {
+        RequiredArgumentBuilder<FabricClientCommandSource, CCoordinates> a = CommandManager.argument(pos1, CBlockPosArgument.blockPos());
+        RequiredArgumentBuilder<FabricClientCommandSource, CCoordinates> b = CommandManager.argument(pos2, CBlockPosArgument.blockPos());
         b = b.executes(c -> {
             CubeArea area = fromCommand(c, pos1, pos2);
             executor.accept(c, area);

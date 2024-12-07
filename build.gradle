@@ -33,6 +33,8 @@ jar {
     exclude('META-INF/**')
     exclude('fabric-installer.json')
     exclude('fabric-installer.lauchwrapper.json')
+    exclude('client-fabric-**.json')
+    exclude('fabric-**')
 
     from {
         configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }

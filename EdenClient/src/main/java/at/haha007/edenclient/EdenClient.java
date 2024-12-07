@@ -4,6 +4,7 @@ import at.haha007.edenclient.annotations.Mod;
 import at.haha007.edenclient.callbacks.Event;
 import at.haha007.edenclient.utils.ModInitializer;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import lombok.Getter;
 import net.fabricmc.api.ClientModInitializer;
 import net.minecraft.client.Minecraft;

@@ -5,6 +5,8 @@ import at.haha007.edenclient.utils.PlayerUtils;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
+import dev.xpple.clientarguments.arguments.CBlockPosArgument;
+import dev.xpple.clientarguments.arguments.CCoordinates;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
 import net.minecraft.commands.arguments.coordinates.Coordinates;
@@ -80,17 +82,17 @@ public class SphereArea implements BlockArea {
 
     private static SphereArea fromCommand(CommandContext<FabricClientCommandSource> context, String keyCenter, String keyRadius) {
         double radius = context.getArgument(keyRadius, Double.class);
-        Coordinates center = context.getArgument(keyCenter, Coordinates.class);
-        return new SphereArea(center.getBlockPos(PlayerUtils.getPlayer().createCommandSourceStackForNameResolution(null)), radius);
+        BlockPos center = CBlockPosArgument.getBlockPos(context, keyCenter);
+        return new SphereArea(center, radius);
     }
 
 
-    public static RequiredArgumentBuilder<FabricClientCommandSource, Coordinates> command(
+    public static RequiredArgumentBuilder<FabricClientCommandSource, CCoordinates> command(
             String keyCenter,
             String keyRadius,
             BiConsumer<CommandContext<FabricClientCommandSource>, SphereArea> executor) {
-        var center = CommandManager.argument(keyCenter, BlockPosArgument.blockPos());
-        var radius = CommandManager.argument(keyRadius, DoubleArgumentType.doubleArg());
+        RequiredArgumentBuilder<FabricClientCommandSource, CCoordinates> center = CommandManager.argument(keyCenter, CBlockPosArgument.blockPos());
+        RequiredArgumentBuilder<FabricClientCommandSource, Double> radius = CommandManager.argument(keyRadius, DoubleArgumentType.doubleArg());
         radius.executes(c -> {
             SphereArea area = fromCommand(c, keyCenter, keyRadius);
             executor.accept(c, area);
@@ -104,7 +106,7 @@ public class SphereArea implements BlockArea {
     private Stream<BlockPos> streamArea(BoundingBox box) {
         Vec3i min = new Vec3i(box.minX(), box.minY(), box.minZ());
         Vec3i max = new Vec3i(box.maxX(), box.maxY(), box.maxZ());
-        Vec3i size = max.subtract(min);
+        Vec3i size = max.subtract(min).offset(1, 1, 1);
 
         Stream<BlockPos> stream =  Stream.generate(new Supplier<>() {
             private long i = 0;
