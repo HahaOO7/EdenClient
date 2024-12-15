@@ -1,15 +1,12 @@
 package at.haha007.edenclient.utils.area;
 
 import at.haha007.edenclient.command.CommandManager;
-import at.haha007.edenclient.utils.PlayerUtils;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import dev.xpple.clientarguments.arguments.CBlockPosArgument;
 import dev.xpple.clientarguments.arguments.CCoordinates;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
-import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
-import net.minecraft.commands.arguments.coordinates.Coordinates;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
@@ -108,8 +105,9 @@ public class SphereArea implements BlockArea {
         Vec3i max = new Vec3i(box.maxX(), box.maxY(), box.maxZ());
         Vec3i size = max.subtract(min).offset(1, 1, 1);
 
-        Stream<BlockPos> stream =  Stream.generate(new Supplier<>() {
+        Stream<BlockPos> stream = Stream.generate(new Supplier<>() {
             private long i = 0;
+
             public BlockPos get() {
                 int x = (int) (i % size.getX());
                 int y = (int) ((i / size.getX()) % size.getY());

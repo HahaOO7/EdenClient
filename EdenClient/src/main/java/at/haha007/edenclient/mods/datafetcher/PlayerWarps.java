@@ -60,18 +60,24 @@ public class PlayerWarps {
         cmd.then(CommandManager.fakeLiteral("fetch", c -> PluginSignature.PLAYER_WARPS.isPluginPresent()).executes(c -> fetchPlayerWarpData()).requires(c -> PluginSignature.PLAYER_WARPS.isPluginPresent()));
 
         cmd.then(CommandManager.literal("clear").executes(c -> clearData()));
+        cmd.then(CommandManager.literal("info").executes(c -> printInfo()));
         return cmd;
+    }
+
+    private int printInfo() {
+        LogUtils.getLogger().info("PlayerWarps: {}", warps.size());
+        warps.stream().sorted(Comparator.comparing(PlayerWarp::name)).forEach(warp -> LogUtils.getLogger().info("    {}", warp));
+        PlayerUtils.sendModMessage("Wrote infos to logs, warps count: " + warps.size());
+        return 1;
     }
 
 
     //PLAYER_WARPS SECTION
     private void queueNextPage(TaskManager tm, int page, Set<String> memo) {
-        LogUtils.getLogger().warn("Page: {}", page);
         tm.then(new WaitForTicksTask(20));
         tm.then(new SyncTask(() -> PlayerUtils.messageC2S("/pwarp list " + page)));
-        tm.then(new MaxTimeTask(new WaitForChatTask(msg -> {
-            String text = removeColorCodes(msg.getString());
-            LogUtils.getLogger().warn("Message: {}", text);
+        tm.then(new MaxTimeTask(new WaitForChatTask(event -> {
+            String text = removeColorCodes(event.getUnmodifiedChatText().getString());
             if (text.matches("PW » That page does not exist![\\S\\s]*")) return true;
             if (!text.matches("PW .?» Akutelle Warps: [\\S\\s]*")) return false;
             queueNextPage(tm, page + 1, memo);
@@ -79,6 +85,7 @@ public class PlayerWarps {
                     .map(s -> s.split("\\s+"))
                     .map(a -> a[a.length - 1])
                     .forEach(memo::add);
+            event.setCanceled(true);
             return true;
         }), 1000));
     }
@@ -97,8 +104,8 @@ public class PlayerWarps {
                 LogUtils.getLogger().info("Queued warp info: {}", warpName);
                 infoTask.then(new WaitForTicksTask(20));
                 infoTask.then(new SyncTask(() -> PlayerUtils.messageC2S("/pwarp info " + warpName)));
-                infoTask.then(new MaxTimeTask(new WaitForChatTask(msg -> {
-                    String text = removeColorCodes(msg.getString());
+                infoTask.then(new MaxTimeTask(new WaitForChatTask(event -> {
+                    String text = removeColorCodes(event.getUnmodifiedChatText().getString());
                     LogUtils.getLogger().info("Fetching warp info: {} {}", warpName, text);
                     if (text.matches("PW » Dieser Warp existiert nicht![\\S\\s]*")) return true;
                     if (!text.matches("PW » Warp Information for %s:[\\S\\s]*"
@@ -121,6 +128,7 @@ public class PlayerWarps {
                         PlayerUtils.sendModMessage("Failed to get position or category for " + warpName);
                         return true;
                     }
+                    event.setCanceled(true);
                     LogUtils.getLogger().info("Got warp info for {}: {}, {}", warpName, position, category);
                     PlayerWarp pw = new PlayerWarp(warpName, position, new StringList(category));
                     this.warps.add(pw);

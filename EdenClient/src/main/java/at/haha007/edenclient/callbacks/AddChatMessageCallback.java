@@ -23,6 +23,7 @@ public interface AddChatMessageCallback {
         private final LocalPlayer player;
         @Setter
         private Component chatText;
+        private final Component unmodifiedChatText;
         private final List<GuiMessage.Line> chatLines;
         @Setter
         private boolean canceled = false;
@@ -31,6 +32,7 @@ public interface AddChatMessageCallback {
             this.player = player;
             this.chatText = chatText;
             this.chatLines = chatLines;
+            unmodifiedChatText = chatText;
         }
 
     }

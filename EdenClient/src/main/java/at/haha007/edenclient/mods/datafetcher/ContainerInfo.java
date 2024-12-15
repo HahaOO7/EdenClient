@@ -109,7 +109,7 @@ public class ContainerInfo {
 
     private Stream<ItemStack> mapShulkerBox(ItemStack stack) {
         ItemContainerContents containerContents = stack.getComponents().get(DataComponents.CONTAINER);
-        if(containerContents == null || containerContents.copyOne() == ItemStack.EMPTY) return Stream.of(stack);
+        if (containerContents == null || containerContents.copyOne() == ItemStack.EMPTY) return Stream.of(stack);
         return containerContents.stream();
     }
 
@@ -130,16 +130,19 @@ public class ContainerInfo {
     }
 
     private void tick(LocalPlayer player) {
+        if(player.moveDist < .0001) return;
         ChunkPos center = player.chunkPosition();
-        ClientChunkCache cm = player.clientLevel.getChunkSource();
+        ClientLevel level = player.clientLevel;
+        ClientChunkCache cm = level.getChunkSource();
         ChunkPos.rangeClosed(center, 2).
                 map(cp -> cm.getChunk(cp.x, cp.z, false)).
                 filter(Objects::nonNull).
+                filter(Predicate.not(LevelChunk::isEmpty)).
                 forEach(this::updateChunk);
     }
 
     private void updateChunk(LevelChunk chunk) {
-        Map<BlockPos, BlockEntity> be = chunk.getBlockEntities();
+        Map<BlockPos, BlockEntity> be = Map.copyOf(chunk.getBlockEntities());
         ChestMap map = chunkMap.get(chunk.getPos());
         if (map == null) return;
         map.keySet().removeIf(Predicate.not(e -> be.containsKey(new BlockPos(e))));

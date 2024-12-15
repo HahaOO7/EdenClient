@@ -1,6 +1,7 @@
 package at.haha007.edenclient.utils.tasks;
 
 import at.haha007.edenclient.callbacks.AddChatMessageCallback;
+import at.haha007.edenclient.callbacks.AddChatMessageCallback.ChatAddEvent;
 import at.haha007.edenclient.callbacks.LeaveWorldCallback;
 import net.minecraft.network.chat.Component;
 
@@ -18,19 +19,18 @@ public class WaitForChatTask implements Task {
     }
 
     private final Object lock = new Object();
-    private final Function<Component, Boolean> matchFunction;
+    private final Function<ChatAddEvent, Boolean> matchFunction;
     private boolean started = false;
 
 
-    public WaitForChatTask(Function<Component, Boolean> matchFunction) {
+    public WaitForChatTask(Function<ChatAddEvent, Boolean> matchFunction) {
         this.matchFunction = matchFunction;
     }
 
 
-    private boolean onChatMessage(AddChatMessageCallback.ChatAddEvent event) {
+    private boolean onChatMessage(ChatAddEvent event) {
         synchronized (lock) {
-            Component message = event.getChatText();
-            boolean matches = matchFunction.apply(message);
+            boolean matches = matchFunction.apply(event);
             if (matches) {
                 lock.notifyAll();
                 return true;

@@ -14,14 +14,12 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import com.mojang.logging.LogUtils;
+import dev.xpple.clientarguments.arguments.CBlockPosArgument;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.CoreShaders;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
-import net.minecraft.commands.arguments.coordinates.Coordinates;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.world.phys.AABB;
@@ -73,7 +71,8 @@ public class GetTo {
         if (box) {
             matrixStack.pushPose();
             matrixStack.translate(target.getX(), target.getY(), target.getZ());
-            this.vb.drawWithShader(matrixStack.last().pose(), RenderSystem.getProjectionMatrix(), RenderSystem.getShader());
+            vb.bind();
+            vb.drawWithShader(matrixStack.last().pose(), RenderSystem.getProjectionMatrix(), RenderSystem.getShader());
             matrixStack.popPose();
         }
         if (tracer) {
@@ -89,8 +88,8 @@ public class GetTo {
 
     private void registerCommand() {
         LiteralArgumentBuilder<FabricClientCommandSource> cmd = literal(COMMAND_NAME);
-        cmd.then(argument("target", BlockPosArgument.blockPos()).executes(c -> {
-            BlockPos pos = c.getArgument("target", Coordinates.class).getBlockPos(PlayerUtils.getPlayer().createCommandSourceStackForNameResolution(null));
+        cmd.then(argument("target", CBlockPosArgument.blockPos()).executes(c -> {
+            BlockPos pos = CBlockPosArgument.getBlockPos(c, "target");
             getTo(pos, true, true, true);
             return 1;
         }).then(argument("tags", StringArgumentType.word()).suggests((c, b) -> {
@@ -100,7 +99,7 @@ public class GetTo {
             b.suggest("-tbp");
             return b.buildFuture();
         }).executes(c -> {
-            BlockPos pos = c.getArgument("target", Coordinates.class).getBlockPos(PlayerUtils.getPlayer().createCommandSourceStackForNameResolution(null));
+            BlockPos pos = CBlockPosArgument.getBlockPos(c, "target");
             String tags = c.getArgument("tags", String.class);
             if (!tags.startsWith("-")) {
                 PlayerUtils.sendModMessage("/getto <target> -[t,b,p]");
