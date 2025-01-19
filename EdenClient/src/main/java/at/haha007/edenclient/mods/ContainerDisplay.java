@@ -33,6 +33,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import static at.haha007.edenclient.command.CommandManager.literal;
@@ -43,7 +44,7 @@ import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 public class ContainerDisplay {
     @ConfigSubscriber("false")
     private boolean enabled;
-    private Map<Vec3i, ContainerInfo.ChestInfo> entries = new HashMap<>();
+    private Map<Vec3i, ContainerInfo.ChestInfo> entries = new ConcurrentHashMap<>();
 
 
     public ContainerDisplay() {
@@ -58,13 +59,13 @@ public class ContainerDisplay {
             return;
         }
         ChunkPos chunkPos = player.chunkPosition();
-        entries = new HashMap<>();
+        entries = new ConcurrentHashMap<>();
         ChunkPos.rangeClosed(chunkPos, 1).forEach(cp -> entries.putAll(EdenClient.getMod(DataFetcher.class).getContainerInfo().getContainerInfo(cp)));
         Vec3i pp = player.blockPosition();
         entries = entries.entrySet().stream()
                 .sorted(Comparator.comparingInt(e -> e.getKey().distManhattan(pp)))
                 .limit(200)
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                .collect(Collectors.toConcurrentMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
     private void registerCommand() {
@@ -130,15 +131,15 @@ public class ContainerDisplay {
                     matrixStack.pushPose();
                     matrixStack.translate(y, x, 0);
                     matrixStack.scale(.8f, .8f, .8f);
-                    itemRenderer.render(
+                    itemRenderer.renderStatic(
                             item.getDefaultInstance(),
-                            ItemDisplayContext.NONE,
-                            false,
+                            ItemDisplayContext.FIXED,
+                            0xF000F0,
+                            OverlayTexture.NO_OVERLAY,
                             matrixStack,
                             vertexConsumerProvider,
-                            255,
-                            OverlayTexture.NO_OVERLAY,
-                            itemRenderer.getModel(item.getDefaultInstance(), level, player, 1));
+                            level,
+                            0);
                     matrixStack.popPose();
                 }
             } else {
@@ -146,15 +147,15 @@ public class ContainerDisplay {
                 matrixStack.scale(.6f, .6f, .6f);
                 Item item = items.getFirst();
 
-                itemRenderer.render(
+                itemRenderer.renderStatic(
                         item.getDefaultInstance(),
-                        ItemDisplayContext.NONE,
-                        false,
+                        ItemDisplayContext.FIXED,
+                        0xF000F0,
+                        OverlayTexture.NO_OVERLAY,
                         matrixStack,
                         vertexConsumerProvider,
-                        255,
-                        OverlayTexture.NO_OVERLAY,
-                        itemRenderer.getModel(item.getDefaultInstance(), level, player, 1));
+                        level,
+                        0);
             }
             matrixStack.popPose();
         });

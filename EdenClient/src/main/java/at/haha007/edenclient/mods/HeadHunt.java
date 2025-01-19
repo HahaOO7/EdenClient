@@ -1,10 +1,7 @@
 package at.haha007.edenclient.mods;
 
 import at.haha007.edenclient.annotations.Mod;
-import at.haha007.edenclient.callbacks.GameRenderCallback;
-import at.haha007.edenclient.callbacks.JoinWorldCallback;
-import at.haha007.edenclient.callbacks.LeaveWorldCallback;
-import at.haha007.edenclient.callbacks.PlayerTickCallback;
+import at.haha007.edenclient.callbacks.*;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.RenderUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
@@ -19,6 +16,7 @@ import com.mojang.brigadier.context.CommandContext;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientChunkCache;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.CoreShaders;
@@ -27,7 +25,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.phys.AABB;
@@ -51,6 +51,8 @@ public class HeadHunt {
     private boolean enabled;
     @ConfigSubscriber("true")
     boolean tracer;
+    @ConfigSubscriber("true")
+    boolean clickHeads;
     @ConfigSubscriber("1")
     float red;
     @ConfigSubscriber("1")
@@ -66,8 +68,15 @@ public class HeadHunt {
         PlayerTickCallback.EVENT.register(this::tick, getClass());
         JoinWorldCallback.EVENT.register(this::build, getClass());
         LeaveWorldCallback.EVENT.register(this::destroy, getClass());
+        PlayerInteractBlockCallback.EVENT.register(this::onInteractBlock, getClass());
         PerWorldConfig.get().register(this, "headhunt");
         registerCommand();
+    }
+
+    private InteractionResult onInteractBlock(LocalPlayer localPlayer, ClientLevel clientLevel, InteractionHand interactionHand, BlockHitResult blockHitResult) {
+        BlockPos blockPos = blockHitResult.getBlockPos();
+        foundHeads.add(blockPos);
+        return InteractionResult.PASS;
     }
 
     private void tick(LocalPlayer player) {
@@ -91,7 +100,11 @@ public class HeadHunt {
                 .limit(1000)
                 .map(v -> (Vec3i) v).collect(Collectors.toSet());
         heads.removeAll(foundHeads);
-        heads.stream().filter(bp -> player.position().distanceToSqr(Vec3.atCenterOf(bp)) < 20).forEach(this::clickPos);
+        if(clickHeads) {
+            heads.stream()
+                    .filter(bp -> player.position().distanceToSqr(Vec3.atCenterOf(bp)) < 20)
+                    .forEach(this::clickPos);
+        }
     }
 
     private void clickPos(Vec3i target) {
@@ -135,6 +148,12 @@ public class HeadHunt {
         cmd.then(literal("tracer").executes(c -> {
             tracer = !tracer;
             sendModMessage(tracer ? "Tracer enabled" : "Tracer disabled");
+            return 1;
+        }));
+
+        cmd.then(literal("click").executes(c -> {
+            clickHeads = !clickHeads;
+            sendModMessage(clickHeads ? "Atomatic click enabled" : "Atomatic click disabled");
             return 1;
         }));
 

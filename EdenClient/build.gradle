@@ -48,12 +48,12 @@ dependencies {
     //Annotations
     implementation project(":EcAnnotations")
     annotationProcessor project(":EcProcessors")
-    compileOnly 'org.projectlombok:lombok:1.18.32'
-    annotationProcessor 'org.projectlombok:lombok:1.18.32'
+    compileOnly 'org.projectlombok:lombok:1.18.36'
+    annotationProcessor 'org.projectlombok:lombok:1.18.36'
 
     //Chat Component API
-    modImplementation include("net.kyori:adventure-api:4.17.0")
-    modImplementation include("net.kyori:adventure-text-serializer-gson:4.17.0")
+    modImplementation include("net.kyori:adventure-api:${project.adventure_version}")
+    modImplementation include("net.kyori:adventure-text-serializer-gson:${project.adventure_version}")
 
     include modImplementation("dev.xpple:clientarguments:${project.clientarguments_version}")
 }

@@ -12,6 +12,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.network.protocol.game.ServerboundUseItemOnPacket;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -30,7 +31,7 @@ import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 public class DoubleDoor {
 
     @ConfigSubscriber("false")
-    private boolean enabled = true;
+    private boolean enabled = false;
 
     public DoubleDoor() {
         PlayerInteractBlockCallback.EVENT.register(this::onInteractBlock, getClass());

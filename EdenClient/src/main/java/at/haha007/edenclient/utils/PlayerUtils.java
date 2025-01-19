@@ -210,7 +210,6 @@ public class PlayerUtils {
         //replace slot 9
         inventory.selected = 8;
         connection.send(new ServerboundSetCarriedItemPacket(8));
-        gameMode.handlePickItem(slot);
         return true;
     }
 
@@ -241,10 +240,15 @@ public class PlayerUtils {
             return true;
         }
 
-        //select slot 9
+        //select slot 9 and pickblock
+        //as of 1.21.4 you can't pick a item but need to pick a block
         inventory.selected = 8;
         connection.send(new ServerboundSetCarriedItemPacket(8));
-        gameMode.handlePickItem(slot);
+        ClientLevel level = getPlayer().clientLevel;
+        BlockPos.withinManhattanStream(player.blockPosition(), 5, 5, 5)
+                .filter(b -> level.getBlockState(b).getBlock().asItem() == item)
+                .findFirst()
+                .ifPresent(b -> gameMode.handlePickItemFromBlock(b, false));
         return true;
     }
 
@@ -281,7 +285,6 @@ public class PlayerUtils {
         //replace slot 9
         inventory.selected = 8;
         connection.send(new ServerboundSetCarriedItemPacket(8));
-        gameMode.handlePickItem(slot);
         return Optional.of(select);
     }
 
