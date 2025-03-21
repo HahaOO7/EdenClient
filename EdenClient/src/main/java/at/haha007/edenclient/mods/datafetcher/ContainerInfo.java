@@ -6,6 +6,11 @@ import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import at.haha007.edenclient.utils.config.loaders.ConfigLoader;
 import at.haha007.edenclient.utils.config.wrappers.ItemList;
+import at.haha007.edenclient.utils.tasks.SyncTask;
+import at.haha007.edenclient.utils.tasks.TaskManager;
+import at.haha007.edenclient.utils.tasks.WaitForTicksTask;
+import lombok.Getter;
+import lombok.experimental.Accessors;
 import net.minecraft.client.multiplayer.ClientChunkCache;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
@@ -43,8 +48,10 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@Accessors(fluent = true)
 public class ContainerInfo {
     @ConfigSubscriber()
+    @Getter
     private final ChunkChestMap chunkMap;
     private Vec3i lastInteractedBlock = null;
     private Direction lastClickedDirection = null;
@@ -142,10 +149,19 @@ public class ContainerInfo {
     }
 
     private void updateChunk(LevelChunk chunk) {
-        Map<BlockPos, BlockEntity> be = Map.copyOf(chunk.getBlockEntities());
-        ChestMap map = chunkMap.get(chunk.getPos());
-        if (map == null) return;
-        map.keySet().removeIf(Predicate.not(e -> be.containsKey(new BlockPos(e))));
+        if(chunk.isEmpty()) return;
+        new TaskManager()
+                .then(new WaitForTicksTask(20))
+                .then(new SyncTask(() -> {
+                    if (!PlayerUtils.getPlayer().chunkPosition().equals(chunk.getPos())) {
+                        return;
+                    }
+                    Map<BlockPos, BlockEntity> be = Map.copyOf(chunk.getBlockEntities());
+                    if(be.isEmpty()) return;
+                    ChestMap map = chunkMap.get(chunk.getPos());
+                    if (map == null) return;
+                    map.keySet().removeIf(Predicate.not(e -> be.containsKey(new BlockPos(e))));
+                }));
     }
 
 
@@ -228,7 +244,7 @@ public class ContainerInfo {
         }
     }
 
-    private static class ChunkChestMap extends HashMap<ChunkPos, ChestMap> {
+    public static class ChunkChestMap extends HashMap<ChunkPos, ChestMap> {
     }
 
     private static class ContainerConfigLoader implements ConfigLoader<ListTag, ChunkChestMap> {

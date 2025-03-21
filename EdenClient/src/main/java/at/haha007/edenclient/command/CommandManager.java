@@ -99,9 +99,9 @@ public class CommandManager {
 
     public static void reset() {
         dispatcher = new CommandDispatcher<>();
+        cmds.clear();
         registerCommand("ecmds");
         registerCommand("ehelp");
-        cmds.clear();
     }
 
     public static void register(LiteralArgumentBuilder<FabricClientCommandSource> command, String... usage) {

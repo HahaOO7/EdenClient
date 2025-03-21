@@ -102,7 +102,10 @@ public class ModInitializer {
             for (String string : strings) {
                 Class<?> clazz = Class.forName(string);
                 Mod mod = clazz.getAnnotation(Mod.class);
-                List<Class<?>> dependencies = Arrays.stream(mod.dependencies()).distinct().sorted().toList();
+                List<Class<?>> dependencies = Arrays.stream(mod.dependencies())
+                        .distinct()
+                        .sorted(Comparator.comparing(Class::getSimpleName))
+                        .toList();
                 AnnotatedClass annotatedClass = new AnnotatedClass(clazz, new ArrayList<>(dependencies));
                 annotatedClasses.add(annotatedClass);
             }

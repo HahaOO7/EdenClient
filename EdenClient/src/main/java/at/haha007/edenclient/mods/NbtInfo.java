@@ -7,12 +7,9 @@ import com.mojang.logging.LogUtils;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.RegistryAccess;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.nbt.TextComponentTagVisitor;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.commands.data.EntityDataAccessor;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 
@@ -25,14 +22,11 @@ public class NbtInfo {
                     LocalPlayer player = PlayerUtils.getPlayer();
                     Inventory inv = player.getInventory();
                     ItemStack stack = inv.getSelected();
+                    Tag itemTag = stack.save(player.registryAccess());
                     if (stack.isEmpty()) {
                         sendModMessage("Take an item in your hand!");
                     } else {
                         try {
-                            CompoundTag playerTag = new EntityDataAccessor(player).getData();
-                            ListTag inventoryTag = playerTag.getList("Inventory", Tag.TAG_COMPOUND);
-                            CompoundTag itemTag = (CompoundTag) inventoryTag.get(inv.selected);
-
                             String json = Component.Serializer.toJson(new TextComponentTagVisitor("").visit(itemTag), RegistryAccess.EMPTY);
                             sendModMessage(GsonComponentSerializer.gson().deserialize(json));
                         } catch (IllegalStateException e) {
