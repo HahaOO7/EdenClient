@@ -2,29 +2,32 @@ package at.haha007.edenclient.mods;
 
 import at.haha007.edenclient.annotations.Mod;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
+import at.haha007.edenclient.utils.RenderUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.BlockMarker;
+import net.minecraft.client.particle.ParticleEngine;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
-
-import java.util.Random;
+import net.minecraft.world.phys.Vec3;
 
 import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
 @Mod
 public class BarrierDisplay {
-    private static final int DISTANCE = 5;
-    private final Random rand = new Random();
-    @ConfigSubscriber("0")
-    private int counter = 20;
+    //Barrier particle lasts about 4 seconds, repeat every 2?
+    private static final int DELAY = 40;
+    private int tickCounter = 0;
+    @ConfigSubscriber("5")
+    private int range = 20;
     @ConfigSubscriber("false")
     private boolean enabled;
 
@@ -36,23 +39,37 @@ public class BarrierDisplay {
 
     private void onTick(LocalPlayer player) {
         if (!enabled) return;
+        tickCounter++;
         if (player.getInventory().getSelected().getItem() == Items.BARRIER) return;
-        for (int i = 0; i < counter; i++) {
-            BlockPos pos = player.blockPosition().offset((int) (rand.nextGaussian() * DISTANCE), (int) (rand.nextGaussian() * DISTANCE), (int) (rand.nextGaussian() * DISTANCE));
-            if (player.clientLevel.getBlockState(pos).getBlock() != Blocks.BARRIER) continue;
-            var effect = new BlockParticleOption(ParticleTypes.BLOCK_MARKER, Blocks.BARRIER.defaultBlockState());
-            Minecraft.getInstance().particleEngine.add(new BlockMarker.Provider().createParticle(effect,
-                    player.clientLevel, pos.getX() + .5, pos.getY() + .5, pos.getZ() + .5, 0, 0, 0));
-        }
+        Vec3 cameraPos = RenderUtils.getCameraPos();
+        BlockPos center = new BlockPos((int) cameraPos.x, (int) cameraPos.y, (int) cameraPos.z);
+        BlockParticleOption effect = new BlockParticleOption(ParticleTypes.BLOCK_MARKER, Blocks.BARRIER.defaultBlockState());
+        ClientLevel level = player.clientLevel;
+        ParticleEngine particleEngine = Minecraft.getInstance().particleEngine;
+        BlockPos.withinManhattanStream(center, range, range, range)
+                .filter(bp -> level.getBlockState(bp).getBlock() == Blocks.BARRIER)
+                .filter(bp -> (bp.hashCode() + tickCounter) % DELAY == 0)
+                .forEach(pos -> particleEngine.add(new BlockMarker.Provider().createParticle(
+                        effect,
+                        level,
+                        pos.getX() + .5,
+                        pos.getY() + .5,
+                        pos.getZ() + .5,
+                        0,
+                        0,
+                        0)));
     }
 
     private void registerCommand() {
         var node = literal("ebarrierdisplay");
-        node.then(literal("count").then(argument("count", IntegerArgumentType.integer(0, 100000)).executes(c -> {
-            counter = c.getArgument("count", Integer.class);
-            sendModMessage(("Barrier display counter is " + counter));
+        node.then(literal("range").then(argument("range", IntegerArgumentType.integer(0, 100000)).executes(c -> {
+            range = c.getArgument("range", Integer.class);
+            sendModMessage(("Barrier display range is " + range));
             return 1;
-        })));
+        })).executes(c -> {
+            sendModMessage(("Barrier display range is " + range));
+            return 1;
+        }));
         node.then(literal("toggle").executes(c -> {
             enabled = !enabled;
             sendModMessage(enabled ? "Enabled barrierdisplay." : "Disabled barrierdisplay");
@@ -60,6 +77,6 @@ public class BarrierDisplay {
         }));
         register(node,
                 "BarrierDisplay displays barriers without being in creative with a barrier in hand. It also works in creative.",
-                "Use \"/ebarrierdisplay count <number>\" to set how many blocks the BarrierDisplay should check per tick. (max. of 10000 is advised).");
+                "Use \"/ebarrierdisplay range <number>\"");
     }
 }

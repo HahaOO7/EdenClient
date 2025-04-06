@@ -1,17 +1,15 @@
 package at.haha007.edenclient.mods.datafetcher;
 
+import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.callbacks.*;
 import at.haha007.edenclient.utils.PlayerUtils;
+import at.haha007.edenclient.utils.Scheduler;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import at.haha007.edenclient.utils.config.loaders.ConfigLoader;
 import at.haha007.edenclient.utils.config.wrappers.ItemList;
-import at.haha007.edenclient.utils.tasks.SyncTask;
-import at.haha007.edenclient.utils.tasks.TaskManager;
-import at.haha007.edenclient.utils.tasks.WaitForTicksTask;
 import lombok.Getter;
 import lombok.experimental.Accessors;
-import net.minecraft.client.multiplayer.ClientChunkCache;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
@@ -43,7 +41,10 @@ import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -60,11 +61,11 @@ public class ContainerInfo {
     ContainerInfo() {
         chunkMap = new ChunkChestMap();
 
-        PlayerTickCallback.EVENT.register(this::tick, getClass());
         PlayerAttackBlockCallback.EVENT.register(this::attackBlock, getClass());
         PlayerInteractBlockCallback.EVENT.register(this::interactBlock, getClass());
         ContainerCloseCallback.EVENT.register(this::onCloseInventory, getClass());
         PlayerInvChangeCallback.EVENT.register(this::onInventoryChange, getClass());
+        UpdateLevelChunkCallback.EVENT.register(this::updateChunk, getClass());
 
         PerWorldConfig.get().register(new ContainerConfigLoader(), ChunkChestMap.class);
         PerWorldConfig.get().register(new ChestMapLoader(), ChestMap.class);
@@ -122,6 +123,13 @@ public class ContainerInfo {
 
     private InteractionResult attackBlock(LocalPlayer player, BlockPos blockPos, Direction direction) {
         lastInteractedBlock = null;
+        ClientLevel world = player.clientLevel;
+        BlockEntity be = world.getBlockEntity(blockPos);
+        if (!(be instanceof Container)) return InteractionResult.PASS;
+        LevelChunk chunk = world.getChunkAt(blockPos);
+
+        EdenClient.getMod(Scheduler.class).scheduleSyncDelayed(() -> updateChunk(chunk), 1);
+
         return InteractionResult.PASS;
     }
 
@@ -136,32 +144,13 @@ public class ContainerInfo {
         return InteractionResult.PASS;
     }
 
-    private void tick(LocalPlayer player) {
-        if(player.moveDist < .0001) return;
-        ChunkPos center = player.chunkPosition();
-        ClientLevel level = player.clientLevel;
-        ClientChunkCache cm = level.getChunkSource();
-        ChunkPos.rangeClosed(center, 2).
-                map(cp -> cm.getChunk(cp.x, cp.z, false)).
-                filter(Objects::nonNull).
-                filter(Predicate.not(LevelChunk::isEmpty)).
-                forEach(this::updateChunk);
-    }
-
     private void updateChunk(LevelChunk chunk) {
-        if(chunk.isEmpty()) return;
-        new TaskManager()
-                .then(new WaitForTicksTask(20))
-                .then(new SyncTask(() -> {
-                    if (!PlayerUtils.getPlayer().chunkPosition().equals(chunk.getPos())) {
-                        return;
-                    }
-                    Map<BlockPos, BlockEntity> be = Map.copyOf(chunk.getBlockEntities());
-                    if(be.isEmpty()) return;
-                    ChestMap map = chunkMap.get(chunk.getPos());
-                    if (map == null) return;
-                    map.keySet().removeIf(Predicate.not(e -> be.containsKey(new BlockPos(e))));
-                }));
+        if (chunk.isEmpty()) return;
+        Map<BlockPos, BlockEntity> be = Map.copyOf(chunk.getBlockEntities());
+        if (be.isEmpty()) return;
+        ChestMap map = chunkMap.get(chunk.getPos());
+        if (map == null) return;
+        map.keySet().removeIf(Predicate.not(e -> be.containsKey(new BlockPos(e))));
     }
 
 

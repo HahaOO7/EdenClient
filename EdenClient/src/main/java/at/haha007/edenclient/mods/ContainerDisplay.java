@@ -30,7 +30,6 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Quaternionf;
 
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -73,7 +72,7 @@ public class ContainerDisplay {
         LiteralArgumentBuilder<FabricClientCommandSource> toggle = literal("toggle");
         toggle.executes(c -> {
             enabled = !enabled;
-            sendModMessage(enabled ? "TileEntityEsp enabled" : "TileEntityEsp disabled");
+            sendModMessage(enabled ? "ContainerDisplay enabled" : "ContainerDisplay disabled");
             return 1;
         });
 

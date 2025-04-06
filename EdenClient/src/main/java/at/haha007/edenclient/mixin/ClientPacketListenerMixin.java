@@ -1,10 +1,7 @@
 package at.haha007.edenclient.mixin;
 
 import at.haha007.edenclient.EdenClient;
-import at.haha007.edenclient.callbacks.CommandSuggestionCallback;
-import at.haha007.edenclient.callbacks.InventoryOpenCallback;
-import at.haha007.edenclient.callbacks.JoinWorldCallback;
-import at.haha007.edenclient.callbacks.LeaveWorldCallback;
+import at.haha007.edenclient.callbacks.*;
 import at.haha007.edenclient.command.CommandManager;
 import at.haha007.edenclient.utils.ContainerInfo;
 import com.mojang.brigadier.CommandDispatcher;
@@ -15,11 +12,13 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.multiplayer.CommonListenerCookie;
 import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.*;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.chunk.LevelChunk;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -108,6 +107,19 @@ public abstract class ClientPacketListenerMixin {
         int id = packet.getContainerId();
         ContainerInfo containerInfo = ContainerInfo.update(id, items);
         if (containerInfo.isComplete()) InventoryOpenCallback.EVENT.invoker().open(containerInfo);
+    }
+
+    @Inject(method = "updateLevelChunk", at = @At("RETURN"))
+    private void onUpdateLevelChunk(int i, int j, ClientboundLevelChunkPacketData clientboundLevelChunkPacketData, CallbackInfo ci) {
+        LevelChunk chunk = this.level.getChunkSource().getChunkNow(i, j);
+        UpdateLevelChunkCallback.EVENT.invoker().updateLevelChunk(chunk);
+    }
+
+    @Inject(method = "handleBlockDestruction", at = @At("RETURN"))
+    private void onBlockDestruction(ClientboundBlockDestructionPacket packet, CallbackInfo ci) {
+        BlockPos pos = packet.getPos();
+        LevelChunk chunk = this.level.getChunkSource().getChunkNow(pos.getX() >> 4, pos.getZ() >> 4);
+        UpdateLevelChunkCallback.EVENT.invoker().updateLevelChunk(chunk);
     }
 
     @Inject(method = "handleOpenScreen", at = @At("HEAD"))
