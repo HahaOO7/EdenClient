@@ -81,6 +81,6 @@ public class AotoGrindstone {
         ItemEnchantments enchantments = item.getEnchantments();
         if (enchantments.isEmpty())
             return false;
-        return enchantments.keySet().stream().anyMatch(e -> e.is(EnchantmentTags.CURSE));
+        return enchantments.keySet().stream().anyMatch(e -> !e.is(EnchantmentTags.CURSE));
     }
 }

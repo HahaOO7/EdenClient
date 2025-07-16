@@ -8,8 +8,18 @@ import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import at.haha007.edenclient.utils.config.loaders.ConfigLoader;
 import at.haha007.edenclient.utils.config.wrappers.ItemList;
+import at.haha007.edenclient.utils.tasks.MaxTimeTask;
+import at.haha007.edenclient.utils.tasks.SyncTask;
+import at.haha007.edenclient.utils.tasks.TaskManager;
+import at.haha007.edenclient.utils.tasks.WaitForInventoryTask;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.logging.LogUtils;
 import lombok.Getter;
 import lombok.experimental.Accessors;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
@@ -21,6 +31,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.protocol.game.ServerboundUseItemOnPacket;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.Container;
 import net.minecraft.world.InteractionHand;
@@ -36,18 +47,19 @@ import net.minecraft.world.item.component.ItemContainerContents;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.literal;
 
 @Accessors(fluent = true)
 public class ContainerInfo {
@@ -56,6 +68,10 @@ public class ContainerInfo {
     private final ChunkChestMap chunkMap;
     private Vec3i lastInteractedBlock = null;
     private Direction lastClickedDirection = null;
+
+    private AutoMode autoMode = null;
+    TaskManager autoUpdateTask;
+    private final Map<BlockPos, Long> updatedBlocks = new HashMap<>();
 
 
     ContainerInfo() {
@@ -66,12 +82,135 @@ public class ContainerInfo {
         ContainerCloseCallback.EVENT.register(this::onCloseInventory, getClass());
         PlayerInvChangeCallback.EVENT.register(this::onInventoryChange, getClass());
         UpdateLevelChunkCallback.EVENT.register(this::updateChunk, getClass());
+        PlayerTickCallback.EVENT.register(this::tick, getClass());
 
         PerWorldConfig.get().register(new ContainerConfigLoader(), ChunkChestMap.class);
         PerWorldConfig.get().register(new ChestMapLoader(), ChestMap.class);
         PerWorldConfig.get().register(new ChestInfoLoader(), ChestInfo.class);
         PerWorldConfig.get().register(this, "ContainerInfo");
+    }
 
+    public LiteralArgumentBuilder<FabricClientCommandSource> registerCommand() {
+        LiteralArgumentBuilder<FabricClientCommandSource> cmd = literal("chestinfo");
+        cmd.then(literal("empty").executes(c -> {
+            if (autoMode != null) {
+                PlayerUtils.sendModMessage("AutoUpdate already running");
+                return 1;
+            }
+            autoMode = AutoMode.EMPTY;
+            updatedBlocks.clear();
+            PlayerUtils.sendModMessage("AutoUpdate enabled");
+            return 1;
+        }));
+        cmd.then(literal("old").executes(c -> {
+            if (autoMode != null) {
+                PlayerUtils.sendModMessage("AutoUpdate already running");
+                return 1;
+            }
+            autoMode = AutoMode.OLD;
+            updatedBlocks.clear();
+            PlayerUtils.sendModMessage("AutoUpdate enabled");
+            return 1;
+        }));
+        cmd.then(literal("old_empty").executes(c -> {
+            if (autoMode != null) {
+                PlayerUtils.sendModMessage("AutoUpdate already running");
+                return 1;
+            }
+            autoMode = AutoMode.OLD_EMPTY;
+            updatedBlocks.clear();
+            PlayerUtils.sendModMessage("AutoUpdate enabled");
+            return 1;
+        }));
+        cmd.then(literal("all").executes(c -> {
+            if (autoMode != null) {
+                PlayerUtils.sendModMessage("AutoUpdate already running");
+                return 1;
+            }
+            autoMode = AutoMode.ALL;
+            updatedBlocks.clear();
+            PlayerUtils.sendModMessage("AutoUpdate enabled");
+            return 1;
+        }));
+        cmd.then(literal("stop").executes(c -> {
+            if (autoMode == null) {
+                PlayerUtils.sendModMessage("AutoUpdate not running");
+                return 1;
+            }
+            autoMode = null;
+            if (autoUpdateTask != null)
+                autoUpdateTask.cancel();
+            autoUpdateTask = null;
+            PlayerUtils.sendModMessage("AutoUpdate disabled");
+            return 1;
+        }));
+        return cmd;
+    }
+
+
+    private void tick(LocalPlayer player) {
+        if (autoMode == null) return;
+        if (autoUpdateTask != null) return;
+
+        //find nearby container that isnt already updated
+        ClientLevel world = player.clientLevel;
+        Vec3 playerEyePosition = player.getEyePosition();
+        double range = player.blockInteractionRange() + 1;
+        Vec3 min = playerEyePosition.subtract(range, range, range);
+        Vec3 max = playerEyePosition.add(range, range, range);
+        BlockPos minBlockPos = new BlockPos((int) min.x, (int) min.y, (int) min.z);
+        BlockPos maxBlockPos = new BlockPos((int) max.x, (int) max.y, (int) max.z);
+
+        Predicate<BlockPos> filter = switch (autoMode) {
+            case EMPTY -> p -> matchesEmpty(p, world);
+            case ALL -> p -> !updatedBlocks.containsKey(p);
+            case OLD -> p -> matchesOld(p, 60);
+            case OLD_EMPTY -> p -> matchesOld(p, 60) && matchesEmpty(p, world);
+        };
+        if (autoMode == AutoMode.OLD || autoMode == AutoMode.OLD_EMPTY) {
+            removeOldEntriesFromUpdatedBlocks(300);
+        }
+
+        Optional<BlockPos> closest = BlockPos.betweenClosedStream(minBlockPos, maxBlockPos)
+                .map(BlockPos::new)
+                .filter(p -> Vec3.atCenterOf(p).subtract(playerEyePosition).lengthSqr() < range * range)
+                .filter(p -> world.getBlockEntity(p) != null)
+                .filter(p -> world.getBlockEntity(p) instanceof BaseContainerBlockEntity)
+                .filter(filter)
+                .min(Comparator.comparingDouble(p -> Vec3.atCenterOf(p).subtract(playerEyePosition).lengthSqr()));
+        if (closest.isEmpty()) return;
+
+        BlockPos pos = closest.get();
+        //check for side with air, prefering sides facing the player
+        Vec3i playerPos = player.blockPosition().relative(Direction.UP);
+        Direction freeDirection = Direction.stream()
+                .filter(p -> world.getBlockState(pos.relative(p)).isAir())
+                .min(Comparator.comparingDouble(p -> playerPos.distSqr(pos.relative(p))))
+                .orElse(null);
+
+        if (freeDirection == null) return;
+
+        //interact with block
+        updatedBlocks.put(pos, System.currentTimeMillis());
+        lastInteractedBlock = pos;
+        lastClickedDirection = freeDirection;
+        autoUpdateTask = new TaskManager().then(new MaxTimeTask(
+                new WaitForInventoryTask()
+                        .then(() -> {
+                            Screen screen = Minecraft.getInstance().screen;
+                            if (!(screen instanceof AbstractContainerScreen<?> inventoryScreen)) return;
+                            AbstractContainerMenu menu = inventoryScreen.getMenu();
+                            onCloseInventory(menu.getItems());
+                        })
+                        .then(new SyncTask(PlayerUtils.getPlayer()::closeContainer)
+                                .then(() -> autoUpdateTask = null)),
+                10000, () -> {
+            autoUpdateTask = null;
+            LogUtils.getLogger().info("failed to update container at {}", pos);
+        }));
+        autoUpdateTask.start();
+        LogUtils.getLogger().info("fetching container at {}", pos);
+        player.connection.send(new ServerboundUseItemOnPacket(InteractionHand.MAIN_HAND, new BlockHitResult(Vec3.atCenterOf(pos), freeDirection, pos, false), 1));
     }
 
     private void onInventoryChange(Inventory playerInventory) {
@@ -133,7 +272,8 @@ public class ContainerInfo {
         return InteractionResult.PASS;
     }
 
-    private InteractionResult interactBlock(LocalPlayer player, ClientLevel world, InteractionHand hand, BlockHitResult blockHitResult) {
+    private InteractionResult interactBlock(LocalPlayer player, ClientLevel world, InteractionHand
+            hand, BlockHitResult blockHitResult) {
         BlockEntity be = world.getBlockEntity(blockHitResult.getBlockPos());
         if (be instanceof Container) {
             lastInteractedBlock = blockHitResult.getBlockPos();
@@ -145,6 +285,7 @@ public class ContainerInfo {
     }
 
     private void updateChunk(LevelChunk chunk) {
+        if (chunk == null) return;
         if (chunk.isEmpty()) return;
         Map<BlockPos, BlockEntity> be = Map.copyOf(chunk.getBlockEntities());
         if (be.isEmpty()) return;
@@ -265,5 +406,36 @@ public class ContainerInfo {
         public ListTag parse(@NotNull String s) {
             return new ListTag();
         }
+    }
+
+    private enum AutoMode {
+        EMPTY,
+        ALL,
+        OLD,
+        OLD_EMPTY;
+    }
+
+    private void removeOldEntriesFromUpdatedBlocks(int seconds) {
+        updatedBlocks.entrySet().stream()
+                .filter(e -> e.getValue() < System.currentTimeMillis() - seconds * 1000L)
+                .toList()
+                .forEach(e -> updatedBlocks.remove(e.getKey()));
+    }
+
+    private boolean matchesEmpty(BlockPos pos, ClientLevel level) {
+        if(updatedBlocks.containsKey(pos)) return false;
+        LevelChunk levelChunk = level.getChunkAt(pos);
+        if (levelChunk.isEmpty()) return false;
+        ChunkPos chunkPos = levelChunk.getPos();
+        ChestMap chestMap = chunkMap.get(chunkPos);
+        if (chestMap == null) return true;
+        ChestInfo chestInfo = chestMap.get(pos);
+        if (chestInfo == null) return true;
+        return chestInfo.items.isEmpty();
+    }
+
+    private boolean matchesOld(BlockPos pos, int seconds) {
+        long lastUpdated = updatedBlocks.getOrDefault(pos, 0L);
+        return lastUpdated < System.currentTimeMillis() - seconds * 1000L;
     }
 }

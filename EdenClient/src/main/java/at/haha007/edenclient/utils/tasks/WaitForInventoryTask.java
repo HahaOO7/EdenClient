@@ -20,6 +20,7 @@ public class WaitForInventoryTask implements Task {
 
     private final Predicate<Component> matcher;
     private final Object lock = new Object();
+    boolean done = false;
 
     public WaitForInventoryTask(Predicate<Component> matcher) {
         this.matcher = matcher;
@@ -36,6 +37,7 @@ public class WaitForInventoryTask implements Task {
     private boolean onInventoryOpen(Component name) {
         synchronized (lock) {
             if (matcher.test(name)) {
+                done = true;
                 lock.notifyAll();
                 return true;
             }
@@ -46,7 +48,9 @@ public class WaitForInventoryTask implements Task {
     public void run() throws InterruptedException {
         synchronized (lock) {
             listeners.add(this);
-            lock.wait();
+            while (!done) {
+                lock.wait();
+            }
         }
     }
 }

@@ -8,11 +8,16 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class MaxTimeTask implements Task {
 
     private final Task task;
+    private final Task onTimeout;
     private final long millis;
 
     public MaxTimeTask(Task task, long millis) {
+        this(task, millis, () -> {});
+    }
+    public MaxTimeTask(Task task, long millis, Task onTimeout) {
         this.task = task;
         this.millis = millis;
+        this.onTimeout = onTimeout;
     }
 
 
@@ -25,6 +30,7 @@ public class MaxTimeTask implements Task {
                 Thread.sleep(millis);
                 if (!done.get()) {
                     thread.interrupt();
+                    onTimeout.run();
                 }
             } catch (InterruptedException ignored) {
                 Thread.currentThread().interrupt();

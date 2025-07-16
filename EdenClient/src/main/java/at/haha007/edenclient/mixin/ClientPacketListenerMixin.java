@@ -99,7 +99,7 @@ public abstract class ClientPacketListenerMixin {
         ecAddCommands();
     }
 
-    @Inject(method = "handleContainerContent", at = @At("HEAD"))
+    @Inject(method = "handleContainerContent", at = @At("HEAD"), cancellable = true)
     private void onInventoryContent(ClientboundContainerSetContentPacket packet, CallbackInfo ci) {
         //get items, remove player items
         List<ItemStack> items = packet.getItems();
@@ -122,7 +122,7 @@ public abstract class ClientPacketListenerMixin {
         UpdateLevelChunkCallback.EVENT.invoker().updateLevelChunk(chunk);
     }
 
-    @Inject(method = "handleOpenScreen", at = @At("HEAD"))
+    @Inject(method = "handleOpenScreen", at = @At("HEAD"), cancellable = true)
     private void onInventoryOpen(ClientboundOpenScreenPacket packet, CallbackInfo ci) {
         MenuType<?> type = packet.getType();
         int id = packet.getContainerId();

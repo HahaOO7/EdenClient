@@ -16,6 +16,7 @@ public class DataFetcher {
     public DataFetcher() {
         register(literal("edatafetcher")
                         .then(playerWarps.registerCommand())
+                        .then(containerInfo.registerCommand())
                         .then(chestShopItemNames.registerCommand()),
                 "Enables fetching of playerwarp-data and abbreviated chestshop-itemnames.");
     }

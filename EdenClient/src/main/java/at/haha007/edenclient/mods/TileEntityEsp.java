@@ -206,6 +206,7 @@ public class TileEntityEsp {
         if (!enabled) return;
         RenderSystem.setShader(Minecraft.getInstance().getShaderManager().getProgram(CoreShaders.POSITION));
         RenderSystem.setShaderColor(red, green, blue, 1);
+        RenderSystem.disableDepthTest();
         if (tracer && !tileEntities.isEmpty()) {
             matrixStack.pushPose();
             matrixStack.translate(.5, .5, .5);
@@ -229,5 +230,6 @@ public class TileEntityEsp {
             VertexBuffer.unbind();
             matrixStack.popPose();
         });
+        RenderSystem.enableDepthTest();
     }
 }

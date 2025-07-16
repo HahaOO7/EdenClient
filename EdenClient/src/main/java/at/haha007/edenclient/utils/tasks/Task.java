@@ -9,8 +9,12 @@ public interface Task {
     default Task then(Task other) {
         Task self = this;
         return () -> {
-            self.run();
-            other.run();
+            try {
+                self.run();
+                other.run();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
         };
     }
 
