@@ -21,7 +21,7 @@ public class StringListLoader implements ConfigLoader<ListTag, StringList> {
     public StringList load(@NotNull ListTag nbtElement) {
         StringList list = new StringList();
         for (Tag element : nbtElement) {
-            list.add(element.getAsString());
+            list.add(element.asString().orElseThrow());
         }
         return list;
     }

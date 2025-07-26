@@ -12,7 +12,7 @@ public class DoubleLoader implements ConfigLoader<DoubleTag, Double> {
 
     @NotNull
     public Double load(@NotNull DoubleTag nbtElement) {
-        return nbtElement.getAsDouble();
+        return nbtElement.asDouble().orElseThrow();
     }
 
     @NotNull

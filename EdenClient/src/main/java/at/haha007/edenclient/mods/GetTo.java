@@ -3,30 +3,24 @@ package at.haha007.edenclient.mods;
 import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.annotations.Mod;
 import at.haha007.edenclient.callbacks.GameRenderCallback;
-import at.haha007.edenclient.callbacks.JoinWorldCallback;
-import at.haha007.edenclient.callbacks.LeaveWorldCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.mods.datafetcher.DataFetcher;
+import at.haha007.edenclient.utils.EdenRenderUtils;
 import at.haha007.edenclient.utils.PlayerUtils;
-import at.haha007.edenclient.utils.RenderUtils;
-import com.mojang.blaze3d.buffers.BufferUsage;
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.*;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import dev.xpple.clientarguments.arguments.CBlockPosArgument;
+import fi.dy.masa.malilib.render.RenderUtils;
+import fi.dy.masa.malilib.util.data.Color4f;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.CoreShaders;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import org.joml.Matrix4f;
+import org.lwjgl.opengl.GL11;
 
 import java.util.Comparator;
+import java.util.List;
 import java.util.Optional;
 
 import static at.haha007.edenclient.command.CommandManager.*;
@@ -34,27 +28,14 @@ import static at.haha007.edenclient.command.CommandManager.*;
 @Mod
 public class GetTo {
     private Vec3i target;
-    private VertexBuffer vb;
     private boolean tracer;
     private boolean box;
     private static final String COMMAND_NAME = "egetto";
 
     public GetTo() {
         registerCommand();
-        JoinWorldCallback.EVENT.register(this::build, getClass());
-        LeaveWorldCallback.EVENT.register(this::destroy, getClass());
-        GameRenderCallback.EVENT.register(this::render, getClass());
+        GameRenderCallback.EVENT.register(f -> render(), getClass());
         PlayerTickCallback.EVENT.register(this::tick, getClass());
-    }
-
-    private void destroy() {
-        vb.close();
-    }
-
-    private void build() {
-        vb = new VertexBuffer(BufferUsage.STATIC_WRITE);
-        AABB bb = new AABB(0, 0, 0, 1, 1, 1);
-        RenderUtils.drawOutlinedBox(bb, vb);
     }
 
     private void tick(LocalPlayer player) {
@@ -62,27 +43,15 @@ public class GetTo {
         if (player.blockPosition().distSqr(target) < 10) target = null;
     }
 
-    private void render(PoseStack matrixStack, MultiBufferSource.BufferSource vertexConsumerProvider, float deltaTick) {
+    private void render() {
         if (target == null) return;
-        RenderSystem.setShader(Minecraft.getInstance().getShaderManager().getProgram(CoreShaders.POSITION));
-        RenderSystem.setShaderColor(1, 1, 1, 1);
-        RenderSystem.disableDepthTest();
-
+        GL11.glDisable(GL11.GL_DEPTH_TEST);
+        GL11.glEnable(GL11.GL_LINE_SMOOTH);
         if (box) {
-            matrixStack.pushPose();
-            matrixStack.translate(target.getX(), target.getY(), target.getZ());
-            vb.bind();
-            vb.drawWithShader(matrixStack.last().pose(), RenderSystem.getProjectionMatrix(), RenderSystem.getShader());
-            matrixStack.popPose();
+            RenderUtils.renderAreaOutline(new BlockPos(target), new BlockPos(target), 10, Color4f.WHITE, Color4f.WHITE, Color4f.WHITE);
         }
         if (tracer) {
-            Matrix4f matrix = matrixStack.last().pose();
-            Vec3 start = RenderUtils.getCameraPos().add(PlayerUtils.getClientLookVec());
-            BufferBuilder bb = Tesselator.getInstance().begin(VertexFormat.Mode.DEBUG_LINES, DefaultVertexFormat.POSITION);
-            bb.addVertex(matrix, target.getX() + .5f, target.getY() + .5f, target.getZ() + .5f);
-            bb.addVertex(matrix, (float) start.x, (float) start.y, (float) start.z);
-            RenderSystem.setShaderColor(1, 1, 1, 1);
-            BufferUploader.drawWithShader(bb.buildOrThrow());
+            EdenRenderUtils.drawTracers(List.of(Vec3.atCenterOf(target)), Color4f.WHITE);
         }
     }
 

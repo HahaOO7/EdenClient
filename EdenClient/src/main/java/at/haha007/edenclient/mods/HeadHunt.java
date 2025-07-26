@@ -2,40 +2,34 @@ package at.haha007.edenclient.mods;
 
 import at.haha007.edenclient.annotations.Mod;
 import at.haha007.edenclient.callbacks.*;
-import at.haha007.edenclient.utils.PlayerUtils;
-import at.haha007.edenclient.utils.RenderUtils;
+import at.haha007.edenclient.utils.EdenRenderUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
-import com.mojang.blaze3d.buffers.BufferUsage;
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.*;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
+import fi.dy.masa.malilib.render.RenderUtils;
+import fi.dy.masa.malilib.util.data.Color4f;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientChunkCache;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.CoreShaders;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.chunk.LevelChunk;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-import org.joml.Matrix4f;
-import org.joml.Vector3f;
+import org.lwjgl.opengl.GL11;
 
+import java.awt.*;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Map;
@@ -61,7 +55,6 @@ public class HeadHunt {
     float blue;
     Set<Vec3i> heads = new HashSet<>();
     Set<Vec3i> foundHeads = new HashSet<>();
-    private VertexBuffer wireframeBox;
 
     public HeadHunt() {
         GameRenderCallback.EVENT.register(this::render, getClass());
@@ -100,7 +93,7 @@ public class HeadHunt {
                 .limit(1000)
                 .map(v -> (Vec3i) v).collect(Collectors.toSet());
         heads.removeAll(foundHeads);
-        if(clickHeads) {
+        if (clickHeads) {
             heads.stream()
                     .filter(bp -> player.position().distanceToSqr(Vec3.atCenterOf(bp)) < 20)
                     .forEach(this::clickPos);
@@ -119,15 +112,11 @@ public class HeadHunt {
     private void build() {
         foundHeads.clear();
         enabled = false;
-        wireframeBox = new VertexBuffer(BufferUsage.STATIC_WRITE);
-        AABB bb = new AABB(0, 0, 0, 1, 1, 1);
-        RenderUtils.drawOutlinedBox(bb, wireframeBox);
     }
 
     private void destroy() {
         heads = new HashSet<>();
         foundHeads = new HashSet<>();
-        wireframeBox.close();
     }
 
     private void registerCommand() {
@@ -176,33 +165,17 @@ public class HeadHunt {
     }
 
 
-    private void render(PoseStack matrixStack, MultiBufferSource.BufferSource vertexConsumerProvider, float v) {
+    private void render(float tickDelta) {
         if (!enabled) return;
-        if(heads.isEmpty()) return;
-        RenderSystem.setShader(Minecraft.getInstance().getShaderManager().getProgram(CoreShaders.POSITION));
-        RenderSystem.setShaderColor(red, green, blue, 1);
+        if (heads.isEmpty()) return;
+        GL11.glEnable(GL11.GL_LINE_SMOOTH);
+        GL11.glDisable(GL11.GL_DEPTH_TEST);
         if (tracer) {
-            matrixStack.pushPose();
-            matrixStack.translate(.5, .5, .5);
-            Vector3f start = new Vector3f(RenderUtils.getCameraPos().add(PlayerUtils.getClientLookVec()).add(-.5, -.5, -.5).toVector3f());
-            Matrix4f matrix = matrixStack.last().pose();
-            BufferBuilder bb = Tesselator.getInstance().begin(VertexFormat.Mode.DEBUG_LINES, DefaultVertexFormat.POSITION);
-
-            for (Vec3i t : heads) {
-                bb.addVertex(matrix, t.getX(), t.getY(), t.getZ());
-                bb.addVertex(matrix, start.x(), start.y(), start.z());
-            }
-            BufferUploader.drawWithShader(bb.buildOrThrow());
-            matrixStack.popPose();
+            EdenRenderUtils.drawTracers(heads.stream().map(Vec3::atCenterOf).toList(), Color4f.fromColor(new Color(red, green, blue).getRGB()));
         }
 
-        heads.forEach(c -> {
-            matrixStack.pushPose();
-            matrixStack.translate(c.getX(), c.getY(), c.getZ());
-            wireframeBox.bind();
-            wireframeBox.drawWithShader(matrixStack.last().pose(), RenderSystem.getProjectionMatrix(), RenderSystem.getShader());
-            VertexBuffer.unbind();
-            matrixStack.popPose();
-        });
+        for (Vec3i c : heads) {
+            RenderUtils.renderBlockOutline(new BlockPos(c), 0, 1, Color4f.fromColor(new Color(red, green, blue).getRGB()));
+        }
     }
 }

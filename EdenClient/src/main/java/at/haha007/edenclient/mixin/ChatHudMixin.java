@@ -8,7 +8,6 @@ import net.minecraft.client.GuiMessage;
 import net.minecraft.client.GuiMessageTag;
 import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.core.RegistryAccess;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MessageSignature;
 import org.jetbrains.annotations.Nullable;
@@ -41,12 +40,12 @@ public abstract class ChatHudMixin {
             AddChatMessageCallback.ChatAddEvent event = new AddChatMessageCallback.ChatAddEvent(player, chatText, trimmedMessages);
             try {
                 AddChatMessageCallback.EVENT.invoker().interact(event);
-            } catch (Throwable t) {
+            } catch (Exception t) {
                 LogUtils.getLogger().error("Error while processing chat message", t);
             }
             chatText = event.getChatText();
             if (chatText != null && !chatText.getString().isBlank() && !event.isCanceled()) {
-                LogUtils.getLogger().info("Chat: {}", Component.Serializer.toJson(chatText, RegistryAccess.EMPTY));
+                LogUtils.getLogger().info("Chat: {}", chatText.tryCollapseToString());
                 addMessage(chatText, null, GuiMessageTag.system());
             }
         });

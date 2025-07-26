@@ -145,11 +145,11 @@ public class Excavator {
         int minY = playerPos.getY() + 2;
         int maxY = playerPos.getY() + 4;
         List<BlockPos> c = area.ceilingStream().filter(p -> filterMinY(minY, p)).filter(p -> p.getY() < maxY).sorted(Comparator.comparingDouble(playerPos::distManhattan)).toList();
-        Optional<Target> target = c.stream().map(this::breakWaterloggedTarget).filter(Objects::nonNull).findFirst();
-        if (target.isPresent()) return target.get();
+        Optional<Target> optionalTarget = c.stream().map(this::breakWaterloggedTarget).filter(Objects::nonNull).findFirst();
+        if (optionalTarget.isPresent()) return optionalTarget.get();
 
-        target = c.stream().map(this::placeTarget).filter(Objects::nonNull).findFirst();
-        return target.orElse(null);
+        optionalTarget = c.stream().map(this::placeTarget).filter(Objects::nonNull).findFirst();
+        return optionalTarget.orElse(null);
     }
 
     private Target floorTarget(BlockPos playerPos) {
@@ -202,11 +202,11 @@ public class Excavator {
         ClientLevel level = player.clientLevel;
         BlockState blockState = level.getBlockState(pos);
         FluidState fluidState = level.getFluidState(pos);
-        Target target = new Target(pos, 5, breakBlockTargetAction(pos));
+        Target breakTarget = new Target(pos, 5, breakBlockTargetAction(pos));
         boolean hasCollisionShape = !blockState.getShape(level, pos).isEmpty();
-        if (!fluidState.isEmpty() && hasCollisionShape) return target;
+        if (!fluidState.isEmpty() && hasCollisionShape) return breakTarget;
         if (hasNeighboringFluids(pos, level)) return null;
-        if (hasCollisionShape) return target;
+        if (hasCollisionShape) return breakTarget;
         return null;
     }
 
@@ -261,20 +261,20 @@ public class Excavator {
     private void selectBestTool(BlockPos pos, LocalPlayer player) {
         ClientLevel level = player.clientLevel;
         BlockState state = level.getBlockState(pos);
-        int originalSlot = player.getInventory().selected;
+        int originalSlot = player.getInventory().getSelectedSlot();
         float bestDelta = state.getDestroyProgress(player, level, pos);
         int bestSlot = originalSlot;
         if (bestDelta >= 1) return;
         for (int i = 0; i < 9; i++) {
-            player.getInventory().selected = i;
+            player.getInventory().setSelectedSlot(i);
             float delta = state.getDestroyProgress(player, level, pos);
             if (delta <= bestDelta) continue;
             bestSlot = i;
             bestDelta = delta;
         }
-        player.getInventory().selected = originalSlot;
+        player.getInventory().setSelectedSlot(originalSlot);
         if (bestSlot == originalSlot) return;
-        player.getInventory().selected = bestSlot;
+        player.getInventory().setSelectedSlot(bestSlot);
         player.connection.send(new ServerboundSetCarriedItemPacket(bestSlot));
     }
 
@@ -314,7 +314,7 @@ public class Excavator {
                     Thread.sleep(1);
                 } catch (IndexOutOfBoundsException e) {
                     LogUtils.getLogger().error("Error while don't-ing.", e);
-                }catch (InterruptedException e) {
+                } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 }
             }));
@@ -347,7 +347,6 @@ public class Excavator {
             target = null;
             return 1;
         });
-        ///eexcavate ~ ~10 ~ ~10 ~-100 ~10
         toggle.executes(c -> {
             enabled = !enabled;
             if (enabled) PlayerUtils.sendModMessage("Excavator enabled.");

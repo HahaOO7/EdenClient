@@ -11,8 +11,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.animal.Sheep;
-import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.animal.sheep.Sheep;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.Vec3;
 
@@ -46,11 +45,10 @@ public class AutoSheer {
         MultiPlayerGameMode interactionManager = Minecraft.getInstance().gameMode;
         if (interactionManager == null) return;
         Vec3 pos = player.position();
-        Inventory inv = player.getInventory();
         InteractionHand shearHand;
-        if (inv.getSelected().getItem() == Items.SHEARS)
+        if (player.getMainHandItem().getItem() == Items.SHEARS)
             shearHand = InteractionHand.MAIN_HAND;
-        else if (inv.offhand.get(0).getItem() == Items.SHEARS)
+        else if (player.getOffhandItem().getItem() == Items.SHEARS)
             shearHand = InteractionHand.OFF_HAND;
         else
             return;

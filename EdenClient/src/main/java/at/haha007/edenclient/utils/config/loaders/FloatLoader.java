@@ -11,7 +11,7 @@ public class FloatLoader implements ConfigLoader<FloatTag, Float> {
 
     @NotNull
     public Float load(@NotNull FloatTag nbtElement) {
-        return nbtElement.getAsFloat();
+        return nbtElement.asFloat().orElseThrow();
     }
 
     @NotNull

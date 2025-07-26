@@ -11,7 +11,7 @@ public class BooleanLoader implements ConfigLoader<ByteTag, Boolean> {
 
     @NotNull
     public Boolean load(@NotNull ByteTag value) {
-        return value.getAsByte() != 0;
+        return value.asBoolean().orElseThrow();
     }
 
     @NotNull

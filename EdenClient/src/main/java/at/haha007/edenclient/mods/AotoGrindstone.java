@@ -11,6 +11,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.GrindstoneScreen;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.network.HashedStack;
 import net.minecraft.network.protocol.game.ServerboundContainerClickPacket;
 import net.minecraft.tags.EnchantmentTags;
 import net.minecraft.world.inventory.ClickType;
@@ -66,13 +67,25 @@ public class AotoGrindstone {
             ItemStack item = menu.getSlot(i).getItem();
             if (item.isEmpty() || !isItemEnchanted(item))
                 continue;
-            player.connection.send(new ServerboundContainerClickPacket(windowId, state, i, 0,
-                    ClickType.QUICK_MOVE, item, Int2ObjectMaps.emptyMap()));
+            player.connection.send(new ServerboundContainerClickPacket(
+                    windowId,
+                    state,
+                    (short) i,
+                    (byte) 0,
+                    ClickType.QUICK_MOVE,
+                    Int2ObjectMaps.emptyMap(),
+                    HashedStack.create(item, player.connection.decoratedHashOpsGenenerator())));
             return;
         }
         ItemStack item = menu.getSlot(RESULT_SLOT).getItem();
-        player.connection.send(new ServerboundContainerClickPacket(windowId, state, RESULT_SLOT, 0,
-                ClickType.THROW, item, Int2ObjectMaps.emptyMap()));
+        player.connection.send(new ServerboundContainerClickPacket(
+                windowId,
+                state,
+                (short) RESULT_SLOT,
+                (byte) 0,
+                ClickType.THROW,
+                Int2ObjectMaps.emptyMap(),
+                HashedStack.create(item, player.connection.decoratedHashOpsGenenerator())));
     }
 
     private boolean isItemEnchanted(ItemStack item) {

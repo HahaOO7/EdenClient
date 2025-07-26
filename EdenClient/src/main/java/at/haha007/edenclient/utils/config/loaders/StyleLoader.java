@@ -25,13 +25,13 @@ public class StyleLoader implements ConfigLoader<CompoundTag, Style> {
     @NotNull
     public Style load(@NotNull CompoundTag tag) {
         Style style = Style.EMPTY;
-        style = style.withBold(tag.getBoolean("bold"));
-        style = style.withObfuscated(tag.getBoolean("obfuscated"));
-        style = style.withItalic(tag.getBoolean("italic"));
-        style = style.withStrikethrough(tag.getBoolean("strikethrough"));
-        style = style.withUnderlined(tag.getBoolean("underlined"));
+        style = style.withBold(tag.getBoolean("bold").orElseThrow());
+        style = style.withObfuscated(tag.getBoolean("obfuscated").orElseThrow());
+        style = style.withItalic(tag.getBoolean("italic").orElseThrow());
+        style = style.withStrikethrough(tag.getBoolean("strikethrough").orElseThrow());
+        style = style.withUnderlined(tag.getBoolean("underlined").orElseThrow());
         if (tag.contains("rgb"))
-            style = style.withColor(tag.getInt("rgb"));
+            style = style.withColor(tag.getInt("rgb").orElseThrow());
         return style;
     }
 

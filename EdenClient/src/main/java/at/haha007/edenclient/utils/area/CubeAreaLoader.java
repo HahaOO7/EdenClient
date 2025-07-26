@@ -30,12 +30,12 @@ public class CubeAreaLoader implements ConfigLoader<CompoundTag, CubeArea> {
     @Override
     @NotNull
     public CubeArea load(@NotNull CompoundTag nbtElement) {
-        int minX = nbtElement.getInt("minX");
-        int minY = nbtElement.getInt("minY");
-        int minZ = nbtElement.getInt("minZ");
-        int maxX = nbtElement.getInt("maxX");
-        int maxY = nbtElement.getInt("maxY");
-        int maxZ = nbtElement.getInt("maxZ");
+        int minX = nbtElement.getInt("minX").orElseThrow();
+        int minY = nbtElement.getInt("minY").orElseThrow();
+        int minZ = nbtElement.getInt("minZ").orElseThrow();
+        int maxX = nbtElement.getInt("maxX").orElseThrow();
+        int maxY = nbtElement.getInt("maxY").orElseThrow();
+        int maxZ = nbtElement.getInt("maxZ").orElseThrow();
         return new CubeArea(new Vec3i(minX, minY, minZ), new Vec3i(maxX, maxY, maxZ));
     }
 

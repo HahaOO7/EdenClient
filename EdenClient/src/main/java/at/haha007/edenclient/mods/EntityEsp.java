@@ -2,26 +2,19 @@ package at.haha007.edenclient.mods;
 
 import at.haha007.edenclient.annotations.Mod;
 import at.haha007.edenclient.callbacks.GameRenderCallback;
-import at.haha007.edenclient.callbacks.JoinWorldCallback;
 import at.haha007.edenclient.callbacks.LeaveWorldCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
-import at.haha007.edenclient.utils.PlayerUtils;
-import at.haha007.edenclient.utils.RenderUtils;
+import at.haha007.edenclient.utils.EdenRenderUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import at.haha007.edenclient.utils.config.wrappers.EntityTypeSet;
-import com.mojang.blaze3d.buffers.BufferUsage;
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.*;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
+import fi.dy.masa.malilib.util.data.Color4f;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.CoreShaders;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.DefaultedRegistry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
@@ -29,8 +22,9 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import org.joml.Matrix4f;
+import org.lwjgl.opengl.GL11;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -43,7 +37,7 @@ public class EntityEsp {
     @ConfigSubscriber("false")
     private boolean enabled;
     @ConfigSubscriber("player")
-    private EntityTypeSet entityTypes;
+    private EntityTypeSet entityTypes = new EntityTypeSet();
     @ConfigSubscriber("false")
     boolean solid;
     @ConfigSubscriber("true")
@@ -55,15 +49,13 @@ public class EntityEsp {
     @ConfigSubscriber("1")
     float blue;
     List<Entity> entities = new ArrayList<>();
-    private VertexBuffer wireframeBox;
-    private VertexBuffer solidBox;
 
     public EntityEsp() {
         GameRenderCallback.EVENT.register(this::render, getClass());
         PlayerTickCallback.EVENT.register(this::tick, getClass());
-        JoinWorldCallback.EVENT.register(this::build, getClass());
         LeaveWorldCallback.EVENT.register(this::destroy, getClass());
         PerWorldConfig.get().register(this, "entityEsp");
+
         registerCommand();
     }
 
@@ -72,24 +64,14 @@ public class EntityEsp {
             entities = new ArrayList<>();
             return;
         }
-        entities = player.getCommandSenderWorld().getEntitiesOfClass(Entity.class,
+        entities = player.clientLevel.getEntitiesOfClass(Entity.class,
                 player.getBoundingBox().inflate(10000, 500, 10000),
                 e -> entityTypes.contains(e.getType()) && e.isAlive() && e != player);
     }
 
-    private void build() {
-        wireframeBox = new VertexBuffer(BufferUsage.STATIC_WRITE);
-        AABB bb = new AABB(-0.5, 0, -0.5, 0.5, 1, 0.5);
-        RenderUtils.drawOutlinedBox(bb, wireframeBox);
-
-        solidBox = new VertexBuffer(BufferUsage.STATIC_WRITE);
-        RenderUtils.drawSolidBox(bb, solidBox);
-    }
 
     private void destroy() {
         this.entities.clear();
-        wireframeBox.close();
-        solidBox.close();
     }
 
     private void registerCommand() {
@@ -170,40 +152,24 @@ public class EntityEsp {
         entityTypes.add(type);
     }
 
-    private void render(PoseStack matrixStack, MultiBufferSource.BufferSource vertexConsumerProvider, float tickDelta) {
+    private void render(float tickDelta) {
         if (!enabled) return;
-        RenderSystem.setShader(Minecraft.getInstance().getShaderManager().getProgram(CoreShaders.POSITION));
-        RenderSystem.setShaderColor(red, green, blue, 1);
-        RenderSystem.disableDepthTest();
+        GL11.glEnable(GL11.GL_LINE_SMOOTH);
         if (tracer && !entities.isEmpty()) {
-            Vec3 start = RenderUtils.getCameraPos().add(PlayerUtils.getClientLookVec());
-            Matrix4f matrix = matrixStack.last().pose();
-            BufferBuilder bb = Tesselator.getInstance().begin(VertexFormat.Mode.DEBUG_LINES, DefaultVertexFormat.POSITION);
-            for (Entity target : entities) {
-                Vec3 t = target.getPosition(tickDelta);
-                bb.addVertex(matrix, (float) t.x, (float) t.y, (float) t.z);
-                bb.addVertex(matrix, (float) start.x, (float) start.y, (float) start.z);
-            }
-            BufferUploader.drawWithShader(bb.buildOrThrow());
+            EdenRenderUtils.drawTracers(entities.stream().map(e -> e.getPosition(tickDelta)).toList(),
+                    Color4f.fromColor(new Color(red, green, blue).getRGB()));
         }
-        Runnable drawBoxTask = solid ? () -> draw(solidBox, matrixStack) : () -> draw(wireframeBox, matrixStack);
         for (Entity target : entities) {
-            matrixStack.pushPose();
-            matrixStack.translate(
-                    target.xo + (target.getX() - target.xo) * tickDelta,
-                    target.yo + (target.getY() - target.yo) * tickDelta,
-                    target.zo + (target.getZ() - target.zo) * tickDelta
-            );
-            matrixStack.scale(target.getBbWidth(), target.getBbHeight(), target.getBbWidth());
-            drawBoxTask.run();
-            matrixStack.popPose();
+            drawOutline(target, tickDelta);
         }
     }
 
-    private void draw(VertexBuffer solidBox, PoseStack matrixStack) {
-        solidBox.bind();
-        solidBox.drawWithShader(matrixStack.last().pose(), RenderSystem.getProjectionMatrix(), RenderSystem.getShader());
-        VertexBuffer.unbind();
-    }
 
+    private void drawOutline(Entity entity, float tickDelta) {
+        Vec3 positionDelta = entity.getPosition(tickDelta).subtract(entity.getPosition(1));
+        AABB boundingBox = entity.getBoundingBox().move(positionDelta);
+        EdenRenderUtils.drawAreaOutline(boundingBox.getMinPosition(),
+                boundingBox.getMaxPosition(),
+                Color4f.fromColor(new Color(red, green, blue).getRGB()));
+    }
 }

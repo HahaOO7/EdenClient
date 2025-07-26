@@ -21,7 +21,7 @@ public class StringSetLoader implements ConfigLoader<ListTag, StringSet> {
     public StringSet load(@NotNull ListTag nbtElement) {
         StringSet list = new StringSet();
         for (Tag element : nbtElement) {
-            list.add(element.getAsString());
+            list.add(element.asString().orElseThrow());
         }
         return list;
     }

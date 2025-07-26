@@ -4,6 +4,8 @@ import at.haha007.edenclient.utils.config.loaders.ConfigLoader;
 import net.minecraft.nbt.CompoundTag;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Optional;
+
 public class SavableBlockAreaLoader implements ConfigLoader<CompoundTag, SavableBlockArea> {
     private static final String CUBE_KEY = "cube";
     private static final String CYLINDER_KEY = "cylinder";
@@ -31,7 +33,11 @@ public class SavableBlockAreaLoader implements ConfigLoader<CompoundTag, Savable
     @Override
     @NotNull
     public SavableBlockArea load(@NotNull CompoundTag nbtElement) {
-        String type = nbtElement.getString("type");
+        Optional<String> optionalType = nbtElement.getString("type");
+        if(optionalType.isEmpty()){
+            return load(parse("0,0,0,0,0,0"));
+        }
+        String type = optionalType.get();
         ConfigLoader<CompoundTag, BlockArea> loader = switch (type) {
             case CUBE_KEY -> new CubeAreaLoader().asBlockAreaLoader();
             case CYLINDER_KEY -> new CylinderAreaLoader().asBlockAreaLoader();
@@ -41,12 +47,15 @@ public class SavableBlockAreaLoader implements ConfigLoader<CompoundTag, Savable
         if (loader == null) {
             return new SavableBlockArea(new SphereAreaLoader().load(new SphereAreaLoader().parse("0,0,0,0")));
         }
-        return new SavableBlockArea(loader.load(nbtElement.getCompound("value")));
+        return new SavableBlockArea(loader.load(nbtElement.getCompound("value").orElseThrow()));
     }
 
     @Override
     @NotNull
     public CompoundTag parse(@NotNull String s) {
-        return new CubeAreaLoader().parse(s);
+        CompoundTag parse = new CompoundTag();
+        parse.putString("type", CUBE_KEY);
+        parse.put("value", new CubeAreaLoader().parse(s));
+        return parse;
     }
 }

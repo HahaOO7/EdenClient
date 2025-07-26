@@ -16,8 +16,8 @@ public class BiStringStringMapLoader implements ConfigLoader<CompoundTag, BiStri
     @NotNull
     public BiStringStringMap load(@NotNull CompoundTag tag) {
         BiStringStringMap list = new BiStringStringMap();
-        for (String key : tag.getAllKeys()) {
-            list.put(key, tag.getString(key));
+        for (String key : tag.keySet()) {
+            list.put(key, tag.getString(key).orElseThrow());
         }
         return list;
     }

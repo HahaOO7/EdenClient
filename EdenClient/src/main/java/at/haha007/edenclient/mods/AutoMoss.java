@@ -44,7 +44,7 @@ public class AutoMoss {
         if (!enabled || ((tick++) % 3 != 0)) {
             return;
         }
-        if (player.getInventory().getSelected().getItem() != Items.BONE_MEAL)
+        if (player.getInventory().getSelectedItem().getItem() != Items.BONE_MEAL)
             return;
         ClientLevel world = player.clientLevel;
         Optional<BlockPos> moss = getNearby(player)

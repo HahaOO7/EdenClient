@@ -11,7 +11,10 @@ repositories {
         name = "xpple"
         url = uri("https://maven.xpple.dev/maven2")
     }
-
+    maven {
+        name = "jitpack"
+        url = uri("https://jitpack.io")
+    }
     mavenCentral()
 }
 
@@ -35,6 +38,14 @@ jar {
     exclude('fabric-installer.lauchwrapper.json')
     exclude('client-fabric-**.json')
     exclude('fabric-**')
+    exclude('fi/**')
+    exclude('javax/**')
+    exclude('data/**')
+    exclude('programmer_art/**')
+    exclude('LICENSE**')
+    exclude('**malilib**')
+    exclude('assets/fabric**/**')
+    exclude('assets/malilib/**')
 
     from {
         configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }

@@ -19,9 +19,9 @@ import net.minecraft.client.gui.screens.inventory.ContainerScreen;
 import net.minecraft.core.Vec3i;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.Container;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import org.jetbrains.annotations.NotNull;
@@ -220,7 +220,11 @@ public class PlayerWarps {
             ItemStack item = inventory.getItem(i);
             if (item.isEmpty()) continue;
             String name = item.getHoverName().getString();
-            item.getTooltipLines(null, PlayerUtils.getPlayer(), TooltipFlag.NORMAL).stream().map(Component::getString).filter(s -> s.startsWith("Ort: world, ")).findAny().ifPresent(s -> map.add(new PlayerWarp(name, getPwarpPos(s), new StringList(category))));
+            item.getTooltipLines(Item.TooltipContext.EMPTY, PlayerUtils.getPlayer(), TooltipFlag.NORMAL).stream()
+                    .map(Component::getString)
+                    .filter(s -> s.startsWith("Ort: world, "))
+                    .findAny()
+                    .ifPresent(s -> map.add(new PlayerWarp(name, getPwarpPos(s), new StringList(category))));
         }
     }
 
@@ -281,11 +285,11 @@ public class PlayerWarps {
 
         @Override
         public @NotNull PlayerWarp load(@NotNull CompoundTag nbtElement) {
-            String name = nbtElement.getString("name");
-            int x = nbtElement.getInt("x");
-            int y = nbtElement.getInt("y");
-            int z = nbtElement.getInt("z");
-            StringList categories = stringListLoader.load(nbtElement.getList(CATEGORIES, Tag.TAG_STRING));
+            String name = nbtElement.getString("name").orElseThrow();
+            int x = nbtElement.getInt("x").orElseThrow();
+            int y = nbtElement.getInt("y").orElseThrow();
+            int z = nbtElement.getInt("z").orElseThrow();
+            StringList categories = stringListLoader.load(nbtElement.getList(CATEGORIES).orElseThrow());
             return new PlayerWarp(name, new Vec3i(x, y, z), categories);
         }
 

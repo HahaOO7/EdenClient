@@ -12,7 +12,7 @@ public class StringLoader implements ConfigLoader<StringTag, String> {
 
     @NotNull
     public String load(@NotNull StringTag nbtElement) {
-        return nbtElement.getAsString();
+        return nbtElement.asString().orElseThrow();
     }
 
     @NotNull

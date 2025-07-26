@@ -1,11 +1,12 @@
 package at.haha007.edenclient.utils.config.loaders;
 
 import net.minecraft.nbt.IntArrayTag;
-import net.minecraft.nbt.IntTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.Optional;
 
 public class BlockBoxLoader implements ConfigLoader<IntArrayTag, BoundingBox> {
 
@@ -23,7 +24,7 @@ public class BlockBoxLoader implements ConfigLoader<IntArrayTag, BoundingBox> {
 
     @NotNull
     public BoundingBox load(@NotNull IntArrayTag tag) {
-        int[] ints = tag.stream().mapToInt(IntTag::getAsInt).toArray();
+        int[] ints = tag.stream().map(Tag::asInt).mapToInt(Optional::orElseThrow).toArray();
         return new BoundingBox(ints[0], ints[2], ints[4], ints[1], ints[3], ints[5]);
     }
 

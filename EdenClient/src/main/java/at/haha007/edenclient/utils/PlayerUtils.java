@@ -1,6 +1,9 @@
 package at.haha007.edenclient.utils;
 
 import at.haha007.edenclient.mixinterface.IHandledScreen;
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.mojang.serialization.JsonOps;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.minecraft.ChatFormatting;
@@ -13,10 +16,9 @@ import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.Vec3i;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.ComponentSerialization;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
 import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
@@ -56,10 +58,12 @@ public class PlayerUtils {
         else player.connection.sendChat(msg);
     }
 
+    @SuppressWarnings("unused")
     public static void sendMessage(Component text) {
         Minecraft.getInstance().gui.getChat().addMessage(text);
     }
 
+    @SuppressWarnings("unused")
     public static void sendTitle(Component title, Component subtitle, int in, int keep, int out) {
         Minecraft.getInstance().gui.setSubtitle(subtitle);
         Minecraft.getInstance().gui.setTitle(title);
@@ -67,15 +71,23 @@ public class PlayerUtils {
     }
 
     public static void sendActionBar(net.kyori.adventure.text.Component text) {
+        Gson gson = new Gson();
         String json = GsonComponentSerializer.gson().serialize(text);
-        MutableComponent component = Component.Serializer.fromJson(json, RegistryAccess.EMPTY);
+        Component component = ComponentSerialization.CODEC
+                .decode(JsonOps.INSTANCE, gson.fromJson(json, JsonElement.class))
+                .getOrThrow()
+                .getFirst();
         component = Component.empty().append(prefix).append(Component.empty().append(component).withStyle(ChatFormatting.GOLD));
         Minecraft.getInstance().gui.setOverlayMessage(component, true);
     }
 
     public static void sendModMessage(net.kyori.adventure.text.Component text) {
+        Gson gson = new Gson();
         String json = GsonComponentSerializer.gson().serialize(text);
-        MutableComponent component = Component.Serializer.fromJson(json, RegistryAccess.EMPTY);
+        Component component = ComponentSerialization.CODEC
+                .decode(JsonOps.INSTANCE, gson.fromJson(json, JsonElement.class))
+                .getOrThrow()
+                .getFirst();
         Minecraft.getInstance().gui.getChat().addMessage(component);
     }
 
@@ -94,8 +106,8 @@ public class PlayerUtils {
 
         //calculate the movement speed
         double genericMovementSpeed = player.getSpeed();
-        double speed = Optional.ofNullable(player.getEffect(MobEffects.MOVEMENT_SPEED)).map(MobEffectInstance::getAmplifier).orElse(-1) + 1d;
-        double slow = Optional.ofNullable(player.getEffect(MobEffects.MOVEMENT_SLOWDOWN)).map(MobEffectInstance::getAmplifier).orElse(-1) + 1d;
+        double speed = Optional.ofNullable(player.getEffect(MobEffects.SPEED)).map(MobEffectInstance::getAmplifier).orElse(-1) + 1d;
+        double slow = Optional.ofNullable(player.getEffect(MobEffects.SLOWNESS)).map(MobEffectInstance::getAmplifier).orElse(-1) + 1d;
         //this formula is not exact, but close enough
         double movementSpeed = genericMovementSpeed * 10 * (5.612 + speed * 1.123 - slow * 0.841);
         movementSpeed /= 20;
@@ -145,7 +157,7 @@ public class PlayerUtils {
         Vec3 playerPos = player.getEyePosition();
         Optional<Direction> direction = Arrays.stream(Direction.values()).min(Comparator.comparingDouble(dir -> Vec3.atLowerCornerOf(dir.getUnitVec3i()).multiply(.5, .5, .5).add(Vec3.atLowerCornerOf(target)).distanceTo(playerPos)));
 
-        return direction.orElse(null);
+        return direction.orElse(Direction.UP);
     }
 
     /**
@@ -199,16 +211,16 @@ public class PlayerUtils {
         }
         if (slot < 0) return false;
 
-        if (slot < 9 && inventory.selected == slot) return true;
+        if (slot < 9 && inventory.getSelectedSlot() == slot) return true;
 
         if (slot < 9) {
-            inventory.selected = slot;
+            inventory.setSelectedSlot(slot);
             connection.send(new ServerboundSetCarriedItemPacket(slot));
             return true;
         }
 
         //replace slot 9
-        inventory.selected = 8;
+        inventory.setSelectedSlot(8);
         connection.send(new ServerboundSetCarriedItemPacket(8));
         return true;
     }
@@ -232,17 +244,17 @@ public class PlayerUtils {
         }
         if (slot < 0) return false;
 
-        if (slot < 9 && inventory.selected == slot) return true;
+        if (slot < 9 && inventory.getSelectedSlot() == slot) return true;
 
         if (slot < 9) {
-            inventory.selected = slot;
+            inventory.setSelectedSlot(slot);
             connection.send(new ServerboundSetCarriedItemPacket(slot));
             return true;
         }
 
         //select slot 9 and pickblock
         //as of 1.21.4 you can't pick a item but need to pick a block
-        inventory.selected = 8;
+        inventory.setSelectedSlot(8);
         connection.send(new ServerboundSetCarriedItemPacket(8));
         ClientLevel level = getPlayer().clientLevel;
         BlockPos.withinManhattanStream(player.blockPosition(), 5, 5, 5)
@@ -274,16 +286,16 @@ public class PlayerUtils {
         }
         if (slot < 0) return Optional.empty();
 
-        if (slot < 9 && inventory.selected == slot) return Optional.of(select);
+        if (slot < 9 && inventory.getSelectedSlot() == slot) return Optional.of(select);
 
         if (slot < 9) {
-            inventory.selected = slot;
+            inventory.setSelectedSlot(slot);
             connection.send(new ServerboundSetCarriedItemPacket(slot));
             return Optional.of(select);
         }
 
         //replace slot 9
-        inventory.selected = 8;
+        inventory.setSelectedSlot(8);
         connection.send(new ServerboundSetCarriedItemPacket(8));
         return Optional.of(select);
     }

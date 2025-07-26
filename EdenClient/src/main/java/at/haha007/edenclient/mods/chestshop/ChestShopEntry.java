@@ -37,17 +37,7 @@ public class ChestShopEntry {
 
         String[] prices = linesFront[2].toLowerCase().replaceAll("\\s", "").split(":");
         for (String priceString : prices) {
-            if (priceString.contains("b")) {
-                priceString = priceString.replace("b", "");
-                if (!MathUtils.isInteger(priceString)) continue;
-                this.buyPrice = Integer.parseInt(priceString);
-            } else if (priceString.contains("s")) {
-                priceString = priceString.replace("s", "");
-                if (!MathUtils.isInteger(priceString)) continue;
-                this.sellPrice = Integer.parseInt(priceString);
-            } else {
-                return;
-            }
+            extractPrice(priceString);
         }
         pos = sign.getBlockPos();
         this.amount = signAmount;
@@ -56,17 +46,29 @@ public class ChestShopEntry {
         this.item = signItem.toLowerCase();
     }
 
+    private void extractPrice(String priceString) {
+        if (priceString.contains("b")) {
+            priceString = priceString.replace("b", "");
+            if (!MathUtils.isInteger(priceString)) return;
+            this.buyPrice = Integer.parseInt(priceString);
+        } else if (priceString.contains("s")) {
+            priceString = priceString.replace("s", "");
+            if (!MathUtils.isInteger(priceString)) return;
+            this.sellPrice = Integer.parseInt(priceString);
+        }
+    }
+
     public ChestShopEntry(CompoundTag tag) {
         isShop = true;
-        amount = tag.getInt("amount");
-        int[] ints = tag.getIntArray("pos");
+        amount = tag.getInt("amount").orElseThrow();
+        int[] ints = tag.getIntArray("pos").orElseThrow();
         pos = new Vec3i(ints[0], ints[1], ints[2]);
-        owner = tag.getString("owner");
-        item = tag.getString("item").toLowerCase();
+        owner = tag.getString("owner").orElseThrow();
+        item = tag.getString("item").orElseThrow().toLowerCase();
         if (tag.contains("buyPrice"))
-            buyPrice = tag.getInt("buyPrice");
+            buyPrice = tag.getInt("buyPrice").orElseThrow();
         if (tag.contains("sellPrice"))
-            sellPrice = tag.getInt("sellPrice");
+            sellPrice = tag.getInt("sellPrice").orElseThrow();
     }
 
     public CompoundTag toTag() {

@@ -4,16 +4,11 @@ import at.haha007.edenclient.annotations.Mod;
 import at.haha007.edenclient.callbacks.GameRenderCallback;
 import at.haha007.edenclient.callbacks.LeaveWorldCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
-import at.haha007.edenclient.utils.PlayerUtils;
-import at.haha007.edenclient.utils.RenderUtils;
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.*;
-import net.minecraft.client.Minecraft;
+import at.haha007.edenclient.utils.EdenRenderUtils;
+import fi.dy.masa.malilib.util.data.Color4f;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.CoreShaders;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.world.phys.Vec3;
-import org.joml.Matrix4f;
+import org.lwjgl.opengl.GL11;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -38,20 +33,11 @@ public class TracerRenderer {
         }
     }
 
-    private void render(PoseStack matrixStack, MultiBufferSource.BufferSource vertexConsumerProvider, float delta) {
+    private void render(float delta) {
         if (tracers.isEmpty()) return;
-        RenderSystem.setShader(Minecraft.getInstance().getShaderManager().getProgram(CoreShaders.POSITION));
-        RenderSystem.disableDepthTest();
-        Matrix4f matrix = matrixStack.last().pose();
-        Vec3 start = RenderUtils.getCameraPos().add(PlayerUtils.getClientLookVec());
-
-        BufferBuilder bb = Tesselator.getInstance().begin(VertexFormat.Mode.DEBUG_LINES, DefaultVertexFormat.POSITION);
-        tracers.values().forEach(s -> s.forEach(target -> {
-            bb.addVertex(matrix, (float) target.x, (float) target.y, (float) target.z);
-            bb.addVertex(matrix, (float) start.x, (float) start.y, (float) start.z);
-        }));
-        RenderSystem.setShaderColor(1, 1, 1, 1);
-        BufferUploader.drawWithShader(bb.buildOrThrow());
+        GL11.glDisable(GL11.GL_DEPTH_TEST);
+        GL11.glEnable(GL11.GL_LINE_SMOOTH);
+        EdenRenderUtils.drawTracers(tracers.values().stream().flatMap(Set::stream).toList(), Color4f.WHITE);
     }
 
     public void add(Vec3 target, int ticks) {

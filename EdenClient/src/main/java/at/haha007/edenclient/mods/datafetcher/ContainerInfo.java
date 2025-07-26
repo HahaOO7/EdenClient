@@ -331,7 +331,7 @@ public class ContainerInfo {
             ChestInfo chestInfo = new ChestInfo();
             Tag itemsCompound = tag.get("items");
             chestInfo.items = PerWorldConfig.get().toObject(itemsCompound, ItemList.class);
-            chestInfo.face = Direction.byName(tag.getString("direction"));
+            chestInfo.face = Direction.byName(tag.getString("direction").orElseThrow());
             return chestInfo;
         }
 

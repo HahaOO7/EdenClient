@@ -9,9 +9,9 @@ import at.haha007.edenclient.mods.datafetcher.ContainerInfo;
 import at.haha007.edenclient.mods.datafetcher.DataFetcher;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import fi.dy.masa.malilib.render.RenderUtils;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
@@ -28,6 +28,7 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Quaternionf;
+import org.lwjgl.opengl.GL11;
 
 import java.util.Comparator;
 import java.util.List;
@@ -59,7 +60,12 @@ public class ContainerDisplay {
         }
         ChunkPos chunkPos = player.chunkPosition();
         entries = new ConcurrentHashMap<>();
-        ChunkPos.rangeClosed(chunkPos, 1).forEach(cp -> entries.putAll(EdenClient.getMod(DataFetcher.class).getContainerInfo().getContainerInfo(cp)));
+        ChunkPos.rangeClosed(chunkPos, 1).forEach(cp -> {
+            Map<Vec3i, ContainerInfo.ChestInfo> info = EdenClient.getMod(DataFetcher.class).getContainerInfo().getContainerInfo(cp);
+            if (info != null) {
+                entries.putAll(info);
+            }
+        });
         Vec3i pp = player.blockPosition();
         entries = entries.entrySet().stream()
                 .sorted(Comparator.comparingInt(e -> e.getKey().distManhattan(pp)))
@@ -87,14 +93,19 @@ public class ContainerDisplay {
     }
 
 
-    private void renderWorld(PoseStack matrixStack, MultiBufferSource.BufferSource vertexConsumerProvider, float v) {
+    private void renderWorld(float v) {
         if (!enabled)
             return;
         Player player = getPlayer();
         Level level = player.level();
 
-        RenderSystem.enableDepthTest();
+        GL11.glEnable(GL11.GL_DEPTH_TEST);
         ItemRenderer itemRenderer = Minecraft.getInstance().getItemRenderer();
+        PoseStack matrixStack = new PoseStack();
+        Vec3 camPos = RenderUtils.camPos();
+        matrixStack.translate(-camPos.x, -camPos.y, -camPos.z);
+
+        MultiBufferSource.BufferSource bufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
         entries.forEach((pos, chestInfo) -> {
             matrixStack.pushPose();
             //calculate looking direction, rendering offset and rendering angle
@@ -136,7 +147,7 @@ public class ContainerDisplay {
                             0xF000F0,
                             OverlayTexture.NO_OVERLAY,
                             matrixStack,
-                            vertexConsumerProvider,
+                            bufferSource,
                             level,
                             0);
                     matrixStack.popPose();
@@ -152,12 +163,12 @@ public class ContainerDisplay {
                         0xF000F0,
                         OverlayTexture.NO_OVERLAY,
                         matrixStack,
-                        vertexConsumerProvider,
+                        bufferSource,
                         level,
                         0);
             }
             matrixStack.popPose();
         });
-        vertexConsumerProvider.endBatch();
+        bufferSource.endBatch();
     }
 }

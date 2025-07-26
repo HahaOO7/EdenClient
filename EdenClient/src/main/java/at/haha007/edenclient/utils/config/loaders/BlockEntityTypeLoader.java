@@ -18,7 +18,7 @@ public class BlockEntityTypeLoader implements ConfigLoader<StringTag, BlockEntit
 
     @NotNull
     public BlockEntityType<?> load(@NotNull StringTag nbtElement) {
-        BlockEntityType<?> type = registry.getValue(ResourceLocation.parse(nbtElement.getAsString()));
+        BlockEntityType<?> type = registry.getValue(ResourceLocation.parse(nbtElement.asString().orElseThrow()));
         return type == null ? BlockEntityType.STRUCTURE_BLOCK : type;
     }
 

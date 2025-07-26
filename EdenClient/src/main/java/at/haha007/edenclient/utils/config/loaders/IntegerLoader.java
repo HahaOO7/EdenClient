@@ -11,7 +11,7 @@ public class IntegerLoader implements ConfigLoader<IntTag, Integer> {
 
     @NotNull
     public Integer load(@NotNull IntTag value) {
-        return value.getAsInt();
+        return value.asInt().orElseThrow();
     }
 
     @NotNull

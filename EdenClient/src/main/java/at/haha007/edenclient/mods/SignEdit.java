@@ -83,7 +83,7 @@ public class SignEdit {
         if (!enabled) return InteractionResult.PASS;
         BlockEntity b = Minecraft.getInstance().level.getBlockEntity(pos);
         Registry<Item> registry = entity.clientLevel.registryAccess().lookupOrThrow(ItemTags.SIGNS.registry());
-        if (!registry.containsKey(BuiltInRegistries.ITEM.getKey(PlayerUtils.getPlayer().getInventory().getSelected().getItem())))
+        if (!registry.containsKey(BuiltInRegistries.ITEM.getKey(PlayerUtils.getPlayer().getInventory().getSelectedItem().getItem())))
             return InteractionResult.PASS;
         if (b instanceof SignBlockEntity sign) {
             SignText frontText = sign.getFrontText();

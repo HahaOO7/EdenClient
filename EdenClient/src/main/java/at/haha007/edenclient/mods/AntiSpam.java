@@ -156,7 +156,7 @@ public class AntiSpam {
         }
 
         chatText = Component.literal("").append(chatText).append(Component.literal(" [x" + spamCounter + "]")
-                .setStyle(Style.EMPTY.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(new SimpleDateFormat("hh:mm:ss").format(new Date()))))));
+                .setStyle(Style.EMPTY.withHoverEvent(new HoverEvent.ShowText(Component.literal(new SimpleDateFormat("hh:mm:ss").format(new Date()))))));
 
         event.setChatText(chatText);
     }

@@ -41,7 +41,7 @@ public class SearchItem {
 
     private Stream<Vec3i> findContainersWithItem(Item item) {
         ChunkChestMap chunkChestMap = EdenClient.getMod(DataFetcher.class).getContainerInfo().chunkMap();
-        if(chunkChestMap == null) return Stream.empty();
+        if (chunkChestMap == null) return Stream.empty();
         return chunkChestMap.values()
                 .stream()
                 .map(HashMap::entrySet)

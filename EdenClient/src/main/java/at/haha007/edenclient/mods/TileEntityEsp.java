@@ -2,29 +2,22 @@ package at.haha007.edenclient.mods;
 
 import at.haha007.edenclient.annotations.Mod;
 import at.haha007.edenclient.callbacks.GameRenderCallback;
-import at.haha007.edenclient.callbacks.JoinWorldCallback;
 import at.haha007.edenclient.callbacks.LeaveWorldCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
-import at.haha007.edenclient.utils.PlayerUtils;
-import at.haha007.edenclient.utils.RenderUtils;
+import at.haha007.edenclient.utils.EdenRenderUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import at.haha007.edenclient.utils.config.wrappers.BlockEntityTypeSet;
-import com.mojang.blaze3d.buffers.BufferUsage;
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.*;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
+import fi.dy.masa.malilib.util.data.Color4f;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientChunkCache;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.CoreShaders;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Registry;
 import net.minecraft.core.Vec3i;
@@ -32,11 +25,12 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.chunk.LevelChunk;
-import net.minecraft.world.phys.AABB;
-import org.joml.Matrix4f;
-import org.joml.Vector3f;
+import net.minecraft.world.phys.Vec3;
+import org.lwjgl.opengl.GL11;
 
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import static at.haha007.edenclient.command.CommandManager.*;
@@ -61,12 +55,10 @@ public class TileEntityEsp {
     @ConfigSubscriber("chest")
     BlockEntityTypeSet types = new BlockEntityTypeSet();
     List<Vec3i> tileEntities = new ArrayList<>();
-    private VertexBuffer wireframeBox;
 
     public TileEntityEsp() {
         GameRenderCallback.EVENT.register(this::render, getClass());
         PlayerTickCallback.EVENT.register(this::tick, getClass());
-        JoinWorldCallback.EVENT.register(this::build, getClass());
         LeaveWorldCallback.EVENT.register(this::destroy, getClass());
         PerWorldConfig.get().register(this, "tileEntityEsp");
         registerCommand();
@@ -93,15 +85,8 @@ public class TileEntityEsp {
                 .map(v -> (Vec3i) v).toList();
     }
 
-    private void build() {
-        wireframeBox = new VertexBuffer(BufferUsage.STATIC_WRITE);
-        AABB bb = new AABB(0, 0, 0, 1, 1, 1);
-        RenderUtils.drawOutlinedBox(bb, wireframeBox);
-    }
-
     private void destroy() {
         tileEntities = new ArrayList<>();
-        wireframeBox.close();
     }
 
     private void registerCommand() {
@@ -202,34 +187,17 @@ public class TileEntityEsp {
     }
 
 
-    private void render(PoseStack matrixStack, MultiBufferSource.BufferSource vertexConsumerProvider, float v) {
+    private void render(float v) {
         if (!enabled) return;
-        RenderSystem.setShader(Minecraft.getInstance().getShaderManager().getProgram(CoreShaders.POSITION));
-        RenderSystem.setShaderColor(red, green, blue, 1);
-        RenderSystem.disableDepthTest();
+        GL11.glEnable(GL11.GL_LINE_SMOOTH);
+        GL11.glDisable(GL11.GL_DEPTH_TEST);
         if (tracer && !tileEntities.isEmpty()) {
-            matrixStack.pushPose();
-            matrixStack.translate(.5, .5, .5);
-            Vector3f start = new Vector3f(RenderUtils.getCameraPos().add(PlayerUtils.getClientLookVec()).add(-.5, -.5, -.5).toVector3f());
-            Matrix4f matrix = matrixStack.last().pose();
-            BufferBuilder bb = Tesselator.getInstance().begin(VertexFormat.Mode.DEBUG_LINES, DefaultVertexFormat.POSITION);
-
-            for (Vec3i t : tileEntities) {
-                bb.addVertex(matrix, t.getX(), t.getY(), t.getZ());
-                bb.addVertex(matrix, start.x(), start.y(), start.z());
-            }
-            BufferUploader.drawWithShader(bb.buildOrThrow());
-            matrixStack.popPose();
+            EdenRenderUtils.drawTracers(tileEntities.stream().map(Vec3::atCenterOf).toList(), Color4f.fromColor(new Color(red, green, blue).getRGB()));
         }
 
-        tileEntities.forEach(c -> {
-            matrixStack.pushPose();
-            matrixStack.translate(c.getX(), c.getY(), c.getZ());
-            wireframeBox.bind();
-            wireframeBox.drawWithShader(matrixStack.last().pose(), RenderSystem.getProjectionMatrix(), RenderSystem.getShader());
-            VertexBuffer.unbind();
-            matrixStack.popPose();
-        });
-        RenderSystem.enableDepthTest();
+        tileEntities.forEach(c -> EdenRenderUtils.drawAreaOutline(
+                Vec3.atLowerCornerOf(c),
+                Vec3.atLowerCornerOf(c.offset(1, 1, 1)),
+                Color4f.fromColor(new Color(red, green, blue).getRGB())));
     }
 }

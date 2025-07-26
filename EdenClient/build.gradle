@@ -1,5 +1,5 @@
 plugins {
-    id 'fabric-loom' version '1.8-SNAPSHOT'
+    id 'fabric-loom' version "${loom_version}"
     id 'maven-publish'
 }
 
@@ -23,6 +23,10 @@ repositories {
     maven {
         name = "xpple"
         url = uri("https://maven.xpple.dev/maven2")
+    }
+    maven {
+        name = "jitpack"
+        url = uri("https://jitpack.io")
     }
     mavenCentral()
 }
@@ -56,6 +60,7 @@ dependencies {
     modImplementation include("net.kyori:adventure-text-serializer-gson:${project.adventure_version}")
 
     include modImplementation("dev.xpple:clientarguments:${project.clientarguments_version}")
+    modImplementation("com.github.sakura-ryoko:malilib:${project.malilib_version}")
 }
 
 processResources {

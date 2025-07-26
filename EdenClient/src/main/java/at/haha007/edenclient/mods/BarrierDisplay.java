@@ -2,7 +2,7 @@ package at.haha007.edenclient.mods;
 
 import at.haha007.edenclient.annotations.Mod;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
-import at.haha007.edenclient.utils.RenderUtils;
+import at.haha007.edenclient.utils.EdenRenderUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
@@ -40,8 +40,8 @@ public class BarrierDisplay {
     private void onTick(LocalPlayer player) {
         if (!enabled) return;
         tickCounter++;
-        if (player.getInventory().getSelected().getItem() == Items.BARRIER) return;
-        Vec3 cameraPos = RenderUtils.getCameraPos();
+        if (player.getInventory().getSelectedItem().getItem() == Items.BARRIER) return;
+        Vec3 cameraPos = EdenRenderUtils.getCameraPos();
         BlockPos center = new BlockPos((int) cameraPos.x, (int) cameraPos.y, (int) cameraPos.z);
         BlockParticleOption effect = new BlockParticleOption(ParticleTypes.BLOCK_MARKER, Blocks.BARRIER.defaultBlockState());
         ClientLevel level = player.clientLevel;

@@ -217,7 +217,7 @@ public class WorldEditReplaceHelper {
         List<String> open = TrapDoorBlock.OPEN.getPossibleValues().stream().map(Object::toString).toList();
         List<String> powered = TrapDoorBlock.POWERED.getPossibleValues().stream().map(Object::toString).toList();
         List<String> half = TrapDoorBlock.HALF.getPossibleValues().stream().map(Half::toString).toList();
-        List<String> facing = TrapDoorBlock.FACING.getPossibleValues().stream().map(Direction::getName).toList();
+        List<String> facing = HorizontalDirectionalBlock.FACING.getPossibleValues().stream().map(Direction::getName).toList();
         List<String> waterlogged = TrapDoorBlock.WATERLOGGED.getPossibleValues().stream().map(Object::toString).toList();
 
         List<List<String>> inputs = List.of(open, powered, half, facing, waterlogged);
@@ -241,7 +241,7 @@ public class WorldEditReplaceHelper {
 
     public void sendReplaceSignBlockCommand(StandingSignBlock fromBlock, StandingSignBlock toBlock, int delay) {
         List<String> rotation = StandingSignBlock.ROTATION.getPossibleValues().stream().map(v -> Integer.toString(v)).toList();
-        List<String> waterlogged = StandingSignBlock.WATERLOGGED.getPossibleValues().stream().map(Object::toString).toList();
+        List<String> waterlogged = SignBlock.WATERLOGGED.getPossibleValues().stream().map(Object::toString).toList();
 
         List<List<String>> inputs = List.of(rotation, waterlogged);
         List<String> names = List.of("rotation", "waterlogged");
@@ -251,7 +251,7 @@ public class WorldEditReplaceHelper {
 
     public void sendReplaceWallSignBlockCommand(WallSignBlock fromBlock, WallSignBlock toBlock, int delay) {
         List<String> facing = WallSignBlock.FACING.getPossibleValues().stream().map(Direction::getName).toList();
-        List<String> waterlogged = WallSignBlock.WATERLOGGED.getPossibleValues().stream().map(Object::toString).toList();
+        List<String> waterlogged = SignBlock.WATERLOGGED.getPossibleValues().stream().map(Object::toString).toList();
 
         List<List<String>> inputs = List.of(facing, waterlogged);
         List<String> names = List.of("facing", "waterlogged");
@@ -260,11 +260,11 @@ public class WorldEditReplaceHelper {
     }
 
     private void sendReplaceFenceBlockCommand(FenceBlock fromBlock, FenceBlock toBlock, int delay) {
-        List<String> north = FenceBlock.NORTH.getPossibleValues().stream().map(Object::toString).toList();
-        List<String> east = FenceBlock.EAST.getPossibleValues().stream().map(Object::toString).toList();
-        List<String> south = FenceBlock.SOUTH.getPossibleValues().stream().map(Object::toString).toList();
-        List<String> west = FenceBlock.WEST.getPossibleValues().stream().map(Object::toString).toList();
-        List<String> waterlogged = FenceBlock.WATERLOGGED.getPossibleValues().stream().map(Object::toString).toList();
+        List<String> north = CrossCollisionBlock.NORTH.getPossibleValues().stream().map(Object::toString).toList();
+        List<String> east = CrossCollisionBlock.EAST.getPossibleValues().stream().map(Object::toString).toList();
+        List<String> south = CrossCollisionBlock.SOUTH.getPossibleValues().stream().map(Object::toString).toList();
+        List<String> west = CrossCollisionBlock.WEST.getPossibleValues().stream().map(Object::toString).toList();
+        List<String> waterlogged = CrossCollisionBlock.WATERLOGGED.getPossibleValues().stream().map(Object::toString).toList();
 
         List<List<String>> inputs = List.of(north, east, south, west, waterlogged);
         List<String> names = List.of("north", "east", "south", "west", "waterlogged");
@@ -273,7 +273,7 @@ public class WorldEditReplaceHelper {
     }
 
     private void sendReplaceFenceGateBlockCommand(FenceGateBlock fromBlock, FenceGateBlock toBlock, int delay) {
-        List<String> facing = FenceGateBlock.FACING.getPossibleValues().stream().map(Direction::getName).toList();
+        List<String> facing = HorizontalDirectionalBlock.FACING.getPossibleValues().stream().map(Direction::getName).toList();
         List<String> inWall = FenceGateBlock.IN_WALL.getPossibleValues().stream().map(Object::toString).toList();
         List<String> open = FenceGateBlock.OPEN.getPossibleValues().stream().map(Object::toString).toList();
         List<String> powered = FenceGateBlock.POWERED.getPossibleValues().stream().map(Object::toString).toList();
@@ -285,10 +285,10 @@ public class WorldEditReplaceHelper {
     }
 
     private void sendReplaceWallBlockCommand(WallBlock fromBlock, WallBlock toBlock, int delay) {
-        List<String> north = WallBlock.NORTH_WALL.getPossibleValues().stream().map(WallSide::getSerializedName).toList();
-        List<String> east = WallBlock.EAST_WALL.getPossibleValues().stream().map(WallSide::getSerializedName).toList();
-        List<String> south = WallBlock.SOUTH_WALL.getPossibleValues().stream().map(WallSide::getSerializedName).toList();
-        List<String> west = WallBlock.WEST_WALL.getPossibleValues().stream().map(WallSide::getSerializedName).toList();
+        List<String> north = WallBlock.NORTH.getPossibleValues().stream().map(WallSide::getSerializedName).toList();
+        List<String> east = WallBlock.EAST.getPossibleValues().stream().map(WallSide::getSerializedName).toList();
+        List<String> south = WallBlock.SOUTH.getPossibleValues().stream().map(WallSide::getSerializedName).toList();
+        List<String> west = WallBlock.WEST.getPossibleValues().stream().map(WallSide::getSerializedName).toList();
         List<String> waterlogged = WallBlock.WATERLOGGED.getPossibleValues().stream().map(Object::toString).toList();
         List<String> up = WallBlock.UP.getPossibleValues().stream().map(Object::toString).toList();
 

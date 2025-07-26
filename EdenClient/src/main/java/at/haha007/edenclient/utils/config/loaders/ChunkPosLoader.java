@@ -12,7 +12,7 @@ public class ChunkPosLoader implements ConfigLoader<IntArrayTag, ChunkPos> {
 
     @NotNull
     public ChunkPos load(@NotNull IntArrayTag tag) {
-        return new ChunkPos(tag.get(0).getAsInt(), tag.get(1).getAsInt());
+        return new ChunkPos(tag.get(0).asInt().orElseThrow(), tag.get(1).asInt().orElseThrow());
     }
 
     @NotNull

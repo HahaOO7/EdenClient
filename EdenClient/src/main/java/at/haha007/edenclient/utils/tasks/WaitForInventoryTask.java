@@ -4,14 +4,14 @@ import at.haha007.edenclient.callbacks.InventoryOpenCallback;
 import at.haha007.edenclient.callbacks.LeaveWorldCallback;
 import net.minecraft.network.chat.Component;
 
-import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 public class WaitForInventoryTask implements Task {
 
-    private static final Set<WaitForInventoryTask> listeners = new HashSet<>();
+    private static final Set<WaitForInventoryTask> listeners = new CopyOnWriteArraySet<>();
 
     static {
         InventoryOpenCallback.EVENT.register(i -> listeners.removeIf(r -> r.onInventoryOpen(i.getTitle())), WaitForInventoryTask.class);

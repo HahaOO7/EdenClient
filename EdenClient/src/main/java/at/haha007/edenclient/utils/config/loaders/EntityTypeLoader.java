@@ -18,7 +18,7 @@ public class EntityTypeLoader implements ConfigLoader<StringTag, EntityType<?>> 
 
     @NotNull
     public EntityType<?> load(@NotNull StringTag nbtElement) {
-        return registry.getValue(ResourceLocation.parse(nbtElement.getAsString()));
+        return registry.getValue(ResourceLocation.parse(nbtElement.asString().orElseThrow()));
     }
 
     @NotNull

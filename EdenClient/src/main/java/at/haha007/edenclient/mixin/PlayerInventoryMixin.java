@@ -2,6 +2,7 @@ package at.haha007.edenclient.mixin;
 
 import at.haha007.edenclient.callbacks.PlayerInvChangeCallback;
 import at.haha007.edenclient.utils.PlayerUtils;
+import com.mojang.logging.LogUtils;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
@@ -14,6 +15,10 @@ public class PlayerInventoryMixin {
 
     @Inject(at = @At("TAIL"), method = "setItem")
     void addItem(int slot, ItemStack stack, CallbackInfo ci) {
-        PlayerInvChangeCallback.EVENT.invoker().onInvChange(PlayerUtils.getPlayer().getInventory());
+        try {
+            PlayerInvChangeCallback.EVENT.invoker().onInvChange(PlayerUtils.getPlayer().getInventory());
+        } catch (IllegalStateException e) {
+            LogUtils.getLogger().info(e.getMessage());
+        }
     }
 }

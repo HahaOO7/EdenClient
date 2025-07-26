@@ -12,7 +12,6 @@
     "ChatScreenMixin",
     "ClientPacketListenerMixin",
     "ClientPlayerMixin",
-    "GameRendererMixin",
     "HandledScreenMixin",
     "MinecraftClientMixin",
     "PlayerControllerMixin",

@@ -9,6 +9,7 @@ import at.haha007.edenclient.utils.area.*;
 import at.haha007.edenclient.utils.config.loaders.*;
 import at.haha007.edenclient.utils.config.wrappers.*;
 import com.mojang.logging.LogUtils;
+import fi.dy.masa.malilib.util.nbt.PrettyNbtStringifier;
 import net.minecraft.core.Vec3i;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtAccounter;
@@ -21,6 +22,7 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -149,7 +151,8 @@ public class PerWorldConfig {
             LogUtils.getLogger().error("Error while loading PerWorldConfig: {}", worldName, e);
         }
         LogUtils.getLogger().info("LOADING CONFIG: {}", worldName);
-        String json = tag.getAsString();
+        @SuppressWarnings("UnstableApiUsage")
+        String json = String.join("\n", new PrettyNbtStringifier().getNbtLines(tag));
         LogUtils.getLogger().info("LOADED VALUES: {}", json);
         LogUtils.getLogger().info("FROM: {}", file);
         CompoundTag finalTag = tag;
@@ -163,9 +166,10 @@ public class PerWorldConfig {
             save(compound, obj);
         });
         LogUtils.getLogger().info("SAVING CONFIG: {}", tag);
-        String json = tag.getAsString();
+        @SuppressWarnings("UnstableApiUsage")
+        String snbt = String.join("\n", new PrettyNbtStringifier().getNbtLines(tag));
         File file = new File(folder, worldName + ".mca");
-        LogUtils.getLogger().info("SAVED VALUES: {}", json);
+        LogUtils.getLogger().info("SAVED VALUES: {}", snbt);
         LogUtils.getLogger().info("TO: {}", file);
         if (ensureExistingConfigFolder()) return;
         try {
@@ -190,6 +194,11 @@ public class PerWorldConfig {
             var annotation = field.getDeclaredAnnotation(ConfigSubscriber.class);
             if (annotation == null) continue;
             Class<?> c = getClass(field);
+            if (c == null) {
+                LogUtils.getLogger().error("Error loading config while loading: No class found for field: {}.{}",
+                        obj.getClass().getSimpleName(), field.getName());
+                continue;
+            }
             ConfigLoader<Tag, ?> loader = getLoader(c);
             if (loader == null) {
                 LogUtils.getLogger().error("Error loading config: No loader found for class: {}", c.getCanonicalName());
@@ -224,6 +233,11 @@ public class PerWorldConfig {
         for (Field field : obj.getClass().getDeclaredFields()) {
             if (!field.isAnnotationPresent(ConfigSubscriber.class)) continue;
             Class<?> c = getClass(field);
+            if (c == null) {
+                LogUtils.getLogger().error("Error loading config while saving: No class found for field: {}.{}",
+                        obj.getClass().getSimpleName(), field.getName());
+                continue;
+            }
             @SuppressWarnings("unchecked")
             ConfigLoader<Tag, Object> loader = (ConfigLoader<Tag, Object>) getLoader(c);
             if (loader == null) {
@@ -235,11 +249,6 @@ public class PerWorldConfig {
                 Object value = field.get(obj);
                 if (value == null) continue;
                 Tag nbt = loader.save(value);
-                //noinspection ConstantValue
-                if (nbt == null) {
-                    LogUtils.getLogger().error("Error while saving {} in class {}", field.getName(), obj.getClass().getSimpleName(), new NullPointerException());
-                    continue;
-                }
                 tag.put(field.getName(), nbt);
             } catch (IllegalAccessException e) {
                 LogUtils.getLogger().error("Error loading config: Can't access field: {}.{}", c.getCanonicalName(), field.getName(), e);
@@ -268,7 +277,7 @@ public class PerWorldConfig {
         if (path.isEmpty()) return root;
         String[] a = path.split("\\.");
         for (String s : a) {
-            CompoundTag tag = root.getCompound(s);
+            CompoundTag tag = root.getCompound(s).orElse(new CompoundTag());
             root.put(s, tag);
             root = tag;
         }
@@ -285,7 +294,7 @@ public class PerWorldConfig {
         return loader.save(object);
     }
 
-    public <T> T toObject(Tag nbt, Class<T> type) {
+    public <T> T toObject(@NotNull Tag nbt, @NotNull Class<T> type) {
         ConfigLoader<Tag, ?> loader = getLoader(type);
         if (loader == null) {
             LogUtils.getLogger().error("Error loading config: No loader found for class: {}", type.getCanonicalName(), new NullPointerException());

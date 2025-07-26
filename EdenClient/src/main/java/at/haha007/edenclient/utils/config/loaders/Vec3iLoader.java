@@ -15,7 +15,7 @@ public class Vec3iLoader implements ConfigLoader<IntArrayTag, Vec3i> {
 
     @NotNull
     public Vec3i load(@NotNull IntArrayTag tag) {
-        return new Vec3i(tag.get(0).getAsInt(), tag.get(1).getAsInt(), tag.get(2).getAsInt());
+        return new Vec3i(tag.get(0).asInt().orElseThrow(), tag.get(1).asInt().orElseThrow(), tag.get(2).asInt().orElseThrow());
     }
 
     @NotNull

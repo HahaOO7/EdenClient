@@ -18,7 +18,7 @@ public class StringVec3iMapLoader implements ConfigLoader<CompoundTag, StringVec
     @NotNull
     public StringVec3iMap load(@NotNull CompoundTag tag) {
         StringVec3iMap list = new StringVec3iMap();
-        for (String key : tag.getAllKeys()) {
+        for (String key : tag.keySet()) {
             list.put(key, PerWorldConfig.get().toObject(tag.get(key), Vec3i.class));
         }
         return list;
