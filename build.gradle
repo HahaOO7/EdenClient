@@ -26,9 +26,17 @@ dependencies {
 tasks.jar {
     dependsOn ':EdenClient:remapJar'
     dependsOn ':EcAnnotations:jar'
-}
-
-jar {
+    
+    // Include the compiled classes from EcAnnotations
+    from {
+        configurations.runtimeClasspath.collect { 
+            it.isDirectory() ? it : zipTree(it) 
+        }
+    }
+    
+    // Include the compiled classes from EcAnnotations directly
+    from project(':EcAnnotations').sourceSets.main.output
+    
     // Configure to exclude specific files or folders
     exclude('assets/fabricloader/**')
     exclude('net/fabricmc/**')
@@ -46,14 +54,10 @@ jar {
     exclude('**malilib**')
     exclude('assets/fabric**/**')
     exclude('assets/malilib/**')
+}
 
-    from {
-        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
-    }
-
+jar {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     archiveBaseName.set('EdenClient')
     archiveVersion.set(project.properties.get("mod_version") as String)
 }
-
-

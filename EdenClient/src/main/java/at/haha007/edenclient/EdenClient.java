@@ -47,17 +47,17 @@ public class EdenClient implements ClientModInitializer {
     public static void onJoin() {
         modInitializer.initializeMods();
         //For limited access EdenClient use:
-//        modInitializer.initializeMods(List.of(
-//                EnsureSilk.class,
-//                AntiStrip.class,
-//                WordHighlighter.class,
-//                Rainbowifier.class,
-//                ContainerDisplay.class,
-//                SignWidthOverride.class,
-//                NbtInfo.class,
-//                AntiSpam.class,
-//                RenderShape.class,
-//                MessageIgnorer.class));
+//        modInitializer.initializeMods(java.util.List.of(
+//                at.haha007.edenclient.mods.EnsureSilk.class,
+//                at.haha007.edenclient.mods.AntiStrip.class,
+//                at.haha007.edenclient.mods.WordHighlighter.class,
+//                at.haha007.edenclient.mods.Rainbowifier.class,
+//                at.haha007.edenclient.mods.ContainerDisplay.class,
+//                at.haha007.edenclient.mods.SignWidthOverride.class,
+//                at.haha007.edenclient.mods.NbtInfo.class,
+//                at.haha007.edenclient.mods.AntiSpam.class,
+//                at.haha007.edenclient.mods.RenderShape.class,
+//                at.haha007.edenclient.mods.MessageIgnorer.class));
     }
 
     public static void onQuit() {
