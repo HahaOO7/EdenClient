@@ -29,6 +29,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.List;
+import java.util.Objects;
 
 @Mixin(ClientPacketListener.class)
 public abstract class ClientPacketListenerMixin {
@@ -98,7 +99,7 @@ public abstract class ClientPacketListenerMixin {
         ecAddCommands();
     }
 
-    @Inject(method = "handleContainerContent", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "handleContainerContent", at = @At("HEAD"))
     private void onInventoryContent(ClientboundContainerSetContentPacket packet, CallbackInfo ci) {
         //get items, remove player items
         List<ItemStack> items = packet.items();
@@ -110,14 +111,14 @@ public abstract class ClientPacketListenerMixin {
 
     @Inject(method = "updateLevelChunk", at = @At("RETURN"))
     private void onUpdateLevelChunk(int i, int j, ClientboundLevelChunkPacketData clientboundLevelChunkPacketData, CallbackInfo ci) {
-        LevelChunk chunk = this.level.getChunkSource().getChunkNow(i, j);
+        LevelChunk chunk = Objects.requireNonNull(this.level).getChunkSource().getChunkNow(i, j);
         UpdateLevelChunkCallback.EVENT.invoker().updateLevelChunk(chunk);
     }
 
     @Inject(method = "handleBlockDestruction", at = @At("RETURN"))
     private void onBlockDestruction(ClientboundBlockDestructionPacket packet, CallbackInfo ci) {
         BlockPos pos = packet.getPos();
-        LevelChunk chunk = this.level.getChunkSource().getChunkNow(pos.getX() >> 4, pos.getZ() >> 4);
+        LevelChunk chunk = Objects.requireNonNull(this.level).getChunkSource().getChunkNow(pos.getX() >> 4, pos.getZ() >> 4);
         UpdateLevelChunkCallback.EVENT.invoker().updateLevelChunk(chunk);
     }
 
@@ -126,8 +127,14 @@ public abstract class ClientPacketListenerMixin {
         MenuType<?> type = packet.getType();
         int id = packet.getContainerId();
         Component title = packet.getTitle();
+
         ContainerInfo containerInfo = ContainerInfo.update(id, type, title);
         if (containerInfo.isComplete()) InventoryOpenCallback.EVENT.invoker().open(containerInfo);
+
+        // Check if any listener wants to cancel the container opening
+        if (ContainerOpenCallback.EVENT.invoker().onContainerOpen(type, id, title)) {
+            ci.cancel();
+        }
     }
 
     @Inject(method = "handleSystemChat", at = @At("HEAD"), cancellable = true)

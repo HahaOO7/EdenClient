@@ -31,6 +31,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ServerboundUseItemOnPacket;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.Container;
@@ -39,6 +40,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ChestMenu;
+import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.inventory.ShulkerBoxMenu;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -56,6 +58,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -83,11 +86,16 @@ public class ContainerInfo {
         PlayerInvChangeCallback.EVENT.register(this::onInventoryChange, getClass());
         UpdateLevelChunkCallback.EVENT.register(this::updateChunk, getClass());
         PlayerTickCallback.EVENT.register(this::tick, getClass());
+        ContainerOpenCallback.EVENT.register(this::shouldCancelContainerOpen, getClass());
 
         PerWorldConfig.get().register(new ContainerConfigLoader(), ChunkChestMap.class);
         PerWorldConfig.get().register(new ChestMapLoader(), ChestMap.class);
         PerWorldConfig.get().register(new ChestInfoLoader(), ChestInfo.class);
         PerWorldConfig.get().register(this, "ContainerInfo");
+    }
+
+    private boolean shouldCancelContainerOpen(MenuType<?> type, int id, Component title) {
+        return autoUpdateTask != null;
     }
 
     public LiteralArgumentBuilder<FabricClientCommandSource> registerCommand() {
@@ -195,15 +203,9 @@ public class ContainerInfo {
         lastInteractedBlock = pos;
         lastClickedDirection = freeDirection;
         autoUpdateTask = new TaskManager().then(new MaxTimeTask(
-                new WaitForInventoryTask()
-                        .then(() -> {
-                            Screen screen = Minecraft.getInstance().screen;
-                            if (!(screen instanceof AbstractContainerScreen<?> inventoryScreen)) return;
-                            AbstractContainerMenu menu = inventoryScreen.getMenu();
-                            onCloseInventory(menu.getItems());
-                        })
-                        .then(new SyncTask(PlayerUtils.getPlayer()::closeContainer)
-                                .then(() -> autoUpdateTask = null)),
+                new WaitForInventoryTask(Pattern.compile(".*"), containerInfo ->
+                        onCloseInventory(containerInfo.getItems())).then(new SyncTask(PlayerUtils.getPlayer()::closeContainer)
+                        .then(() -> autoUpdateTask = null)),
                 10000, () -> {
             autoUpdateTask = null;
             LogUtils.getLogger().info("failed to update container at {}", pos);
@@ -330,7 +332,7 @@ public class ContainerInfo {
         public ChestInfo load(@NotNull CompoundTag tag) {
             ChestInfo chestInfo = new ChestInfo();
             Tag itemsCompound = tag.get("items");
-            chestInfo.items = PerWorldConfig.get().toObject(itemsCompound, ItemList.class);
+            chestInfo.items = itemsCompound == null ? new ItemList() : PerWorldConfig.get().toObject(itemsCompound, ItemList.class);
             chestInfo.face = Direction.byName(tag.getString("direction").orElseThrow());
             return chestInfo;
         }
@@ -412,7 +414,7 @@ public class ContainerInfo {
         EMPTY,
         ALL,
         OLD,
-        OLD_EMPTY;
+        OLD_EMPTY
     }
 
     private void removeOldEntriesFromUpdatedBlocks(int seconds) {
@@ -423,7 +425,7 @@ public class ContainerInfo {
     }
 
     private boolean matchesEmpty(BlockPos pos, ClientLevel level) {
-        if(updatedBlocks.containsKey(pos)) return false;
+        if (updatedBlocks.containsKey(pos)) return false;
         LevelChunk levelChunk = level.getChunkAt(pos);
         if (levelChunk.isEmpty()) return false;
         ChunkPos chunkPos = levelChunk.getPos();
