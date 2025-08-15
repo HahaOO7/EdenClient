@@ -57,6 +57,7 @@ public class EdenClient implements ClientModInitializer {
 //                at.haha007.edenclient.mods.NbtInfo.class,
 //                at.haha007.edenclient.mods.AntiSpam.class,
 //                at.haha007.edenclient.mods.RenderShape.class,
+//                at.haha007.edenclient.mods.SearchItem.class,
 //                at.haha007.edenclient.mods.MessageIgnorer.class));
     }
 

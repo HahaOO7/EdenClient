@@ -8,10 +8,7 @@ import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import at.haha007.edenclient.utils.config.loaders.ConfigLoader;
 import at.haha007.edenclient.utils.config.wrappers.ItemList;
-import at.haha007.edenclient.utils.tasks.MaxTimeTask;
-import at.haha007.edenclient.utils.tasks.SyncTask;
-import at.haha007.edenclient.utils.tasks.TaskManager;
-import at.haha007.edenclient.utils.tasks.WaitForInventoryTask;
+import at.haha007.edenclient.utils.tasks.*;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.logging.LogUtils;
 import lombok.Getter;
@@ -87,11 +84,19 @@ public class ContainerInfo {
         UpdateLevelChunkCallback.EVENT.register(this::updateChunk, getClass());
         PlayerTickCallback.EVENT.register(this::tick, getClass());
         ContainerOpenCallback.EVENT.register(this::shouldCancelContainerOpen, getClass());
+        LeaveWorldCallback.EVENT.register(this::destroy, getClass());
 
         PerWorldConfig.get().register(new ContainerConfigLoader(), ChunkChestMap.class);
         PerWorldConfig.get().register(new ChestMapLoader(), ChestMap.class);
         PerWorldConfig.get().register(new ChestInfoLoader(), ChestInfo.class);
         PerWorldConfig.get().register(this, "ContainerInfo");
+    }
+
+    private void destroy() {
+        autoMode = null;
+        if (autoUpdateTask != null)
+            autoUpdateTask.cancel();
+        autoUpdateTask = null;
     }
 
     private boolean shouldCancelContainerOpen(MenuType<?> type, int id, Component title) {
@@ -204,10 +209,16 @@ public class ContainerInfo {
         lastClickedDirection = freeDirection;
         autoUpdateTask = new TaskManager().then(new MaxTimeTask(
                 new WaitForInventoryTask(Pattern.compile(".*"), containerInfo ->
-                        onCloseInventory(containerInfo.getItems())).then(new SyncTask(PlayerUtils.getPlayer()::closeContainer)
+                        onCloseInventory(containerInfo.getItems()))
+                        .then(() -> lastInteractedBlock = null)
+                        .then(() -> lastClickedDirection = null)
+                        .then(new SyncTask(PlayerUtils.getPlayer()::closeContainer)
+//                                .then(new WaitForTicksTask(3))
                         .then(() -> autoUpdateTask = null)),
-                10000, () -> {
+                100, () -> {
             autoUpdateTask = null;
+            lastInteractedBlock = null;
+            lastClickedDirection = null;
             LogUtils.getLogger().info("failed to update container at {}", pos);
         }));
         autoUpdateTask.start();

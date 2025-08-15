@@ -17,7 +17,10 @@ public class WaitForInventoryTask implements Task {
 
     static {
         InventoryOpenCallback.EVENT.register(i -> listeners.removeIf(r -> r.onInventoryOpen(i)), WaitForInventoryTask.class);
-        LeaveWorldCallback.EVENT.register(listeners::clear, WaitForInventoryTask.class);
+        LeaveWorldCallback.EVENT.register(() -> {
+            listeners.forEach(WaitForInventoryTask::cancel);
+            listeners.clear();
+        }, WaitForInventoryTask.class);
     }
 
     private final Predicate<Component> matcher;
@@ -53,6 +56,12 @@ public class WaitForInventoryTask implements Task {
             while (info == null) {
                 lock.wait();
             }
+        }
+    }
+
+    private void cancel(){
+        synchronized (lock) {
+            lock.notifyAll();
         }
     }
 }
