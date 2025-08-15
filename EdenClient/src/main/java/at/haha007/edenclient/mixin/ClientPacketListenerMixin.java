@@ -47,12 +47,14 @@ public abstract class ClientPacketListenerMixin {
     @Inject(method = "handleLogin", at = @At("RETURN"))
     private void onLogin(ClientboundLoginPacket clientboundLoginPacket, CallbackInfo ci) {
         boolean connect = level != null;
-        if (connect) {
+        if (connect && !EdenClient.connected) {
             EdenClient.onJoin();
             JoinWorldCallback.EVENT.invoker().join();
-        } else {
+            EdenClient.connected = true;
+        } else if(!connect && EdenClient.connected) {
             LeaveWorldCallback.EVENT.invoker().leave();
             EdenClient.onQuit();
+            EdenClient.connected = false;
         }
     }
 

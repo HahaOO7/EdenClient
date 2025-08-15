@@ -212,6 +212,7 @@ public class ContainerInfo {
                         onCloseInventory(containerInfo.getItems()))
                         .then(() -> lastInteractedBlock = null)
                         .then(() -> lastClickedDirection = null)
+                        .then(at.haha007.edenclient.utils.ContainerInfo::clear)
                         .then(new SyncTask(PlayerUtils.getPlayer()::closeContainer)
 //                                .then(new WaitForTicksTask(3))
                         .then(() -> autoUpdateTask = null)),
@@ -219,6 +220,7 @@ public class ContainerInfo {
             autoUpdateTask = null;
             lastInteractedBlock = null;
             lastClickedDirection = null;
+            at.haha007.edenclient.utils.ContainerInfo.clear();
             LogUtils.getLogger().info("failed to update container at {}", pos);
         }));
         autoUpdateTask.start();

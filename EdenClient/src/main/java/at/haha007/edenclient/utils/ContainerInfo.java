@@ -41,6 +41,10 @@ public class ContainerInfo {
         return containerInfo;
     }
 
+    public static void clear() {
+        cache.invalidateAll();
+    }
+
     public static void remove(int id) {
         cache.invalidate(id);
     }

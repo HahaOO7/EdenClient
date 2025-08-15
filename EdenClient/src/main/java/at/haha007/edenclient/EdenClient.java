@@ -23,6 +23,7 @@ public class EdenClient implements ClientModInitializer {
     @Getter
     private static EdenClient instance;
     public static final ExecutorService chatThread = Executors.newSingleThreadExecutor();
+    public static boolean connected = false;
 
     public static void setInstance(EdenClient instance) {
         EdenClient.instance = instance;
