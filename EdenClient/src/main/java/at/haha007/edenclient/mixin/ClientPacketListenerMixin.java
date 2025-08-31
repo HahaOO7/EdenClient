@@ -105,6 +105,7 @@ public abstract class ClientPacketListenerMixin {
     private void onInventoryContent(ClientboundContainerSetContentPacket packet, CallbackInfo ci) {
         //get items, remove player items
         List<ItemStack> items = packet.items();
+        if(items.size() < 36) return;
         items = items.subList(0, items.size() - 36);
         int id = packet.containerId();
         ContainerInfo containerInfo = ContainerInfo.update(id, items);

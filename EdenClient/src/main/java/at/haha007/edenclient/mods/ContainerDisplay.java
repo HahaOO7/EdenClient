@@ -42,7 +42,7 @@ import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
 @Mod(dependencies = DataFetcher.class)
 public class ContainerDisplay {
-    @ConfigSubscriber("false")
+    @ConfigSubscriber("true")
     private boolean enabled;
     private Map<Vec3i, ContainerInfo.ChestInfo> entries = new ConcurrentHashMap<>();
 

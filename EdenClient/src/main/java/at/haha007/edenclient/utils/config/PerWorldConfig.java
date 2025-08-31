@@ -153,7 +153,7 @@ public class PerWorldConfig {
         LogUtils.getLogger().info("LOADING CONFIG: {}", worldName);
         @SuppressWarnings("UnstableApiUsage")
         String json = String.join("\n", new PrettyNbtStringifier().getNbtLines(tag));
-        LogUtils.getLogger().info("LOADED VALUES: {}", json);
+//        LogUtils.getLogger().info("LOADED VALUES: {}", json);
         LogUtils.getLogger().info("FROM: {}", file);
         CompoundTag finalTag = tag;
         registered.forEach((key, obj) -> load(getCompound(finalTag, key), obj));
@@ -165,11 +165,7 @@ public class PerWorldConfig {
             CompoundTag compound = getCompound(tag, key);
             save(compound, obj);
         });
-        LogUtils.getLogger().info("SAVING CONFIG: {}", tag);
-        @SuppressWarnings("UnstableApiUsage")
-        String snbt = String.join("\n", new PrettyNbtStringifier().getNbtLines(tag));
         File file = new File(folder, worldName + ".mca");
-        LogUtils.getLogger().info("SAVED VALUES: {}", snbt);
         LogUtils.getLogger().info("TO: {}", file);
         if (ensureExistingConfigFolder()) return;
         try {
