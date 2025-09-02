@@ -42,6 +42,7 @@ public class BarrierDisplay {
         tickCounter++;
         if (player.getInventory().getSelectedItem().getItem() == Items.BARRIER) return;
         Vec3 cameraPos = EdenRenderUtils.getCameraPos();
+        if (cameraPos == null) return;
         BlockPos center = new BlockPos((int) cameraPos.x, (int) cameraPos.y, (int) cameraPos.z);
         BlockParticleOption effect = new BlockParticleOption(ParticleTypes.BLOCK_MARKER, Blocks.BARRIER.defaultBlockState());
         ClientLevel level = player.clientLevel;
