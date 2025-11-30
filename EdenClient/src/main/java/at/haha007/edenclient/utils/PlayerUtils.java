@@ -168,7 +168,7 @@ public class PlayerUtils {
      */
     public static boolean breakBlock(BlockPos pos) {
         LocalPlayer player = getPlayer();
-        ClientLevel world = player.clientLevel;
+        ClientLevel world = Minecraft.getInstance().level;
         BlockState state = world.getBlockState(pos);
         Block block = state.getBlock();
         float delta = state.getDestroyProgress(player, world, pos);
@@ -195,7 +195,7 @@ public class PlayerUtils {
         if (connection == null) return false;
         MultiPlayerGameMode gameMode = Minecraft.getInstance().gameMode;
         if (gameMode == null) return false;
-        ClientLevel level = player.clientLevel;
+        ClientLevel level = Minecraft.getInstance().level;
 
         int slot = -1;
         for (int i = 0; i < 36; i++) {
@@ -256,7 +256,7 @@ public class PlayerUtils {
         //as of 1.21.4 you can't pick a item but need to pick a block
         inventory.setSelectedSlot(8);
         connection.send(new ServerboundSetCarriedItemPacket(8));
-        ClientLevel level = getPlayer().clientLevel;
+        ClientLevel level = Minecraft.getInstance().level;
         BlockPos.withinManhattanStream(player.blockPosition(), 5, 5, 5)
                 .filter(b -> level.getBlockState(b).getBlock().asItem() == item)
                 .findFirst()

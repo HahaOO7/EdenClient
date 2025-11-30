@@ -68,7 +68,7 @@ public class AutoHarvest {
             place = null;
             return;
         }
-        world = player.clientLevel;
+        world = Minecraft.getInstance().level;
         Vec3 pos = player.getEyePosition();
         BlockPos blockPos = player.blockPosition();
         cropsHarvestedThisTick = 0;
@@ -168,7 +168,7 @@ public class AutoHarvest {
         ClientPacketListener nh = Minecraft.getInstance().getConnection();
         if (nh == null)
             return;
-        player.clientLevel.setBlockAndUpdate(target, Blocks.AIR.defaultBlockState());
+        Minecraft.getInstance().level.setBlockAndUpdate(target, Blocks.AIR.defaultBlockState());
         nh.send(new ServerboundPlayerActionPacket(ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK, target, getHitDirectionForBlock(player, target)));
     }
 

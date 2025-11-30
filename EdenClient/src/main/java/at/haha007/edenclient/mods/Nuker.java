@@ -10,6 +10,7 @@ import at.haha007.edenclient.utils.area.SavableBlockArea;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import at.haha007.edenclient.utils.config.wrappers.BlockSet;
+import com.mojang.authlib.minecraft.client.MinecraftClient;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -182,7 +183,7 @@ public class Nuker {
             if (!minableBlocks.isEmpty()) {
                 minableBlocks.stream().limit(limit).forEach(p -> {
                     nh.send(new ServerboundPlayerActionPacket(ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK, p, getHitDirectionForBlock(player, p)));
-                    player.clientLevel.setBlockAndUpdate(p, air);
+                    Minecraft.getInstance().level.setBlockAndUpdate(p, air);
                 });
                 return;
             }
@@ -200,7 +201,7 @@ public class Nuker {
     }
 
     private void findTarget(LocalPlayer player) {
-        ClientLevel world = player.clientLevel;
+        ClientLevel world = Minecraft.getInstance().level;
         Vec3 playerPos = player.getEyePosition();
         Stream<BlockPos> stream = getNearby(player);
         stream = stream.filter(p -> Vec3.atCenterOf(p).closerThan(playerPos, distance));
@@ -216,7 +217,7 @@ public class Nuker {
     }
 
     private List<BlockPos> getInstantMinableBlocksInRange(LocalPlayer player) {
-        ClientLevel world = player.clientLevel;
+        ClientLevel world = Minecraft.getInstance().level;
         Stream<BlockPos> stream = getNearby(player);
         stream = stream.filter(p -> Vec3.atCenterOf(p).closerThan(player.getEyePosition(), distance));
         if (filterHeight)
@@ -238,7 +239,7 @@ public class Nuker {
     }
 
     private boolean instantMinable(BlockPos pos, LocalPlayer player) {
-        ClientLevel world = player.clientLevel;
+        ClientLevel world = Minecraft.getInstance().level;
         BlockState state = world.getBlockState(pos);
         float delta = state.getDestroyProgress(player, world, pos);
         return delta >= 1;
@@ -246,7 +247,7 @@ public class Nuker {
 
     private boolean isNextToLiquid(BlockPos pos) {
         LocalPlayer player = PlayerUtils.getPlayer();
-        ClientLevel world = player.clientLevel;
+        ClientLevel world = Minecraft.getInstance().level;
         //don't care about down
         FluidState state = world.getFluidState(pos.relative(Direction.UP));
         if (!state.isEmpty()) return true;

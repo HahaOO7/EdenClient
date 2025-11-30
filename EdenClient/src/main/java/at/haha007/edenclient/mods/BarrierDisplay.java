@@ -45,7 +45,7 @@ public class BarrierDisplay {
         if (cameraPos == null) return;
         BlockPos center = new BlockPos((int) cameraPos.x, (int) cameraPos.y, (int) cameraPos.z);
         BlockParticleOption effect = new BlockParticleOption(ParticleTypes.BLOCK_MARKER, Blocks.BARRIER.defaultBlockState());
-        ClientLevel level = player.clientLevel;
+        ClientLevel level = Minecraft.getInstance().level;
         ParticleEngine particleEngine = Minecraft.getInstance().particleEngine;
         BlockPos.withinManhattanStream(center, range, range, range)
                 .filter(bp -> level.getBlockState(bp).getBlock() == Blocks.BARRIER)

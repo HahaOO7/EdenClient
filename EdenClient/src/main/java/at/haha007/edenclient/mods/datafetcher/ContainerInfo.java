@@ -17,6 +17,7 @@ import com.mojang.logging.LogUtils;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
@@ -166,7 +167,7 @@ public class ContainerInfo {
         if (autoUpdateTask != null) return;
 
         //find nearby container that isnt already updated
-        ClientLevel world = player.clientLevel;
+        ClientLevel world = Minecraft.getInstance().level;
         Vec3 playerEyePosition = player.getEyePosition();
         double range = player.blockInteractionRange() + 1;
         Vec3 min = playerEyePosition.subtract(range, range, range);
@@ -277,7 +278,7 @@ public class ContainerInfo {
 
     private InteractionResult attackBlock(LocalPlayer player, BlockPos blockPos, Direction direction) {
         lastInteractedBlock = null;
-        ClientLevel world = player.clientLevel;
+        ClientLevel world = Minecraft.getInstance().level;
         BlockEntity be = world.getBlockEntity(blockPos);
         if (!(be instanceof Container)) return InteractionResult.PASS;
         LevelChunk chunk = world.getChunkAt(blockPos);

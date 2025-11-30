@@ -13,6 +13,7 @@ import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import fi.dy.masa.malilib.util.data.Color4f;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.phys.AABB;
@@ -48,7 +49,7 @@ public class ItemEsp {
     }
 
     private void tick(LocalPlayer player) {
-        items = player.clientLevel.getEntitiesOfClass(ItemEntity.class, player.getBoundingBox().inflate(10000, 500, 10000), i -> true);
+        items = Minecraft.getInstance().level.getEntitiesOfClass(ItemEntity.class, player.getBoundingBox().inflate(10000, 500, 10000), i -> true);
     }
 
     private void render(float tickDelta) {

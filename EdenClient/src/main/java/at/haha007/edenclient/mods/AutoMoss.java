@@ -46,7 +46,7 @@ public class AutoMoss {
         }
         if (player.getInventory().getSelectedItem().getItem() != Items.BONE_MEAL)
             return;
-        ClientLevel world = player.clientLevel;
+        ClientLevel world = Minecraft.getInstance().level;
         Optional<BlockPos> moss = getNearby(player)
                 .filter(bp -> world.getBlockState(bp).getBlock() == Blocks.MOSS_BLOCK)
                 .filter(bp -> world.getBlockState(bp.offset(0, 1, 0)).getBlock() == Blocks.AIR)
@@ -57,7 +57,7 @@ public class AutoMoss {
     }
 
     private boolean hasStoneNeighbor(BlockPos blockPos) {
-        ClientLevel world = getPlayer().clientLevel;
+        ClientLevel world = Minecraft.getInstance().level;
         ResourceKey<? extends Registry<Block>> registry = BlockTags.MOSS_REPLACEABLE.registry();
         RegistryAccess manager = world.registryAccess();
         for (BlockPos pos : BlockPos.betweenClosed(blockPos.offset(-1, -1, -1), blockPos.offset(1, 1, 1))) {

@@ -13,11 +13,25 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import fi.dy.masa.malilib.render.RenderUtils;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
+import net.fabricmc.fabric.api.client.model.loading.v1.wrapper.WrapperBakedItemModel;
+import net.fabricmc.fabric.impl.client.model.loading.BakedModelsHooks;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.data.models.model.ItemModelUtils;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.render.state.GuiRenderState;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.block.model.BlockStateModel;
+import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.entity.ItemRenderer;
+import net.minecraft.client.renderer.entity.state.ItemFrameRenderState;
+import net.minecraft.client.renderer.item.ItemModel;
+import net.minecraft.client.renderer.item.ItemModelResolver;
+import net.minecraft.client.renderer.item.ItemModels;
+import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.client.resources.model.BlockStateDefinitions;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
 import net.minecraft.util.Mth;
@@ -26,6 +40,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Quaternionf;
 import org.lwjgl.opengl.GL11;
@@ -101,13 +116,14 @@ public class ContainerDisplay {
 
         GL11.glEnable(GL11.GL_DEPTH_TEST);
         ItemRenderer itemRenderer = Minecraft.getInstance().getItemRenderer();
-        PoseStack matrixStack = new PoseStack();
+        ItemModelResolver modelResolver = Minecraft.getInstance().getItemModelResolver();
+        PoseStack poseStack = new PoseStack();
         Vec3 camPos = RenderUtils.camPos();
-        matrixStack.translate(-camPos.x, -camPos.y, -camPos.z);
+        poseStack.translate(-camPos.x, -camPos.y, -camPos.z);
 
         MultiBufferSource.BufferSource bufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
         entries.forEach((pos, chestInfo) -> {
-            matrixStack.pushPose();
+            poseStack.pushPose();
             //calculate looking direction, rendering offset and rendering angle
             final Direction direction = chestInfo.face();
             final Vec3 offset = Vec3.atLowerCornerOf(direction.getUnitVec3i().offset(1, 1, 1)).scale(.5);
@@ -123,51 +139,60 @@ public class ContainerDisplay {
             }
 
             //move matrix to rendering position
-            matrixStack.translate(pos.getX() + offset.x(), pos.getY() + offset.y(), pos.getZ() + offset.z());
+            poseStack.translate(pos.getX() + offset.x(), pos.getY() + offset.y(), pos.getZ() + offset.z());
             //rotate to look outwards
-            matrixStack.mulPose(rotation);
+            poseStack.mulPose(rotation);
             //scale item down
             List<Item> items = chestInfo.items();
             int loopCount = Math.min(items.size(), 9);
             if (loopCount > 1) {
                 //multiple items -> render 3x3 items
-                matrixStack.scale(.3f, .3f, .3f);
+                poseStack.scale(.3f, .3f, .3f);
 
                 //loop over items, max 9 times
                 for (int i = 0; i < loopCount; i++) {
                     Item item = items.get(i);
                     int x = 1 - i / 3;
                     int y = 1 - i % 3;
-                    matrixStack.pushPose();
-                    matrixStack.translate(y, x, 0);
-                    matrixStack.scale(.8f, .8f, .8f);
-                    itemRenderer.renderStatic(
+                    poseStack.pushPose();
+                    poseStack.translate(y, x, 0);
+                    poseStack.scale(.8f, .8f, .8f);
+                    itemRenderer.renderItem(
                             item.getDefaultInstance(),
                             ItemDisplayContext.FIXED,
                             0xF000F0,
                             OverlayTexture.NO_OVERLAY,
-                            matrixStack,
+                            poseStack,
                             bufferSource,
                             level,
                             0);
-                    matrixStack.popPose();
+                    poseStack.popPose();
                 }
             } else {
                 //one item -> render it BIG!
-                matrixStack.scale(.6f, .6f, .6f);
+                poseStack.scale(.6f, .6f, .6f);
                 Item item = items.getFirst();
+                itemRenderer.renderItem(
+                        ItemDisplayContext.FIXED,
+                        poseStack,
+                        bufferSource,
+                        0,
+                        0,
+                        new int[]{},
 
-                itemRenderer.renderStatic(
+                        );
+
+                itemRenderer.renderItem(
                         item.getDefaultInstance(),
                         ItemDisplayContext.FIXED,
                         0xF000F0,
                         OverlayTexture.NO_OVERLAY,
-                        matrixStack,
+                        poseStack,
                         bufferSource,
                         level,
                         0);
             }
-            matrixStack.popPose();
+            poseStack.popPose();
         });
         bufferSource.endBatch();
     }

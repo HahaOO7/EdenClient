@@ -3,6 +3,7 @@ package at.haha007.edenclient.mixin;
 import at.haha007.edenclient.callbacks.PlayerAttackBlockCallback;
 import at.haha007.edenclient.callbacks.PlayerInteractBlockCallback;
 import at.haha007.edenclient.utils.PlayerUtils;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
@@ -22,7 +23,7 @@ public class PlayerControllerMixin {
             method = "performUseItemOn",
             cancellable = true)
     void interactBlock(LocalPlayer player, InteractionHand hand, BlockHitResult hitResult, CallbackInfoReturnable<InteractionResult> ci) {
-        InteractionResult result = PlayerInteractBlockCallback.EVENT.invoker().interact(player, player.clientLevel, hand, hitResult);
+        InteractionResult result = PlayerInteractBlockCallback.EVENT.invoker().interact(player, Minecraft.getInstance().level, hand, hitResult);
         if (result == InteractionResult.FAIL) {
             ci.setReturnValue(InteractionResult.FAIL);
             ci.cancel();

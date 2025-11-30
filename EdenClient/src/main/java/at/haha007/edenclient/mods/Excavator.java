@@ -84,12 +84,12 @@ public class Excavator {
         BlockPos dropPos = area.stream().filter(p -> p.getY() == floorY).min(Comparator.comparingDouble(pos -> pos.distSqr(playerPos))).map(BlockPos::above).orElse(null);
         if (dropPos == null) return null;
         BlockPos dropFloor = dropPos.below().below();
-        BlockState state = player.clientLevel.getBlockState(dropFloor);
+        BlockState state = Minecraft.getInstance().level.getBlockState(dropFloor);
         //if it is not safe to drop
-        if (!state.getShape(player.clientLevel, dropFloor).isEmpty() && !state.isFaceSturdy(player.clientLevel, dropFloor, Direction.UP)) {
+        if (!state.getShape(Minecraft.getInstance().level, dropFloor).isEmpty() && !state.isFaceSturdy(Minecraft.getInstance().level, dropFloor, Direction.UP)) {
             return new Target(dropFloor, 5, breakBlockTargetAction(dropFloor));
         }
-        if (state.isFaceSturdy(player.clientLevel, dropFloor, Direction.UP)) {
+        if (state.isFaceSturdy(Minecraft.getInstance().level, dropFloor, Direction.UP)) {
             Vec3 center = Vec3.atBottomCenterOf(playerPos);
 
             return new Target(dropFloor, 5, new BooleanSupplier() {
@@ -180,7 +180,7 @@ public class Excavator {
 
     private Target placeTarget(BlockPos pos) {
         LocalPlayer player = PlayerUtils.getPlayer();
-        ClientLevel level = player.clientLevel;
+        ClientLevel level = Minecraft.getInstance().level;
         Target foundTarget = new Target(pos, 4.5, placeBlockTargetAction(pos));
         BlockState blockState = level.getBlockState(pos);
         FluidState fluidState = level.getFluidState(pos);
@@ -199,7 +199,7 @@ public class Excavator {
 
     private Target breakTarget(BlockPos pos) {
         LocalPlayer player = PlayerUtils.getPlayer();
-        ClientLevel level = player.clientLevel;
+        ClientLevel level = Minecraft.getInstance().level;
         BlockState blockState = level.getBlockState(pos);
         FluidState fluidState = level.getFluidState(pos);
         Target breakTarget = new Target(pos, 5, breakBlockTargetAction(pos));
@@ -212,7 +212,7 @@ public class Excavator {
 
     private Target breakWaterloggedTarget(BlockPos pos) {
         LocalPlayer player = PlayerUtils.getPlayer();
-        ClientLevel level = player.clientLevel;
+        ClientLevel level = Minecraft.getInstance().level;
         BlockState blockState = level.getBlockState(pos);
         FluidState fluidState = level.getFluidState(pos);
         Target foundTarget = new Target(pos, 5, breakBlockTargetAction(pos));
@@ -234,7 +234,7 @@ public class Excavator {
     private BooleanSupplier breakBlockTargetAction(BlockPos pos) {
         return () -> {
             LocalPlayer player = PlayerUtils.getPlayer();
-            ClientLevel level = player.clientLevel;
+            ClientLevel level = Minecraft.getInstance().level;
             BlockState state = level.getBlockState(pos);
             if (state.getShape(level, pos).isEmpty()) return true;
             selectBestTool(pos, player);
@@ -259,7 +259,7 @@ public class Excavator {
     }
 
     private void selectBestTool(BlockPos pos, LocalPlayer player) {
-        ClientLevel level = player.clientLevel;
+        ClientLevel level = Minecraft.getInstance().level;
         BlockState state = level.getBlockState(pos);
         int originalSlot = player.getInventory().getSelectedSlot();
         float bestDelta = state.getDestroyProgress(player, level, pos);
@@ -307,7 +307,7 @@ public class Excavator {
 
         cmd.then(CommandManager.literal("don't").executes(c -> {
             Scheduler scheduler = getMod(Scheduler.class);
-            ClientLevel world = PlayerUtils.getPlayer().clientLevel;
+            ClientLevel world = Minecraft.getInstance().level;
             scheduler.runAsync(() -> streamOut(PlayerUtils.getPlayer().blockPosition().below()).map(BlockPos::new).forEach(b -> {
                 try {
                     world.setBlockAndUpdate(b, Blocks.WATER.defaultBlockState());

@@ -16,6 +16,7 @@ import fi.dy.masa.malilib.util.data.Color4f;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientChunkCache;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
@@ -70,7 +71,7 @@ public class TileEntityEsp {
             return;
         }
         ChunkPos chunkPos = player.chunkPosition();
-        ClientChunkCache cm = player.clientLevel.getChunkSource();
+        ClientChunkCache cm = Minecraft.getInstance().level.getChunkSource();
         BlockPos pp = player.blockPosition();
         tileEntities = ChunkPos.rangeClosed(chunkPos, distance)
                 .flatMap(cp -> {
