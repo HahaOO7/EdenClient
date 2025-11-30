@@ -14,6 +14,7 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
@@ -58,7 +59,8 @@ public class BarrierDisplay {
                         pos.getZ() + .5,
                         0,
                         0,
-                        0)));
+                        0,
+                        RandomSource.createNewThreadLocalInstance())));
     }
 
     private void registerCommand() {

@@ -2,49 +2,37 @@ package at.haha007.edenclient.mods;
 
 import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.annotations.Mod;
-import at.haha007.edenclient.callbacks.GameRenderCallback;
+import at.haha007.edenclient.callbacks.ContainerCloseCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.command.CommandManager;
 import at.haha007.edenclient.mods.datafetcher.ContainerInfo;
 import at.haha007.edenclient.mods.datafetcher.DataFetcher;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
-import com.mojang.blaze3d.vertex.PoseStack;
+import at.haha007.edenclient.utils.tasks.SyncTask;
+import at.haha007.edenclient.utils.tasks.TaskManager;
+import at.haha007.edenclient.utils.tasks.WaitForTicksTask;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import fi.dy.masa.malilib.render.RenderUtils;
+import com.mojang.math.Transformation;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
-import net.fabricmc.fabric.api.client.model.loading.v1.wrapper.WrapperBakedItemModel;
-import net.fabricmc.fabric.impl.client.model.loading.BakedModelsHooks;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.data.models.model.ItemModelUtils;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.render.state.GuiRenderState;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.SubmitNodeCollector;
-import net.minecraft.client.renderer.block.model.BlockStateModel;
-import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
-import net.minecraft.client.renderer.entity.ItemRenderer;
-import net.minecraft.client.renderer.entity.state.ItemFrameRenderState;
-import net.minecraft.client.renderer.item.ItemModel;
-import net.minecraft.client.renderer.item.ItemModelResolver;
-import net.minecraft.client.renderer.item.ItemModels;
-import net.minecraft.client.renderer.item.ItemStackRenderState;
-import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.client.resources.model.BlockStateDefinitions;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
-import net.minecraft.util.Mth;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.util.Brightness;
+import net.minecraft.world.entity.Display;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Quaternionf;
+import org.joml.Vector3f;
 import org.lwjgl.opengl.GL11;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -57,23 +45,50 @@ import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
 @Mod(dependencies = DataFetcher.class)
 public class ContainerDisplay {
+    private List<Integer> displayEntityIds = new ArrayList<>();
     @ConfigSubscriber("true")
     private boolean enabled;
     private Map<Vec3i, ContainerInfo.ChestInfo> entries = new ConcurrentHashMap<>();
-
+    private ChunkPos lastChunkPos = new ChunkPos(0, 0);
+    private boolean shouldUpdate = true;
 
     public ContainerDisplay() {
-        GameRenderCallback.EVENT.register(this::renderWorld, getClass());
         PlayerTickCallback.EVENT.register(this::tick, getClass());
+        ContainerCloseCallback.EVENT.register(t -> shouldUpdate = true, getClass());
         PerWorldConfig.get().register(this, "ContainerDisplay");
         registerCommand();
     }
 
     private void tick(LocalPlayer player) {
+        update(player.blockPosition(), player.chunkPosition());
         if (!enabled) {
             return;
         }
         ChunkPos chunkPos = player.chunkPosition();
+        if (!chunkPos.equals(this.lastChunkPos)) {
+            shouldUpdate = true;
+        }
+        this.lastChunkPos = chunkPos;
+    }
+
+    private void update(BlockPos pp, ChunkPos chunkPos) {
+        if (!shouldUpdate) return;
+        ClientLevel level = Minecraft.getInstance().level;
+        if (level == null) return;
+        //clear old entities
+        TaskManager tm = new TaskManager();
+        List<Integer> oldDisplayEntities = displayEntityIds;
+        displayEntityIds = new ArrayList<>();
+        tm.then(new WaitForTicksTask(1));
+        tm.then(new SyncTask(() -> {
+            for (Integer id : oldDisplayEntities) {
+                level.removeEntity(id, Entity.RemovalReason.DISCARDED);
+            }
+        }));
+        tm.start();
+
+        if (!enabled) return;
+        //find nearby containers to create displays for
         entries = new ConcurrentHashMap<>();
         ChunkPos.rangeClosed(chunkPos, 1).forEach(cp -> {
             Map<Vec3i, ContainerInfo.ChestInfo> info = EdenClient.getMod(DataFetcher.class).getContainerInfo().getContainerInfo(cp);
@@ -81,11 +96,14 @@ public class ContainerDisplay {
                 entries.putAll(info);
             }
         });
-        Vec3i pp = player.blockPosition();
         entries = entries.entrySet().stream()
                 .sorted(Comparator.comparingInt(e -> e.getKey().distManhattan(pp)))
                 .limit(200)
                 .collect(Collectors.toConcurrentMap(Map.Entry::getKey, Map.Entry::getValue));
+
+        //update display entities
+        createDisplayEntities();
+        shouldUpdate = false;
     }
 
     private void registerCommand() {
@@ -93,6 +111,7 @@ public class ContainerDisplay {
         LiteralArgumentBuilder<FabricClientCommandSource> toggle = literal("toggle");
         toggle.executes(c -> {
             enabled = !enabled;
+            shouldUpdate = true;
             sendModMessage(enabled ? "ContainerDisplay enabled" : "ContainerDisplay disabled");
             return 1;
         });
@@ -103,30 +122,27 @@ public class ContainerDisplay {
             return 1;
         }));
 
+        cmd.then(literal("test").executes(c -> {
+            createDisplayEntities();
+            return 1;
+        }));
+
         cmd.then(toggle);
         CommandManager.register(cmd, "Displays icons on top of containers.");
     }
 
 
-    private void renderWorld(float v) {
-        if (!enabled)
-            return;
-        Player player = getPlayer();
-        Level level = player.level();
-
+    private void createDisplayEntities() {
+        ClientLevel level = Minecraft.getInstance().level;
+        if (level == null) return;
         GL11.glEnable(GL11.GL_DEPTH_TEST);
-        ItemRenderer itemRenderer = Minecraft.getInstance().getItemRenderer();
-        ItemModelResolver modelResolver = Minecraft.getInstance().getItemModelResolver();
-        PoseStack poseStack = new PoseStack();
-        Vec3 camPos = RenderUtils.camPos();
-        poseStack.translate(-camPos.x, -camPos.y, -camPos.z);
 
-        MultiBufferSource.BufferSource bufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
         entries.forEach((pos, chestInfo) -> {
-            poseStack.pushPose();
             //calculate looking direction, rendering offset and rendering angle
             final Direction direction = chestInfo.face();
             final Vec3 offset = Vec3.atLowerCornerOf(direction.getUnitVec3i().offset(1, 1, 1)).scale(.5);
+
+
             final Quaternionf rotation = direction.getRotation();
             if (direction.getAxis() == Direction.Axis.Y) {
                 Quaternionf horizontal = getPlayer().getDirection().getRotation();
@@ -135,65 +151,89 @@ public class ContainerDisplay {
                 rotation.mul(Direction.NORTH.getRotation());
             } else {
                 rotation.mul(Direction.EAST.getRotation());
-                rotation.rotateZ(-Mth.HALF_PI);
+                rotation.rotateZ(-1.5707964f);
             }
 
-            //move matrix to rendering position
-            poseStack.translate(pos.getX() + offset.x(), pos.getY() + offset.y(), pos.getZ() + offset.z());
-            //rotate to look outwards
-            poseStack.mulPose(rotation);
             //scale item down
             List<Item> items = chestInfo.items();
             int loopCount = Math.min(items.size(), 9);
             if (loopCount > 1) {
                 //multiple items -> render 3x3 items
-                poseStack.scale(.3f, .3f, .3f);
+                int columns = 3;
+                float spacing = 0.28f;
 
-                //loop over items, max 9 times
+                // Compute total width/height so we can center the grid
+                int rows = (loopCount + columns - 1) / columns;
+
+                float totalWidth = (columns - 1) * spacing;
+                float totalHeight = (rows - 1) * spacing;
+
+                float halfWidth = totalWidth / 2f;
+                float halfHeight = totalHeight / 2f;
+
                 for (int i = 0; i < loopCount; i++) {
                     Item item = items.get(i);
-                    int x = 1 - i / 3;
-                    int y = 1 - i % 3;
-                    poseStack.pushPose();
-                    poseStack.translate(y, x, 0);
-                    poseStack.scale(.8f, .8f, .8f);
-                    itemRenderer.renderItem(
-                            item.getDefaultInstance(),
-                            ItemDisplayContext.FIXED,
-                            0xF000F0,
-                            OverlayTexture.NO_OVERLAY,
-                            poseStack,
-                            bufferSource,
-                            level,
-                            0);
-                    poseStack.popPose();
+
+                    // Grid coordinates
+                    int col = i % columns;
+                    int row = i / columns;
+
+                    // Local offsets, centered around (0,0)
+                    float x = (col * spacing) - halfWidth;     // left → right
+                    float y = halfHeight - (row * spacing);    // top → bottom
+
+                    float dx;
+                    float dy;
+                    float dz;
+
+                    // Convert grid (x,y) into block-face relative 3D offsets
+                    if (direction.getAxis() == Direction.Axis.X) {
+                        dx = 0;
+                        dy = y;
+                        dz = x;
+
+                    } else if (direction.getAxis() == Direction.Axis.Y) {
+                        dx = x;
+                        dy = 0;
+                        dz = y;
+
+                    } else { // Z axis
+                        dx = x;
+                        dy = y;
+                        dz = 0;
+                    }
+
+                    Display.ItemDisplay display =
+                            new Display.ItemDisplay(EntityType.ITEM_DISPLAY, level);
+
+                    display.setPos(pos.getX() + offset.x(),
+                            pos.getY() + offset.y(),
+                            pos.getZ() + offset.z());
+
+                    Vector3f offsetPos = new Vector3f(dx, dy, dz);
+                    Vector3f scale = new Vector3f(.22f, .22f, .22f);
+                    Transformation transform = new Transformation(offsetPos, new Quaternionf(), scale, rotation);
+                    display.setTransformation(transform);
+                    display.setBrightnessOverride(Brightness.FULL_BRIGHT);
+                    display.setItemStack(item.getDefaultInstance());
+                    level.addEntity(display);
+                    displayEntityIds.add(display.getId());
                 }
             } else {
                 //one item -> render it BIG!
-                poseStack.scale(.6f, .6f, .6f);
                 Item item = items.getFirst();
-                itemRenderer.renderItem(
-                        ItemDisplayContext.FIXED,
-                        poseStack,
-                        bufferSource,
-                        0,
-                        0,
-                        new int[]{},
 
-                        );
-
-                itemRenderer.renderItem(
-                        item.getDefaultInstance(),
-                        ItemDisplayContext.FIXED,
-                        0xF000F0,
-                        OverlayTexture.NO_OVERLAY,
-                        poseStack,
-                        bufferSource,
-                        level,
-                        0);
+                Display.ItemDisplay display = new Display.ItemDisplay(EntityType.ITEM_DISPLAY, level);
+                display.setPos(pos.getX() + offset.x(), pos.getY() + offset.y(), pos.getZ() + offset.z());
+                Vector3f offsetPos = new Vector3f();
+                Vector3f scale = new Vector3f(.6f, .6f, .6f);
+                Transformation transformation = new Transformation(offsetPos, rotation, scale, new Quaternionf());
+                display.setTransformation(transformation);
+                display.setItemStack(item.getDefaultInstance());
+                level.addEntity(display);
+                display.setBrightnessOverride(Brightness.FULL_BRIGHT);
+                displayEntityIds.add(display.getId());
             }
-            poseStack.popPose();
         });
-        bufferSource.endBatch();
     }
 }

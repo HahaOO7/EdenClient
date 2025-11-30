@@ -290,6 +290,11 @@ public class ContainerInfo {
 
     private InteractionResult interactBlock(LocalPlayer player, ClientLevel world, InteractionHand
             hand, BlockHitResult blockHitResult) {
+        //remove all positions in same chunk without block entity
+        ChunkPos cp = new ChunkPos(blockHitResult.getBlockPos());
+        ChestMap chestMap = chunkMap.getOrDefault(cp, new ChestMap());
+        Set<Vec3i> chests = chestMap.keySet();
+        chests.removeIf(Predicate.not(e -> world.getBlockEntity(new BlockPos(e)) instanceof Container));
         BlockEntity be = world.getBlockEntity(blockHitResult.getBlockPos());
         if (be instanceof Container) {
             lastInteractedBlock = blockHitResult.getBlockPos();
