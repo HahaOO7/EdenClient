@@ -249,7 +249,6 @@ public class ContainerInfo {
         // smallest only chests and shulkerboxes!
         if (itemStacks.size() < 27) return;
 
-        @SuppressWarnings("resource")
         Level level = PlayerUtils.getPlayer().level();
         Registry<Block> registry = level.registryAccess().lookupOrThrow(BlockTags.SHULKER_BOXES.registry());
         BlockPos basePos = new BlockPos(lastInteractedBlock);
@@ -269,7 +268,6 @@ public class ContainerInfo {
 
                     Direction viewerDir = getViewerHorizontalDir();
                     Direction rightDir = getRightOf(viewerDir);
-                    Direction pairDir = connectedDir;
 
                     BlockPos leftChestPos = basePos;
                     BlockPos rightChestPos = otherPos;
@@ -278,16 +276,12 @@ public class ContainerInfo {
                     // derive left/right purely from the viewer's perspective.
                     boolean perpendicularToView =
                             viewerDir.getAxis().isHorizontal() &&
-                                    pairDir.getAxis().isHorizontal() &&
-                                    pairDir != viewerDir &&
-                                    pairDir != viewerDir.getOpposite();
+                                    connectedDir.getAxis().isHorizontal() &&
+                                    connectedDir != viewerDir &&
+                                    connectedDir != viewerDir.getOpposite();
 
                     if (perpendicularToView) {
-                        if (pairDir == rightDir) {
-                            // otherPos is to the right of basePos -> base = left, other = right
-                            leftChestPos = basePos;
-                            rightChestPos = otherPos;
-                        } else if (pairDir == rightDir.getOpposite()) {
+                        if (connectedDir == rightDir.getOpposite()) {
                             // otherPos is to the left of basePos -> base = right, other = left
                             leftChestPos = otherPos;
                             rightChestPos = basePos;
@@ -298,10 +292,7 @@ public class ContainerInfo {
                         boolean invert = (facing == Direction.NORTH || facing == Direction.WEST);
 
                         if (!invert) {
-                            if (type == ChestType.LEFT) {
-                                leftChestPos = basePos;
-                                rightChestPos = otherPos;
-                            } else {
+                            if (type != ChestType.LEFT) {
                                 leftChestPos = otherPos;
                                 rightChestPos = basePos;
                             }
@@ -309,9 +300,6 @@ public class ContainerInfo {
                             if (type == ChestType.LEFT) {
                                 leftChestPos = otherPos;
                                 rightChestPos = basePos;
-                            } else {
-                                leftChestPos = basePos;
-                                rightChestPos = otherPos;
                             }
                         }
                     }
@@ -340,10 +328,7 @@ public class ContainerInfo {
             return lastClickedDirection.getOpposite();
         }
         LocalPlayer player = PlayerUtils.getPlayer();
-        if (player != null) {
-            return player.getDirection();
-        }
-        return Direction.NORTH;
+        return player.getDirection();
     }
 
     private Direction getRightOf(Direction dir) {
