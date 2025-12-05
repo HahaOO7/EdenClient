@@ -27,6 +27,9 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.block.ChestBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.ChestType;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
@@ -138,10 +141,12 @@ public class ContainerDisplay {
         GL11.glEnable(GL11.GL_DEPTH_TEST);
 
         entries.forEach((pos, chestInfo) -> {
+            BlockPos blockPos = new BlockPos(pos);
+            BlockState state = level.getBlockState(blockPos);
+
             //calculate looking direction, rendering offset and rendering angle
             final Direction direction = chestInfo.face();
             final Vec3 offset = Vec3.atLowerCornerOf(direction.getUnitVec3i().offset(1, 1, 1)).scale(.5);
-
 
             final Quaternionf rotation = direction.getRotation();
             if (direction.getAxis() == Direction.Axis.Y) {
@@ -154,8 +159,37 @@ public class ContainerDisplay {
                 rotation.rotateZ(-1.5707964f);
             }
 
-            //scale item down
-            List<Item> items = chestInfo.items();
+            // Decide which items to render:
+            // - single chest / non-chest: use its own items
+            // - double chest + outer side (left/right): merge both halves (full content)
+            // - double chest + front/back/top/bottom: use its own (split) items
+            List<Item> items = new ArrayList<>(chestInfo.items());
+
+            if (state.getBlock() instanceof ChestBlock chestBlock) {
+                ChestType type = state.getValue(ChestBlock.TYPE);
+                if (type != ChestType.SINGLE) {
+                    Direction facing = state.getValue(ChestBlock.FACING);
+                    Direction side1 = facing.getClockWise();
+                    Direction side2 = facing.getCounterClockWise();
+
+                    boolean isOuterSide = (direction == side1 || direction == side2);
+
+                    if (isOuterSide) {
+                        // Merge items from both halves to show full content on outer sides
+                        Direction connectedDir = ChestBlock.getConnectedDirection(state);
+                        BlockPos otherPos = blockPos.relative(connectedDir);
+                        ContainerInfo.ChestInfo otherInfo = entries.get(otherPos);
+                        if (otherInfo != null) {
+                            for (Item it : otherInfo.items()) {
+                                if (!items.contains(it)) {
+                                    items.add(it);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             int loopCount = Math.min(items.size(), 9);
             if (loopCount > 1) {
                 //multiple items -> render 3x3 items
@@ -219,7 +253,7 @@ public class ContainerDisplay {
                     level.addEntity(display);
                     displayEntityIds.add(display.getId());
                 }
-            } else {
+            } else if (loopCount == 1) {
                 //one item -> render it BIG!
                 Item item = items.getFirst();
 
