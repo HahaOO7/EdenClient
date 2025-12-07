@@ -47,12 +47,14 @@ public abstract class ClientPacketListenerMixin {
     @Inject(method = "handleLogin", at = @At("RETURN"))
     private void onLogin(ClientboundLoginPacket clientboundLoginPacket, CallbackInfo ci) {
         boolean connect = level != null;
-        if (connect) {
+        if (connect && !EdenClient.connected) {
             EdenClient.onJoin();
             JoinWorldCallback.EVENT.invoker().join();
-        } else {
+            EdenClient.connected = true;
+        } else if(!connect && EdenClient.connected) {
             LeaveWorldCallback.EVENT.invoker().leave();
             EdenClient.onQuit();
+            EdenClient.connected = false;
         }
     }
 
@@ -103,10 +105,13 @@ public abstract class ClientPacketListenerMixin {
     private void onInventoryContent(ClientboundContainerSetContentPacket packet, CallbackInfo ci) {
         //get items, remove player items
         List<ItemStack> items = packet.items();
+        if(items.size() < 36) return;
         items = items.subList(0, items.size() - 36);
         int id = packet.containerId();
         ContainerInfo containerInfo = ContainerInfo.update(id, items);
-        if (containerInfo.isComplete()) InventoryOpenCallback.EVENT.invoker().open(containerInfo);
+        if (!containerInfo.isComplete()) return;
+        InventoryOpenCallback.EVENT.invoker().open(containerInfo);
+        ContainerInfo.remove(id);
     }
 
     @Inject(method = "updateLevelChunk", at = @At("RETURN"))
@@ -129,7 +134,10 @@ public abstract class ClientPacketListenerMixin {
         Component title = packet.getTitle();
 
         ContainerInfo containerInfo = ContainerInfo.update(id, type, title);
-        if (containerInfo.isComplete()) InventoryOpenCallback.EVENT.invoker().open(containerInfo);
+        if (containerInfo.isComplete()) {
+            InventoryOpenCallback.EVENT.invoker().open(containerInfo);
+            ContainerInfo.remove(id);
+        }
 
         // Check if any listener wants to cancel the container opening
         if (ContainerOpenCallback.EVENT.invoker().onContainerOpen(type, id, title)) {

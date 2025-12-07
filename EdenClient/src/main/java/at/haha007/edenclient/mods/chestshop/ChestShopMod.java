@@ -26,6 +26,7 @@ import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.Style;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.Vec3i;
 import net.minecraft.world.level.ChunkPos;
@@ -89,7 +90,7 @@ public class ChestShopMod {
     }
 
     private void checkForShops(LocalPlayer player, int radius) {
-        ChunkSource cm = player.clientLevel.getChunkSource();
+        ChunkSource cm = Minecraft.getInstance().level.getChunkSource();
         ChunkPos.rangeClosed(player.chunkPosition(), radius).forEach(cp -> checkForShops(cm, cp));
     }
 

@@ -11,6 +11,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -49,11 +50,11 @@ public class EnsureSilk {
 
     private InteractionResult onAttackBlock(LocalPlayer localPlayer, BlockPos blockPos, Direction direction) {
         if (!enabled) return InteractionResult.PASS;
-        Block block = localPlayer.clientLevel.getBlockState(blockPos).getBlock();
+        Block block = Minecraft.getInstance().level.getBlockState(blockPos).getBlock();
         if (!filter.contains(block)) return InteractionResult.PASS;
         ItemStack tool = localPlayer.getMainHandItem();
         if (tool.isEmpty()) return InteractionResult.FAIL;
-        Holder.Reference<Enchantment> silk = localPlayer.clientLevel.registryAccess().lookup(Registries.ENCHANTMENT).orElseThrow().get(Enchantments.SILK_TOUCH).orElseThrow();
+        Holder.Reference<Enchantment> silk = Minecraft.getInstance().level.registryAccess().lookup(Registries.ENCHANTMENT).orElseThrow().get(Enchantments.SILK_TOUCH).orElseThrow();
         boolean hasSilkTouch = tool.getEnchantments().getLevel(silk) > 0;
         return hasSilkTouch ? InteractionResult.PASS : InteractionResult.FAIL;
     }

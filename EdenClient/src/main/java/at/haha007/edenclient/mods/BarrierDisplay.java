@@ -14,6 +14,7 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
@@ -42,9 +43,10 @@ public class BarrierDisplay {
         tickCounter++;
         if (player.getInventory().getSelectedItem().getItem() == Items.BARRIER) return;
         Vec3 cameraPos = EdenRenderUtils.getCameraPos();
+        if (cameraPos == null) return;
         BlockPos center = new BlockPos((int) cameraPos.x, (int) cameraPos.y, (int) cameraPos.z);
         BlockParticleOption effect = new BlockParticleOption(ParticleTypes.BLOCK_MARKER, Blocks.BARRIER.defaultBlockState());
-        ClientLevel level = player.clientLevel;
+        ClientLevel level = Minecraft.getInstance().level;
         ParticleEngine particleEngine = Minecraft.getInstance().particleEngine;
         BlockPos.withinManhattanStream(center, range, range, range)
                 .filter(bp -> level.getBlockState(bp).getBlock() == Blocks.BARRIER)
@@ -57,7 +59,8 @@ public class BarrierDisplay {
                         pos.getZ() + .5,
                         0,
                         0,
-                        0)));
+                        0,
+                        RandomSource.createNewThreadLocalInstance())));
     }
 
     private void registerCommand() {

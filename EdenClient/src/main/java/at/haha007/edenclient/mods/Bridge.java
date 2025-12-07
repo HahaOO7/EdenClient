@@ -52,7 +52,7 @@ public class Bridge {
         if (!(item instanceof BlockItem blockItem)) return;
         Block block = blockItem.getBlock();
         BlockState defaultState = block.defaultBlockState();
-        if (!defaultState.isCollisionShapeFullBlock(player.clientLevel, player.blockPosition())) return;
+        if (!defaultState.isCollisionShapeFullBlock(Minecraft.getInstance().level, player.blockPosition())) return;
 
         streamPlaceBlocks().limit(3).forEach(this::clickPos);
     }
@@ -72,7 +72,7 @@ public class Bridge {
 
     private Stream<BlockPos> streamPlaceBlocks() {
         LocalPlayer player = PlayerUtils.getPlayer();
-        ClientLevel level = player.clientLevel;
+        ClientLevel level = Minecraft.getInstance().level;
         BlockPos center = player.blockPosition().below();
         Stream<BlockPos> stream = BlockPos.withinManhattanStream(center, range, 1, range);
         stream = stream.map(BlockPos::new);

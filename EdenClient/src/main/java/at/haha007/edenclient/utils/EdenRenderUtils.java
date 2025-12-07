@@ -7,16 +7,21 @@ import fi.dy.masa.malilib.render.MaLiLibPipelines;
 import fi.dy.masa.malilib.render.RenderContext;
 import fi.dy.masa.malilib.render.RenderUtils;
 import fi.dy.masa.malilib.util.data.Color4f;
+import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
+import java.util.Optional;
 
 public enum EdenRenderUtils {
     ;
 
     public static Vec3 getCameraPos() {
-        return Minecraft.getInstance().getBlockEntityRenderDispatcher().camera.getPosition();
+        return Optional.ofNullable(Minecraft.getInstance().getCameraEntity())
+                .map(Entity::getEyePosition)
+                .orElse(null);
     }
 
     public static void drawTracers(List<Vec3> positions, Color4f color) {

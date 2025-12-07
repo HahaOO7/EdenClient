@@ -79,7 +79,7 @@ public class HeadHunt {
             return;
         }
         ChunkPos chunkPos = player.chunkPosition();
-        ClientChunkCache cm = player.clientLevel.getChunkSource();
+        ClientChunkCache cm = Minecraft.getInstance().level.getChunkSource();
         BlockPos pp = player.blockPosition();
         heads = ChunkPos.rangeClosed(chunkPos, 20)
                 .flatMap(cp -> {

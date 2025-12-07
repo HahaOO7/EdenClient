@@ -60,7 +60,7 @@ public class AutoSheer {
     }
 
     private static void interactOffhand(LocalPlayer player, Vec3 pos, MultiPlayerGameMode interactionManager) {
-        player.clientLevel.getEntitiesOfClass(Sheep.class, player.getBoundingBox().inflate(5), Sheep::readyForShearing).forEach(sheep -> {
+        Minecraft.getInstance().level.getEntitiesOfClass(Sheep.class, player.getBoundingBox().inflate(5), Sheep::readyForShearing).forEach(sheep -> {
             if (!sheep.readyForShearing()) return;
             if (sheep.position().distanceToSqr(pos) < 25) {
                 interactionManager.interact(player, sheep, InteractionHand.MAIN_HAND);
@@ -70,7 +70,7 @@ public class AutoSheer {
     }
 
     private static void interactMainHand(LocalPlayer player, Vec3 pos, MultiPlayerGameMode interactionManager) {
-        player.clientLevel.getEntitiesOfClass(Sheep.class, player.getBoundingBox().inflate(5), Sheep::readyForShearing).forEach(sheep -> {
+        Minecraft.getInstance().level.getEntitiesOfClass(Sheep.class, player.getBoundingBox().inflate(5), Sheep::readyForShearing).forEach(sheep -> {
             if (!sheep.readyForShearing()) return;
             if (sheep.position().distanceToSqr(pos) < 25) {
                 interactionManager.interact(player, sheep, InteractionHand.MAIN_HAND);

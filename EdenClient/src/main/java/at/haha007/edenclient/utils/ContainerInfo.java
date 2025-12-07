@@ -1,5 +1,6 @@
 package at.haha007.edenclient.utils;
 
+import at.haha007.edenclient.callbacks.LeaveWorldCallback;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.mojang.logging.LogUtils;
@@ -14,6 +15,10 @@ import java.util.concurrent.ExecutionException;
 @Getter
 public class ContainerInfo {
     private static final Cache<Integer, ContainerInfo> cache = CacheBuilder.newBuilder().maximumSize(100).build();
+
+    static{
+        LeaveWorldCallback.EVENT.register(cache::invalidateAll, ContainerInfo.class);
+    }
 
     public static ContainerInfo get(int id) {
         try {
@@ -34,6 +39,14 @@ public class ContainerInfo {
         ContainerInfo containerInfo = get(id);
         containerInfo.update(type, title);
         return containerInfo;
+    }
+
+    public static void clear() {
+        cache.invalidateAll();
+    }
+
+    public static void remove(int id) {
+        cache.invalidate(id);
     }
 
     private MenuType<?> type = null;

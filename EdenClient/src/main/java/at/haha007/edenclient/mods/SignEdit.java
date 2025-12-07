@@ -82,7 +82,7 @@ public class SignEdit {
     private InteractionResult onAttackBlock(LocalPlayer entity, BlockPos pos, Direction side) {
         if (!enabled) return InteractionResult.PASS;
         BlockEntity b = Minecraft.getInstance().level.getBlockEntity(pos);
-        Registry<Item> registry = entity.clientLevel.registryAccess().lookupOrThrow(ItemTags.SIGNS.registry());
+        Registry<Item> registry = Minecraft.getInstance().level.registryAccess().lookupOrThrow(ItemTags.SIGNS.registry());
         if (!registry.containsKey(BuiltInRegistries.ITEM.getKey(PlayerUtils.getPlayer().getInventory().getSelectedItem().getItem())))
             return InteractionResult.PASS;
         if (b instanceof SignBlockEntity sign) {
@@ -107,7 +107,7 @@ public class SignEdit {
         DataFetcher dataFetcher = EdenClient.getMod(DataFetcher.class);
         ContainerInfo containerInfoMod = dataFetcher.getContainerInfo();
         if (containerInfoMod == null) return InteractionResult.PASS;
-        ContainerInfo.ChestMap chunkMap = containerInfoMod.getContainerInfo(entity.clientLevel.getChunk(pos).getPos());
+        ContainerInfo.ChestMap chunkMap = containerInfoMod.getContainerInfo(Minecraft.getInstance().level.getChunk(pos).getPos());
         if (chunkMap == null) return InteractionResult.PASS;
         ContainerInfo.ChestInfo chestInfo = chunkMap.get(pos);
         if (chestInfo == null) return InteractionResult.PASS;

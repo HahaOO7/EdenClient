@@ -14,6 +14,7 @@ import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import fi.dy.masa.malilib.util.data.Color4f;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.DefaultedRegistry;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -64,7 +65,7 @@ public class EntityEsp {
             entities = new ArrayList<>();
             return;
         }
-        entities = player.clientLevel.getEntitiesOfClass(Entity.class,
+        entities = Minecraft.getInstance().level.getEntitiesOfClass(Entity.class,
                 player.getBoundingBox().inflate(10000, 500, 10000),
                 e -> entityTypes.contains(e.getType()) && e.isAlive() && e != player);
     }

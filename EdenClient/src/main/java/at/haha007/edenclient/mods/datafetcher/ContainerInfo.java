@@ -18,8 +18,6 @@ import lombok.Getter;
 import lombok.experimental.Accessors;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
@@ -87,11 +85,19 @@ public class ContainerInfo {
         UpdateLevelChunkCallback.EVENT.register(this::updateChunk, getClass());
         PlayerTickCallback.EVENT.register(this::tick, getClass());
         ContainerOpenCallback.EVENT.register(this::shouldCancelContainerOpen, getClass());
+        LeaveWorldCallback.EVENT.register(this::destroy, getClass());
 
         PerWorldConfig.get().register(new ContainerConfigLoader(), ChunkChestMap.class);
         PerWorldConfig.get().register(new ChestMapLoader(), ChestMap.class);
         PerWorldConfig.get().register(new ChestInfoLoader(), ChestInfo.class);
         PerWorldConfig.get().register(this, "ContainerInfo");
+    }
+
+    private void destroy() {
+        autoMode = null;
+        if (autoUpdateTask != null)
+            autoUpdateTask.cancel();
+        autoUpdateTask = null;
     }
 
     private boolean shouldCancelContainerOpen(MenuType<?> type, int id, Component title) {
@@ -161,7 +167,7 @@ public class ContainerInfo {
         if (autoUpdateTask != null) return;
 
         //find nearby container that isnt already updated
-        ClientLevel world = player.clientLevel;
+        ClientLevel world = Minecraft.getInstance().level;
         Vec3 playerEyePosition = player.getEyePosition();
         double range = player.blockInteractionRange() + 1;
         Vec3 min = playerEyePosition.subtract(range, range, range);
@@ -204,10 +210,18 @@ public class ContainerInfo {
         lastClickedDirection = freeDirection;
         autoUpdateTask = new TaskManager().then(new MaxTimeTask(
                 new WaitForInventoryTask(Pattern.compile(".*"), containerInfo ->
-                        onCloseInventory(containerInfo.getItems())).then(new SyncTask(PlayerUtils.getPlayer()::closeContainer)
+                        onCloseInventory(containerInfo.getItems()))
+                        .then(() -> lastInteractedBlock = null)
+                        .then(() -> lastClickedDirection = null)
+                        .then(at.haha007.edenclient.utils.ContainerInfo::clear)
+                        .then(new SyncTask(PlayerUtils.getPlayer()::closeContainer)
+//                                .then(new WaitForTicksTask(3))
                         .then(() -> autoUpdateTask = null)),
-                10000, () -> {
+                100, () -> {
             autoUpdateTask = null;
+            lastInteractedBlock = null;
+            lastClickedDirection = null;
+            at.haha007.edenclient.utils.ContainerInfo.clear();
             LogUtils.getLogger().info("failed to update container at {}", pos);
         }));
         autoUpdateTask.start();
@@ -264,7 +278,7 @@ public class ContainerInfo {
 
     private InteractionResult attackBlock(LocalPlayer player, BlockPos blockPos, Direction direction) {
         lastInteractedBlock = null;
-        ClientLevel world = player.clientLevel;
+        ClientLevel world = Minecraft.getInstance().level;
         BlockEntity be = world.getBlockEntity(blockPos);
         if (!(be instanceof Container)) return InteractionResult.PASS;
         LevelChunk chunk = world.getChunkAt(blockPos);
@@ -276,6 +290,11 @@ public class ContainerInfo {
 
     private InteractionResult interactBlock(LocalPlayer player, ClientLevel world, InteractionHand
             hand, BlockHitResult blockHitResult) {
+        //remove all positions in same chunk without block entity
+        ChunkPos cp = new ChunkPos(blockHitResult.getBlockPos());
+        ChestMap chestMap = chunkMap.getOrDefault(cp, new ChestMap());
+        Set<Vec3i> chests = chestMap.keySet();
+        chests.removeIf(Predicate.not(e -> world.getBlockEntity(new BlockPos(e)) instanceof Container));
         BlockEntity be = world.getBlockEntity(blockHitResult.getBlockPos());
         if (be instanceof Container) {
             lastInteractedBlock = blockHitResult.getBlockPos();
