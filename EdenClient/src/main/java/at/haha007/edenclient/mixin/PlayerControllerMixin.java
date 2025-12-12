@@ -1,6 +1,7 @@
 package at.haha007.edenclient.mixin;
 
 import at.haha007.edenclient.callbacks.PlayerAttackBlockCallback;
+import at.haha007.edenclient.callbacks.PlayerBreakBlockCallback;
 import at.haha007.edenclient.callbacks.PlayerInteractBlockCallback;
 import at.haha007.edenclient.utils.PlayerUtils;
 import net.minecraft.client.Minecraft;
@@ -45,6 +46,7 @@ public class PlayerControllerMixin {
     @Inject(method = "destroyBlock", at = @At("HEAD"), cancellable = true)
     private void onDestroyBlock(BlockPos blockPos, CallbackInfoReturnable<Boolean> cir) {
         InteractionResult result = PlayerAttackBlockCallback.EVENT.invoker().interact(PlayerUtils.getPlayer(), blockPos, Direction.UP);
+        PlayerBreakBlockCallback.EVENT.invoker().breakBlock(PlayerUtils.getPlayer(), blockPos, Direction.UP);
         if (result == InteractionResult.FAIL) cir.setReturnValue(false);
     }
 

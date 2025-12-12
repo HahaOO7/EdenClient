@@ -47,12 +47,20 @@ import net.minecraft.world.item.component.ItemContainerContents;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.ChestBlock;
+import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.ChestBlockEntity;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.ChestType;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -67,7 +75,7 @@ public class ContainerInfo {
     @ConfigSubscriber()
     @Getter
     private final ChunkChestMap chunkMap;
-    private Vec3i lastInteractedBlock = null;
+    private BlockPos lastInteractedBlock = null;
     private Direction lastClickedDirection = null;
 
     private AutoMode autoMode = null;
@@ -80,7 +88,15 @@ public class ContainerInfo {
 
         PlayerAttackBlockCallback.EVENT.register(this::attackBlock, getClass());
         PlayerInteractBlockCallback.EVENT.register(this::interactBlock, getClass());
-        ContainerCloseCallback.EVENT.register(this::onCloseInventory, getClass());
+        ContainerCloseCallback.EVENT.register(itemStacks -> {
+            updateInventory(itemStacks);
+            lastInteractedBlock = null;
+        }, getClass());
+        PlayerBreakBlockCallback.EVENT.register((a,b,c) -> {
+            lastInteractedBlock = b;
+            updateInventory(Collections.emptyList());
+            lastInteractedBlock = null;
+        }, getClass());
         PlayerInvChangeCallback.EVENT.register(this::onInventoryChange, getClass());
         UpdateLevelChunkCallback.EVENT.register(this::updateChunk, getClass());
         PlayerTickCallback.EVENT.register(this::tick, getClass());
@@ -168,6 +184,7 @@ public class ContainerInfo {
 
         //find nearby container that isnt already updated
         ClientLevel world = Minecraft.getInstance().level;
+        if (world == null) return;
         Vec3 playerEyePosition = player.getEyePosition();
         double range = player.blockInteractionRange() + 1;
         Vec3 min = playerEyePosition.subtract(range, range, range);
@@ -210,13 +227,12 @@ public class ContainerInfo {
         lastClickedDirection = freeDirection;
         autoUpdateTask = new TaskManager().then(new MaxTimeTask(
                 new WaitForInventoryTask(Pattern.compile(".*"), containerInfo ->
-                        onCloseInventory(containerInfo.getItems()))
+                        updateInventory(containerInfo.getItems()))
                         .then(() -> lastInteractedBlock = null)
                         .then(() -> lastClickedDirection = null)
                         .then(at.haha007.edenclient.utils.ContainerInfo::clear)
                         .then(new SyncTask(PlayerUtils.getPlayer()::closeContainer)
-//                                .then(new WaitForTicksTask(3))
-                        .then(() -> autoUpdateTask = null)),
+                                .then(() -> autoUpdateTask = null)),
                 100, () -> {
             autoUpdateTask = null;
             lastInteractedBlock = null;
@@ -239,14 +255,13 @@ public class ContainerInfo {
         List<ItemStack> items = sh.getItems();
         items = items.subList(0, items.size() - 36);
         if (items.isEmpty()) lastInteractedBlock = null;
-        else onCloseInventory(items);
+        else updateInventory(items);
     }
 
-    private void onCloseInventory(List<ItemStack> itemStacks) {
+    private void updateInventory(List<ItemStack> itemStacks) {
         if (lastInteractedBlock == null) return;
         //smallest only chests and shulkerboxes!
         if (itemStacks.size() < 27) return;
-        ChunkPos cp = new ChunkPos(new BlockPos(lastInteractedBlock));
         @SuppressWarnings("resource")
         Level level = PlayerUtils.getPlayer().level();
         Registry<Block> registry = level.registryAccess().lookupOrThrow(BlockTags.SHULKER_BOXES.registry());
@@ -258,16 +273,43 @@ public class ContainerInfo {
         Map<Item, Integer> counts = new HashMap<>();
         items.forEach((item, stacks) -> counts.put(item, stacks.stream().mapToInt(ItemStack::getCount).sum()));
 
-        ChestInfo chestInfo = new ChestInfo();
-        chestInfo.items.addAll(counts.keySet());
-        chestInfo.items.sort(Comparator.comparingInt(i -> -counts.get(i)));
-        chestInfo.face = lastClickedDirection == null ? Direction.UP : lastClickedDirection;
+        BlockEntity blockEntity = level.getBlockEntity(lastInteractedBlock);
+        if (!(blockEntity instanceof BaseContainerBlockEntity)) {
+            return;
+        }
 
-        ChestMap map = chunkMap.computeIfAbsent(cp, chunkPos -> new ChestMap());
-        if (chestInfo.items.isEmpty())
-            map.remove(lastInteractedBlock);
-        else
-            map.put(lastInteractedBlock, chestInfo);
+        List<Item> itemsList = new ArrayList<>(counts.keySet());
+        itemsList.sort(Comparator.comparingInt(i -> -counts.get(i)));
+
+        putChestInfo(lastInteractedBlock, itemsList, lastClickedDirection);
+
+        BlockState blockState = level.getBlockState(lastInteractedBlock);
+        if (!(blockEntity instanceof ChestBlockEntity)) {
+            return;
+        }
+        ChestType chestType = blockState.getValue(BlockStateProperties.CHEST_TYPE);
+        if (chestType == ChestType.SINGLE) {
+            return;
+        }
+        Direction connectedDirection = ChestBlock.getConnectedDirection(blockState);
+        BlockPos otherPos = lastInteractedBlock.relative(connectedDirection);
+        putChestInfo(otherPos, itemsList, null);
+    }
+
+    private void putChestInfo(Vec3i position, List<Item> items, @Nullable Direction face) {
+        ChunkPos chunkPos = new ChunkPos(new BlockPos(lastInteractedBlock));
+        ChestMap map = chunkMap.computeIfAbsent(chunkPos, cp -> new ChestMap());
+        if (items.isEmpty()) {
+            map.remove(position);
+            return;
+        }
+
+        ChestInfo chestInfo = map.computeIfAbsent(position, pos -> new ChestInfo());
+        chestInfo.items.clear();
+        chestInfo.items.addAll(items);
+        if (face != null) {
+            chestInfo.face = face;
+        }
     }
 
     private Stream<ItemStack> mapShulkerBox(ItemStack stack) {
@@ -282,9 +324,7 @@ public class ContainerInfo {
         BlockEntity be = world.getBlockEntity(blockPos);
         if (!(be instanceof Container)) return InteractionResult.PASS;
         LevelChunk chunk = world.getChunkAt(blockPos);
-
         EdenClient.getMod(Scheduler.class).scheduleSyncDelayed(() -> updateChunk(chunk), 1);
-
         return InteractionResult.PASS;
     }
 

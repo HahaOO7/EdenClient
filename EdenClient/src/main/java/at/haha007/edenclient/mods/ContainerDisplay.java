@@ -3,7 +3,9 @@ package at.haha007.edenclient.mods;
 import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.annotations.Mod;
 import at.haha007.edenclient.callbacks.ContainerCloseCallback;
+import at.haha007.edenclient.callbacks.PlayerBreakBlockCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
+import at.haha007.edenclient.callbacks.UpdateLevelChunkCallback;
 import at.haha007.edenclient.command.CommandManager;
 import at.haha007.edenclient.mods.datafetcher.ContainerInfo;
 import at.haha007.edenclient.mods.datafetcher.DataFetcher;
@@ -27,6 +29,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
@@ -55,8 +58,17 @@ public class ContainerDisplay {
     public ContainerDisplay() {
         PlayerTickCallback.EVENT.register(this::tick, getClass());
         ContainerCloseCallback.EVENT.register(t -> shouldUpdate = true, getClass());
+        UpdateLevelChunkCallback.EVENT.register(c -> updateLater(), getClass());
+        PlayerBreakBlockCallback.EVENT.register((a,b,c) -> updateLater(), getClass());
         PerWorldConfig.get().register(this, "ContainerDisplay");
         registerCommand();
+    }
+
+    private void updateLater() {
+        TaskManager tm = new TaskManager();
+        tm.then(new WaitForTicksTask(1));
+        tm.then(() -> shouldUpdate = true);
+        tm.start();
     }
 
     private void tick(LocalPlayer player) {
@@ -97,6 +109,7 @@ public class ContainerDisplay {
             }
         });
         entries = entries.entrySet().stream()
+                .filter(e -> level.getBlockEntity(new BlockPos(e.getKey())) != null)
                 .sorted(Comparator.comparingInt(e -> e.getKey().distManhattan(pp)))
                 .limit(200)
                 .collect(Collectors.toConcurrentMap(Map.Entry::getKey, Map.Entry::getValue));
@@ -138,6 +151,7 @@ public class ContainerDisplay {
         GL11.glEnable(GL11.GL_DEPTH_TEST);
 
         entries.forEach((pos, chestInfo) -> {
+            if(chestInfo == null || chestInfo.items().isEmpty()) return;
             //calculate looking direction, rendering offset and rendering angle
             final Direction direction = chestInfo.face();
             final Vec3 offset = Vec3.atLowerCornerOf(direction.getUnitVec3i().offset(1, 1, 1)).scale(.5);
