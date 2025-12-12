@@ -28,7 +28,7 @@ Key files
 
 Quick build and run
 -------------------
-Run these commands from the repository root (`/home/achim/IdeaProjects/EdenClient`):
+Run these commands from the repository root:
 
 Build the whole multi-project and produce jars:
 
