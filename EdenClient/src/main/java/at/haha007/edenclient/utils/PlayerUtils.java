@@ -58,9 +58,18 @@ public class PlayerUtils {
         else player.connection.sendChat(msg);
     }
 
-    @SuppressWarnings("unused")
     public static void sendMessage(Component text) {
         Minecraft.getInstance().gui.getChat().addMessage(text);
+    }
+
+    public static void sendMessage(net.kyori.adventure.text.Component text){
+        Gson gson = new Gson();
+        String json = GsonComponentSerializer.gson().serialize(text);
+        Component component = ComponentSerialization.CODEC
+                .decode(JsonOps.INSTANCE, gson.fromJson(json, JsonElement.class))
+                .getOrThrow()
+                .getFirst();
+        sendMessage(component);
     }
 
     @SuppressWarnings("unused")
@@ -77,7 +86,7 @@ public class PlayerUtils {
                 .decode(JsonOps.INSTANCE, gson.fromJson(json, JsonElement.class))
                 .getOrThrow()
                 .getFirst();
-        component = Component.empty().append(prefix).append(Component.empty().append(component).withStyle(ChatFormatting.GOLD));
+        component = Component.empty().append(Component.empty().append(component));
         Minecraft.getInstance().gui.setOverlayMessage(component, true);
     }
 
@@ -88,7 +97,7 @@ public class PlayerUtils {
                 .decode(JsonOps.INSTANCE, gson.fromJson(json, JsonElement.class))
                 .getOrThrow()
                 .getFirst();
-        Minecraft.getInstance().gui.getChat().addMessage(Component.empty().append(prefix).append(component));
+        sendMessage(Component.empty().append(prefix).append(component));
     }
 
     public static void sendModMessage(String text) {

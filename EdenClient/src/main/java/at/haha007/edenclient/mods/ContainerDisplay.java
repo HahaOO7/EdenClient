@@ -49,7 +49,7 @@ import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 @Mod(dependencies = DataFetcher.class)
 public class ContainerDisplay {
     private List<Integer> displayEntityIds = new ArrayList<>();
-    @ConfigSubscriber("true")
+    @ConfigSubscriber("false")
     private boolean enabled;
     private Map<Vec3i, ContainerInfo.ChestInfo> entries = new ConcurrentHashMap<>();
     private ChunkPos lastChunkPos = new ChunkPos(0, 0);
@@ -165,7 +165,7 @@ public class ContainerDisplay {
             // - double chest + front/back/top/bottom: use its own (split) items
             List<Item> items = new ArrayList<>(chestInfo.items());
 
-            if (state.getBlock() instanceof ChestBlock chestBlock) {
+            if (state.getBlock() instanceof ChestBlock) {
                 ChestType type = state.getValue(ChestBlock.TYPE);
                 if (type != ChestType.SINGLE) {
                     Direction facing = state.getValue(ChestBlock.FACING);
