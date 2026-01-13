@@ -8,7 +8,8 @@
   "client": [
     "AbstractContainerScreenMixin",
     "AbstractSignEditScreenMixin",
-    "ChatHudMixin",
+    "ChatComponentMixin",
+    "ChatListenerMixin",
     "ChatScreenMixin",
     "ClientPacketListenerMixin",
     "ClientPlayerMixin",
