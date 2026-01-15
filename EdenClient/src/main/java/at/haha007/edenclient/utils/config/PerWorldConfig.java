@@ -100,6 +100,7 @@ public class PerWorldConfig {
         register(new ChunkPosLoader(), ChunkPos.class);
 
         register(new SavableBlockAreaLoader(), SavableBlockArea.class);
+        register(new SavableBlockAreaListLoader(), SavableBlockAreaList.class);
         register(new CubeAreaLoader(), CubeArea.class);
         register(new SphereAreaLoader(), SphereArea.class);
         register(new CylinderAreaLoader(), CylinderArea.class);

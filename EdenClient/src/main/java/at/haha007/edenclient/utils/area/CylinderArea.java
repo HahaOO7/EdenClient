@@ -97,6 +97,11 @@ public class CylinderArea implements BlockArea {
         return streamArea(bb).filter(this::isCeiling);
     }
 
+    @Override
+    public BlockPos center() {
+        return bottomCenter.offset(0, height / 2, 0);
+    }
+
 
     private Stream<BlockPos> streamArea(BoundingBox box) {
         Vec3i min = new Vec3i(box.minX(), box.minY(), box.minZ());
@@ -144,5 +149,14 @@ public class CylinderArea implements BlockArea {
         radius.then(height);
         center.then(radius);
         return center;
+    }
+
+    @Override
+    public String toString() {
+        return "CylinderArea{" +
+                "bottomCenter=" + bottomCenter +
+                ", height=" + height +
+                ", radius=" + radius +
+                '}';
     }
 }

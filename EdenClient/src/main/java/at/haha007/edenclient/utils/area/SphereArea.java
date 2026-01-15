@@ -77,6 +77,11 @@ public class SphereArea implements BlockArea {
         return streamArea(bb).filter(this::isCeiling);
     }
 
+    @Override
+    public BlockPos center() {
+        return center;
+    }
+
     private static SphereArea fromCommand(CommandContext<FabricClientCommandSource> context, String keyCenter, String keyRadius) {
         double radius = context.getArgument(keyRadius, Double.class);
         BlockPos center = CBlockPosArgument.getBlockPos(context, keyCenter);
@@ -120,5 +125,13 @@ public class SphereArea implements BlockArea {
             }
         });
         return stream.limit((long) box.getXSpan() * box.getYSpan() * box.getZSpan()).filter(Objects::nonNull);
+    }
+
+    @Override
+    public String toString() {
+        return "SphereArea{" +
+                "center=" + center +
+                ", radius=" + radius +
+                '}';
     }
 }

@@ -4,7 +4,13 @@ import at.haha007.edenclient.annotations.Mod;
 import at.haha007.edenclient.callbacks.GameRenderCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.utils.PlayerUtils;
+import at.haha007.edenclient.utils.area.BlockArea;
+import at.haha007.edenclient.utils.area.BlockAreaRenderFactory;
+import at.haha007.edenclient.utils.area.SavableBlockArea;
+import at.haha007.edenclient.utils.area.SavableBlockAreaList;
+import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
+import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.kyori.adventure.text.Component;
@@ -13,7 +19,9 @@ import net.kyori.adventure.text.format.TextDecoration;
 import net.minecraft.client.player.LocalPlayer;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static at.haha007.edenclient.command.CommandManager.literal;
 import static at.haha007.edenclient.command.CommandManager.register;
@@ -26,7 +34,6 @@ public class Timer {
 
     public Timer() {
         PerWorldConfig.get().register(this, "timer");
-        GameRenderCallback.EVENT.register(this::onRender, getClass());
         PlayerTickCallback.EVENT.register(this::tick, getClass());
         registerCommand();
     }
@@ -93,10 +100,6 @@ public class Timer {
         }));
 
         register(command, "Timer [start,step,stop]", "Displays the elapsed time since starting the timer.");
-    }
-
-    private void onRender(float deltaTick) {
-        //TODO splits based on checkpoints
     }
 
     private void tick(LocalPlayer localPlayer) {

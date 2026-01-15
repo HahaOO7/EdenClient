@@ -11,6 +11,7 @@ import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
+import oshi.util.tuples.Pair;
 
 import java.util.List;
 import java.util.Optional;
@@ -69,13 +70,36 @@ public enum EdenRenderUtils {
                                              float maxY,
                                              float maxZ,
                                              Color4f color) {
-        // MaLiLibPipelines.LINES_NO_DEPTH_NO_CULL
         RenderContext ctx = new RenderContext(() -> "edenclient:drawBoundingBoxEdges", MaLiLibPipelines.DEBUG_LINES_MASA_SIMPLE_NO_DEPTH_NO_CULL);
         BufferBuilder buffer = ctx.getBuilder();
 
         drawBoundingBoxLinesX(buffer, minX, minY, minZ, maxX, maxY, maxZ, color);
         drawBoundingBoxLinesY(buffer, minX, minY, minZ, maxX, maxY, maxZ, color);
         drawBoundingBoxLinesZ(buffer, minX, minY, minZ, maxX, maxY, maxZ, color);
+
+        try {
+            MeshData meshData = buffer.build();
+            if (meshData != null) {
+                ctx.draw(meshData, false, false);
+                meshData.close();
+            }
+            ctx.close();
+        } catch (Exception err) {
+            MaLiLib.LOGGER.error("drawBoundingBoxEdges(): Draw Exception; {}", err.getMessage());
+        }
+    }
+
+    public static void drawLines(List<Pair<Vec3, Vec3>> lines, Color4f color) {
+        // MaLiLibPipelines.LINES_NO_DEPTH_NO_CULL
+        RenderContext ctx = new RenderContext(() -> "edenclient:drawBoundingBoxEdges", MaLiLibPipelines.DEBUG_LINES_MASA_SIMPLE_NO_CULL);
+        BufferBuilder buffer = ctx.getBuilder();
+
+        for (Pair<Vec3, Vec3> line : lines) {
+            Vec3 start = line.getA().subtract(RenderUtils.camPos());
+            Vec3 end = line.getB().subtract(RenderUtils.camPos());
+            buffer.addVertex((float) start.x, (float) start.y, (float) start.z).setColor(color.r, color.g, color.b, color.a);
+            buffer.addVertex((float) end.x, (float) end.y, (float) end.z).setColor(color.r, color.g, color.b, color.a);
+        }
 
         try {
             MeshData meshData = buffer.build();

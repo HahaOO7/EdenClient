@@ -2,9 +2,11 @@ package at.haha007.edenclient.mods;
 
 import at.haha007.edenclient.annotations.Mod;
 import at.haha007.edenclient.callbacks.ConfigLoadedCallback;
+import at.haha007.edenclient.callbacks.GameRenderCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.area.BlockArea;
+import at.haha007.edenclient.utils.area.BlockAreaRenderFactory;
 import at.haha007.edenclient.utils.area.CubeArea;
 import at.haha007.edenclient.utils.area.SavableBlockArea;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
