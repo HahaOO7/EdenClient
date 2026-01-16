@@ -14,6 +14,7 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.logging.LogUtils;
 import fi.dy.masa.malilib.render.RenderUtils;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
@@ -342,7 +343,7 @@ public class PathTimer {
             return 1;
         });
 
-        LiteralArgumentBuilder<FabricClientCommandSource> addCommand = literal("add").then(checkpointCommand);
+        LiteralArgumentBuilder<FabricClientCommandSource> addCommand = literal("add");
         List<ArgumentBuilder<FabricClientCommandSource, ?>> addCmds = BlockArea.commands((context, area) -> {
             Path path = loadedPath();
             if (path == null) {
@@ -358,6 +359,35 @@ public class PathTimer {
             addCommand.then(addCmd);
         }
         checkpointCommand.then(addCommand);
+
+        RequiredArgumentBuilder<FabricClientCommandSource, Integer> insertCommand = argument("checkpoint", IntegerArgumentType.integer(1))
+                .suggests((c, b) -> {
+                    Path path = loadedPath();
+                    if (path == null) return b.buildFuture();
+                    int size = path.path.size();
+                    for (int i = 0; i <= size; i++) {
+                        b.suggest(i + 1);
+                    }
+                    return b.buildFuture();
+                });
+
+        List<ArgumentBuilder<FabricClientCommandSource, ?>> insertCmds = BlockArea.commands((context, area) -> {
+            Path path = loadedPath();
+            if (path == null) {
+                PlayerUtils.sendModMessage("No path loaded. Set a path key first.");
+                return;
+            }
+            int checkpointIndex = IntegerArgumentType.getInteger(context, "checkpoint") - 1;
+            SavableBlockArea savableArea = new SavableBlockArea(area);
+            SavableBlockAreaList loadedPath = path.path;
+            loadedPath.add(checkpointIndex, savableArea);
+            PlayerUtils.sendModMessage("Added checkpoint area.");
+
+        });
+        for (ArgumentBuilder<FabricClientCommandSource, ?> insertCmd : insertCmds) {
+            insertCommand.then(insertCmd);
+        }
+        checkpointCommand.then(literal("insert").then(insertCommand));
 
         checkpointCommand.then(literal("list").executes(c -> {
             Path path = loadedPath();
@@ -465,15 +495,16 @@ public class PathTimer {
         if (nextCheckpoint == null) return;
         LocalPlayer player = PlayerUtils.getPlayer();
         if (nextCheckpoint.contains(player.blockPosition())) {
-            long currentTime = System.currentTimeMillis();
-            if (nextCheckpointIndex == 0) {
-                startTime = currentTime;
+            if (nextCheckpointIndex != 0) {
+                long currentTime = System.currentTimeMillis();
+                long totalTime = currentTime - startTime;
+                long deltaTime = totalTime - (checkpointTimes.isEmpty() ? 0 : checkpointTimes.getLast());
+                checkpointTimes.add(totalTime);
+                Component timeComponent = formatTimeComponent(totalTime, deltaTime);
+                PlayerUtils.sendModMessage(Component.text("Reached checkpoint " + (nextCheckpointIndex) + ". ", NamedTextColor.DARK_AQUA).append(timeComponent));
+            } else {
+                startTime = System.currentTimeMillis();
             }
-            long totalTime = currentTime - startTime;
-            long deltaTime = nextCheckpointIndex == 0 ? totalTime : totalTime - checkpointTimes.getLast();
-            checkpointTimes.add(totalTime);
-            Component timeComponent = formatTimeComponent(totalTime, deltaTime);
-            PlayerUtils.sendModMessage(Component.text("Reached checkpoint " + (nextCheckpointIndex + 1) + ". ", NamedTextColor.DARK_AQUA).append(timeComponent));
             nextCheckpointIndex++;
             if (nextCheckpointIndex >= loadedPath.size()) {
                 pathFinished();

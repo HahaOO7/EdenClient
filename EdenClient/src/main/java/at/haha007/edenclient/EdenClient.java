@@ -10,7 +10,9 @@ import at.haha007.edenclient.utils.ModInitializer;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import fi.dy.masa.malilib.event.RenderEventHandler;
+import fi.dy.masa.malilib.event.WorldLoadHandler;
 import fi.dy.masa.malilib.interfaces.IRenderer;
+import fi.dy.masa.malilib.interfaces.IWorldLoadListener;
 import lombok.Getter;
 import net.fabricmc.api.ClientModInitializer;
 import net.minecraft.client.GuiMessageTag;
@@ -41,7 +43,9 @@ public class EdenClient implements ClientModInitializer {
         setInstance(this);
         PerWorldConfig.get();
         modInitializer.initializeMods(c -> c.getAnnotation(Mod.class).required());
+        WorldLoadHandler.getInstance().registerWorldLoadPostHandler(new IWorldLoadListener() {
 
+        });
         RenderEventHandler.getInstance().registerWorldLastRenderer(new IRenderer() {
             @Override
             public void onRenderWorldLast(Matrix4f posMatrix, Matrix4f projMatrix) {

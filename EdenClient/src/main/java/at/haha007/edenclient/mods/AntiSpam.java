@@ -45,9 +45,7 @@ public class AntiSpam {
             return 1;
         }));
 
-        register(node, "AntiSpam compresses the chat to eliminate all types of unnecessary spam.",
-                "The newest instance of the message will still be displayed, all older ones removed.",
-                "The number in the square brackets shows how often a message was repeated.");
+        register(node, "AntiSpam compresses the chat to eliminate all types of unnecessary spam.", "The newest instance of the message will still be displayed, all older ones removed.", "The number in the square brackets shows how often a message was repeated.");
     }
 
     private void onChat(AddChatMessageCallback.ChatAddEvent event) {
@@ -55,8 +53,7 @@ public class AntiSpam {
         List<GuiMessage.Line> chatLines = event.getChatLines();
         Component chatText = event.getChatText();
         if (chatText == null) return;
-        if (chatLines.isEmpty())
-            return;
+        if (chatLines.isEmpty()) return;
 
         class JustGiveMeTheStringVisitor implements FormattedCharSink {
             final StringBuilder sb = new StringBuilder();
@@ -73,33 +70,28 @@ public class AntiSpam {
             }
         }
 
-        double width = Minecraft.getInstance().options.chatWidth().get();
-        double scale = Minecraft.getInstance().options.chatScale().get();
-        int maxTextLength = Mth.floor(width / scale);
-        List<FormattedCharSequence> newLines = ComponentRenderUtils.wrapComponents(
-                chatText, maxTextLength, Minecraft.getInstance().font);
+        int maxTextLength = 500;
+        List<FormattedCharSequence> newLines = ComponentRenderUtils.wrapComponents(chatText, maxTextLength, Minecraft.getInstance().font);
 
         int spamCounter = 1;
         int matchingLines = 0;
 
         for (int i = chatLines.size() - 1; i >= 0; i--) {
-            JustGiveMeTheStringVisitor oldLineVS =
-                    new JustGiveMeTheStringVisitor();
+            JustGiveMeTheStringVisitor oldLineVS = new JustGiveMeTheStringVisitor();
             chatLines.get(i).content().accept(oldLineVS);
             String oldLine = oldLineVS.toString();
 
             if (matchingLines <= newLines.size() - 1) {
-                JustGiveMeTheStringVisitor newLineVS =
-                        new JustGiveMeTheStringVisitor();
+                JustGiveMeTheStringVisitor newLineVS = new JustGiveMeTheStringVisitor();
                 newLines.get(matchingLines).accept(newLineVS);
                 String newLine = newLineVS.toString();
 
                 if (matchingLines < newLines.size() - 1) {
-                    if (oldLine.equals(newLine))
+                    if (oldLine.equals(newLine)) {
                         matchingLines++;
-                    else
+                    } else {
                         matchingLines = 0;
-
+                    }
                     continue;
                 }
 
@@ -109,8 +101,7 @@ public class AntiSpam {
                 }
 
                 if (i > 0 && matchingLines == newLines.size() - 1) {
-                    JustGiveMeTheStringVisitor nextOldLineVS =
-                            new JustGiveMeTheStringVisitor();
+                    JustGiveMeTheStringVisitor nextOldLineVS = new JustGiveMeTheStringVisitor();
                     chatLines.get(i - 1).content().accept(nextOldLineVS);
                     String nextOldLine = nextOldLineVS.toString();
 
@@ -118,8 +109,7 @@ public class AntiSpam {
                     String addedText = twoLines.substring(newLine.length());
 
                     if (addedText.startsWith(" [x") && addedText.endsWith("]")) {
-                        String oldSpamCounter =
-                                addedText.substring(3, addedText.length() - 1);
+                        String oldSpamCounter = addedText.substring(3, addedText.length() - 1);
 
                         if (MathUtils.isInteger(oldSpamCounter)) {
                             spamCounter += Integer.parseInt(oldSpamCounter);
@@ -129,8 +119,7 @@ public class AntiSpam {
                     }
                 }
 
-                if (oldLine.length() == newLine.length())
-                    spamCounter++;
+                if (oldLine.length() == newLine.length()) spamCounter++;
                 else {
                     String addedText = oldLine.substring(newLine.length());
                     if (!addedText.startsWith(" [x") || !addedText.endsWith("]")) {
@@ -138,8 +127,7 @@ public class AntiSpam {
                         continue;
                     }
 
-                    String oldSpamCounter =
-                            addedText.substring(3, addedText.length() - 1);
+                    String oldSpamCounter = addedText.substring(3, addedText.length() - 1);
                     if (!MathUtils.isInteger(oldSpamCounter)) {
                         matchingLines = 0;
                         continue;
@@ -155,8 +143,7 @@ public class AntiSpam {
             matchingLines = 0;
         }
 
-        chatText = Component.literal("").append(chatText).append(Component.literal(" [x" + spamCounter + "]")
-                .setStyle(Style.EMPTY.withHoverEvent(new HoverEvent.ShowText(Component.literal(new SimpleDateFormat("hh:mm:ss").format(new Date()))))));
+        chatText = Component.literal("").append(chatText).append(Component.literal(" [x" + spamCounter + "]").setStyle(Style.EMPTY.withHoverEvent(new HoverEvent.ShowText(Component.literal(new SimpleDateFormat("hh:mm:ss").format(new Date()))))));
 
         event.setChatText(chatText);
     }
