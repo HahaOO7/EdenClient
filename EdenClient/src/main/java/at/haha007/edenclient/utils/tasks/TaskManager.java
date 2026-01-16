@@ -8,6 +8,7 @@ import com.mojang.logging.LogUtils;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 
 public class TaskManager implements  Task {
@@ -45,12 +46,11 @@ public class TaskManager implements  Task {
 
     public void start() {
         if (started.getAndSet(true)) return;
+//        String stackTrace = Arrays.stream(Thread.currentThread().getStackTrace()).map(Object::toString).collect(Collectors.joining("\n"));
         EdenClient.getMod(Scheduler.class).runAsync(() -> {
             try {
                 run();
-            } catch (InterruptedException e) {
-                LogUtils.getLogger().error("Task interrupted!",e);
-                Thread.currentThread().interrupt();
+            } catch (InterruptedException ignored) {
             }
         });
     }

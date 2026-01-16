@@ -81,6 +81,7 @@ public class PerWorldConfig {
         register(new StringListLoader(), StringList.class);
         register(new StringSetLoader(), StringSet.class);
         register(new StringStringMapLoader(), StringStringMap.class);
+        register(new LongListLoader(), LongList.class);
 
         register(new BlockBoxLoader(), BoundingBox.class);
 
