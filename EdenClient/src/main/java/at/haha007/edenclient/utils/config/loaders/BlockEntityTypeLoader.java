@@ -3,7 +3,7 @@ package at.haha007.edenclient.utils.config.loaders;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.StringTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,7 +18,7 @@ public class BlockEntityTypeLoader implements ConfigLoader<StringTag, BlockEntit
 
     @NotNull
     public BlockEntityType<?> load(@NotNull StringTag nbtElement) {
-        BlockEntityType<?> type = registry.getValue(ResourceLocation.parse(nbtElement.asString().orElseThrow()));
+        BlockEntityType<?> type = registry.getValue(Identifier.parse(nbtElement.asString().orElseThrow()));
         return type == null ? BlockEntityType.STRUCTURE_BLOCK : type;
     }
 

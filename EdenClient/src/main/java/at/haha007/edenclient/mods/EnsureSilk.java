@@ -18,7 +18,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantment;
@@ -99,7 +99,7 @@ public class EnsureSilk {
             return builder.buildFuture();
         }).executes(context -> {
             String name = context.getArgument("type", String.class);
-            ResourceLocation identifier = ResourceLocation.parse(name);
+            Identifier identifier = Identifier.parse(name);
             filter.remove(BuiltInRegistries.BLOCK.getValue(identifier));
             PlayerUtils.sendModMessage("Removed " + name);
             return 1;

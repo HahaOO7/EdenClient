@@ -73,9 +73,9 @@ public class AntiSpam {
             }
         }
 
-        ChatComponent chat = Minecraft.getInstance().gui.getChat();
-        int maxTextLength =
-                Mth.floor(chat.getWidth() / chat.getScale());
+        double width = Minecraft.getInstance().options.chatWidth().get();
+        double scale = Minecraft.getInstance().options.chatScale().get();
+        int maxTextLength = Mth.floor(width / scale);
         List<FormattedCharSequence> newLines = ComponentRenderUtils.wrapComponents(
                 chatText, maxTextLength, Minecraft.getInstance().font);
 

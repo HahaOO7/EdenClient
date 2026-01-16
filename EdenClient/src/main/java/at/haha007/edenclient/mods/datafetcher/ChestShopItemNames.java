@@ -21,7 +21,7 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.DefaultedRegistry;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -161,7 +161,7 @@ public class ChestShopItemNames {
 
 
         DefaultedRegistry<Item> itemRegistry = BuiltInRegistries.ITEM;
-        String[] minecraftIDs = itemRegistry.stream().map(itemRegistry::getKey).map(ResourceLocation::toString).map(itemName -> itemName.split(":")[1]).map(itemName -> itemName.replace('_', ' ')).map(String::toLowerCase).filter(Predicate.not(itemNameMap::containsValue)).toList().toArray(new String[0]);
+        String[] minecraftIDs = itemRegistry.stream().map(itemRegistry::getKey).map(Identifier::toString).map(itemName -> itemName.split(":")[1]).map(itemName -> itemName.replace('_', ' ')).map(String::toLowerCase).filter(Predicate.not(itemNameMap::containsValue)).toList().toArray(new String[0]);
         sendModMessage(Component.text("Started Mapping. Mapping will take about ", NamedTextColor.GOLD)
                 .append(Component.text((minecraftIDs.length / 60 + 1) + " minutes", NamedTextColor.AQUA)));
 

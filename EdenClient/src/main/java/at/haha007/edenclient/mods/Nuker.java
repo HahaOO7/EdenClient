@@ -32,7 +32,7 @@ import net.minecraft.core.Vec3i;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
 import net.minecraft.network.protocol.game.ServerboundSwingPacket;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -165,7 +165,7 @@ public class Nuker {
             return builder.buildFuture();
         }).executes(context -> {
             String name = context.getArgument("type", String.class);
-            ResourceLocation identifier = ResourceLocation.parse(name);
+            Identifier identifier = Identifier.parse(name);
             filter.remove(BuiltInRegistries.BLOCK.getValue(identifier));
             PlayerUtils.sendModMessage("Removed " + name);
             return 1;

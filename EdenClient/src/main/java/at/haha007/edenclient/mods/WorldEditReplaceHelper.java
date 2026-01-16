@@ -21,7 +21,7 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.DefaultedRegistry;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.state.properties.*;
 
@@ -55,8 +55,8 @@ public class WorldEditReplaceHelper {
 
         node.then(literal("replace").then(argument("from", StringArgumentType.word()).suggests(this::suggestValidBlocks).then(argument("to", StringArgumentType.word()).suggests(this::suggestValidBlocks)
                 .executes(c -> {
-                    Optional<Block> fromBlockOpt = BuiltInRegistries.BLOCK.getOptional(ResourceLocation.parse(c.getArgument("from", String.class)));
-                    Optional<Block> toBlockOpt = BuiltInRegistries.BLOCK.getOptional(ResourceLocation.parse(c.getArgument("to", String.class)));
+                    Optional<Block> fromBlockOpt = BuiltInRegistries.BLOCK.getOptional(Identifier.parse(c.getArgument("from", String.class)));
+                    Optional<Block> toBlockOpt = BuiltInRegistries.BLOCK.getOptional(Identifier.parse(c.getArgument("to", String.class)));
 
                     if (fromBlockOpt.isEmpty() || toBlockOpt.isEmpty()) {
                         sendModMessage("One of your block-inputs doesn't exist.");
@@ -83,8 +83,8 @@ public class WorldEditReplaceHelper {
                 return 0;
             }
 
-            replaceUndoRequest(BuiltInRegistries.BLOCK.getValue(ResourceLocation.parse(undoCommandStack.peek()[0])),
-                    BuiltInRegistries.BLOCK.getValue( ResourceLocation.parse(Objects.requireNonNull(undoCommandStack.peek())[1])), delay);
+            replaceUndoRequest(BuiltInRegistries.BLOCK.getValue(Identifier.parse(undoCommandStack.peek()[0])),
+                    BuiltInRegistries.BLOCK.getValue( Identifier.parse(Objects.requireNonNull(undoCommandStack.peek())[1])), delay);
             redoCommandStack.add(new String[]{Objects.requireNonNull(undoCommandStack.peek())[1], Objects.requireNonNull(undoCommandStack.peek())[0]});
             undoCommandStack.pop();
             return 1;
@@ -96,8 +96,8 @@ public class WorldEditReplaceHelper {
                 return 0;
             }
 
-            replaceRedoRequest(BuiltInRegistries.BLOCK.getValue(ResourceLocation.parse(redoCommandStack.peek()[0])),
-                    BuiltInRegistries.BLOCK.getValue( ResourceLocation.parse(Objects.requireNonNull(redoCommandStack.peek())[1])), delay);
+            replaceRedoRequest(BuiltInRegistries.BLOCK.getValue(Identifier.parse(redoCommandStack.peek()[0])),
+                    BuiltInRegistries.BLOCK.getValue( Identifier.parse(Objects.requireNonNull(redoCommandStack.peek())[1])), delay);
             undoCommandStack.add(new String[]{Objects.requireNonNull(redoCommandStack.peek())[1], Objects.requireNonNull(redoCommandStack.peek())[0]});
             redoCommandStack.pop();
             return 1;
@@ -131,7 +131,7 @@ public class WorldEditReplaceHelper {
         DefaultedRegistry<Block> blockRegistry = BuiltInRegistries.BLOCK;
         blockRegistry.stream()
                 .map(blockRegistry::getKey)
-                .map(ResourceLocation::toString)
+                .map(Identifier::toString)
                 .map(itemName -> itemName.split(":")[1])
                 .map(String::toLowerCase).toList().forEach(suggestionsBuilder::suggest);
         return suggestionsBuilder.buildFuture();

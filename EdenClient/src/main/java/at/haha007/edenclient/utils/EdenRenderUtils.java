@@ -90,6 +90,10 @@ public enum EdenRenderUtils {
     }
 
     public static void drawLines(List<Pair<Vec3, Vec3>> lines, Color4f color) {
+        drawLines(lines, color, 1f);
+    }
+
+    public static void drawLines(List<Pair<Vec3, Vec3>> lines, Color4f color, float lineWidth) {
         // MaLiLibPipelines.LINES_NO_DEPTH_NO_CULL
         RenderContext ctx = new RenderContext(() -> "edenclient:drawBoundingBoxEdges", MaLiLibPipelines.DEBUG_LINES_MASA_SIMPLE_NO_CULL);
         BufferBuilder buffer = ctx.getBuilder();
@@ -97,8 +101,8 @@ public enum EdenRenderUtils {
         for (Pair<Vec3, Vec3> line : lines) {
             Vec3 start = line.getA().subtract(RenderUtils.camPos());
             Vec3 end = line.getB().subtract(RenderUtils.camPos());
-            buffer.addVertex((float) start.x, (float) start.y, (float) start.z).setColor(color.r, color.g, color.b, color.a);
-            buffer.addVertex((float) end.x, (float) end.y, (float) end.z).setColor(color.r, color.g, color.b, color.a);
+            buffer.addVertex((float) start.x, (float) start.y, (float) start.z).setColor(color.r, color.g, color.b, color.a).setLineWidth(lineWidth);
+            buffer.addVertex((float) end.x, (float) end.y, (float) end.z).setColor(color.r, color.g, color.b, color.a).setLineWidth(lineWidth);
         }
 
         try {

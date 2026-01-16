@@ -12,7 +12,7 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.*;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.Items;
@@ -61,7 +61,7 @@ public class AutoMoss {
         ResourceKey<? extends Registry<Block>> registry = BlockTags.MOSS_REPLACEABLE.registry();
         RegistryAccess manager = world.registryAccess();
         for (BlockPos pos : BlockPos.betweenClosed(blockPos.offset(-1, -1, -1), blockPos.offset(1, 1, 1))) {
-            ResourceLocation id = BuiltInRegistries.BLOCK.getKey(world.getBlockState(pos).getBlock());
+            Identifier id = BuiltInRegistries.BLOCK.getKey(world.getBlockState(pos).getBlock());
             if (manager.lookupOrThrow(registry).containsKey(id) && world.getBlockState(pos.offset(0, 1, 0)).getBlock() == Blocks.AIR)
                 return true;
         }

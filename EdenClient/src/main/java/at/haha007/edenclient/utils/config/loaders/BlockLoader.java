@@ -3,7 +3,7 @@ package at.haha007.edenclient.utils.config.loaders;
 import net.minecraft.core.DefaultedRegistry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.StringTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.block.Block;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,7 +18,7 @@ public class BlockLoader implements ConfigLoader<StringTag, Block> {
 
     @NotNull
     public Block load(@NotNull StringTag nbtElement) {
-        return registry.getValue(ResourceLocation.parse(nbtElement.asString().orElseThrow()));
+        return registry.getValue(Identifier.parse(nbtElement.asString().orElseThrow()));
     }
 
     @NotNull

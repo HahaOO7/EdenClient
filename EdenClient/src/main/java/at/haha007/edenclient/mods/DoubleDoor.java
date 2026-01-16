@@ -14,7 +14,7 @@ import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.protocol.game.ServerboundUseItemOnPacket;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -74,7 +74,7 @@ public class DoubleDoor {
     }
 
     private boolean noDoor(BlockPos bp, Registry<?> registry, ClientLevel world) {
-        ResourceLocation id = BuiltInRegistries.BLOCK.getKey(world.getBlockState(bp).getBlock());
+        Identifier id = BuiltInRegistries.BLOCK.getKey(world.getBlockState(bp).getBlock());
         return !registry.containsKey(id);
     }
 

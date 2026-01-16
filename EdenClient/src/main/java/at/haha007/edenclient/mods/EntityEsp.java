@@ -18,7 +18,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.DefaultedRegistry;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.phys.AABB;
@@ -107,7 +107,7 @@ public class EntityEsp {
         cmd.then(literal("list").executes(c -> {
             String str = entityTypes.stream()
                     .map(BuiltInRegistries.ENTITY_TYPE::getKey)
-                    .map(ResourceLocation::toString)
+                    .map(Identifier::toString)
                     .map(s -> s.substring(10))
                     .collect(Collectors.joining(", "));
             sendModMessage(str);
