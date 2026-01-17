@@ -11,6 +11,7 @@ import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
+import oshi.util.tuples.Pair;
 
 import java.util.List;
 import java.util.Optional;
@@ -31,8 +32,8 @@ public enum EdenRenderUtils {
         Vec3 cameraPos = fi.dy.masa.malilib.render.RenderUtils.camPos();
         for (Vec3 pos : positions) {
             pos = pos.subtract(cameraPos);
-            buffer.addVertex((float) eyePos.x, (float) eyePos.y, (float) eyePos.z).setColor(color.r, color.g, color.b, color.a);
-            buffer.addVertex((float) pos.x, (float) pos.y, (float) pos.z).setColor(color.r, color.g, color.b, color.a);
+            buffer.addVertex((float) eyePos.x, (float) eyePos.y, (float) eyePos.z).setColor(color.r, color.g, color.b, color.a).setLineWidth(1f);
+            buffer.addVertex((float) pos.x, (float) pos.y, (float) pos.z).setColor(color.r, color.g, color.b, color.a).setLineWidth(1f);
         }
         try {
             MeshData meshData = buffer.build();
@@ -69,13 +70,40 @@ public enum EdenRenderUtils {
                                              float maxY,
                                              float maxZ,
                                              Color4f color) {
-        // MaLiLibPipelines.LINES_NO_DEPTH_NO_CULL
         RenderContext ctx = new RenderContext(() -> "edenclient:drawBoundingBoxEdges", MaLiLibPipelines.DEBUG_LINES_MASA_SIMPLE_NO_DEPTH_NO_CULL);
         BufferBuilder buffer = ctx.getBuilder();
 
         drawBoundingBoxLinesX(buffer, minX, minY, minZ, maxX, maxY, maxZ, color);
         drawBoundingBoxLinesY(buffer, minX, minY, minZ, maxX, maxY, maxZ, color);
         drawBoundingBoxLinesZ(buffer, minX, minY, minZ, maxX, maxY, maxZ, color);
+
+        try {
+            MeshData meshData = buffer.build();
+            if (meshData != null) {
+                ctx.draw(meshData, false, false);
+                meshData.close();
+            }
+            ctx.close();
+        } catch (Exception err) {
+            MaLiLib.LOGGER.error("drawBoundingBoxEdges(): Draw Exception; {}", err.getMessage());
+        }
+    }
+
+    public static void drawLines(List<Pair<Vec3, Vec3>> lines, Color4f color) {
+        drawLines(lines, color, 1f);
+    }
+
+    public static void drawLines(List<Pair<Vec3, Vec3>> lines, Color4f color, float lineWidth) {
+        // MaLiLibPipelines.LINES_NO_DEPTH_NO_CULL
+        RenderContext ctx = new RenderContext(() -> "edenclient:drawBoundingBoxEdges", MaLiLibPipelines.DEBUG_LINES_MASA_SIMPLE_NO_CULL);
+        BufferBuilder buffer = ctx.getBuilder();
+
+        for (Pair<Vec3, Vec3> line : lines) {
+            Vec3 start = line.getA().subtract(RenderUtils.camPos());
+            Vec3 end = line.getB().subtract(RenderUtils.camPos());
+            buffer.addVertex((float) start.x, (float) start.y, (float) start.z).setColor(color.r, color.g, color.b, color.a).setLineWidth(lineWidth);
+            buffer.addVertex((float) end.x, (float) end.y, (float) end.z).setColor(color.r, color.g, color.b, color.a).setLineWidth(lineWidth);
+        }
 
         try {
             MeshData meshData = buffer.build();
@@ -97,47 +125,47 @@ public enum EdenRenderUtils {
                                               float maxY,
                                               float maxZ,
                                               Color4f color) {
-        buffer.addVertex(minX, minY, minZ).setColor(color.r, color.g, color.b, color.a);
-        buffer.addVertex(maxX, minY, minZ).setColor(color.r, color.g, color.b, color.a);
+        buffer.addVertex(minX, minY, minZ).setColor(color.r, color.g, color.b, color.a).setLineWidth(1f);
+        buffer.addVertex(maxX, minY, minZ).setColor(color.r, color.g, color.b, color.a).setLineWidth(1f);
 
-        buffer.addVertex(minX, maxY, minZ).setColor(color.r, color.g, color.b, color.a);
-        buffer.addVertex(maxX, maxY, minZ).setColor(color.r, color.g, color.b, color.a);
+        buffer.addVertex(minX, maxY, minZ).setColor(color.r, color.g, color.b, color.a).setLineWidth(1f);
+        buffer.addVertex(maxX, maxY, minZ).setColor(color.r, color.g, color.b, color.a).setLineWidth(1f);
 
-        buffer.addVertex(minX, minY, maxZ).setColor(color.r, color.g, color.b, color.a);
-        buffer.addVertex(maxX, minY, maxZ).setColor(color.r, color.g, color.b, color.a);
+        buffer.addVertex(minX, minY, maxZ).setColor(color.r, color.g, color.b, color.a).setLineWidth(1f);
+        buffer.addVertex(maxX, minY, maxZ).setColor(color.r, color.g, color.b, color.a).setLineWidth(1f);
 
-        buffer.addVertex(minX, maxY, maxZ).setColor(color.r, color.g, color.b, color.a);
-        buffer.addVertex(maxX, maxY, maxZ).setColor(color.r, color.g, color.b, color.a);
+        buffer.addVertex(minX, maxY, maxZ).setColor(color.r, color.g, color.b, color.a).setLineWidth(1f);
+        buffer.addVertex(maxX, maxY, maxZ).setColor(color.r, color.g, color.b, color.a).setLineWidth(1f);
     }
 
     private static void drawBoundingBoxLinesY(BufferBuilder buffer, float minX, float minY, float minZ, float maxX, float maxY, float maxZ,
                                               Color4f color) {
-        buffer.addVertex(minX, minY, minZ).setColor(color.r, color.g, color.b, color.a);
-        buffer.addVertex(minX, maxY, minZ).setColor(color.r, color.g, color.b, color.a);
+        buffer.addVertex(minX, minY, minZ).setColor(color.r, color.g, color.b, color.a).setLineWidth(1f);
+        buffer.addVertex(minX, maxY, minZ).setColor(color.r, color.g, color.b, color.a).setLineWidth(1f);
 
-        buffer.addVertex(maxX, minY, minZ).setColor(color.r, color.g, color.b, color.a);
-        buffer.addVertex(maxX, maxY, minZ).setColor(color.r, color.g, color.b, color.a);
+        buffer.addVertex(maxX, minY, minZ).setColor(color.r, color.g, color.b, color.a).setLineWidth(1f);
+        buffer.addVertex(maxX, maxY, minZ).setColor(color.r, color.g, color.b, color.a).setLineWidth(1f);
 
-        buffer.addVertex(minX, minY, maxZ).setColor(color.r, color.g, color.b, color.a);
-        buffer.addVertex(minX, maxY, maxZ).setColor(color.r, color.g, color.b, color.a);
+        buffer.addVertex(minX, minY, maxZ).setColor(color.r, color.g, color.b, color.a).setLineWidth(1f);
+        buffer.addVertex(minX, maxY, maxZ).setColor(color.r, color.g, color.b, color.a).setLineWidth(1f);
 
-        buffer.addVertex(maxX, minY, maxZ).setColor(color.r, color.g, color.b, color.a);
-        buffer.addVertex(maxX, maxY, maxZ).setColor(color.r, color.g, color.b, color.a);
+        buffer.addVertex(maxX, minY, maxZ).setColor(color.r, color.g, color.b, color.a).setLineWidth(1f);
+        buffer.addVertex(maxX, maxY, maxZ).setColor(color.r, color.g, color.b, color.a).setLineWidth(1f);
     }
 
     private static void drawBoundingBoxLinesZ(BufferBuilder buffer, float minX, float minY, float minZ, float maxX, float maxY, float maxZ,
                                               Color4f color) {
-        buffer.addVertex(minX, minY, minZ).setColor(color.r, color.g, color.b, color.a);
-        buffer.addVertex(minX, minY, maxZ).setColor(color.r, color.g, color.b, color.a);
+        buffer.addVertex(minX, minY, minZ).setColor(color.r, color.g, color.b, color.a).setLineWidth(1f);
+        buffer.addVertex(minX, minY, maxZ).setColor(color.r, color.g, color.b, color.a).setLineWidth(1f);
 
-        buffer.addVertex(maxX, minY, minZ).setColor(color.r, color.g, color.b, color.a);
-        buffer.addVertex(maxX, minY, maxZ).setColor(color.r, color.g, color.b, color.a);
+        buffer.addVertex(maxX, minY, minZ).setColor(color.r, color.g, color.b, color.a).setLineWidth(1f);
+        buffer.addVertex(maxX, minY, maxZ).setColor(color.r, color.g, color.b, color.a).setLineWidth(1f);
 
-        buffer.addVertex(minX, maxY, minZ).setColor(color.r, color.g, color.b, color.a);
-        buffer.addVertex(minX, maxY, maxZ).setColor(color.r, color.g, color.b, color.a);
+        buffer.addVertex(minX, maxY, minZ).setColor(color.r, color.g, color.b, color.a).setLineWidth(1f);
+        buffer.addVertex(minX, maxY, maxZ).setColor(color.r, color.g, color.b, color.a).setLineWidth(1f);
 
-        buffer.addVertex(maxX, maxY, minZ).setColor(color.r, color.g, color.b, color.a);
-        buffer.addVertex(maxX, maxY, maxZ).setColor(color.r, color.g, color.b, color.a);
+        buffer.addVertex(maxX, maxY, minZ).setColor(color.r, color.g, color.b, color.a).setLineWidth(1f);
+        buffer.addVertex(maxX, maxY, maxZ).setColor(color.r, color.g, color.b, color.a).setLineWidth(1f);
     }
 
 }

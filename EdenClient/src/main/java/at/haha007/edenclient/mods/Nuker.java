@@ -2,9 +2,11 @@ package at.haha007.edenclient.mods;
 
 import at.haha007.edenclient.annotations.Mod;
 import at.haha007.edenclient.callbacks.ConfigLoadedCallback;
+import at.haha007.edenclient.callbacks.GameRenderCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.area.BlockArea;
+import at.haha007.edenclient.utils.area.BlockAreaRenderFactory;
 import at.haha007.edenclient.utils.area.CubeArea;
 import at.haha007.edenclient.utils.area.SavableBlockArea;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
@@ -30,7 +32,7 @@ import net.minecraft.core.Vec3i;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
 import net.minecraft.network.protocol.game.ServerboundSwingPacket;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -163,7 +165,7 @@ public class Nuker {
             return builder.buildFuture();
         }).executes(context -> {
             String name = context.getArgument("type", String.class);
-            ResourceLocation identifier = ResourceLocation.parse(name);
+            Identifier identifier = Identifier.parse(name);
             filter.remove(BuiltInRegistries.BLOCK.getValue(identifier));
             PlayerUtils.sendModMessage("Removed " + name);
             return 1;

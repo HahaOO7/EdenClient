@@ -51,7 +51,17 @@ public class SavableBlockArea implements BlockArea {
         return area.ceilingStream();
     }
 
+    @Override
+    public BlockPos center() {
+        return area.center();
+    }
+
     public enum BlockAreaType {
         CUBE, CYLINDER, SPHERE
+    }
+
+    @Override
+    public String toString() {
+        return area.toString();
     }
 }

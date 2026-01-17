@@ -31,5 +31,6 @@ public abstract class ChatScreenMixin {
         if (newPos < 0 || newPos > recentChat.size() - 1 || historyPos == newPos) return;
         moveInHistory(newPos - historyPos);
         input.setCursorPosition(prefix.length());
+        cir.setReturnValue(true);
     }
 }

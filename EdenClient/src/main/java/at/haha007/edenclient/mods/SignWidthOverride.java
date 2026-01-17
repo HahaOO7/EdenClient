@@ -20,13 +20,13 @@ public class SignWidthOverride {
         registerCommand();
     }
 
-    private boolean onSignWidth(int textWith, int signWidth, boolean withReached) {
-        if (!enabled) return withReached;
+    private boolean onSignWidth(int textWidth, int signWidth, boolean widthReached) {
+        if (!enabled) return widthReached;
         return true;
     }
 
     private void registerCommand() {
-        var node = literal("esignwith");
+        var node = literal("esignwidth");
         node.then(literal("toggle").executes(c -> {
             enabled = !enabled;
             sendModMessage((enabled ? "Enabled SignWidth Override." : "Disabled SignWidth Override."));

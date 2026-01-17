@@ -1,10 +1,12 @@
 package at.haha007.edenclient.utils.area;
 
 import at.haha007.edenclient.command.CommandManager;
+import com.jcraft.jorbis.Block;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.Entity;
 
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -51,5 +53,5 @@ public interface BlockArea {
 
     Stream<BlockPos> ceilingStream();
 
-
+    BlockPos center();
 }

@@ -1,6 +1,6 @@
 package at.haha007.edenclient.utils;
 
-import at.haha007.edenclient.mixinterface.IHandledScreen;
+import at.haha007.edenclient.mixinterface.HandledScreenAccessor;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.mojang.serialization.JsonOps;
@@ -58,9 +58,18 @@ public class PlayerUtils {
         else player.connection.sendChat(msg);
     }
 
-    @SuppressWarnings("unused")
     public static void sendMessage(Component text) {
         Minecraft.getInstance().gui.getChat().addMessage(text);
+    }
+
+    public static void sendMessage(net.kyori.adventure.text.Component text){
+        Gson gson = new Gson();
+        String json = GsonComponentSerializer.gson().serialize(text);
+        Component component = ComponentSerialization.CODEC
+                .decode(JsonOps.INSTANCE, gson.fromJson(json, JsonElement.class))
+                .getOrThrow()
+                .getFirst();
+        sendMessage(component);
     }
 
     @SuppressWarnings("unused")
@@ -77,7 +86,7 @@ public class PlayerUtils {
                 .decode(JsonOps.INSTANCE, gson.fromJson(json, JsonElement.class))
                 .getOrThrow()
                 .getFirst();
-        component = Component.empty().append(prefix).append(Component.empty().append(component).withStyle(ChatFormatting.GOLD));
+        component = Component.empty().append(Component.empty().append(component));
         Minecraft.getInstance().gui.setOverlayMessage(component, true);
     }
 
@@ -88,7 +97,7 @@ public class PlayerUtils {
                 .decode(JsonOps.INSTANCE, gson.fromJson(json, JsonElement.class))
                 .getOrThrow()
                 .getFirst();
-        Minecraft.getInstance().gui.getChat().addMessage(component);
+        sendMessage(Component.empty().append(prefix).append(component));
     }
 
     public static void sendModMessage(String text) {
@@ -131,7 +140,7 @@ public class PlayerUtils {
     public static void clickSlot(int slotId) {
         Screen screen = Minecraft.getInstance().screen;
         if (!(screen instanceof ContainerScreen gcs)) return;
-        ((IHandledScreen) screen).edenClient$clickMouse(gcs.getMenu().slots.get(slotId), slotId, 0, ClickType.PICKUP_ALL);
+        ((HandledScreenAccessor) screen).edenClient$clickMouse(gcs.getMenu().slots.get(slotId), slotId, 0, ClickType.PICKUP_ALL);
     }
 
     public static Vec3 getClientLookVec() {

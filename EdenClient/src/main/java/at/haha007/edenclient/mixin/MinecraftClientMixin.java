@@ -21,9 +21,8 @@ public class MinecraftClientMixin {
     @Nullable
     public ClientLevel level;
 
-
-    @Inject(at = @At("RETURN"), method = "disconnect(Lnet/minecraft/client/gui/screens/Screen;Z)V")
-    void onDisconnect(Screen screen, boolean bl, CallbackInfo ci) {
+    @Inject(at = @At("RETURN"), method = "disconnect(Lnet/minecraft/client/gui/screens/Screen;ZZ)V")
+    void onDisconnect(Screen screen, boolean bl, boolean bl2, CallbackInfo ci) {
         if(!EdenClient.connected) {
             return;
         }

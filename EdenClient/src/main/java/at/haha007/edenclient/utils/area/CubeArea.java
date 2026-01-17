@@ -75,6 +75,14 @@ public class CubeArea implements BlockArea {
         return streamArea(new BoundingBox(min.getX(), min.getY(), min.getZ(), max.getX(), max.getY(), max.getZ()));
     }
 
+    @Override
+    public BlockPos center() {
+        int centerX = (box.minX() + box.maxX()) / 2;
+        int centerY = (box.minY() + box.maxY()) / 2;
+        int centerZ = (box.minZ() + box.maxZ()) / 2;
+        return new BlockPos(centerX, centerY, centerZ);
+    }
+
     private Stream<BlockPos> streamArea(BoundingBox box) {
         Vec3i min = new Vec3i(box.minX(), box.minY(), box.minZ());
         Vec3i max = new Vec3i(box.maxX(), box.maxY(), box.maxZ());
@@ -129,5 +137,12 @@ public class CubeArea implements BlockArea {
         });
         a = a.then(b);
         return a;
+    }
+
+    @Override
+    public String toString() {
+        return "CubeArea{" +
+                "box=" + box +
+                '}';
     }
 }

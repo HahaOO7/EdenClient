@@ -17,7 +17,7 @@ import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.DefaultedRegistry;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.Item;
 
@@ -74,7 +74,7 @@ public class AutoSell {
         }
 
         node.then(literal("remove").then(argument("item", StringArgumentType.greedyString()).suggests(this::suggestRemoveItems).executes(c -> {
-            Optional<Item> opt = BuiltInRegistries.ITEM.getOptional(ResourceLocation.parse(c.getArgument("item", String.class).replace(" ", "_")));
+            Optional<Item> opt = BuiltInRegistries.ITEM.getOptional(Identifier.parse(c.getArgument("item", String.class).replace(" ", "_")));
             if (opt.isEmpty()) {
                 sendModMessage("No item with this name exists.");
                 return 1;
@@ -113,7 +113,7 @@ public class AutoSell {
         DefaultedRegistry<Item> itemRegistry = BuiltInRegistries.ITEM;
         autoSellItems.stream().sorted(Comparator.comparing(i -> itemRegistry.getKey(i).getPath()))
                 .map(itemRegistry::getKey)
-                .map(ResourceLocation::toString)
+                .map(Identifier::toString)
                 .map(itemName -> itemName.split(":")[1])
                 .map(String::toLowerCase).toList().forEach(suggestionsBuilder::suggest);
         return suggestionsBuilder.buildFuture();

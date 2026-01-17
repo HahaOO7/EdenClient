@@ -12,11 +12,11 @@ public interface AddChatMessageCallback {
     Event<AddChatMessageCallback> EVENT = new Event<>(
             listeners -> event -> {
                 for (AddChatMessageCallback listener : listeners) {
-                    listener.interact(event);
+                    listener.onChatAdd(event);
                 }
             });
 
-    void interact(ChatAddEvent event);
+    void onChatAdd(ChatAddEvent event);
 
     @Getter
     class ChatAddEvent {

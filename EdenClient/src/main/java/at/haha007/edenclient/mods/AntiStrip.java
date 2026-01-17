@@ -9,8 +9,8 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -37,7 +37,7 @@ public class AntiStrip {
     );
 
     @ConfigSubscriber("false")
-    private boolean enabled = true;
+    private boolean enabled = false;
 
     public AntiStrip() {
         PlayerInteractBlockCallback.EVENT.register(this::onInteractBlock, getClass());
@@ -62,7 +62,7 @@ public class AntiStrip {
         if (player.isCreative()) return InteractionResult.PASS;
         if (!axeItems.contains((hand == InteractionHand.MAIN_HAND ? player.getMainHandItem() : player.getOffhandItem()).getItem()))
             return InteractionResult.PASS;
-        ResourceLocation id = BuiltInRegistries.BLOCK.getKey(world.getBlockState(blockHitResult.getBlockPos()).getBlock());
+        Identifier id = BuiltInRegistries.BLOCK.getKey(world.getBlockState(blockHitResult.getBlockPos()).getBlock());
         RegistryAccess registryManager = world.registryAccess();
         ResourceKey<? extends Registry<Block>> logsRegistry = BlockTags.LOGS.registry();
         return registryManager.lookupOrThrow(logsRegistry).containsKey(id) ? InteractionResult.FAIL : InteractionResult.PASS;
