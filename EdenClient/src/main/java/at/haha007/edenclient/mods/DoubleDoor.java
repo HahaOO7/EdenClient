@@ -9,18 +9,16 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.Registry;
-import net.minecraft.core.RegistryAccess;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.protocol.game.ServerboundUseItemOnPacket;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.Identifier;
-import net.minecraft.tags.BlockTags;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.DoorBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.DoorHingeSide;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
+
+import java.util.Objects;
 
 import static at.haha007.edenclient.command.CommandManager.literal;
 import static at.haha007.edenclient.command.CommandManager.register;
@@ -46,8 +44,7 @@ public class DoubleDoor {
             return 1;
         }));
 
-        register(node,
-                "DoubleDoor opens multiple doors with one click.");
+        register(node, "DoubleDoor opens multiple doors with one click.");
     }
 
     private InteractionResult onInteractBlock(LocalPlayer player, ClientLevel world, InteractionHand hand, BlockHitResult blockHitResult) {
@@ -61,25 +58,29 @@ public class DoubleDoor {
         if (hand != InteractionHand.MAIN_HAND) return;
         BlockPos bp = blockHitResult.getBlockPos();
 
-        ResourceKey<? extends Registry<Block>> registryKey = BlockTags.DOORS.registry();
-        RegistryAccess registryManager = world.registryAccess();
-        Registry<?> registry = registryManager.lookupOrThrow(registryKey);
+        BlockState doorState = world.getBlockState(bp);
+        if (!(doorState.getBlock() instanceof DoorBlock)) return;
 
-        if (noDoor(bp, registry, world)) return;
 
-        clickPos(bp.north(), registry, world);
-        clickPos(bp.south(), registry, world);
-        clickPos(bp.west(), registry, world);
-        clickPos(bp.east(), registry, world);
+        Direction facing = doorState.getValue(DoorBlock.FACING);
+        Boolean open = doorState.getValue(DoorBlock.OPEN);
+        DoorHingeSide hingeSide = doorState.getValue(DoorBlock.HINGE);
+
+
+        BlockPos neighbor = bp.relative(hingeSide == DoorHingeSide.RIGHT ?
+                facing.getCounterClockWise() : facing.getClockWise());
+
+        doorState = world.getBlockState(neighbor);
+        if (!(doorState.getBlock() instanceof DoorBlock)) return;
+        Boolean neighborOpen = doorState.getValue(DoorBlock.OPEN);
+        if (!neighborOpen.equals(open)) return;
+        if (doorState.getValue(DoorBlock.HINGE) == hingeSide) return;
+        if (doorState.getValue(DoorBlock.FACING) != facing) return;
+
+        clickPos(neighbor);
     }
 
-    private boolean noDoor(BlockPos bp, Registry<?> registry, ClientLevel world) {
-        Identifier id = BuiltInRegistries.BLOCK.getKey(world.getBlockState(bp).getBlock());
-        return !registry.containsKey(id);
-    }
-
-    private void clickPos(BlockPos target, Registry<?> registry, ClientLevel world) {
-        if (noDoor(target, registry, world)) return;
+    private void clickPos(BlockPos target) {
         BlockPos bp = new BlockPos(target);
         Direction dir = Direction.UP;
         var nh = Minecraft.getInstance().getConnection();

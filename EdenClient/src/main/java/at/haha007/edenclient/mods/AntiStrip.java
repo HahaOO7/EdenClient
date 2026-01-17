@@ -37,7 +37,7 @@ public class AntiStrip {
     );
 
     @ConfigSubscriber("false")
-    private boolean enabled = true;
+    private boolean enabled = false;
 
     public AntiStrip() {
         PlayerInteractBlockCallback.EVENT.register(this::onInteractBlock, getClass());
