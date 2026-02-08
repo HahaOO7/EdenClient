@@ -29,7 +29,7 @@ public enum EdenRenderUtils {
         RenderContext ctx = new RenderContext(() -> "edenclient:drawTracers", MaLiLibPipelines.DEBUG_LINES_MASA_SIMPLE_NO_DEPTH_NO_CULL);
         BufferBuilder buffer = ctx.getBuilder();
         Vec3 eyePos = PlayerUtils.getClientLookVec();
-        Vec3 cameraPos = fi.dy.masa.malilib.render.RenderUtils.camPos();
+        Vec3 cameraPos = Minecraft.getInstance().gameRenderer.getMainCamera().position();
         for (Vec3 pos : positions) {
             pos = pos.subtract(cameraPos);
             buffer.addVertex((float) eyePos.x, (float) eyePos.y, (float) eyePos.z).setColor(color.r, color.g, color.b, color.a).setLineWidth(1f);

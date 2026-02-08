@@ -32,7 +32,6 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.ChestType;
-import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
@@ -46,7 +45,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import static at.haha007.edenclient.command.CommandManager.literal;
-import static at.haha007.edenclient.utils.PlayerUtils.getPlayer;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
 @Mod(dependencies = DataFetcher.class)
@@ -62,7 +60,7 @@ public class ContainerDisplay {
         PlayerTickCallback.EVENT.register(this::tick, getClass());
         ContainerCloseCallback.EVENT.register(t -> shouldUpdate = true, getClass());
         UpdateLevelChunkCallback.EVENT.register(c -> updateLater(), getClass());
-        PlayerBreakBlockCallback.EVENT.register((a,b,c) -> updateLater(), getClass());
+        PlayerBreakBlockCallback.EVENT.register((a, b, c) -> updateLater(), getClass());
         PerWorldConfig.get().register(this, "ContainerDisplay");
         registerCommand();
     }
@@ -74,12 +72,17 @@ public class ContainerDisplay {
         tm.start();
     }
 
-    private void tick(LocalPlayer player) {
-        update(player.blockPosition(), player.chunkPosition());
+    private void tick(LocalPlayer ignore) {
+        Entity camera = Minecraft.getInstance().getCameraEntity();
+        if (camera == null) {
+            return;
+        }
+
+        update(camera.blockPosition(), camera.chunkPosition());
         if (!enabled) {
             return;
         }
-        ChunkPos chunkPos = player.chunkPosition();
+        ChunkPos chunkPos = camera.chunkPosition();
         if (!chunkPos.equals(this.lastChunkPos)) {
             shouldUpdate = true;
         }
@@ -150,11 +153,19 @@ public class ContainerDisplay {
 
     private void createDisplayEntities() {
         ClientLevel level = Minecraft.getInstance().level;
-        if (level == null) return;
+        if (level == null) {
+            return;
+        }
+        Entity camera = Minecraft.getInstance().getCameraEntity();
+        if (camera == null) {
+            return;
+        }
         GL11.glEnable(GL11.GL_DEPTH_TEST);
 
         entries.forEach((pos, chestInfo) -> {
-            if(chestInfo == null || chestInfo.items().isEmpty()) return;
+            if (chestInfo == null || chestInfo.items().isEmpty()) {
+                return;
+            }
             BlockPos blockPos = new BlockPos(pos);
             BlockState state = level.getBlockState(blockPos);
             //calculate looking direction, rendering offset and rendering angle
@@ -163,7 +174,7 @@ public class ContainerDisplay {
 
             final Quaternionf rotation = direction.getRotation();
             if (direction.getAxis() == Direction.Axis.Y) {
-                Quaternionf horizontal = getPlayer().getDirection().getRotation();
+                Quaternionf horizontal = camera.getDirection().getRotation();
                 horizontal.mul(Direction.NORTH.getRotation());
                 rotation.mul(horizontal);
                 rotation.mul(Direction.NORTH.getRotation());

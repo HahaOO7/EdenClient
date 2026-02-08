@@ -2,7 +2,9 @@ package at.haha007.edenclient.mods;
 
 import at.haha007.edenclient.annotations.Mod;
 import at.haha007.edenclient.callbacks.AddChatMessageCallback;
+import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.utils.MathUtils;
+import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -30,10 +32,12 @@ import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 public class AntiSpam {
     @ConfigSubscriber("false")
     private boolean enabled;
+    private int ticksPassed = 0;
 
     public AntiSpam() {
         registerCommand();
         AddChatMessageCallback.EVENT.register(this::onChat, getClass());
+        PlayerTickCallback.EVENT.register(p -> ticksPassed++, getClass());
         PerWorldConfig.get().register(this, "antiSpam");
     }
 
@@ -50,6 +54,7 @@ public class AntiSpam {
 
     private void onChat(AddChatMessageCallback.ChatAddEvent event) {
         if (!enabled) return;
+        if (ticksPassed < 2) return;
         List<GuiMessage.Line> chatLines = event.getChatLines();
         Component chatText = event.getChatText();
         if (chatText == null) return;
@@ -143,7 +148,8 @@ public class AntiSpam {
             matchingLines = 0;
         }
 
-        chatText = Component.literal("").append(chatText).append(Component.literal(" [x" + spamCounter + "]").setStyle(Style.EMPTY.withHoverEvent(new HoverEvent.ShowText(Component.literal(new SimpleDateFormat("hh:mm:ss").format(new Date()))))));
+        chatText = Component.literal("").append(chatText).append(Component.literal(" [x" + spamCounter + "]")
+                .setStyle(Style.EMPTY.withHoverEvent(new HoverEvent.ShowText(Component.literal(new SimpleDateFormat("HH:mm:ss").format(new Date()))))));
 
         event.setChatText(chatText);
     }
