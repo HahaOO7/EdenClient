@@ -9,14 +9,20 @@ import at.haha007.edenclient.callbacks.UpdateLevelChunkCallback;
 import at.haha007.edenclient.command.CommandManager;
 import at.haha007.edenclient.mods.datafetcher.ContainerInfo;
 import at.haha007.edenclient.mods.datafetcher.DataFetcher;
+import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import at.haha007.edenclient.utils.tasks.SyncTask;
 import at.haha007.edenclient.utils.tasks.TaskManager;
 import at.haha007.edenclient.utils.tasks.WaitForTicksTask;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.logging.LogUtils;
 import com.mojang.math.Transformation;
+import dev.xpple.clientarguments.arguments.CBlockPosArgument;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.JoinConfiguration;
+import net.kyori.adventure.text.TranslatableComponent;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
@@ -29,9 +35,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.block.ChestBlock;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.properties.ChestType;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
@@ -44,6 +47,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+import static at.haha007.edenclient.command.CommandManager.argument;
 import static at.haha007.edenclient.command.CommandManager.literal;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
@@ -108,7 +112,7 @@ public class ContainerDisplay {
         if (!enabled) return;
         //find nearby containers to create displays for
         entries = new ConcurrentHashMap<>();
-        ChunkPos.rangeClosed(chunkPos, 1).forEach(cp -> {
+        ChunkPos.rangeClosed(chunkPos, 2).forEach(cp -> {
             Map<Vec3i, ContainerInfo.ChestInfo> info = EdenClient.getMod(DataFetcher.class).getContainerInfo().getContainerInfo(cp);
             if (info != null) {
                 entries.putAll(info);
@@ -117,7 +121,7 @@ public class ContainerDisplay {
         entries = entries.entrySet().stream()
                 .filter(e -> level.getBlockEntity(new BlockPos(e.getKey())) != null)
                 .sorted(Comparator.comparingInt(e -> e.getKey().distManhattan(pp)))
-                .limit(200)
+                .limit(250)
                 .collect(Collectors.toConcurrentMap(Map.Entry::getKey, Map.Entry::getValue));
 
         //update display entities
@@ -141,10 +145,22 @@ public class ContainerDisplay {
             return 1;
         }));
 
-        cmd.then(literal("test").executes(c -> {
-            createDisplayEntities();
+        cmd.then(literal("debug").then(argument("pos", CBlockPosArgument.blockPos()).executes(c -> {
+            BlockPos blockPos = CBlockPosArgument.getBlockPos(c, "pos");
+            ChunkPos chunkPos = new ChunkPos(blockPos);
+            ContainerInfo.ChestInfo chestInfo = EdenClient.getMod(DataFetcher.class)
+                    .getContainerInfo()
+                    .getContainerInfo(chunkPos)
+                    .get(blockPos);
+
+            PlayerUtils.sendModMessage("Items in container:");
+            List<TranslatableComponent> texts = chestInfo.items().stream()
+                    .map(Item::getDescriptionId)
+                    .map(Component::translatable).toList();
+            Component joined = Component.join(JoinConfiguration.builder().separator(Component.text(", ")).build(), texts);
+            PlayerUtils.sendMessage(joined);
             return 1;
-        }));
+        })));
 
         cmd.then(toggle);
         CommandManager.register(cmd, "Displays icons on top of containers.");
@@ -166,8 +182,7 @@ public class ContainerDisplay {
             if (chestInfo == null || chestInfo.items().isEmpty()) {
                 return;
             }
-            BlockPos blockPos = new BlockPos(pos);
-            BlockState state = level.getBlockState(blockPos);
+
             //calculate looking direction, rendering offset and rendering angle
             final Direction direction = chestInfo.face();
             final Vec3 offset = Vec3.atLowerCornerOf(direction.getUnitVec3i().offset(1, 1, 1)).scale(.5);
@@ -183,36 +198,7 @@ public class ContainerDisplay {
                 rotation.rotateZ(-1.5707964f);
             }
 
-            // Decide which items to render:
-            // - single chest / non-chest: use its own items
-            // - double chest + outer side (left/right): merge both halves (full content)
-            // - double chest + front/back/top/bottom: use its own (split) items
             List<Item> items = new ArrayList<>(chestInfo.items());
-
-            if (state.getBlock() instanceof ChestBlock) {
-                ChestType type = state.getValue(ChestBlock.TYPE);
-                if (type != ChestType.SINGLE) {
-                    Direction facing = state.getValue(ChestBlock.FACING);
-                    Direction side1 = facing.getClockWise();
-                    Direction side2 = facing.getCounterClockWise();
-
-                    boolean isOuterSide = (direction == side1 || direction == side2);
-
-                    if (isOuterSide) {
-                        // Merge items from both halves to show full content on outer sides
-                        Direction connectedDir = ChestBlock.getConnectedDirection(state);
-                        BlockPos otherPos = blockPos.relative(connectedDir);
-                        ContainerInfo.ChestInfo otherInfo = entries.get(otherPos);
-                        if (otherInfo != null) {
-                            for (Item it : otherInfo.items()) {
-                                if (!items.contains(it)) {
-                                    items.add(it);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
 
             int loopCount = Math.min(items.size(), 9);
             if (loopCount > 1) {
@@ -291,6 +277,8 @@ public class ContainerDisplay {
                 level.addEntity(display);
                 display.setBrightnessOverride(Brightness.FULL_BRIGHT);
                 displayEntityIds.add(display.getId());
+            } else {
+                LogUtils.getLogger().warn("Invalid loop count " + loopCount);
             }
         });
     }
