@@ -4,7 +4,6 @@ import at.haha007.edenclient.annotations.Mod;
 import at.haha007.edenclient.callbacks.AddChatMessageCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.utils.MathUtils;
-import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -74,8 +73,8 @@ public class AntiSpam {
                 return sb.toString();
             }
         }
-
-        int maxTextLength = 500;
+        int maxTextLength = Mth.floor(ChatComponent.getWidth(Minecraft.getInstance().options.chatWidth().get())
+                / Minecraft.getInstance().options.chatScale().get());
         List<FormattedCharSequence> newLines = ComponentRenderUtils.wrapComponents(chatText, maxTextLength, Minecraft.getInstance().font);
 
         int spamCounter = 1;

@@ -12,8 +12,10 @@
     "ChatListenerMixin",
     "ChatScreenMixin",
     "ClientPacketListenerMixin",
-    "ClientPlayerMixin",
+    "LocalPlayerMixin",
+    "FishingHookMixin",
     "HandledScreenMixin",
+    "LivingEntityMixin",
     "MinecraftClientMixin",
     "PlayerControllerMixin",
     "PlayerInventoryMixin"

@@ -17,7 +17,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 
 @Mixin(LocalPlayer.class)
-public abstract class ClientPlayerMixin {
+public abstract class LocalPlayerMixin {
 
     @Shadow
     @Final
