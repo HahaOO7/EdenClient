@@ -59,6 +59,7 @@ public class Excavator {
 
     private void tick(LocalPlayer player) {
         if (!enabled) return;
+        if (PlayerUtils.shouldPlayLegit()) return;
         if (area == null) {
             PlayerUtils.sendModMessage("Excavator area not defined");
             enabled = false;
@@ -198,7 +199,6 @@ public class Excavator {
     }
 
     private Target breakTarget(BlockPos pos) {
-        LocalPlayer player = PlayerUtils.getPlayer();
         ClientLevel level = Minecraft.getInstance().level;
         BlockState blockState = level.getBlockState(pos);
         FluidState fluidState = level.getFluidState(pos);
@@ -211,7 +211,6 @@ public class Excavator {
     }
 
     private Target breakWaterloggedTarget(BlockPos pos) {
-        LocalPlayer player = PlayerUtils.getPlayer();
         ClientLevel level = Minecraft.getInstance().level;
         BlockState blockState = level.getBlockState(pos);
         FluidState fluidState = level.getFluidState(pos);

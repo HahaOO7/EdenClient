@@ -35,6 +35,7 @@ public class AntiAfk {
     }
 
     private boolean moveAround() {
+        if(PlayerUtils.shouldPlayLegit()) return false;
         LocalPlayer player = PlayerUtils.getPlayer();
         BlockPos bp = player.blockPosition();
         if (maxDistance(bp, startPos) > 1) return false;

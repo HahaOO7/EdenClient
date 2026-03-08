@@ -1,5 +1,6 @@
 package at.haha007.edenclient.utils;
 
+import at.haha007.edenclient.callbacks.JoinWorldCallback;
 import at.haha007.edenclient.mixinterface.HandledScreenAccessor;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
@@ -13,6 +14,7 @@ import net.minecraft.client.gui.screens.inventory.ContainerScreen;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
+import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -28,10 +30,12 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -45,6 +49,15 @@ import java.util.Optional;
 public class PlayerUtils {
 
     private static final Component prefix = Component.literal("[EC] ").setStyle(Style.EMPTY.applyFormats(ChatFormatting.LIGHT_PURPLE, ChatFormatting.BOLD));
+    public static boolean checkSpectator = true;
+    public static boolean checkNearbyPlayers = true;
+
+    static {
+        JoinWorldCallback.EVENT.register(() -> {
+            checkSpectator = true;
+            checkNearbyPlayers = true;
+        }, PlayerUtils.class);
+    }
 
     private PlayerUtils() {
     }
@@ -63,7 +76,7 @@ public class PlayerUtils {
         Minecraft.getInstance().gui.getChat().addMessage(text);
     }
 
-    public static void sendMessage(net.kyori.adventure.text.Component text){
+    public static void sendMessage(net.kyori.adventure.text.Component text) {
         Gson gson = new Gson();
         String json = GsonComponentSerializer.gson().serialize(text);
         Component component = ComponentSerialization.CODEC
@@ -146,6 +159,7 @@ public class PlayerUtils {
 
     public static Vec3 getClientLookVec() {
         Entity entity = Minecraft.getInstance().getCameraEntity();
+        if(entity == null) return Vec3.ZERO;
         float f = 0.017453292F;
         float pi = (float) Math.PI;
 
@@ -195,6 +209,37 @@ public class PlayerUtils {
         gameMode.continueDestroyBlock(pos, dir);
         state = world.getBlockState(pos);
         return state.getBlock() != block;
+    }
+
+    public static boolean worldHasSpectator() {
+        Minecraft instance = Minecraft.getInstance();
+        LocalPlayer player = instance.player;
+        if (player == null) return false;
+        Collection<PlayerInfo> onlinePlayers = player.connection.getListedOnlinePlayers();
+        for (PlayerInfo onlinePlayer : onlinePlayers) {
+            if (onlinePlayer.getGameMode() == GameType.SPECTATOR) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static boolean hasNearbyPlayers() {
+        Minecraft instance = Minecraft.getInstance();
+        ClientLevel level = instance.level;
+        LocalPlayer player = instance.player;
+        if (level == null) return false;
+        if (player == null) return false;
+        for (Entity entity : level.entitiesForRendering()) {
+            if (entity != player && entity instanceof Player) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static boolean shouldPlayLegit() {
+        return (checkNearbyPlayers && hasNearbyPlayers()) || (checkNearbyPlayers || worldHasSpectator());
     }
 
     public static boolean selectPlacableBlock() {

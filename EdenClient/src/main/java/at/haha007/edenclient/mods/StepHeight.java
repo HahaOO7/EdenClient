@@ -25,7 +25,7 @@ public class StepHeight {
     }
 
     private Optional<Float> onStepUpHeight() {
-        return Float.isNaN(height) ? Optional.empty() : Optional.of(height);
+        return Float.isNaN(height) || PlayerUtils.shouldPlayLegit() ? Optional.empty() : Optional.of(height);
     }
 
     private void registerCommand() {

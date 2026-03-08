@@ -3,6 +3,7 @@ package at.haha007.edenclient.mods;
 import at.haha007.edenclient.annotations.Mod;
 import at.haha007.edenclient.callbacks.JoinWorldCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
+import at.haha007.edenclient.utils.PlayerUtils;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.Minecraft;
@@ -44,6 +45,7 @@ public class AutoMoss {
         if (!enabled || ((tick++) % 3 != 0)) {
             return;
         }
+        if(PlayerUtils.shouldPlayLegit()) return;
         if (player.getInventory().getSelectedItem().getItem() != Items.BONE_MEAL)
             return;
         ClientLevel world = Minecraft.getInstance().level;

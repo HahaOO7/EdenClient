@@ -51,7 +51,7 @@ public abstract class ClientPacketListenerMixin {
             EdenClient.onJoin();
             JoinWorldCallback.EVENT.invoker().join();
             EdenClient.connected = true;
-        } else if(!connect && EdenClient.connected) {
+        } else if (!connect && EdenClient.connected) {
             LeaveWorldCallback.EVENT.invoker().leave();
             EdenClient.onQuit();
             EdenClient.connected = false;
@@ -105,7 +105,7 @@ public abstract class ClientPacketListenerMixin {
     private void onInventoryContent(ClientboundContainerSetContentPacket packet, CallbackInfo ci) {
         //get items, remove player items
         List<ItemStack> items = packet.items();
-        if(items.size() < 36) return;
+        if (items.size() < 36) return;
         items = items.subList(0, items.size() - 36);
         int id = packet.containerId();
         ContainerInfo containerInfo = ContainerInfo.update(id, items);

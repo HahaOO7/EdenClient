@@ -53,6 +53,7 @@ public class AotoGrindstone {
     private void onTick(LocalPlayer player) {
         if (!this.enabled)
             return;
+        if(PlayerUtils.shouldPlayLegit()) return;
         Screen screen = Minecraft.getInstance().screen;
 
         if (!(screen instanceof GrindstoneScreen grindstoneScreen)) {

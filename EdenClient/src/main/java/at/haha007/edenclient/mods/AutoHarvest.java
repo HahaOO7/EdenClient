@@ -63,6 +63,7 @@ public class AutoHarvest {
     private void tick(LocalPlayer player) {
         if (!enabled)
             return;
+        if(PlayerUtils.shouldPlayLegit()) return;
         if (place != null) {
             clickPos(place);
             place = null;

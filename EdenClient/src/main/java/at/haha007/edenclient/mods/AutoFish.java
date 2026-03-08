@@ -51,19 +51,28 @@ public class AutoFish {
 
     private void tick(LocalPlayer player) {
         if(!enabled) return;
-        if (!(player.getMainHandItem().getItem() instanceof FishingRodItem)) return;
-        FishingHook fishing = player.fishing;
-        if(fishing == null) return;
-        if(fishing.getHookedIn() != null || ((FishingHookMixin) fishing).edenclient$isFishBiting()) {
-            useRod(player);
+        if(PlayerUtils.shouldPlayLegit()) return;
+        for (InteractionHand hand : InteractionHand.values()) {
+            if(checkForHand(player, hand)) return;
         }
     }
 
-    private void useRod(LocalPlayer player) {
+    private boolean checkForHand(LocalPlayer player, InteractionHand hand) {
+        if (!(player.getItemInHand(hand).getItem() instanceof FishingRodItem)) return false;
+        FishingHook fishing = player.fishing;
+        if(fishing == null) return false;
+        if(fishing.getHookedIn() != null || ((FishingHookMixin) fishing).edenclient$isFishBiting()) {
+            useRod(player, hand);
+            return true;
+        }
+        return false;
+    }
+
+    private void useRod(LocalPlayer player,  InteractionHand hand) {
         MultiPlayerGameMode interactionManager = Minecraft.getInstance().gameMode;
         if(interactionManager == null) return;
-        interactionManager.useItem(player, InteractionHand.MAIN_HAND);
-        interactionManager.useItem(player, InteractionHand.MAIN_HAND);
+        interactionManager.useItem(player, hand);
+        interactionManager.useItem(player, hand);
         player.setYRot(player.getYRot() + turn);
     }
 }

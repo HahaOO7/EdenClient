@@ -48,16 +48,11 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.ChestBlock;
-import net.minecraft.world.level.block.HorizontalDirectionalBlock;
-import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
-import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.minecraft.world.level.block.state.properties.ChestType;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.ChestType;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.phys.BlockHitResult;
@@ -95,7 +90,7 @@ public class ContainerInfo {
             updateInventory(itemStacks);
             lastInteractedBlock = null;
         }, getClass());
-        PlayerBreakBlockCallback.EVENT.register((a,b,c) -> {
+        PlayerBreakBlockCallback.EVENT.register((a, b, c) -> {
             lastInteractedBlock = b;
             updateInventory(Collections.emptyList());
             lastInteractedBlock = null;
@@ -270,67 +265,6 @@ public class ContainerInfo {
         Registry<Block> registry = level.registryAccess().lookupOrThrow(BlockTags.SHULKER_BOXES.registry());
         BlockPos basePos = new BlockPos(lastInteractedBlock);
 
-        // Double chest: split into top (0–26) / bottom (27–53),
-        // assign bottom rows to "right" chest (from viewer perspective).
-        if (itemStacks.size() == 54) {
-            BlockState state = level.getBlockState(basePos);
-            if (state.getBlock() instanceof ChestBlock) {
-                ChestType type = state.getValue(ChestBlock.TYPE);
-                if (type != ChestType.SINGLE) {
-                    Direction connectedDir = ChestBlock.getConnectedDirection(state);
-                    BlockPos otherPos = basePos.relative(connectedDir);
-
-                    List<ItemStack> upperHalf = itemStacks.subList(0, 27);   // top 3 rows
-                    List<ItemStack> lowerHalf = itemStacks.subList(27, 54);  // bottom 3 rows
-
-                    Direction viewerDir = getViewerHorizontalDir();
-                    Direction rightDir = getRightOf(viewerDir);
-
-                    BlockPos leftChestPos = basePos;
-                    BlockPos rightChestPos = otherPos;
-
-                    // If pairDir is perpendicular to view direction, we can
-                    // derive left/right purely from the viewer's perspective.
-                    boolean perpendicularToView =
-                            viewerDir.getAxis().isHorizontal() &&
-                                    connectedDir.getAxis().isHorizontal() &&
-                                    connectedDir != viewerDir &&
-                                    connectedDir != viewerDir.getOpposite();
-
-                    if (perpendicularToView) {
-                        if (connectedDir == rightDir.getOpposite()) {
-                            // otherPos is to the left of basePos -> base = right, other = left
-                            leftChestPos = otherPos;
-                            rightChestPos = basePos;
-                        }
-                    } else {
-                        // Fallback: derive left/right from chest facing + type
-                        Direction facing = state.getValue(ChestBlock.FACING);
-                        boolean invert = (facing == Direction.NORTH || facing == Direction.WEST);
-
-                        if (!invert) {
-                            if (type != ChestType.LEFT) {
-                                leftChestPos = otherPos;
-                                rightChestPos = basePos;
-                            }
-                        } else {
-                            if (type == ChestType.LEFT) {
-                                leftChestPos = otherPos;
-                                rightChestPos = basePos;
-                            }
-                        }
-                    }
-
-                    // Right chest = lower 3 rows, left chest = upper 3 rows
-                    storeChest(leftChestPos, upperHalf, level, registry);
-                    storeChest(rightChestPos, lowerHalf, level, registry);
-
-                    updatedBlocks.put(otherPos, System.currentTimeMillis());
-                    return;
-                }
-            }
-        }
-
         // Default behavior: single chests, shulkers, etc.
         storeChest(basePos, itemStacks, level, registry);
     }
@@ -383,7 +317,6 @@ public class ContainerInfo {
         items.forEach((item, itemStacks) ->
                 counts.put(item, itemStacks.stream().mapToInt(ItemStack::getCount).sum())
         );
-
         if (counts.isEmpty()) {
             ChestMap map = chunkMap.get(cp);
             if (map != null) {

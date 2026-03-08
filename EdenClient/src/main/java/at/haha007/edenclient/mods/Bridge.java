@@ -48,6 +48,7 @@ public class Bridge {
         if (!enabled) {
             return;
         }
+        if(PlayerUtils.shouldPlayLegit()) return;
         Item item = player.getInventory().getSelectedItem().getItem();
         if (!(item instanceof BlockItem blockItem)) return;
         Block block = blockItem.getBlock();

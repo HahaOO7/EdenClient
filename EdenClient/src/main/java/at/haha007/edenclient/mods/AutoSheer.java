@@ -42,6 +42,7 @@ public class AutoSheer {
 
     private void onTick(LocalPlayer player) {
         if (!enabled) return;
+        if(PlayerUtils.shouldPlayLegit()) return;
         MultiPlayerGameMode interactionManager = Minecraft.getInstance().gameMode;
         if (interactionManager == null) return;
         Vec3 pos = player.position();

@@ -3,6 +3,7 @@ package at.haha007.edenclient.mods;
 import at.haha007.edenclient.annotations.Mod;
 import at.haha007.edenclient.callbacks.*;
 import at.haha007.edenclient.utils.EdenRenderUtils;
+import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
@@ -78,6 +79,7 @@ public class HeadHunt {
             foundHeads = new HashSet<>();
             return;
         }
+        if(PlayerUtils.shouldPlayLegit()) return;
         ChunkPos chunkPos = player.chunkPosition();
         ClientChunkCache cm = Minecraft.getInstance().level.getChunkSource();
         BlockPos pp = player.blockPosition();

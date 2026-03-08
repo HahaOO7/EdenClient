@@ -2,17 +2,14 @@ package at.haha007.edenclient.mods;
 
 import at.haha007.edenclient.annotations.Mod;
 import at.haha007.edenclient.callbacks.ConfigLoadedCallback;
-import at.haha007.edenclient.callbacks.GameRenderCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.area.BlockArea;
-import at.haha007.edenclient.utils.area.BlockAreaRenderFactory;
 import at.haha007.edenclient.utils.area.CubeArea;
 import at.haha007.edenclient.utils.area.SavableBlockArea;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import at.haha007.edenclient.utils.config.wrappers.BlockSet;
-import com.mojang.authlib.minecraft.client.MinecraftClient;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -175,6 +172,7 @@ public class Nuker {
 
     private void onTick(LocalPlayer player) {
         if (!enabled) return;
+        if (PlayerUtils.shouldPlayLegit()) return;
         ClientPacketListener nh = Minecraft.getInstance().getConnection();
         BlockState air = Blocks.AIR.defaultBlockState();
         MultiPlayerGameMode im = Minecraft.getInstance().gameMode;
@@ -248,7 +246,6 @@ public class Nuker {
     }
 
     private boolean isNextToLiquid(BlockPos pos) {
-        LocalPlayer player = PlayerUtils.getPlayer();
         ClientLevel world = Minecraft.getInstance().level;
         //don't care about down
         FluidState state = world.getFluidState(pos.relative(Direction.UP));
