@@ -47,7 +47,10 @@ import java.util.stream.Collectors;
 import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
-@Mod
+@Mod(dependencies = {
+        DataFetcher.class,
+        GetTo.class
+})
 public class ChestShopMod {
 
     @ConfigSubscriber

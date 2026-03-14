@@ -17,7 +17,7 @@ import net.minecraft.client.player.LocalPlayer;
 import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
-@Mod
+@Mod(dependencies = Scheduler.class)
 public class LifeSaver {
 
     @ConfigSubscriber("1")

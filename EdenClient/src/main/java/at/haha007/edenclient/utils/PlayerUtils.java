@@ -114,6 +114,10 @@ public class PlayerUtils {
         sendMessage(Component.empty().append(prefix).append(component));
     }
 
+    public static void sendModMessage(Component text) {
+        sendMessage(Component.empty().append(prefix).append(text));
+    }
+
     public static void sendModMessage(String text) {
         sendModMessage(net.kyori.adventure.text.Component.text(text, NamedTextColor.GOLD));
     }
@@ -159,7 +163,7 @@ public class PlayerUtils {
 
     public static Vec3 getClientLookVec() {
         Entity entity = Minecraft.getInstance().getCameraEntity();
-        if(entity == null) return Vec3.ZERO;
+        if (entity == null) return Vec3.ZERO;
         float f = 0.017453292F;
         float pi = (float) Math.PI;
 

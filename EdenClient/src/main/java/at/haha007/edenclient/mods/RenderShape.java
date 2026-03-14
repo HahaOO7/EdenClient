@@ -15,7 +15,7 @@ import net.minecraft.world.phys.Vec3;
 
 import static at.haha007.edenclient.command.CommandManager.*;
 
-@Mod
+@Mod(dependencies = {CubeRenderer.class, TracerRenderer.class})
 public class RenderShape {
 
     public RenderShape() {

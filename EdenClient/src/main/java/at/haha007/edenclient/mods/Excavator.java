@@ -42,7 +42,7 @@ import java.util.stream.Stream;
 
 import static at.haha007.edenclient.EdenClient.getMod;
 
-@Mod(dependencies = CubeRenderer.class)
+@Mod(dependencies = {CubeRenderer.class, Scheduler.class})
 public class Excavator {
     private boolean enabled = false;
     @ConfigSubscriber("0,0,0,0,0,0")

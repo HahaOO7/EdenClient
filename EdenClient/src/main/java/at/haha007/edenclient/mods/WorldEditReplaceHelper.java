@@ -32,7 +32,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static at.haha007.edenclient.command.CommandManager.*;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
-@Mod
+@Mod(dependencies = Scheduler.class)
 public class WorldEditReplaceHelper {
 
     /*
@@ -84,7 +84,7 @@ public class WorldEditReplaceHelper {
             }
 
             replaceUndoRequest(BuiltInRegistries.BLOCK.getValue(Identifier.parse(undoCommandStack.peek()[0])),
-                    BuiltInRegistries.BLOCK.getValue( Identifier.parse(Objects.requireNonNull(undoCommandStack.peek())[1])), delay);
+                    BuiltInRegistries.BLOCK.getValue(Identifier.parse(Objects.requireNonNull(undoCommandStack.peek())[1])), delay);
             redoCommandStack.add(new String[]{Objects.requireNonNull(undoCommandStack.peek())[1], Objects.requireNonNull(undoCommandStack.peek())[0]});
             undoCommandStack.pop();
             return 1;
@@ -97,7 +97,7 @@ public class WorldEditReplaceHelper {
             }
 
             replaceRedoRequest(BuiltInRegistries.BLOCK.getValue(Identifier.parse(redoCommandStack.peek()[0])),
-                    BuiltInRegistries.BLOCK.getValue( Identifier.parse(Objects.requireNonNull(redoCommandStack.peek())[1])), delay);
+                    BuiltInRegistries.BLOCK.getValue(Identifier.parse(Objects.requireNonNull(redoCommandStack.peek())[1])), delay);
             undoCommandStack.add(new String[]{Objects.requireNonNull(redoCommandStack.peek())[1], Objects.requireNonNull(redoCommandStack.peek())[0]});
             redoCommandStack.pop();
             return 1;

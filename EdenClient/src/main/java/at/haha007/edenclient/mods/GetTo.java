@@ -7,6 +7,7 @@ import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.mods.datafetcher.DataFetcher;
 import at.haha007.edenclient.utils.EdenRenderUtils;
 import at.haha007.edenclient.utils.PlayerUtils;
+import at.haha007.edenclient.utils.Scheduler;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import dev.xpple.clientarguments.arguments.CBlockPosArgument;
@@ -25,7 +26,7 @@ import java.util.Optional;
 
 import static at.haha007.edenclient.command.CommandManager.*;
 
-@Mod
+@Mod(dependencies = Scheduler.class)
 public class GetTo {
     private Vec3i target;
     private boolean tracer;
