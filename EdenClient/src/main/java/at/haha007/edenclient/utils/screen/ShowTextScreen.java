@@ -5,6 +5,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.*;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -36,6 +37,12 @@ public class ShowTextScreen extends Screen {
 
         addRenderableWidget(closeButton);
         addRenderableWidget(textWidget);
+    }
+
+    @Override
+    public void render(GuiGraphics graphics, int i, int j, float f) {
+        graphics.fill(0, 0, width, height, 0x88000000); //ARGB
+        super.render(graphics, i, j, f);
     }
 
     @Override

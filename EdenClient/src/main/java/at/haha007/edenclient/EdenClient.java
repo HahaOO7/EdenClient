@@ -23,7 +23,9 @@ import org.joml.Matrix4f;
 import org.lwjgl.opengl.GL11;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 import java.util.function.Predicate;
 
@@ -92,6 +94,10 @@ public class EdenClient implements ClientModInitializer {
 
     public static <T> T getMod(Class<T> clazz) {
         return modInitializer.getMod(clazz);
+    }
+
+    public static Collection<Object> getLoadedMods(){
+        return modInitializer.getLoadedMods();
     }
 
     public static File getDataFolder() {

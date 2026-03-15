@@ -35,6 +35,10 @@ public class ModInitializer {
         return (T) registeredMods.get(clazz);
     }
 
+    public Collection<Object> getLoadedMods() {
+        return Collections.unmodifiableCollection(registeredMods.values());
+    }
+
     private void registerMod(Class<?> clazz) {
         try {
             LogUtils.getLogger().info("Registering mod: {}", clazz.getCanonicalName());

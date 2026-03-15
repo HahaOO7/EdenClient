@@ -1,6 +1,5 @@
 package at.haha007.edenclient.utils.screen;
 
-import net.minecraft.client.gui.ActiveTextCollector;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
@@ -39,7 +38,7 @@ public class SimpleTextWidget extends AbstractWidget {
         int visibleLines = height / lineHeight;
         int maxScroll = Math.max(0, lines.size() - visibleLines);
 
-        scrollOffset = Math.max(0, Math.min(scrollOffset, maxScroll));
+        scrollOffset = Math.clamp(scrollOffset, 0, maxScroll);
 
         guiGraphics.enableScissor(
                 getX(),
@@ -80,8 +79,9 @@ public class SimpleTextWidget extends AbstractWidget {
     protected void updateWidgetNarration(@NonNull NarrationElementOutput output) {
     }
 
-    public void setMessage(Component component) {
-        this.message = component;
+    @Override
+    public void setMessage(@NonNull Component component) {
+        super.setMessage(component);
         rebuildLines();
     }
 
