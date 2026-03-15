@@ -2,12 +2,12 @@ package at.haha007.edenclient.utils;
 
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.MeshData;
+import com.mojang.logging.LogUtils;
 import fi.dy.masa.malilib.MaLiLib;
 import fi.dy.masa.malilib.render.MaLiLibPipelines;
 import fi.dy.masa.malilib.render.RenderContext;
 import fi.dy.masa.malilib.render.RenderUtils;
 import fi.dy.masa.malilib.util.data.Color4f;
-import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
@@ -70,7 +70,7 @@ public enum EdenRenderUtils {
                                              float maxY,
                                              float maxZ,
                                              Color4f color) {
-        RenderContext ctx = new RenderContext(() -> "edenclient:drawBoundingBoxEdges", MaLiLibPipelines.DEBUG_LINES_MASA_SIMPLE_NO_DEPTH_NO_CULL);
+        RenderContext ctx = new RenderContext(() -> "edenclient:drawBoundingBoxEdges", MaLiLibPipelines.DEBUG_LINES_MASA_SIMPLE_NO_CULL);
         BufferBuilder buffer = ctx.getBuilder();
 
         drawBoundingBoxLinesX(buffer, minX, minY, minZ, maxX, maxY, maxZ, color);
@@ -80,7 +80,7 @@ public enum EdenRenderUtils {
         try {
             MeshData meshData = buffer.build();
             if (meshData != null) {
-                ctx.draw(meshData, false, false);
+                ctx.draw(meshData, false, true);
                 meshData.close();
             }
             ctx.close();
@@ -94,26 +94,25 @@ public enum EdenRenderUtils {
     }
 
     public static void drawLines(List<Pair<Vec3, Vec3>> lines, Color4f color, float lineWidth) {
-        // MaLiLibPipelines.LINES_NO_DEPTH_NO_CULL
-        RenderContext ctx = new RenderContext(() -> "edenclient:drawBoundingBoxEdges", MaLiLibPipelines.DEBUG_LINES_MASA_SIMPLE_NO_CULL);
-        BufferBuilder buffer = ctx.getBuilder();
-
-        for (Pair<Vec3, Vec3> line : lines) {
-            Vec3 start = line.getA().subtract(RenderUtils.camPos());
-            Vec3 end = line.getB().subtract(RenderUtils.camPos());
-            buffer.addVertex((float) start.x, (float) start.y, (float) start.z).setColor(color.r, color.g, color.b, color.a).setLineWidth(lineWidth);
-            buffer.addVertex((float) end.x, (float) end.y, (float) end.z).setColor(color.r, color.g, color.b, color.a).setLineWidth(lineWidth);
-        }
-
-        try {
+        try (RenderContext ctx = new RenderContext(() -> "edenclient:drawLines", MaLiLibPipelines.DEBUG_LINES_MASA_SIMPLE_NO_CULL)) {
+            BufferBuilder buffer = ctx.getBuilder();
+            for (Pair<Vec3, Vec3> line : lines) {
+                Vec3 start = line.getA().subtract(RenderUtils.camPos());
+                Vec3 end = line.getB().subtract(RenderUtils.camPos());
+                buffer.addVertex((float) start.x, (float) start.y, (float) start.z)
+                        .setColor(color.r, color.g, color.b, color.a)
+                        .setLineWidth(lineWidth);
+                buffer.addVertex((float) end.x, (float) end.y, (float) end.z)
+                        .setColor(color.r, color.g, color.b, color.a)
+                        .setLineWidth(lineWidth);
+            }
             MeshData meshData = buffer.build();
             if (meshData != null) {
                 ctx.draw(meshData, false, false);
                 meshData.close();
             }
-            ctx.close();
         } catch (Exception err) {
-            MaLiLib.LOGGER.error("drawBoundingBoxEdges(): Draw Exception; {}", err.getMessage());
+            LogUtils.getLogger().error("Could not draw lines", err);
         }
     }
 
