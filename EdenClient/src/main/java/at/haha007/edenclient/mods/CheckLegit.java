@@ -23,7 +23,7 @@ public class CheckLegit {
     public CheckLegit() {
         PerWorldConfig.get().register(this, "checkLegit");
         ConfigLoadedCallback.EVENT.register(this::updateConfig, getClass());
-        LiteralArgumentBuilder<FabricClientCommandSource> cmd = literal("echeckleg5it")
+        LiteralArgumentBuilder<FabricClientCommandSource> cmd = literal("echecklegit")
                 .executes(c -> {
                     sendStatusMessage(Component.text("Current status: "));
                     return 1;

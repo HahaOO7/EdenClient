@@ -24,7 +24,7 @@ public class PathFollower {
 
         Vec3 target;
         double distanceToNext = currentBlock.endPos().distanceToSqr(player.position());
-        if (distanceToNext < .1) {
+        if (distanceToNext < .001) {
             int nextIndex = nearest.block() + 2;
             if (nextIndex >= positions.size()) {
                 return false;

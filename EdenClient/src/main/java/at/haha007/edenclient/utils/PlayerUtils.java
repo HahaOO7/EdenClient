@@ -123,13 +123,17 @@ public class PlayerUtils {
     }
 
     public static void walkTowards(Vec3 target) {
-        var player = getPlayer();
+        LocalPlayer player = getPlayer();
         //get delta vec
         Vec3 vec = target.subtract(player.position());
         //remove vertical component
         vec = vec.subtract(0, vec.y, 0);
         //if the horizontal component is less than 0.1 we have reached the destination
-        if (vec.length() <= 0.1) return;
+        if (vec.length() <= 0.1) {
+            player.setPos(target.x, player.position().y, target.z);
+            player.setDeltaMovement(0, 0, 0);
+            return;
+        }
 
         //calculate the movement speed
         double genericMovementSpeed = player.getSpeed();
@@ -140,7 +144,7 @@ public class PlayerUtils {
         movementSpeed /= 20;
 
         //scale the vector to the movement speed
-        movementSpeed = Math.min(target.distanceTo(player.position()) * .5, movementSpeed);
+        movementSpeed = Math.min(target.distanceTo(player.position()), movementSpeed);
         vec = vec.normalize().scale(movementSpeed);
 
 
@@ -243,7 +247,7 @@ public class PlayerUtils {
     }
 
     public static boolean shouldPlayLegit() {
-        return (checkNearbyPlayers && hasNearbyPlayers()) || (checkNearbyPlayers || worldHasSpectator());
+        return (checkNearbyPlayers && hasNearbyPlayers()) || (checkSpectator && worldHasSpectator());
     }
 
     public static boolean selectPlacableBlock() {
