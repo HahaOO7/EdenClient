@@ -28,7 +28,6 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ClickType;
@@ -128,10 +127,13 @@ public class PlayerUtils {
         Vec3 vec = target.subtract(player.position());
         //remove vertical component
         vec = vec.subtract(0, vec.y, 0);
-        //if the horizontal component is less than 0.1 we have reached the destination
-        if (vec.length() <= 0.1) {
+        double horizontalDistance = vec.length();
+
+        //if the horizontal component is less than 0.5 we have reached the destination
+        if (horizontalDistance <= 0.5) {
             player.setPos(target.x, player.position().y, target.z);
-            player.setDeltaMovement(0, 0, 0);
+            double fallingSpeed = player.getDeltaMovement().y();
+            player.setDeltaMovement(0, fallingSpeed, 0);
             return;
         }
 
@@ -143,15 +145,13 @@ public class PlayerUtils {
         double movementSpeed = genericMovementSpeed * 10 * (5.612 + speed * 1.123 - slow * 0.841);
         movementSpeed /= 20;
 
-        //scale the vector to the movement speed
-        movementSpeed = Math.min(target.distanceTo(player.position()), movementSpeed);
+        //scale the vector to the movement speed, don't overshoot
+        movementSpeed = Math.min(horizontalDistance, movementSpeed);
         vec = vec.normalize().scale(movementSpeed);
 
-
         //move the player
-        player.move(MoverType.SELF, vec);
-
-        player.position().distanceTo(target);
+        double fallingSpeed = player.getDeltaMovement().y();
+        player.setDeltaMovement(vec.x, fallingSpeed, vec.z);
     }
 
     public static void walkTowards(Vec3i target) {
@@ -201,6 +201,7 @@ public class PlayerUtils {
     public static boolean breakBlock(BlockPos pos) {
         LocalPlayer player = getPlayer();
         ClientLevel world = Minecraft.getInstance().level;
+        if(world == null) return false;
         BlockState state = world.getBlockState(pos);
         Block block = state.getBlock();
         float delta = state.getDestroyProgress(player, world, pos);
@@ -259,6 +260,9 @@ public class PlayerUtils {
         MultiPlayerGameMode gameMode = Minecraft.getInstance().gameMode;
         if (gameMode == null) return false;
         ClientLevel level = Minecraft.getInstance().level;
+        if(level == null) {
+            return false;
+        }
 
         int slot = -1;
         for (int i = 0; i < 36; i++) {
@@ -320,6 +324,9 @@ public class PlayerUtils {
         inventory.setSelectedSlot(8);
         connection.send(new ServerboundSetCarriedItemPacket(8));
         ClientLevel level = Minecraft.getInstance().level;
+        if(level == null) {
+            return false;
+        }
         BlockPos.withinManhattanStream(player.blockPosition(), 5, 5, 5)
                 .filter(b -> level.getBlockState(b).getBlock().asItem() == item)
                 .findFirst()

@@ -9,6 +9,7 @@ import at.haha007.edenclient.utils.config.PerWorldConfig;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 
 import static at.haha007.edenclient.command.CommandManager.literal;
@@ -41,9 +42,11 @@ public class CheckLegit {
 
     private void sendStatusMessage(Component prefix) {
         Component spectatorStatus = Component.text("check spectator",
-                PlayerUtils.checkSpectator ? NamedTextColor.GREEN : NamedTextColor.RED);
+                PlayerUtils.checkSpectator ? NamedTextColor.GREEN : NamedTextColor.RED)
+                .hoverEvent(HoverEvent.showText(Component.text(PlayerUtils.checkSpectator ? "enabled" : "disabled")));
         Component nearbyStatus = Component.text("check nearby players",
-                PlayerUtils.checkNearbyPlayers ? NamedTextColor.GREEN : NamedTextColor.RED);
+                PlayerUtils.checkNearbyPlayers ? NamedTextColor.GREEN : NamedTextColor.RED)
+                .hoverEvent(HoverEvent.showText(Component.text("enabled")));
         Component space = Component.text(" - ");
         Component text = prefix.append(spectatorStatus, space, nearbyStatus);
         PlayerUtils.sendModMessage(text);
