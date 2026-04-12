@@ -7,21 +7,26 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 public class SyncTask implements Task {
-    private final Runnable runnable;
+    private final Task runnable;
 
-    public SyncTask(Runnable runnable) {
+    public SyncTask(Task runnable) {
         this.runnable = runnable;
     }
 
     public void run() throws InterruptedException {
         CompletableFuture<Integer> future = EdenClient.getMod(Scheduler.class).callSync(() -> {
-            runnable.run();
+            try {
+                runnable.run();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
             return 1;
         });
 
         try {
             future.get();
-        } catch ( ExecutionException e) {
+        } catch (ExecutionException e) {
+            future.completeExceptionally(e.getCause());
             throw new InterruptedException(e.getMessage());
         }
     }

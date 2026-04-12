@@ -52,7 +52,7 @@ public class Nuker {
     @ConfigSubscriber("false")
     private boolean enabled = false;
     @ConfigSubscriber("false")
-    private boolean filterEnabled = false;
+    private boolean filterBlocks = false;
     @ConfigSubscriber("stone")
     private BlockSet filter;
     @ConfigSubscriber("20")
@@ -62,6 +62,8 @@ public class Nuker {
     private BlockPos target = null;
     @ConfigSubscriber("true")
     private boolean filterHeight;
+    @ConfigSubscriber("true")
+    private boolean filterLiquids;
 
     public Nuker() {
         registerCommand();
@@ -109,13 +111,18 @@ public class Nuker {
         cmd.then(areaCmd);
         cmd.then(literal("filter")
                 .then(literal("toggle").executes(c -> {
-                    filterEnabled = !filterEnabled;
-                    PlayerUtils.sendModMessage(filterEnabled ? "Filter enabled" : "Filter disabled");
+                    filterBlocks = !filterBlocks;
+                    PlayerUtils.sendModMessage(filterBlocks ? "Filter enabled" : "Filter disabled");
                     return 1;
                 }))
                 .then(literal("height").executes(c -> {
                     this.filterHeight = !this.filterHeight;
                     PlayerUtils.sendModMessage(this.filterHeight ? "Filter height enabled" : "Filter height disabled");
+                    return 1;
+                }))
+                .then(literal("liquid").executes(c -> {
+                    this.filterLiquids = !this.filterLiquids;
+                    PlayerUtils.sendModMessage(this.filterLiquids ? "Filter liquids enabled" : "Filter liquids disabled");
                     return 1;
                 }))
                 .then(addCommand())
@@ -181,9 +188,11 @@ public class Nuker {
         if (target == null) {
             List<BlockPos> minableBlocks = getInstantMinableBlocksInRange(player);
             if (!minableBlocks.isEmpty()) {
+                ClientLevel world = Minecraft.getInstance().level;
+                if (world == null) return;
                 minableBlocks.stream().limit(limit).forEach(p -> {
                     nh.send(new ServerboundPlayerActionPacket(ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK, p, getHitDirectionForBlock(player, p)));
-                    Minecraft.getInstance().level.setBlockAndUpdate(p, air);
+                    world.setBlockAndUpdate(p, air);
                 });
                 return;
             }
@@ -202,6 +211,7 @@ public class Nuker {
 
     private void findTarget(LocalPlayer player) {
         ClientLevel world = Minecraft.getInstance().level;
+        if (world == null) return;
         Vec3 playerPos = player.getEyePosition();
         Stream<BlockPos> stream = getNearby(player);
         stream = stream.filter(p -> Vec3.atCenterOf(p).closerThan(playerPos, distance));
@@ -209,8 +219,9 @@ public class Nuker {
             stream = stream.filter(p -> player.getBlockY() <= p.getY());
         stream = stream.filter(area::contains);
         stream = stream.filter(p -> !world.getBlockState(p).isAir());
-        stream = stream.filter(Predicate.not(this::isNextToLiquid));
-        if (filterEnabled) {
+        if (filterLiquids)
+            stream = stream.filter(Predicate.not(this::isNextToLiquid));
+        if (filterBlocks) {
             stream = stream.filter(p -> applyFilter(world.getBlockState(p).getBlock()));
         }
         target = stream.map(BlockPos::new).min(Comparator.comparingDouble(p -> Vec3.atCenterOf(p).distanceTo(playerPos))).orElse(null);
@@ -218,6 +229,7 @@ public class Nuker {
 
     private List<BlockPos> getInstantMinableBlocksInRange(LocalPlayer player) {
         ClientLevel world = Minecraft.getInstance().level;
+        if (world == null) return List.of();
         Stream<BlockPos> stream = getNearby(player);
         stream = stream.filter(p -> Vec3.atCenterOf(p).closerThan(player.getEyePosition(), distance));
         if (filterHeight)
@@ -225,8 +237,9 @@ public class Nuker {
         stream = stream.filter(area::contains);
         stream = stream.filter(p -> !world.getBlockState(p).isAir());
         stream = stream.filter(p -> instantMinable(p, player));
-        stream = stream.filter(Predicate.not(this::isNextToLiquid));
-        if (filterEnabled) {
+        if (filterLiquids)
+            stream = stream.filter(Predicate.not(this::isNextToLiquid));
+        if (filterBlocks) {
             stream = stream.filter(p -> applyFilter(world.getBlockState(p).getBlock()));
         }
         stream = stream.limit(limit);
@@ -240,6 +253,7 @@ public class Nuker {
 
     private boolean instantMinable(BlockPos pos, LocalPlayer player) {
         ClientLevel world = Minecraft.getInstance().level;
+        if (world == null) return false;
         BlockState state = world.getBlockState(pos);
         float delta = state.getDestroyProgress(player, world, pos);
         return delta >= 1;
@@ -247,6 +261,7 @@ public class Nuker {
 
     private boolean isNextToLiquid(BlockPos pos) {
         ClientLevel world = Minecraft.getInstance().level;
+        if (world == null) return true;
         //don't care about down
         FluidState state = world.getFluidState(pos.relative(Direction.UP));
         if (!state.isEmpty()) return true;

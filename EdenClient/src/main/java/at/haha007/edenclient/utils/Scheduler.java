@@ -94,6 +94,17 @@ public class Scheduler {
         return future;
     }
 
+    public <T> CompletableFuture<T> callSyncDelayed(Supplier<T> callable, int delay) {
+        CompletableFuture<T> future = new CompletableFuture<>();
+        Runnable runnable = () -> future.complete(callable.get());
+        if (delay == 0) {
+            runSync(runnable);
+        } else {
+            scheduleSyncDelayed(runnable, delay);
+        }
+        return future;
+    }
+
     public boolean cancelTask(Runnable runnable) {
         AtomicBoolean found = new AtomicBoolean(false);
         delayedSync.values().forEach(c -> found.set(found.get() || c.remove(runnable)));

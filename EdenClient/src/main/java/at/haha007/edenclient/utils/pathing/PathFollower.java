@@ -25,7 +25,7 @@ public class PathFollower {
         int startY = currentBlock.start().getY();
         int endY = currentBlock.end().getY();
         int playerY = player.getBlockY();
-        int minY = Math.min(startY, endY);
+        int minY = Math.min(startY, endY) - 1;
         int maxY = Math.max(startY, endY);
         if (horizontalDistance > .2 || playerY < minY || playerY > maxY) {
             return false;
@@ -43,7 +43,7 @@ public class PathFollower {
         } else {
             target = currentBlock.endPos();
         }
-        PlayerUtils.walkTowards(target);
+        PlayerUtils.walkTowards(target, true);
         return true;
     }
 }

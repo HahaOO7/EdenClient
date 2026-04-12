@@ -18,27 +18,46 @@ import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Registry;
 import net.minecraft.core.Vec3i;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.ComponentSerialization;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
 import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.item.FallingBlockEntity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.level.ClipBlockStateContext;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.CollisionContext;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -121,7 +140,7 @@ public class PlayerUtils {
         sendModMessage(net.kyori.adventure.text.Component.text(text, NamedTextColor.GOLD));
     }
 
-    public static void walkTowards(Vec3 target) {
+    public static boolean walkTowards(Vec3 target) {
         LocalPlayer player = getPlayer();
         //get delta vec
         Vec3 vec = target.subtract(player.position());
@@ -134,29 +153,75 @@ public class PlayerUtils {
             player.setPos(target.x, player.position().y, target.z);
             double fallingSpeed = player.getDeltaMovement().y();
             player.setDeltaMovement(0, fallingSpeed, 0);
-            return;
+            player.setSprinting(false);
+            return true;
         }
 
-        //calculate the movement speed
-        double genericMovementSpeed = player.getSpeed();
-        double speed = Optional.ofNullable(player.getEffect(MobEffects.SPEED)).map(MobEffectInstance::getAmplifier).orElse(-1) + 1d;
-        double slow = Optional.ofNullable(player.getEffect(MobEffects.SLOWNESS)).map(MobEffectInstance::getAmplifier).orElse(-1) + 1d;
-        //this formula is not exact, but close enough
-        double movementSpeed = genericMovementSpeed * 10 * (5.612 + speed * 1.123 - slow * 0.841);
-        movementSpeed /= 20;
-
-        //scale the vector to the movement speed, don't overshoot
-        movementSpeed = Math.min(horizontalDistance, movementSpeed);
-        vec = vec.normalize().scale(movementSpeed);
+        player.setSprinting(true);
+        double speed = getWalkingSpeed();
+        vec = vec.normalize().scale(speed);
 
         //move the player
         double fallingSpeed = player.getDeltaMovement().y();
         player.setDeltaMovement(vec.x, fallingSpeed, vec.z);
+
+        return false;
     }
+
+    public static boolean walkTowards(Vec3 target, boolean autoJump) {
+        boolean targetReached = walkTowards(target);
+        if (targetReached) return true;
+        if (!autoJump) return false;
+
+        LocalPlayer player = getPlayer();
+        if (player.horizontalCollision && player.onGround()) {
+            ClientLevel level = Minecraft.getInstance().level;
+            if (level == null) return false;
+            float f = level.getBlockState(player.blockPosition()).getBlock().getJumpFactor();
+            float g = level.getBlockState(player.getBlockPosBelowThatAffectsMyMovement()).getBlock().getJumpFactor();
+            double blockJumpFactor = f == 1.0 ? g : f;
+            double jumpPower = player.getAttributeValue(Attributes.JUMP_STRENGTH) * blockJumpFactor + player.getJumpBoostPower();
+            player.setDeltaMovement(player.getDeltaMovement().multiply(1, 0, 1).add(0, jumpPower, 0));
+        }
+        return false;
+    }
+
 
     public static void walkTowards(Vec3i target) {
         Vec3 t = Vec3.atBottomCenterOf(target);
         walkTowards(t);
+    }
+
+
+    public static double getWalkingSpeed() {
+        double speed = 4.317;
+        LocalPlayer player = getPlayer();
+        ClientLevel level = Minecraft.getInstance().level;
+        if (level == null) {
+            return 0;
+        }
+        speed *= player.getAttributeValue(Attributes.MOVEMENT_SPEED) * 10;
+
+        boolean sneaking = player.isMovingSlowly();
+        if (sneaking) {
+            speed *= player.getAttributeValue(Attributes.SNEAKING_SPEED);
+        }
+
+        Block block = level.getBlockState(player.getBlockPosBelowThatAffectsMyMovement()).getBlock();
+
+        ItemStack boots = player.getItemBySlot(EquipmentSlot.FEET);
+        Registry<Enchantment> lookup = player.registryAccess().lookupOrThrow(Registries.ENCHANTMENT);
+        int soulSpeedLevel = EnchantmentHelper.getItemEnchantmentLevel(lookup.getOrThrow(Enchantments.SOUL_SPEED), boots);
+
+        if ((block == Blocks.SOUL_SAND || block == Blocks.SOUL_SOIL) && soulSpeedLevel <= 0) {
+            speed *= 0.581;
+        }
+
+
+        if (block == (Blocks.HONEY_BLOCK)) speed *= 0.581;
+        if (block == (Blocks.SLIME_BLOCK)) speed *= 0.73;
+
+        return (Math.max(speed, 0) / 20);
     }
 
     public static void clickSlot(int slotId) {
@@ -201,7 +266,7 @@ public class PlayerUtils {
     public static boolean breakBlock(BlockPos pos) {
         LocalPlayer player = getPlayer();
         ClientLevel world = Minecraft.getInstance().level;
-        if(world == null) return false;
+        if (world == null) return false;
         BlockState state = world.getBlockState(pos);
         Block block = state.getBlock();
         float delta = state.getDestroyProgress(player, world, pos);
@@ -260,7 +325,7 @@ public class PlayerUtils {
         MultiPlayerGameMode gameMode = Minecraft.getInstance().gameMode;
         if (gameMode == null) return false;
         ClientLevel level = Minecraft.getInstance().level;
-        if(level == null) {
+        if (level == null) {
             return false;
         }
 
@@ -291,6 +356,7 @@ public class PlayerUtils {
         connection.send(new ServerboundSetCarriedItemPacket(8));
         return true;
     }
+
 
     public static boolean selectItem(Item item) {
         LocalPlayer player = getPlayer();
@@ -324,7 +390,7 @@ public class PlayerUtils {
         inventory.setSelectedSlot(8);
         connection.send(new ServerboundSetCarriedItemPacket(8));
         ClientLevel level = Minecraft.getInstance().level;
-        if(level == null) {
+        if (level == null) {
             return false;
         }
         BlockPos.withinManhattanStream(player.blockPosition(), 5, 5, 5)
@@ -373,5 +439,51 @@ public class PlayerUtils {
     public static String removeColorCodes(String msg) {
         msg = msg.replaceAll("§[0-9a-fk-or]", "");
         return msg;
+    }
+
+    public static BlockHitResult rayTraceBlocks(Vec3 from, Vec3 direction, double distance, AABB shape) {
+        ClientLevel level = Minecraft.getInstance().level;
+        if (level == null || from == null || direction == null || shape == null || distance <= 0) {
+            return BlockHitResult.miss(from == null ? Vec3.ZERO : from, Direction.DOWN, BlockPos.ZERO);
+        }
+
+        double dirLength = direction.length();
+        if (dirLength < 1e-6) {
+            return BlockHitResult.miss(from, Direction.DOWN, BlockPos.containing(from));
+        }
+
+        Vec3 normalizedDirection = direction.scale(1.0 / dirLength);
+        Vec3 movement = normalizedDirection.scale(distance);
+        Vec3 end = from.add(movement);
+
+        LocalPlayer player = Minecraft.getInstance().player;
+        CollisionContext collisionContext = player == null ? CollisionContext.empty() : CollisionContext.of(player);
+        ClipContext context = new ClipContext(from, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, collisionContext);
+        BlockHitResult lineHit = level.clip(context);
+
+        Direction hitFace = Direction.getNearest(
+                (int) Math.signum(movement.x),
+                (int) Math.signum(movement.y),
+                (int) Math.signum(movement.z),
+                Direction.UP
+        ).getOpposite();
+
+        // Also sweep the provided shape to catch side collisions that center-line clipping can miss.
+        if (!level.noCollision(shape)) {
+            return new BlockHitResult(from, hitFace, BlockPos.containing(from), false);
+        }
+
+        double stepSize = 0.1;
+        int steps = (int) Math.ceil(distance / stepSize);
+        for (int i = 1; i <= steps; i++) {
+            double t = Math.min(i * stepSize, distance);
+            AABB swept = shape.move(normalizedDirection.scale(t));
+            if (!level.noCollision(swept)) {
+                Vec3 hitPos = from.add(normalizedDirection.scale(t));
+                return new BlockHitResult(hitPos, hitFace, BlockPos.containing(hitPos), false);
+            }
+        }
+
+        return lineHit;
     }
 }

@@ -3,24 +3,35 @@ package at.haha007.edenclient.mods;
 import at.haha007.edenclient.annotations.Mod;
 import at.haha007.edenclient.callbacks.GameRenderCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
+import at.haha007.edenclient.utils.EdenRenderUtils;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.Scheduler;
 import at.haha007.edenclient.utils.pathing.*;
+import at.haha007.edenclient.utils.pathing.segment.PathSegment;
+import at.haha007.edenclient.utils.pathing.segmentcalculator.StraightSegmentCalculator;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import fi.dy.masa.malilib.util.data.Color4f;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import org.lwjgl.opengl.GL11;
+
+import java.awt.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
 
 import static at.haha007.edenclient.command.CommandManager.*;
 
 @Mod(dependencies = Scheduler.class)
 public class PathTest {
-    private Path path;
+    private List<PathSegment> path;
     private boolean enabled = false;
 
     public PathTest() {
@@ -29,26 +40,35 @@ public class PathTest {
         PlayerTickCallback.EVENT.register(this::tick, getClass());
     }
 
-    private void tick(LocalPlayer localPlayer) {
-        if (path == null) return;
-        if (!enabled) return;
-        PathPosition nearest = path.getNearest(localPlayer.position());
-        int segment = nearest.block();
-        PathBlock block = path.getBlock(segment);
-        if (block == null) return;
-
-        if ((segment > 0 || block.endPos().distanceToSqr(localPlayer.position()) < .0001)
-                && nearest.distance() < .5
-                && path.length() > 1) {
-            path = path.subPath(1);
-        }
-
-        PathFollower.follow(path);
+    private void tick(LocalPlayer player) {
     }
 
     private void render(float tickDelta) {
         GL11.glEnable(GL11.GL_LINE_SMOOTH);
         GL11.glEnable(GL11.GL_DEPTH_TEST);
+        StraightSegmentCalculator straightSegmentCalculator = new StraightSegmentCalculator(3.5);
+        Collection<PathSegment> segments = straightSegmentCalculator.calculateSegments(PlayerUtils.getPlayer().position().add(0, .01, 0));
+        for (PathSegment segment : segments) {
+            Vec3 vec3 = segment.to();
+            EdenRenderUtils.drawAreaOutline(vec3.add(-.5, .001, -.5), vec3.add(.5, .16, .5), Color4f.fromColor(Color.BLUE.getRGB()));
+        }
+
+//        BlockPos playerPos = PlayerUtils.getPlayer().getBlockPosBelowThatAffectsMyMovement();
+//        for (int x = -5; x <= 5; x++) {
+//            for (int z = -5; z <= 5; z++) {
+//                for (int y = -5; y <= 2; y++) {
+//                    Optional<Double> height = PathingUtils.getWalkableHeight(playerPos.offset(x, y, z));
+//                    if(height.isEmpty()) continue;
+//
+//                    Vec3 min = Vec3.atLowerCornerOf(playerPos.offset(x, -playerPos.getY(), z)).add(0, height.get(), 0);
+//
+//                    Vec3 max = min.add(1, 0.16, 1);
+//                    EdenRenderUtils.drawAreaOutline(min, max, Color4f.fromColor(Color.RED.getRGB()));
+//                }
+//            }
+//        }
+
+
         if (path == null) return;
         PathRenderer.renderPath(path, tickDelta);
     }
@@ -73,15 +93,15 @@ public class PathTest {
     }
 
     private void generatePathTowards(double distance) {
-        BlockPos playerPos = PlayerUtils.getPlayer().blockPosition();
+        Vec3 playerPos = PlayerUtils.getPlayer().position();
         Entity camera = Minecraft.getInstance().getCameraEntity();
         if (camera == null) {
             return;
         }
         Vec3 direction = camera.getLookAngle();
-        direction = direction.multiply(1, 0, 1).normalize().scale(distance);
-        BlockPos target = playerPos.offset((int) direction.x(), (int) direction.y(), (int) direction.z());
-        Path tempPath = PathFinder.createDefault().findPath(playerPos, target, false);
+        direction = direction.normalize().scale(distance);
+        Vec3 target = playerPos.add(direction.x(), direction.y(), direction.z());
+        List<PathSegment> tempPath = PathFinder.createDefault().findPath(playerPos, target, false);
         path = tempPath == null ? path : tempPath;
     }
 

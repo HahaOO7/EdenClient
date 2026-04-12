@@ -6,10 +6,15 @@ import at.haha007.edenclient.utils.EdenRenderUtils;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
+import at.haha007.edenclient.utils.pathing.Path;
+import at.haha007.edenclient.utils.pathing.SimplePathFinder;
+import at.haha007.edenclient.utils.pathing.PathFollower;
+import at.haha007.edenclient.utils.pathing.SimplePathRenderer;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
+import com.mojang.logging.LogUtils;
 import fi.dy.masa.malilib.render.RenderUtils;
 import fi.dy.masa.malilib.util.data.Color4f;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
@@ -48,6 +53,8 @@ public class HeadHunt {
     boolean tracer;
     @ConfigSubscriber("true")
     boolean clickHeads;
+    @ConfigSubscriber("false")
+    boolean follow = false;
     @ConfigSubscriber("1")
     float red;
     @ConfigSubscriber("1")
@@ -56,6 +63,7 @@ public class HeadHunt {
     float blue;
     Set<Vec3i> heads = new HashSet<>();
     Set<Vec3i> foundHeads = new HashSet<>();
+    private Path path;
 
     public HeadHunt() {
         GameRenderCallback.EVENT.register(this::render, getClass());
@@ -79,7 +87,7 @@ public class HeadHunt {
             foundHeads = new HashSet<>();
             return;
         }
-        if(PlayerUtils.shouldPlayLegit()) return;
+        if (PlayerUtils.shouldPlayLegit()) return;
         ChunkPos chunkPos = player.chunkPosition();
         ClientChunkCache cm = Minecraft.getInstance().level.getChunkSource();
         BlockPos pp = player.blockPosition();
@@ -94,11 +102,52 @@ public class HeadHunt {
                 .sorted(Comparator.comparingDouble(pos -> pos.distSqr(pp)))
                 .limit(1000)
                 .map(v -> (Vec3i) v).collect(Collectors.toSet());
+        int totalHeads = heads.size();
         heads.removeAll(foundHeads);
+        int foundHeadCount = this.foundHeads.size();
+        int subtracted = heads.size();
+        Vec3i nearest = heads.stream().min(Comparator.comparingDouble(h -> h.distSqr(player.blockPosition()))).orElse(null);
+        LogUtils.getLogger().info("Total:%s Found:%s Subtracted:%s Nearest: %s".formatted(totalHeads, foundHeadCount, subtracted, nearest));
+
         if (clickHeads) {
             heads.stream()
                     .filter(bp -> player.position().distanceToSqr(Vec3.atCenterOf(bp)) < 20)
-                    .forEach(this::clickPos);
+                    .forEach(target -> {
+                        clickPos(target);
+                        path = null;
+                    });
+        }
+
+        if (follow) {
+            if (path != null) {
+                PathFollower.follow(path);
+                Vec3 last = Vec3.atBottomCenterOf(path.getPath().getLast());
+                if (last.distanceTo(player.position()) < .2)
+                    path = null;
+                return;
+            }
+            //path does not exist, create path to nearest reachable egg
+            long startTime = System.currentTimeMillis();
+            for (Vec3i head : heads.stream().sorted(Comparator.comparingDouble(pp::distSqr)).toList()) {
+                if (startTime + 2000 < System.currentTimeMillis()) {
+                    PlayerUtils.sendModMessage("Took too long to find path, disabling follow");
+                    follow = false;
+                    break;
+                }
+                //try to create a path to the head
+                Path possiblePath = SimplePathFinder.createDefault().findPath(pp, new BlockPos(head), false);
+                double dist = possiblePath.getPath().getLast().distSqr(head);
+                if (dist > 15) {
+                    //can't get near enough to head
+                    continue;
+                }
+                path = possiblePath;
+                break;
+            }
+            if(path == null){
+                follow = false;
+                PlayerUtils.sendModMessage("Disabled follow, no path found!");
+            }
         }
     }
 
@@ -109,6 +158,7 @@ public class HeadHunt {
         if (im == null) return;
         im.useItemOn(getPlayer(), InteractionHand.MAIN_HAND, new BlockHitResult(Vec3.atLowerCornerOf(bp.relative(dir)), dir, bp, false));
         foundHeads.add(target);
+        path = null;
     }
 
     private void build() {
@@ -119,6 +169,7 @@ public class HeadHunt {
     private void destroy() {
         heads = new HashSet<>();
         foundHeads = new HashSet<>();
+        path = null;
     }
 
     private void registerCommand() {
@@ -148,6 +199,13 @@ public class HeadHunt {
             return 1;
         }));
 
+        cmd.then(literal("follow").executes(c -> {
+            follow = !follow;
+            path = null;
+            sendModMessage(follow ? "Atomatic walk to next head enabled" : "Atomatic walk to next head disabled");
+            return 1;
+        }));
+
         cmd.then(literal("color").then(arg("r").then(arg("g").then(arg("b").executes(this::setColor)))));
 
         cmd.then(toggle);
@@ -172,6 +230,8 @@ public class HeadHunt {
         if (heads.isEmpty()) return;
         GL11.glEnable(GL11.GL_LINE_SMOOTH);
         GL11.glDisable(GL11.GL_DEPTH_TEST);
+        if (path != null)
+            SimplePathRenderer.renderPath(path, tickDelta);
         if (tracer) {
             EdenRenderUtils.drawTracers(heads.stream().map(Vec3::atCenterOf).toList(), Color4f.fromColor(new Color(red, green, blue).getRGB()));
         }

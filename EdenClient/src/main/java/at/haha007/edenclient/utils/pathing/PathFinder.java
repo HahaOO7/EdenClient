@@ -1,32 +1,25 @@
 package at.haha007.edenclient.utils.pathing;
 
-import at.haha007.edenclient.utils.pathing.calculator.NeighborCandidateCalculator;
-import at.haha007.edenclient.utils.pathing.calculator.StepDownNeighborCalculator;
-import at.haha007.edenclient.utils.pathing.calculator.StepUpNeighborCalculator;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.AABB;
+import at.haha007.edenclient.utils.pathing.segment.PathSegment;
+import at.haha007.edenclient.utils.pathing.segmentcalculator.SegmentCalculator;
+import at.haha007.edenclient.utils.pathing.segmentcalculator.StraightSegmentCalculator;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.*;
 
 public class PathFinder {
-    private final List<NeighborCandidateCalculator> calculators;
+    private static final int MAX_NODES = 10_000;
+    private static final double REACH_DISTANCE = 1.0;
 
-    public PathFinder(List<NeighborCandidateCalculator> calculators) {
+    private final List<SegmentCalculator> calculators;
+
+    public PathFinder(List<SegmentCalculator> calculators) {
         this.calculators = calculators;
     }
 
     public static PathFinder createDefault() {
-        LocalPlayer player = Minecraft.getInstance().player;
         return new PathFinder(List.of(
-//                new HorizontalNeighborCalculator(),
-                new StepDownNeighborCalculator(3),
-                new StepUpNeighborCalculator(player == null ? 0 : (int) player.maxUpStep())
+                new StraightSegmentCalculator(3.5)
         ));
     }
 
@@ -38,58 +31,51 @@ public class PathFinder {
      * @param exact  if it can't find a path, use the nearest possible path
      * @return the path or null if it can't find a path
      */
-    public Path findPath(BlockPos start, BlockPos target, boolean exact) {
-        if (start.equals(target)) {
-            return new Path(List.of(start, target));
+    public List<PathSegment> findPath(Vec3 start, Vec3 target, boolean exact) {
+        if (start.distanceTo(target) < REACH_DISTANCE) {
+            return List.of();
         }
 
-        // A* pathfinding algorithm
-        PriorityQueue<PathNode> openSet = new PriorityQueue<>(
-                Comparator.comparingDouble(n -> n.fScore)
-        );
-        Map<BlockPos, PathNode> allNodes = new HashMap<>();
+        PriorityQueue<PathNode> openSet = new PriorityQueue<>(Comparator.comparingDouble(n -> n.fScore));
+        Map<String, PathNode> allNodes = new HashMap<>();
 
-        PathNode startNode = new PathNode(start, null, 0, start.distManhattan(target));
+        PathNode startNode = new PathNode(start, null, null, 0, start.distanceTo(target));
         openSet.add(startNode);
-        allNodes.put(start, startNode);
+        allNodes.put(posKey(start), startNode);
 
-        BlockPos bestNode = start;
-        double bestDistance = start.distManhattan(target);
+        PathNode bestNode = startNode;
+        double bestDistance = start.distanceTo(target);
 
-        while (!openSet.isEmpty()) {
+        while (!openSet.isEmpty() && allNodes.size() < MAX_NODES) {
             PathNode current = openSet.poll();
 
-            if (current.pos.equals(target)) {
+            if (current.pos.distanceTo(target) < REACH_DISTANCE) {
                 return reconstructPath(current);
             }
 
-            // Update best node for inexact path finding
-            double currentDistance = current.pos.distManhattan(target);
+            double currentDistance = current.pos.distanceTo(target);
             if (currentDistance < bestDistance) {
                 bestDistance = currentDistance;
-                bestNode = current.pos;
+                bestNode = current;
             }
 
-            // Early exit: if the best possible remaining path is worse than our current best
-            if (!exact && openSet.peek() != null && openSet.peek().pos.distManhattan(target) > bestDistance + 200) {
-                break;
-            }
+            for (SegmentCalculator calculator : calculators) {
+                for (PathSegment segment : calculator.calculateSegments(current.pos)) {
+                    Vec3 neighborPos = segment.to();
+                    double tentativeGScore = current.gScore + current.pos.distanceTo(neighborPos);
+                    String neighborKey = posKey(neighborPos);
 
-            // Explore neighbors
-            for (NeighborCandidateCalculator calculator : calculators) {
-                for (BlockPos neighbor : calculator.getValidNeighbors(current.pos)) {
-                    double tentativeGScore = current.gScore + calculateCost(current.pos, neighbor);
-
-                    PathNode neighborNode = allNodes.get(neighbor);
+                    PathNode neighborNode = allNodes.get(neighborKey);
                     if (neighborNode == null) {
-                        neighborNode = new PathNode(neighbor, current, tentativeGScore,
-                                tentativeGScore + neighbor.distManhattan(target));
-                        allNodes.put(neighbor, neighborNode);
+                        neighborNode = new PathNode(neighborPos, current, segment,
+                                tentativeGScore, tentativeGScore + neighborPos.distanceTo(target));
+                        allNodes.put(neighborKey, neighborNode);
                         openSet.add(neighborNode);
                     } else if (tentativeGScore < neighborNode.gScore) {
                         neighborNode.parent = current;
+                        neighborNode.segment = segment;
                         neighborNode.gScore = tentativeGScore;
-                        neighborNode.fScore = tentativeGScore + neighbor.distManhattan(target);
+                        neighborNode.fScore = tentativeGScore + neighborPos.distanceTo(target);
                         if (!openSet.contains(neighborNode)) {
                             openSet.add(neighborNode);
                         }
@@ -98,181 +84,44 @@ public class PathFinder {
             }
         }
 
-        // If exact path is required and not found, return null
-        if (exact) {
-            return null;
-        }
-
-        // Return path to nearest reachable position
-        return reconstructPath(allNodes.get(bestNode));
+        if (exact) return null;
+        return reconstructPath(bestNode);
     }
 
-    private double calculateCost(BlockPos pos, BlockPos neighbor) {
-        if (neighbor.getY() > pos.getY()) {
-            return 3;
-        }
-        return 1;
+    /**
+     * Creates a map key for a Vec3 position snapped to 0.5-block precision on x/z
+     * and 0.1-block precision on y (to handle varying walkable heights).
+     */
+    private static String posKey(Vec3 pos) {
+        long x = Math.round(pos.x * 2);
+        long y = Math.round(pos.y * 10);
+        long z = Math.round(pos.z * 2);
+        return x + "," + y + "," + z;
     }
 
-    private Path reconstructPath(PathNode node) {
-        List<BlockPos> path = new ArrayList<>();
-        while (node != null) {
-            path.add(node.pos);
+    private static List<PathSegment> reconstructPath(PathNode node) {
+        List<PathSegment> path = new ArrayList<>();
+        while (node != null && node.segment != null) {
+            path.add(node.segment);
             node = node.parent;
         }
         Collections.reverse(path);
-        int pathSize;
-        do {
-            pathSize = path.size();
-            optimizePath(path);
-        } while (path.size() != pathSize);
-        return new Path(path);
+        return path;
     }
 
     private static class PathNode {
-        final BlockPos pos;
+        final Vec3 pos;
         PathNode parent;
-        double gScore; // Cost from start
-        double fScore; // Estimated total cost
+        PathSegment segment;
+        double gScore;
+        double fScore;
 
-        PathNode(BlockPos pos, PathNode parent, double gScore, double fScore) {
+        PathNode(Vec3 pos, PathNode parent, PathSegment segment, double gScore, double fScore) {
             this.pos = pos;
             this.parent = parent;
+            this.segment = segment;
             this.gScore = gScore;
             this.fScore = fScore;
         }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj) return true;
-            if (!(obj instanceof PathNode other)) return false;
-            return pos.equals(other.pos);
-        }
-
-        @Override
-        public int hashCode() {
-            return pos.hashCode();
-        }
-    }
-
-    // try to remove blocks that are not needed
-    // by trying to remove blocks and checking if all the blocks in the path are still walkable
-    // using the getBlocksAlongLine method
-    private static void optimizePath(List<BlockPos> path) {
-        if (path.size() <= 2) {
-            return; // No optimization needed for very short paths
-        }
-
-        // Try to remove intermediate points
-        int i = 0;
-        while (i < path.size() - 2) {
-            BlockPos start = path.get(i);
-            BlockPos end = path.get(i + 2);
-            // Check if all blocks along the line are walkable
-            boolean allWalkable = start.getY() == end.getY();
-
-            if (allWalkable) {
-                // Get all blocks that would be traversed in a straight line
-                Collection<BlockPos> blocksAlongLine = getBlocksAlongLine(Vec3.atBottomCenterOf(start), Vec3.atBottomCenterOf(end));
-                for (BlockPos block : blocksAlongLine) {
-                    if (!isWalkable(block)) {
-                        allWalkable = false;
-                        break;
-                    }
-                }
-            }
-
-            if (allWalkable) {
-                // Remove the intermediate point since the straight line is walkable
-                path.remove(i + 1);
-                // Don't increment i to try to optimize further
-            } else {
-                // Can't remove this point, move to next
-                i++;
-            }
-        }
-    }
-
-    // returns all blocks a player would collide with walking a straight line
-    // a player is 0.6x0.6 blocks wide
-    // only blocks at foot height in a horizontal line
-    private static Collection<BlockPos> getBlocksAlongLine(Vec3 start, Vec3 end) {
-        Set<BlockPos> blocks = new HashSet<>();
-
-        // Use the foot height (y-coordinate) from the start position
-        int footY = (int) Math.floor(start.y);
-
-        // Calculate the horizontal distance
-        double dx = end.x - start.x;
-        double dz = end.z - start.z;
-        double distance = Math.sqrt(dx * dx + dz * dz);
-
-        if (distance < 0.01) {
-            // Start and end are very close, just check the start position
-            return getBlocksAtFootLevel(start.x, start.z, footY);
-        }
-
-        // Step size - smaller steps for more accuracy
-        double stepSize = 0.1;
-        int numSteps = (int) (distance / stepSize) + 1;
-
-        // Check blocks along the horizontal line
-        for (int i = 0; i <= numSteps; i++) {
-            double t = (double) i / numSteps;
-            double currentX = start.x + dx * t;
-            double currentZ = start.z + dz * t;
-
-            // Add all blocks the player's collision box would intersect at this position
-            blocks.addAll(getBlocksAtFootLevel(currentX, currentZ, footY));
-        }
-
-        return blocks;
-    }
-
-    // Helper method to get all blocks a player's collision box would intersect at foot level
-    private static Collection<BlockPos> getBlocksAtFootLevel(double x, double z, int footY) {
-        Set<BlockPos> blocks = new HashSet<>();
-
-        // Player collision box width
-        final double PLAYER_WIDTH = 0.7;
-
-        // Calculate the bounds of the player's collision box at foot level
-        double minX = x - PLAYER_WIDTH / 2;
-        double maxX = x + PLAYER_WIDTH / 2;
-        double minZ = z - PLAYER_WIDTH / 2;
-        double maxZ = z + PLAYER_WIDTH / 2;
-
-        // Add all blocks that intersect with the collision box at foot level
-        int startBlockX = (int) Math.floor(minX);
-        int endBlockX = (int) Math.floor(maxX);
-        int startBlockZ = (int) Math.floor(minZ);
-        int endBlockZ = (int) Math.floor(maxZ);
-
-        for (int blockX = startBlockX; blockX <= endBlockX; blockX++) {
-            for (int blockZ = startBlockZ; blockZ <= endBlockZ; blockZ++) {
-                blocks.add(new BlockPos(blockX, footY, blockZ));
-            }
-        }
-
-        return blocks;
-    }
-
-    private static boolean isWalkable(BlockPos pos) {
-        ClientLevel level = Minecraft.getInstance().level;
-        if (level == null) {
-            return false;
-        }
-        //floor has to have a solid top surface and 2 blocks without collision above
-        BlockState floorState = level.getBlockState(pos.below());
-        if (!floorState.isFaceSturdy(level, pos.below(), Direction.UP)) {
-            return false;
-        }
-        if (!level.getBlockState(pos).getCollisionShape(level, pos).isEmpty()) {
-            return false;
-        }
-        if (!level.getBlockState(pos.above()).getCollisionShape(level, pos.above()).isEmpty()) {
-            return false;
-        }
-        return true;
     }
 }
