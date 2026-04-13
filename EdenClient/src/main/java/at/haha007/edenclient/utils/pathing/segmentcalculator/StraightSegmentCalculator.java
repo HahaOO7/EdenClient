@@ -10,7 +10,6 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.Pose;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -50,23 +49,23 @@ public class StraightSegmentCalculator implements SegmentCalculator {
         }
 
         List<PathSegment> segments = new ArrayList<>();
-        moveableHeightAt(fromBlockPos.west(), from.y, maxStepUp + from.y)
+        moveableHeightAt(fromBlockPos.west(), from, maxStepUp + from.y)
                 .ifPresent(h -> segments.add(new StraightPathSegment(from, new Vec3(Mth.floor(from.x) - .5, h, Mth.floor(from.z) + 0.5))));
-        moveableHeightAt(fromBlockPos.east(), from.y, maxStepUp + from.y)
+        moveableHeightAt(fromBlockPos.east(), from, maxStepUp + from.y)
                 .ifPresent(h -> segments.add(new StraightPathSegment(from, new Vec3(Mth.floor(from.x) + 1.5, h, Mth.floor(from.z) + 0.5))));
-        moveableHeightAt(fromBlockPos.north(), from.y, maxStepUp + from.y)
+        moveableHeightAt(fromBlockPos.north(), from, maxStepUp + from.y)
                 .ifPresent(h -> segments.add(new StraightPathSegment(from, new Vec3(Mth.floor(from.x) + 0.5, h, Mth.floor(from.z) - .5))));
-        moveableHeightAt(fromBlockPos.south(), from.y, maxStepUp + from.y)
+        moveableHeightAt(fromBlockPos.south(), from, maxStepUp + from.y)
                 .ifPresent(h -> segments.add(new StraightPathSegment(from, new Vec3(Mth.floor(from.x) + 0.5, h, Mth.floor(from.z) + 1.5))));
         return segments;
     }
 
-    private Optional<Double> moveableHeightAt(BlockPos start, double startY, double maxFloorHeight) {
-        Optional<Double> dropHeight = findDropHeight(start, startY);
+    private Optional<Double> moveableHeightAt(BlockPos start, Vec3 from, double maxFloorHeight) {
+        Optional<Double> dropHeight = findDropHeight(start, from);
         if (dropHeight.isPresent()) {
             return dropHeight;
         }
-        return findStepUpHeight(start, startY, maxFloorHeight);
+        return findStepUpHeight(start, from.y, maxFloorHeight);
     }
 
     private Optional<Double> findStepUpHeight(BlockPos start, double startY, double maxFloorHeight) {
@@ -93,14 +92,19 @@ public class StraightSegmentCalculator implements SegmentCalculator {
 
     }
 
-    private Optional<Double> findDropHeight(BlockPos start, double startY) {
+    private Optional<Double> findDropHeight(BlockPos start, Vec3 from) {
         ClientLevel level = Minecraft.getInstance().level;
         if (level == null) {
             return Optional.empty();
         }
-        int minFloorHeight = Mth.floor(startY - maxDropDistance);
+        int minFloorHeight = Mth.floor(from.y - maxDropDistance);
         //first check if there is enough head  roon to walk over
-        AABB aabb = PlayerUtils.getPlayer().getDimensions(Pose.STANDING).makeBoundingBox(Vec3.atBottomCenterOf(start));
+        LocalPlayer player = PlayerUtils.getPlayer();
+        BlockPos fromPos = new BlockPos(Mth.floor(from.x), Mth.floor(from.y), Mth.floor(from.z));
+        BlockPos direction = start.subtract(fromPos);
+        AABB aabb = player.getDimensions(player.getPose())
+                .makeBoundingBox(Mth.floor(from.x) + .5, Mth.floor(from.y) + .5, Mth.floor(from.z) + .5)
+                .expandTowards(direction.getX(), direction.getY(), direction.getZ());
         if (!level.noCollision(aabb)) {
             return Optional.empty();
         }
@@ -112,9 +116,10 @@ public class StraightSegmentCalculator implements SegmentCalculator {
                 continue;
             }
             double floorHeight = walkableHeight.get();
-            if (floorHeight < startY - maxDropDistance) {
+            if (floorHeight < from.y - maxDropDistance) {
                 return Optional.empty();
             }
+
             return Optional.of(floorHeight);
         }
         return Optional.empty();

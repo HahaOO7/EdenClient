@@ -6,33 +6,33 @@ import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.utils.EdenRenderUtils;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.Scheduler;
-import at.haha007.edenclient.utils.pathing.*;
+import at.haha007.edenclient.utils.pathing.PathFinder;
+import at.haha007.edenclient.utils.pathing.PathRenderer;
+import at.haha007.edenclient.utils.pathing.segment.MasterPathSegment;
 import at.haha007.edenclient.utils.pathing.segment.PathSegment;
 import at.haha007.edenclient.utils.pathing.segmentcalculator.StraightSegmentCalculator;
+import at.haha007.edenclient.utils.tasks.Task;
+import at.haha007.edenclient.utils.tasks.TaskManager;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import fi.dy.masa.malilib.util.data.Color4f;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.phys.shapes.VoxelShape;
 import org.lwjgl.opengl.GL11;
 
 import java.awt.*;
 import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
 
 import static at.haha007.edenclient.command.CommandManager.*;
 
 @Mod(dependencies = Scheduler.class)
 public class PathTest {
-    private List<PathSegment> path;
+    private MasterPathSegment path;
     private boolean enabled = false;
+    private TaskManager taskManager;
 
     public PathTest() {
         registerCommand();
@@ -46,8 +46,8 @@ public class PathTest {
     private void render(float tickDelta) {
         GL11.glEnable(GL11.GL_LINE_SMOOTH);
         GL11.glEnable(GL11.GL_DEPTH_TEST);
-        StraightSegmentCalculator straightSegmentCalculator = new StraightSegmentCalculator(3.5);
-        Collection<PathSegment> segments = straightSegmentCalculator.calculateSegments(PlayerUtils.getPlayer().position().add(0, .01, 0));
+        StraightSegmentCalculator calculator = new StraightSegmentCalculator(3.5);
+        Collection<PathSegment> segments = calculator.calculateSegments(PlayerUtils.getPlayer().position().add(0, .01, 0));
         for (PathSegment segment : segments) {
             Vec3 vec3 = segment.to();
             EdenRenderUtils.drawAreaOutline(vec3.add(-.5, .001, -.5), vec3.add(.5, .16, .5), Color4f.fromColor(Color.BLUE.getRGB()));
@@ -70,7 +70,7 @@ public class PathTest {
 
 
         if (path == null) return;
-        PathRenderer.renderPath(path, tickDelta);
+        PathRenderer.renderPath(path.children(), tickDelta);
     }
 
 
@@ -87,6 +87,23 @@ public class PathTest {
         })).then(literal("clear").executes(c -> {
             path = null;
             return 1;
+        })).then(literal("start").executes(c -> {
+            if (path == null) {
+                PlayerUtils.sendModMessage("No path generated yet. Use /epathtest <distance> to generate a path.");
+                return 1;
+            }
+            if (taskManager != null) {
+                taskManager.cancel();
+            }
+            Task follower = path.follower();
+            taskManager = new TaskManager();
+            taskManager.then(follower);
+            taskManager.then(() -> taskManager = null);
+            taskManager.start();
+            return 1;
+        })).then(literal("stop").executes(c -> {
+            taskManager.cancel();
+            return 1;
         }));
 
         register(node, "/epathtest [<distance>,clear]");
@@ -101,7 +118,7 @@ public class PathTest {
         Vec3 direction = camera.getLookAngle();
         direction = direction.normalize().scale(distance);
         Vec3 target = playerPos.add(direction.x(), direction.y(), direction.z());
-        List<PathSegment> tempPath = PathFinder.createDefault().findPath(playerPos, target, false);
+        MasterPathSegment tempPath = (MasterPathSegment) PathFinder.createDefault().findPath(playerPos, target, false);
         path = tempPath == null ? path : tempPath;
     }
 

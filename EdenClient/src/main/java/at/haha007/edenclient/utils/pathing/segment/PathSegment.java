@@ -7,8 +7,8 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class PathSegment {
-    protected final Vec3 from;
-    protected final Vec3 to;
+    private final Vec3 from;
+    private final Vec3 to;
     protected final PlayerAssumptions playerAssumptions;
 
     protected PathSegment(Vec3 from, Vec3 to) {

@@ -1,5 +1,6 @@
 package at.haha007.edenclient.utils.pathing;
 
+import at.haha007.edenclient.utils.pathing.segment.MasterPathSegment;
 import at.haha007.edenclient.utils.pathing.segment.PathSegment;
 import at.haha007.edenclient.utils.pathing.segmentcalculator.SegmentCalculator;
 import at.haha007.edenclient.utils.pathing.segmentcalculator.StraightSegmentCalculator;
@@ -31,9 +32,9 @@ public class PathFinder {
      * @param exact  if it can't find a path, use the nearest possible path
      * @return the path or null if it can't find a path
      */
-    public List<PathSegment> findPath(Vec3 start, Vec3 target, boolean exact) {
+    public PathSegment findPath(Vec3 start, Vec3 target, boolean exact) {
         if (start.distanceTo(target) < REACH_DISTANCE) {
-            return List.of();
+            return null;
         }
 
         PriorityQueue<PathNode> openSet = new PriorityQueue<>(Comparator.comparingDouble(n -> n.fScore));
@@ -99,14 +100,14 @@ public class PathFinder {
         return x + "," + y + "," + z;
     }
 
-    private static List<PathSegment> reconstructPath(PathNode node) {
+    private static PathSegment reconstructPath(PathNode node) {
         List<PathSegment> path = new ArrayList<>();
         while (node != null && node.segment != null) {
             path.add(node.segment);
             node = node.parent;
         }
         Collections.reverse(path);
-        return path;
+        return new MasterPathSegment(path);
     }
 
     private static class PathNode {
