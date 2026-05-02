@@ -4,15 +4,17 @@ import at.haha007.edenclient.utils.pathing.segment.MasterPathSegment;
 import at.haha007.edenclient.utils.pathing.segment.PathSegment;
 import at.haha007.edenclient.utils.pathing.segmentcalculator.MasterSegmentCalculator;
 import at.haha007.edenclient.utils.pathing.segmentcalculator.SegmentCalculator;
+import lombok.Getter;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.*;
 
 public class PathFinder {
-    private static final int MAX_NODES = 10_000;
+    private static final int MAX_NODES = 100_000;
     private static final double REACH_DISTANCE = 1.0;
     private static final double REACH_DISTANCE_SQUARED = REACH_DISTANCE * REACH_DISTANCE;
     private static final double POSITION_KEY_SCALE = 1_000.0;
+    public static final int DEFAULT_NODE_BUDGET_PER_TICK = 1_000;
 
     private final SegmentCalculator calculator;
 
@@ -25,7 +27,15 @@ public class PathFinder {
     }
 
     /**
+     * Creates a resumable path search that can be advanced over multiple ticks.
+     */
+    public PathSearch startSearch(Vec3 start, Vec3 target, boolean exact) {
+        return new PathSearch(start, target, exact);
+    }
+
+    /**
      * Find a path from start to target
+     * This is a blocking compatibility wrapper around {@link #startSearch(Vec3, Vec3, boolean)}.
      *
      * @param start  the starting position
      * @param target the target position
@@ -33,63 +43,149 @@ public class PathFinder {
      * @return the path or null if it can't find a path
      */
     public PathSegment findPath(Vec3 start, Vec3 target, boolean exact) {
-        if (start.distanceToSqr(target) < REACH_DISTANCE_SQUARED) {
-            return null;
+        return startSearch(start, target, exact).advanceUntilDone();
+    }
+
+    @Getter
+    public enum SearchStatus {
+        RUNNING(false),
+        FOUND_EXACT(true),
+        FOUND_BEST_EFFORT(true),
+        FAILED(true),
+        ALREADY_AT_TARGET(true);
+
+        private final boolean done;
+
+        SearchStatus(boolean done) {
+            this.done = done;
         }
 
-        PriorityQueue<OpenSetEntry> openSet = new PriorityQueue<>(Comparator.comparingDouble(n -> n.fScore));
-        Map<PositionKey, PathNode> allNodes = new HashMap<>(MAX_NODES);
+    }
 
-        PathNode startNode = new PathNode(start, null, null, 0);
-        openSet.add(new OpenSetEntry(startNode, 0, start.distanceTo(target)));
-        allNodes.put(posKey(start), startNode);
+    public final class PathSearch {
+        private final Vec3 target;
+        private final boolean exact;
+        private final PriorityQueue<OpenSetEntry> openSet = new PriorityQueue<>(Comparator.comparingDouble(n -> n.fScore));
+        private final Map<PositionKey, PathNode> allNodes = new HashMap<>(MAX_NODES);
 
-        PathNode bestNode = startNode;
-        double bestDistanceSquared = start.distanceToSqr(target);
+        private PathNode bestNode;
+        private double bestDistanceSquared;
+        @Getter
+        private SearchStatus status;
 
-        while (!openSet.isEmpty() && allNodes.size() < MAX_NODES) {
-            OpenSetEntry entry = openSet.poll();
-            PathNode current = entry.node;
+        private PathSearch(Vec3 start, Vec3 target, boolean exact) {
+            this.target = target;
+            this.exact = exact;
+            PathNode startNode = new PathNode(start, null, null, 0);
+            this.bestNode = startNode;
+            this.bestDistanceSquared = start.distanceToSqr(target);
 
-            // Lazy open-set updates: old entries remain in the queue and are skipped here.
-            if (entry.gScoreSnapshot != current.gScore) {
-                continue;
+            if (bestDistanceSquared < REACH_DISTANCE_SQUARED) {
+                status = SearchStatus.ALREADY_AT_TARGET;
+                return;
             }
 
-            if (current.pos.distanceToSqr(target) < REACH_DISTANCE_SQUARED) {
-                return reconstructPath(current);
+            status = SearchStatus.RUNNING;
+            openSet.add(new OpenSetEntry(startNode, 0, start.distanceTo(target)));
+            allNodes.put(posKey(start), startNode);
+        }
+
+        public boolean advance() {
+            return advance(1);
+        }
+
+        /**
+         * Advances the search by up to {@code maxNodesToProcess} open-set entries.
+         *
+         * @return true when the search has finished.
+         */
+        public boolean advance(int maxNodesToProcess) {
+            if (maxNodesToProcess <= 0) {
+                throw new IllegalArgumentException("maxNodesToProcess has to be >= 1");
+            }
+            if (status.isDone()) {
+                return true;
             }
 
-            double currentDistanceSquared = current.pos.distanceToSqr(target);
-            if (currentDistanceSquared < bestDistanceSquared) {
-                bestDistanceSquared = currentDistanceSquared;
-                bestNode = current;
-            }
+            int processedEntries = 0;
+            while (processedEntries < maxNodesToProcess && !openSet.isEmpty() && allNodes.size() < MAX_NODES) {
+                processedEntries++;
 
-            for (PathSegment segment : calculator.calculateSegments(current.pos)) {
-                Vec3 neighborPos = segment.to();
-                double tentativeGScore = current.gScore + current.pos.distanceTo(neighborPos);
-                PositionKey neighborKey = posKey(neighborPos);
+                OpenSetEntry entry = openSet.poll();
+                PathNode current = entry.node;
 
-                PathNode neighborNode = allNodes.get(neighborKey);
-                if (neighborNode == null) {
-                    neighborNode = new PathNode(neighborPos, current, segment,
-                            tentativeGScore);
-                    allNodes.put(neighborKey, neighborNode);
-                    openSet.add(new OpenSetEntry(neighborNode, tentativeGScore,
-                            tentativeGScore + neighborPos.distanceTo(target)));
-                } else if (tentativeGScore < neighborNode.gScore) {
-                    neighborNode.parent = current;
-                    neighborNode.segment = segment;
-                    neighborNode.gScore = tentativeGScore;
-                    openSet.add(new OpenSetEntry(neighborNode, tentativeGScore,
-                            tentativeGScore + neighborPos.distanceTo(target)));
+                // Lazy open-set updates: old entries remain in the queue and are skipped here.
+                if (Double.compare(entry.gScoreSnapshot, current.gScore) != 0) {
+                    continue;
+                }
+
+                double currentDistanceSquared = current.pos.distanceToSqr(target);
+                if (currentDistanceSquared < REACH_DISTANCE_SQUARED) {
+                    bestNode = current;
+                    bestDistanceSquared = currentDistanceSquared;
+                    status = SearchStatus.FOUND_EXACT;
+                    return true;
+                }
+
+                if (currentDistanceSquared < bestDistanceSquared) {
+                    bestDistanceSquared = currentDistanceSquared;
+                    bestNode = current;
+                }
+
+                for (PathSegment segment : calculator.calculateSegments(current.pos)) {
+                    Vec3 neighborPos = segment.to();
+                    double tentativeGScore = current.gScore + current.pos.distanceTo(neighborPos);
+                    PositionKey neighborKey = posKey(neighborPos);
+
+                    PathNode neighborNode = allNodes.get(neighborKey);
+                    if (neighborNode == null) {
+                        neighborNode = new PathNode(neighborPos, current, segment, tentativeGScore);
+                        allNodes.put(neighborKey, neighborNode);
+                        openSet.add(new OpenSetEntry(neighborNode, tentativeGScore,
+                                tentativeGScore + neighborPos.distanceTo(target)));
+                    } else if (tentativeGScore < neighborNode.gScore) {
+                        neighborNode.parent = current;
+                        neighborNode.segment = segment;
+                        neighborNode.gScore = tentativeGScore;
+                        openSet.add(new OpenSetEntry(neighborNode, tentativeGScore,
+                                tentativeGScore + neighborPos.distanceTo(target)));
+                    }
                 }
             }
+
+            if (openSet.isEmpty() || allNodes.size() >= MAX_NODES) {
+                status = exact ? SearchStatus.FAILED : SearchStatus.FOUND_BEST_EFFORT;
+            }
+            return status.isDone();
         }
 
-        if (exact) return null;
-        return reconstructPath(bestNode);
+        public PathSegment advanceUntilDone() {
+            do {
+                // advance until the search reaches a terminal state
+            } while (!advance(MAX_NODES));
+            return getResolvedPath();
+        }
+
+        /**
+         * Returns the currently best-known path, even while the search is still running.
+         */
+        public PathSegment getBestPathSoFar() {
+            return reconstructPath(bestNode);
+        }
+
+        /**
+         * Returns the final result using the same semantics as {@link PathFinder#findPath(Vec3, Vec3, boolean)}.
+         */
+        public PathSegment getResolvedPath() {
+            return switch (status) {
+                case FOUND_EXACT, FOUND_BEST_EFFORT -> reconstructPath(bestNode);
+                case RUNNING, FAILED, ALREADY_AT_TARGET -> null;
+            };
+        }
+
+        public boolean isDone() {
+            return status.isDone();
+        }
     }
 
     /**

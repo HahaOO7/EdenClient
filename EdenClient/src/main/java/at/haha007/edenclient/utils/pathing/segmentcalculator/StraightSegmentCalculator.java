@@ -17,14 +17,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class StraightSegmentCalculator implements SegmentCalculator {
     private static final int COLLISION_CACHE_SIZE = 4_096;
@@ -36,6 +29,8 @@ public class StraightSegmentCalculator implements SegmentCalculator {
             return size() > COLLISION_CACHE_SIZE;
         }
     };
+
+    private final Set<Long> fluidBlocks = new HashSet<>();
     private ClientLevel cachedCollisionLevel;
     private long cachedCollisionGameTime = Long.MIN_VALUE;
 
@@ -46,6 +41,9 @@ public class StraightSegmentCalculator implements SegmentCalculator {
     @Override
     public Collection<PathSegment> calculateSegments(Vec3 from) {
         LocalPlayer player = PlayerUtils.getPlayer();
+        ClientLevel level = Minecraft.getInstance().level;
+        if(level == null) return Collections.emptyList();
+        resetCollisionCacheIfNeeded(level);
         float playerWidth = player.getBbWidth();
         List<PathSegment> segments = new ArrayList<>();
         float maxStepUp = PlayerUtils.getPlayer().maxUpStep();
@@ -97,7 +95,6 @@ public class StraightSegmentCalculator implements SegmentCalculator {
         if (level == null) {
             return Double.NaN;
         }
-        resetCollisionCacheIfNeeded(level);
 
         LocalPlayer player = PlayerUtils.getPlayer();
         EntityDimensions dimensions = player.getDimensions(player.getPose());
@@ -161,6 +158,9 @@ public class StraightSegmentCalculator implements SegmentCalculator {
                     to.x - halfWidth, candidateY, to.z - halfWidth,
                     to.x + halfWidth, candidateY + playerHeight, to.z + halfWidth
             );
+            if(hasFluidCollision(level, targetBox)){
+                continue;
+            }
             if (hasBlockCollision(level, targetBox, collisionContext)) {
                 continue;
             }
@@ -184,12 +184,42 @@ public class StraightSegmentCalculator implements SegmentCalculator {
         return Double.NaN;
     }
 
+    private boolean hasFluidCollision(ClientLevel level, AABB box){
+        int minBlockX = Mth.floor(box.minX + 1e-7);
+        int maxBlockX = Mth.floor(box.maxX - 1e-7);
+        int minBlockY = Mth.floor(box.minY + 1e-7);
+        int maxBlockY = Mth.floor(box.maxY - 1e-7);
+        int minBlockZ = Mth.floor(box.minZ + 1e-7);
+        int maxBlockZ = Mth.floor(box.maxZ - 1e-7);
+
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+        for (int x = minBlockX; x <= maxBlockX; x++) {
+            for (int y = minBlockY; y <= maxBlockY; y++) {
+                for (int z = minBlockZ; z <= maxBlockZ; z++) {
+                    pos.set(x, y, z);
+                    long key = pos.asLong();
+                    if(fluidBlocks.contains(key)){
+                        return true;
+                    }
+                    if(level.getFluidState(pos).isEmpty()){
+                        continue;
+                    }
+                    fluidBlocks.add(key);
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
     private void resetCollisionCacheIfNeeded(ClientLevel level) {
         long gameTime = level.getGameTime();
         if (level == cachedCollisionLevel && gameTime == cachedCollisionGameTime) {
             return;
         }
         collisionBoxesCache.clear();
+        fluidBlocks.clear();
         cachedCollisionLevel = level;
         cachedCollisionGameTime = gameTime;
     }
@@ -245,7 +275,7 @@ public class StraightSegmentCalculator implements SegmentCalculator {
 
 
     private List<Vec3> getAllBlockOffsets(float playerWidth) {
-        playerWidth += 1e-7f;
+        playerWidth += 1e-3f;
         List<Vec3> blockOffsets = new ArrayList<>();
         // hugging walls
         blockOffsets.add(new Vec3(playerWidth / 2, 0, 0));

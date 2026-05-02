@@ -8,7 +8,6 @@ import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.Scheduler;
 import at.haha007.edenclient.utils.pathing.PathFinder;
 import at.haha007.edenclient.utils.pathing.PathRenderer;
-import at.haha007.edenclient.utils.pathing.segment.MasterPathSegment;
 import at.haha007.edenclient.utils.pathing.segment.PathSegment;
 import at.haha007.edenclient.utils.pathing.segmentcalculator.StraightSegmentCalculator;
 import at.haha007.edenclient.utils.tasks.Task;
@@ -30,7 +29,8 @@ import static at.haha007.edenclient.command.CommandManager.*;
 
 @Mod(dependencies = Scheduler.class)
 public class PathTest {
-    private MasterPathSegment path;
+    private PathSegment path;
+    private PathFinder.PathSearch pathSearch;
     private boolean enabled = false;
     private TaskManager taskManager;
 
@@ -41,18 +41,43 @@ public class PathTest {
     }
 
     private void tick(LocalPlayer player) {
+        if (pathSearch == null) {
+            return;
+        }
+
+        if (!pathSearch.isDone()) {
+            pathSearch.advance(PathFinder.DEFAULT_NODE_BUDGET_PER_TICK);
+            path = pathSearch.getBestPathSoFar();
+        }
+
+        if (!pathSearch.isDone()) {
+            return;
+        }
+
+        path = pathSearch.getResolvedPath();
+        String message = switch (pathSearch.getStatus()) {
+            case FOUND_EXACT -> "Path search finished with an exact path.";
+            case FOUND_BEST_EFFORT -> "Path search finished with the best reachable path.";
+            case FAILED -> "Path search failed to find an exact path.";
+            case ALREADY_AT_TARGET -> "Already at the requested target.";
+            case RUNNING -> null;
+        };
+        if (message != null) {
+            PlayerUtils.sendModMessage(message);
+        }
+        pathSearch = null;
     }
 
     private void render(float tickDelta) {
 //        if(!enabled) return;
         GL11.glEnable(GL11.GL_LINE_SMOOTH);
         GL11.glEnable(GL11.GL_DEPTH_TEST);
-//        StraightSegmentCalculator calculator = new StraightSegmentCalculator(3.5);
-//        Collection<PathSegment> segments = calculator.calculateSegments(PlayerUtils.getPlayer().position().add(0, .01, 0));
-//        for (PathSegment segment : segments) {
-//            Vec3 vec3 = segment.to();
-//            EdenRenderUtils.drawAreaOutline(vec3.add(-.1, .001, -.1), vec3.add(.1, .16, .1), Color4f.fromColor(Color.BLUE.getRGB()));
-//        }
+        StraightSegmentCalculator calculator = new StraightSegmentCalculator(3.5);
+        Collection<PathSegment> segments = calculator.calculateSegments(PlayerUtils.getPlayer().position().add(0, .01, 0));
+        for (PathSegment segment : segments) {
+            Vec3 vec3 = segment.to();
+            EdenRenderUtils.drawAreaOutline(vec3.add(-.1, .001, -.1), vec3.add(.1, .16, .1), Color4f.fromColor(Color.BLUE.getRGB()));
+        }
 
 //        BlockPos playerPos = PlayerUtils.getPlayer().getBlockPosBelowThatAffectsMyMovement();
 //        for (int x = -5; x <= 5; x++) {
@@ -71,7 +96,7 @@ public class PathTest {
 
 
         if (path == null) return;
-        PathRenderer.renderPath(path.children(), tickDelta);
+        PathRenderer.renderPath(path);
     }
 
 
@@ -83,21 +108,20 @@ public class PathTest {
             PlayerUtils.sendModMessage(enabled ? "Enabled" : "Disabled");
             return 1;
         }).then(argument("distance", DoubleArgumentType.doubleArg(1)).executes(c -> {
-            TaskManager taskManager = new TaskManager();
-            taskManager.then(() -> {
-                for (int i = 0; i < 100; i++) {
-                    generatePathTowards(c.getArgument("distance", Double.class));
-                }
-            });
-            taskManager.start();
+            startPathTowards(c.getArgument("distance", Double.class));
             return 1;
         })).then(literal("clear").executes(c -> {
             path = null;
+            pathSearch = null;
             return 1;
         })).then(literal("start").executes(c -> {
             if (path == null) {
                 PlayerUtils.sendModMessage("No path generated yet. Use /epathtest <distance> to generate a path.");
                 return 1;
+            }
+            if (pathSearch != null) {
+                pathSearch = null;
+                PlayerUtils.sendModMessage("Stopped the active search and started following the current best path.");
             }
             if (taskManager != null) {
                 taskManager.cancel();
@@ -109,14 +133,17 @@ public class PathTest {
             taskManager.start();
             return 1;
         })).then(literal("stop").executes(c -> {
-            taskManager.cancel();
+            if (taskManager != null) {
+                taskManager.cancel();
+                taskManager = null;
+            }
             return 1;
         }));
 
         register(node, "/epathtest [<distance>,clear]");
     }
 
-    private void generatePathTowards(double distance) {
+    private void startPathTowards(double distance) {
         Vec3 playerPos = PlayerUtils.getPlayer().position();
         Entity camera = Minecraft.getInstance().getCameraEntity();
         if (camera == null) {
@@ -125,8 +152,9 @@ public class PathTest {
         Vec3 direction = camera.getLookAngle();
         direction = direction.normalize().scale(distance);
         Vec3 target = playerPos.add(direction.x(), direction.y(), direction.z());
-        MasterPathSegment tempPath = (MasterPathSegment) PathFinder.createDefault().findPath(playerPos, target, false);
-        path = tempPath == null ? path : tempPath;
+        pathSearch = PathFinder.createDefault().startSearch(playerPos, target, false);
+        path = pathSearch.getBestPathSoFar();
+        PlayerUtils.sendModMessage("Started incremental path search.");
     }
 
 }
