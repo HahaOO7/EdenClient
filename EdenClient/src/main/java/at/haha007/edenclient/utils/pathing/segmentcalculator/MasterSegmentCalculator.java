@@ -12,7 +12,7 @@ public class MasterSegmentCalculator implements SegmentCalculator {
 
     public static MasterSegmentCalculator createDefault() {
         MasterSegmentCalculator master = new MasterSegmentCalculator();
-        master.addCalculator(new StraightSegmentCalculator(3));
+        master.addCalculator(new StraightSegmentCalculator(3.5));
         master.addCalculator(new JumpUpSegmentCalculator());
         return master;
     }
@@ -25,7 +25,14 @@ public class MasterSegmentCalculator implements SegmentCalculator {
     public Collection<PathSegment> calculateSegments(Vec3 from) {
         List<PathSegment> segments = new ArrayList<>();
         for (SegmentCalculator calculator : calculators) {
-            segments.addAll(calculator.calculateSegments(from));
+            Collection<PathSegment> add = calculator.calculateSegments(from);
+            segments.addAll(add);
+            for (PathSegment segment : add) {
+                Vec3 f = segment.from();
+                if(f.distanceTo(from) > 0.0001) {
+                    System.out.println();
+                }
+            }
         }
         return segments;
     }

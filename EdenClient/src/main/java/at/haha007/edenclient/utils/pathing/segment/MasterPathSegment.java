@@ -25,6 +25,16 @@ public class MasterPathSegment extends PathSegment {
         return task;
     }
 
+    @Override
+    public boolean isValid() {
+        for (PathSegment child : children) {
+            if (!child.isValid()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     public List<PathSegment> children() {
         return children;
     }

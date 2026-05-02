@@ -25,6 +25,21 @@ public class PathingUtils {
     private PathingUtils() {
     }
 
+    public static double getMaxJumpHeight(float jumpPower) {
+        // This formula is derived from the physics of Minecraft's jump mechanics.
+        // The player starts with an initial upward velocity equal to jumpPower.
+        // Each tick, gravity reduces the velocity by 0.08 and drag reduces it by 2%.
+        // The maximum height is reached when the velocity becomes zero or negative.
+        double height = 0;
+        double velocity = jumpPower;
+        while (velocity > 0) {
+            height += velocity;
+            velocity -= 0.08; // gravity
+            velocity *= 0.98; // drag
+        }
+        return height;
+    }
+
     public static boolean canJumpReach(BlockPos from, BlockPos to) {
         ClientLevel level = Minecraft.getInstance().level;
         if (level == null) return false;

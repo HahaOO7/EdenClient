@@ -26,17 +26,17 @@ dependencies {
 tasks.jar {
     dependsOn ':EdenClient:remapJar'
     dependsOn ':EcAnnotations:jar'
-    
+
     // Include the compiled classes from EcAnnotations
     from {
-        configurations.runtimeClasspath.collect { 
-            it.isDirectory() ? it : zipTree(it) 
+        configurations.runtimeClasspath.collect {
+            it.isDirectory() ? it : zipTree(it)
         }
     }
-    
+
     // Include the compiled classes from EcAnnotations directly
     from project(':EcAnnotations').sourceSets.main.output
-    
+
     // Configure to exclude specific files or folders
     exclude('assets/fabricloader/**')
     exclude('net/fabricmc/**')

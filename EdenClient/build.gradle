@@ -28,6 +28,10 @@ repositories {
         name = "jitpack"
         url = uri("https://jitpack.io")
     }
+    maven {
+        name = "fallenbreath"
+        url 'https://maven.fallenbreath.me/releases'
+    }
     mavenCentral()
 }
 

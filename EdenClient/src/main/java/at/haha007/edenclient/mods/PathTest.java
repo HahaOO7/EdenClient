@@ -44,13 +44,14 @@ public class PathTest {
     }
 
     private void render(float tickDelta) {
+//        if(!enabled) return;
         GL11.glEnable(GL11.GL_LINE_SMOOTH);
         GL11.glEnable(GL11.GL_DEPTH_TEST);
         StraightSegmentCalculator calculator = new StraightSegmentCalculator(3.5);
         Collection<PathSegment> segments = calculator.calculateSegments(PlayerUtils.getPlayer().position().add(0, .01, 0));
         for (PathSegment segment : segments) {
             Vec3 vec3 = segment.to();
-            EdenRenderUtils.drawAreaOutline(vec3.add(-.5, .001, -.5), vec3.add(.5, .16, .5), Color4f.fromColor(Color.BLUE.getRGB()));
+            EdenRenderUtils.drawAreaOutline(vec3.add(-.1, .001, -.1), vec3.add(.1, .16, .1), Color4f.fromColor(Color.BLUE.getRGB()));
         }
 
 //        BlockPos playerPos = PlayerUtils.getPlayer().getBlockPosBelowThatAffectsMyMovement();

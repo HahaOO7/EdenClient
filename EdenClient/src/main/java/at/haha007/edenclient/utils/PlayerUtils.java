@@ -145,20 +145,15 @@ public class PlayerUtils {
         //get delta vec
         Vec3 vec = target.subtract(player.position());
         //remove vertical component
+        if(vec.lengthSqr() < 1e-3) {
+            return true;
+        }
         vec = vec.subtract(0, vec.y, 0);
         double horizontalDistance = vec.length();
 
-        //if the horizontal component is less than 0.5 we have reached the destination
-        if (horizontalDistance <= 0.5) {
-            player.setPos(target.x, player.position().y, target.z);
-            double fallingSpeed = player.getDeltaMovement().y();
-            player.setDeltaMovement(0, fallingSpeed, 0);
-            player.setSprinting(false);
-            return true;
-        }
-
         player.setSprinting(true);
         double speed = getWalkingSpeed();
+        speed = Math.min(speed, horizontalDistance);
         vec = vec.normalize().scale(speed);
 
         //move the player

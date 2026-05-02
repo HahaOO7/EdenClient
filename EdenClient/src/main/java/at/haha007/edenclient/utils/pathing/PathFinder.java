@@ -2,8 +2,8 @@ package at.haha007.edenclient.utils.pathing;
 
 import at.haha007.edenclient.utils.pathing.segment.MasterPathSegment;
 import at.haha007.edenclient.utils.pathing.segment.PathSegment;
+import at.haha007.edenclient.utils.pathing.segmentcalculator.MasterSegmentCalculator;
 import at.haha007.edenclient.utils.pathing.segmentcalculator.SegmentCalculator;
-import at.haha007.edenclient.utils.pathing.segmentcalculator.StraightSegmentCalculator;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.*;
@@ -11,17 +11,16 @@ import java.util.*;
 public class PathFinder {
     private static final int MAX_NODES = 10_000;
     private static final double REACH_DISTANCE = 1.0;
+    private static final double POSITION_KEY_SCALE = 1_000.0;
 
-    private final List<SegmentCalculator> calculators;
+    private final SegmentCalculator calculator;
 
-    public PathFinder(List<SegmentCalculator> calculators) {
-        this.calculators = calculators;
+    public PathFinder(SegmentCalculator calculator) {
+        this.calculator = calculator;
     }
 
     public static PathFinder createDefault() {
-        return new PathFinder(List.of(
-                new StraightSegmentCalculator(3.5)
-        ));
+        return new PathFinder(MasterSegmentCalculator.createDefault());
     }
 
     /**
@@ -38,7 +37,7 @@ public class PathFinder {
         }
 
         PriorityQueue<PathNode> openSet = new PriorityQueue<>(Comparator.comparingDouble(n -> n.fScore));
-        Map<String, PathNode> allNodes = new HashMap<>();
+        Map<PositionKey, PathNode> allNodes = new HashMap<>();
 
         PathNode startNode = new PathNode(start, null, null, 0, start.distanceTo(target));
         openSet.add(startNode);
@@ -60,27 +59,24 @@ public class PathFinder {
                 bestNode = current;
             }
 
-            for (SegmentCalculator calculator : calculators) {
-                for (PathSegment segment : calculator.calculateSegments(current.pos)) {
-                    Vec3 neighborPos = segment.to();
-                    double tentativeGScore = current.gScore + current.pos.distanceTo(neighborPos);
-                    String neighborKey = posKey(neighborPos);
+            for (PathSegment segment : calculator.calculateSegments(current.pos)) {
+                Vec3 neighborPos = segment.to();
+                double tentativeGScore = current.gScore + current.pos.distanceTo(neighborPos);
+                PositionKey neighborKey = posKey(neighborPos);
 
-                    PathNode neighborNode = allNodes.get(neighborKey);
-                    if (neighborNode == null) {
-                        neighborNode = new PathNode(neighborPos, current, segment,
-                                tentativeGScore, tentativeGScore + neighborPos.distanceTo(target));
-                        allNodes.put(neighborKey, neighborNode);
-                        openSet.add(neighborNode);
-                    } else if (tentativeGScore < neighborNode.gScore) {
-                        neighborNode.parent = current;
-                        neighborNode.segment = segment;
-                        neighborNode.gScore = tentativeGScore;
-                        neighborNode.fScore = tentativeGScore + neighborPos.distanceTo(target);
-                        if (!openSet.contains(neighborNode)) {
-                            openSet.add(neighborNode);
-                        }
-                    }
+                PathNode neighborNode = allNodes.get(neighborKey);
+                if (neighborNode == null) {
+                    neighborNode = new PathNode(neighborPos, current, segment,
+                            tentativeGScore, tentativeGScore + neighborPos.distanceTo(target));
+                    allNodes.put(neighborKey, neighborNode);
+                    openSet.add(neighborNode);
+                } else if (tentativeGScore < neighborNode.gScore) {
+                    neighborNode.parent = current;
+                    neighborNode.segment = segment;
+                    neighborNode.gScore = tentativeGScore;
+                    neighborNode.fScore = tentativeGScore + neighborPos.distanceTo(target);
+                    openSet.remove(neighborNode);
+                    openSet.add(neighborNode);
                 }
             }
         }
@@ -90,14 +86,14 @@ public class PathFinder {
     }
 
     /**
-     * Creates a map key for a Vec3 position snapped to 0.5-block precision on x/z
-     * and 0.1-block precision on y (to handle varying walkable heights).
+     * Creates a map key for a Vec3 position using a fine enough grid to preserve
+     * distinct sub-block anchors produced by the segment calculators.
      */
-    private static String posKey(Vec3 pos) {
-        long x = Math.round(pos.x * 2);
-        long y = Math.round(pos.y * 10);
-        long z = Math.round(pos.z * 2);
-        return x + "," + y + "," + z;
+    private static PositionKey posKey(Vec3 pos) {
+        long x = Math.round(pos.x * POSITION_KEY_SCALE);
+        long y = Math.round(pos.y * POSITION_KEY_SCALE);
+        long z = Math.round(pos.z * POSITION_KEY_SCALE);
+        return new PositionKey(x, y, z);
     }
 
     private static PathSegment reconstructPath(PathNode node) {
@@ -107,6 +103,7 @@ public class PathFinder {
             node = node.parent;
         }
         Collections.reverse(path);
+        if(path.isEmpty()) return null;
         return new MasterPathSegment(path);
     }
 
@@ -124,5 +121,8 @@ public class PathFinder {
             this.gScore = gScore;
             this.fScore = fScore;
         }
+    }
+
+    private record PositionKey(long x, long y, long z) {
     }
 }
