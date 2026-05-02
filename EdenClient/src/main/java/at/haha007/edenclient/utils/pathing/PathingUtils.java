@@ -85,23 +85,44 @@ public class PathingUtils {
         return true;
     }
 
+    public static boolean isStraightCollisionFreeMove(AABB shape, Direction direction, double distance) {
+        //inflate shape, check collisions
+        AABB expanded = shape.expandTowards(
+                direction.getStepX() * distance,
+                direction.getStepY() * distance,
+                direction.getStepZ() * distance
+        );
+        ClientLevel level = Minecraft.getInstance().level;
+        if (level == null) return false;
+        return level.noCollision(expanded);
+    }
+
     public static boolean isCollisionFreeMove(AABB shape, Vec3 movement) {
         ClientLevel level = Minecraft.getInstance().level;
         if (level == null) return false;
 
-        double length = movement.length();
+        double dx = movement.x;
+        double dy = movement.y;
+        double dz = movement.z;
+        double length = Math.sqrt(dx * dx + dy * dy + dz * dz);
 
         // Shape is already at the starting position.
         if (!level.noCollision(shape)) return false;
         if (length < 1e-6) return true;
 
-        Vec3 direction = movement.normalize();
+        // If the full swept bounds are collision-free, the whole move is collision-free.
+        if (level.noCollision(shape.expandTowards(dx, dy, dz))) return true;
+
         double stepSize = 0.1;
         int steps = (int) Math.ceil(length / stepSize);
+        double invLength = 1.0 / length;
+        double dirX = dx * invLength;
+        double dirY = dy * invLength;
+        double dirZ = dz * invLength;
 
         for (int i = 1; i <= steps; i++) {
             double t = Math.min(i * stepSize, length);
-            AABB swept = shape.move(direction.scale(t));
+            AABB swept = shape.move(dirX * t, dirY * t, dirZ * t);
             if (!level.noCollision(swept)) return false;
         }
 

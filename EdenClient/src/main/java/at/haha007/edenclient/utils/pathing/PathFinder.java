@@ -11,6 +11,7 @@ import java.util.*;
 public class PathFinder {
     private static final int MAX_NODES = 10_000;
     private static final double REACH_DISTANCE = 1.0;
+    private static final double REACH_DISTANCE_SQUARED = REACH_DISTANCE * REACH_DISTANCE;
     private static final double POSITION_KEY_SCALE = 1_000.0;
 
     private final SegmentCalculator calculator;
@@ -32,30 +33,36 @@ public class PathFinder {
      * @return the path or null if it can't find a path
      */
     public PathSegment findPath(Vec3 start, Vec3 target, boolean exact) {
-        if (start.distanceTo(target) < REACH_DISTANCE) {
+        if (start.distanceToSqr(target) < REACH_DISTANCE_SQUARED) {
             return null;
         }
 
-        PriorityQueue<PathNode> openSet = new PriorityQueue<>(Comparator.comparingDouble(n -> n.fScore));
-        Map<PositionKey, PathNode> allNodes = new HashMap<>();
+        PriorityQueue<OpenSetEntry> openSet = new PriorityQueue<>(Comparator.comparingDouble(n -> n.fScore));
+        Map<PositionKey, PathNode> allNodes = new HashMap<>(MAX_NODES);
 
-        PathNode startNode = new PathNode(start, null, null, 0, start.distanceTo(target));
-        openSet.add(startNode);
+        PathNode startNode = new PathNode(start, null, null, 0);
+        openSet.add(new OpenSetEntry(startNode, 0, start.distanceTo(target)));
         allNodes.put(posKey(start), startNode);
 
         PathNode bestNode = startNode;
-        double bestDistance = start.distanceTo(target);
+        double bestDistanceSquared = start.distanceToSqr(target);
 
         while (!openSet.isEmpty() && allNodes.size() < MAX_NODES) {
-            PathNode current = openSet.poll();
+            OpenSetEntry entry = openSet.poll();
+            PathNode current = entry.node;
 
-            if (current.pos.distanceTo(target) < REACH_DISTANCE) {
+            // Lazy open-set updates: old entries remain in the queue and are skipped here.
+            if (entry.gScoreSnapshot != current.gScore) {
+                continue;
+            }
+
+            if (current.pos.distanceToSqr(target) < REACH_DISTANCE_SQUARED) {
                 return reconstructPath(current);
             }
 
-            double currentDistance = current.pos.distanceTo(target);
-            if (currentDistance < bestDistance) {
-                bestDistance = currentDistance;
+            double currentDistanceSquared = current.pos.distanceToSqr(target);
+            if (currentDistanceSquared < bestDistanceSquared) {
+                bestDistanceSquared = currentDistanceSquared;
                 bestNode = current;
             }
 
@@ -67,16 +74,16 @@ public class PathFinder {
                 PathNode neighborNode = allNodes.get(neighborKey);
                 if (neighborNode == null) {
                     neighborNode = new PathNode(neighborPos, current, segment,
-                            tentativeGScore, tentativeGScore + neighborPos.distanceTo(target));
+                            tentativeGScore);
                     allNodes.put(neighborKey, neighborNode);
-                    openSet.add(neighborNode);
+                    openSet.add(new OpenSetEntry(neighborNode, tentativeGScore,
+                            tentativeGScore + neighborPos.distanceTo(target)));
                 } else if (tentativeGScore < neighborNode.gScore) {
                     neighborNode.parent = current;
                     neighborNode.segment = segment;
                     neighborNode.gScore = tentativeGScore;
-                    neighborNode.fScore = tentativeGScore + neighborPos.distanceTo(target);
-                    openSet.remove(neighborNode);
-                    openSet.add(neighborNode);
+                    openSet.add(new OpenSetEntry(neighborNode, tentativeGScore,
+                            tentativeGScore + neighborPos.distanceTo(target)));
                 }
             }
         }
@@ -112,15 +119,16 @@ public class PathFinder {
         PathNode parent;
         PathSegment segment;
         double gScore;
-        double fScore;
 
-        PathNode(Vec3 pos, PathNode parent, PathSegment segment, double gScore, double fScore) {
+        PathNode(Vec3 pos, PathNode parent, PathSegment segment, double gScore) {
             this.pos = pos;
             this.parent = parent;
             this.segment = segment;
             this.gScore = gScore;
-            this.fScore = fScore;
         }
+    }
+
+    private record OpenSetEntry(PathNode node, double gScoreSnapshot, double fScore) {
     }
 
     private record PositionKey(long x, long y, long z) {

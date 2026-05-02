@@ -47,12 +47,12 @@ public class PathTest {
 //        if(!enabled) return;
         GL11.glEnable(GL11.GL_LINE_SMOOTH);
         GL11.glEnable(GL11.GL_DEPTH_TEST);
-        StraightSegmentCalculator calculator = new StraightSegmentCalculator(3.5);
-        Collection<PathSegment> segments = calculator.calculateSegments(PlayerUtils.getPlayer().position().add(0, .01, 0));
-        for (PathSegment segment : segments) {
-            Vec3 vec3 = segment.to();
-            EdenRenderUtils.drawAreaOutline(vec3.add(-.1, .001, -.1), vec3.add(.1, .16, .1), Color4f.fromColor(Color.BLUE.getRGB()));
-        }
+//        StraightSegmentCalculator calculator = new StraightSegmentCalculator(3.5);
+//        Collection<PathSegment> segments = calculator.calculateSegments(PlayerUtils.getPlayer().position().add(0, .01, 0));
+//        for (PathSegment segment : segments) {
+//            Vec3 vec3 = segment.to();
+//            EdenRenderUtils.drawAreaOutline(vec3.add(-.1, .001, -.1), vec3.add(.1, .16, .1), Color4f.fromColor(Color.BLUE.getRGB()));
+//        }
 
 //        BlockPos playerPos = PlayerUtils.getPlayer().getBlockPosBelowThatAffectsMyMovement();
 //        for (int x = -5; x <= 5; x++) {
@@ -83,7 +83,13 @@ public class PathTest {
             PlayerUtils.sendModMessage(enabled ? "Enabled" : "Disabled");
             return 1;
         }).then(argument("distance", DoubleArgumentType.doubleArg(1)).executes(c -> {
-            generatePathTowards(c.getArgument("distance", Double.class));
+            TaskManager taskManager = new TaskManager();
+            taskManager.then(() -> {
+                for (int i = 0; i < 100; i++) {
+                    generatePathTowards(c.getArgument("distance", Double.class));
+                }
+            });
+            taskManager.start();
             return 1;
         })).then(literal("clear").executes(c -> {
             path = null;
