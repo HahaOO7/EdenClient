@@ -15,10 +15,14 @@ import fi.dy.masa.malilib.interfaces.IRenderer;
 import fi.dy.masa.malilib.interfaces.IWorldLoadListener;
 import lombok.Getter;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.tag.convention.v2.ConventionalItemTags;
 import net.minecraft.client.GuiMessageTag;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.data.tags.VanillaItemTagsProvider;
 import net.minecraft.network.chat.Component;
+import net.minecraft.tags.ItemTags;
+import net.minecraft.world.item.Items;
 import org.joml.Matrix4f;
 import org.lwjgl.opengl.GL11;
 

@@ -13,7 +13,6 @@ import java.util.function.BooleanSupplier;
  */
 public class TickingTask implements Task {
     private final BooleanSupplier supplier;
-    private int index = 0;
 
     public TickingTask(BooleanSupplier supplier) {
         this.supplier = supplier;
@@ -26,6 +25,7 @@ public class TickingTask implements Task {
         try {
             while (Boolean.TRUE.equals(future.get())) {
                 future = scheduler.callSyncDelayed(supplier::getAsBoolean, 1);
+                System.out.println("TickingTask tick " + supplier.getClass().getSimpleName() + " " + supplier);
             }
         } catch (ExecutionException e) {
             LogUtils.getLogger().warn("ExecutionException while executing TickingTask! ", e);

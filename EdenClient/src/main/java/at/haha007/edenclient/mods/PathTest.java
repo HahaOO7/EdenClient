@@ -24,14 +24,18 @@ import org.lwjgl.opengl.GL11;
 
 import java.awt.*;
 import java.util.Collection;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static at.haha007.edenclient.command.CommandManager.*;
 
 @Mod(dependencies = Scheduler.class)
 public class PathTest {
-    private PathSegment path;
+    private volatile PathSegment path;
     private PathFinder.PathSearch pathSearch;
-    private boolean enabled = false;
+    private Thread pathSearchThread;
+    private volatile boolean pathSearchFinished;
+    private final AtomicLong activeSearchGeneration = new AtomicLong();
+    private boolean shouldRender = true;
     private TaskManager taskManager;
 
     public PathTest() {
@@ -45,12 +49,7 @@ public class PathTest {
             return;
         }
 
-        if (!pathSearch.isDone()) {
-            pathSearch.advance(PathFinder.DEFAULT_NODE_BUDGET_PER_TICK);
-            path = pathSearch.getBestPathSoFar();
-        }
-
-        if (!pathSearch.isDone()) {
+        if (!pathSearchFinished) {
             return;
         }
 
@@ -66,32 +65,19 @@ public class PathTest {
             PlayerUtils.sendModMessage(message);
         }
         pathSearch = null;
+        pathSearchThread = null;
+        pathSearchFinished = false;
     }
 
     private void render(float tickDelta) {
-//        if(!enabled) return;
+        if (!shouldRender) return;
         GL11.glEnable(GL11.GL_LINE_SMOOTH);
         GL11.glEnable(GL11.GL_DEPTH_TEST);
-        StraightSegmentCalculator calculator = new StraightSegmentCalculator(3.5);
-        Collection<PathSegment> segments = calculator.calculateSegments(PlayerUtils.getPlayer().position().add(0, .01, 0));
-        for (PathSegment segment : segments) {
-            Vec3 vec3 = segment.to();
-            EdenRenderUtils.drawAreaOutline(vec3.add(-.1, .001, -.1), vec3.add(.1, .16, .1), Color4f.fromColor(Color.BLUE.getRGB()));
-        }
-
-//        BlockPos playerPos = PlayerUtils.getPlayer().getBlockPosBelowThatAffectsMyMovement();
-//        for (int x = -5; x <= 5; x++) {
-//            for (int z = -5; z <= 5; z++) {
-//                for (int y = -5; y <= 2; y++) {
-//                    Optional<Double> height = PathingUtils.getWalkableHeight(playerPos.offset(x, y, z));
-//                    if(height.isEmpty()) continue;
-//
-//                    Vec3 min = Vec3.atLowerCornerOf(playerPos.offset(x, -playerPos.getY(), z)).add(0, height.get(), 0);
-//
-//                    Vec3 max = min.add(1, 0.16, 1);
-//                    EdenRenderUtils.drawAreaOutline(min, max, Color4f.fromColor(Color.RED.getRGB()));
-//                }
-//            }
+//        StraightSegmentCalculator calculator = new StraightSegmentCalculator(3.5);
+//        Collection<PathSegment> segments = calculator.calculateSegments(PlayerUtils.getPlayer().position().add(0, .01, 0));
+//        for (PathSegment segment : segments) {
+//            Vec3 vec3 = segment.to();
+//            EdenRenderUtils.drawAreaOutline(vec3.add(-.1, .001, -.1), vec3.add(.1, .16, .1), Color4f.fromColor(Color.BLUE.getRGB()));
 //        }
 
 
@@ -104,15 +90,15 @@ public class PathTest {
         LiteralArgumentBuilder<FabricClientCommandSource> node = literal("epathtest");
 
         node.executes(c -> {
-            enabled = !enabled;
-            PlayerUtils.sendModMessage(enabled ? "Enabled" : "Disabled");
+            shouldRender = !shouldRender;
+            PlayerUtils.sendModMessage(shouldRender ? "Enabled" : "Disabled");
             return 1;
         }).then(argument("distance", DoubleArgumentType.doubleArg(1)).executes(c -> {
             startPathTowards(c.getArgument("distance", Double.class));
             return 1;
         })).then(literal("clear").executes(c -> {
             path = null;
-            pathSearch = null;
+            stopPathSearch();
             return 1;
         })).then(literal("start").executes(c -> {
             if (path == null) {
@@ -120,7 +106,7 @@ public class PathTest {
                 return 1;
             }
             if (pathSearch != null) {
-                pathSearch = null;
+                stopPathSearch();
                 PlayerUtils.sendModMessage("Stopped the active search and started following the current best path.");
             }
             if (taskManager != null) {
@@ -144,6 +130,7 @@ public class PathTest {
     }
 
     private void startPathTowards(double distance) {
+        stopPathSearch();
         Vec3 playerPos = PlayerUtils.getPlayer().position();
         Entity camera = Minecraft.getInstance().getCameraEntity();
         if (camera == null) {
@@ -154,7 +141,34 @@ public class PathTest {
         Vec3 target = playerPos.add(direction.x(), direction.y(), direction.z());
         pathSearch = PathFinder.createDefault().startSearch(playerPos, target, false);
         path = pathSearch.getBestPathSoFar();
+        startPathSearchThread(pathSearch);
         PlayerUtils.sendModMessage("Started incremental path search.");
+    }
+
+    private void startPathSearchThread(PathFinder.PathSearch search) {
+        long searchGeneration = activeSearchGeneration.incrementAndGet();
+        pathSearchFinished = false;
+        pathSearchThread = new Thread(() -> {
+            while (!Thread.currentThread().isInterrupted() && searchGeneration == activeSearchGeneration.get() && !search.isDone()) {
+                search.advance(PathFinder.DEFAULT_NODE_BUDGET_PER_TICK);
+                path = search.getBestPathSoFar();
+            }
+            if (searchGeneration == activeSearchGeneration.get()) {
+                pathSearchFinished = true;
+            }
+        }, "edenclient-path-search");
+        pathSearchThread.setDaemon(true);
+        pathSearchThread.start();
+    }
+
+    private void stopPathSearch() {
+        activeSearchGeneration.incrementAndGet();
+        pathSearchFinished = false;
+        if (pathSearchThread != null) {
+            pathSearchThread.interrupt();
+            pathSearchThread = null;
+        }
+        pathSearch = null;
     }
 
 }

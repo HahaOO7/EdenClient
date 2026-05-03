@@ -13,7 +13,7 @@ public class MasterSegmentCalculator implements SegmentCalculator {
     public static MasterSegmentCalculator createDefault() {
         MasterSegmentCalculator master = new MasterSegmentCalculator();
         master.addCalculator(new StraightSegmentCalculator(3.5));
-        master.addCalculator(new JumpUpSegmentCalculator());
+        master.addCalculator(new ClimbingSegmentCalculator());
         return master;
     }
 

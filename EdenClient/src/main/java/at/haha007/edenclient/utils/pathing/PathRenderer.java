@@ -25,6 +25,8 @@ public class PathRenderer {
         List<Pair<Vec3, Vec3>> lines = new ArrayList<>();
         for (PathSegment segment : segments) {
             lines.add(new Pair<>(segment.from().add(0, .1, 0), segment.to().add(0, .1, 0)));
+            EdenRenderUtils.drawAreaOutline(segment.to().add(-0.2, .1, -0.2), segment.to().add(0.2, .5, 0.2),
+                    Color4f.fromColor(Color.BLUE.getRGB()));
         }
         EdenRenderUtils.drawLines(lines, Color4f.fromColor(Color.RED.getRGB()));
     }

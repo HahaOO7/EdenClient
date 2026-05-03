@@ -145,7 +145,7 @@ public class PlayerUtils {
         //get delta vec
         Vec3 vec = target.subtract(player.position());
         //remove vertical component
-        if(vec.lengthSqr() < 1e-3) {
+        if(vec.lengthSqr() < 1e-3 && player.onGround()) {
             return true;
         }
         vec = vec.subtract(0, vec.y, 0);

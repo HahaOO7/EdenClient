@@ -7,11 +7,12 @@ import at.haha007.edenclient.utils.pathing.segment.PathSegment;
 import at.haha007.edenclient.utils.pathing.segment.StraightPathSegment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EntityDimensions;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
@@ -21,6 +22,7 @@ import java.util.*;
 
 public class StraightSegmentCalculator implements SegmentCalculator {
     private static final int COLLISION_CACHE_SIZE = 4_096;
+    private static final int MAX_COLLISION_SOURCE_BLOCK_EXTENSION_BELOW = 1;
 
     private final double maxDropDistance;
     private final Map<Long, List<AABB>> collisionBoxesCache = new LinkedHashMap<>(256, 0.75f, true) {
@@ -60,11 +62,20 @@ public class StraightSegmentCalculator implements SegmentCalculator {
     }
 
     private List<Vec3> getReachableBlocks(Vec3 from, float playerWidth, double maxStepUp) {
+        LocalPlayer player = PlayerUtils.getPlayer();
+        ClientLevel level = Minecraft.getInstance().level;
+        if (level == null) {
+            return List.of();
+        }
+
         int minX = Mth.floor(from.x - playerWidth);
         int maxX = Mth.floor(from.x + playerWidth);
         int minZ = Mth.floor(from.z - playerWidth);
         int maxZ = Mth.floor(from.z + playerWidth);
-        maxStepUp = Math.max(PathingUtils.getMaxJumpHeight(PathingUtils.getJumpPower()), maxStepUp);
+        double jumpHeight = PathingUtils.getMaxJumpHeight(PathingUtils.getJumpPower());
+        if (canUseJumpHeight(from, player, level)) {
+            maxStepUp = Math.max(jumpHeight, maxStepUp);
+        }
         List<Vec3> reachableBlockOffsets = new ArrayList<>();
         List<Vec3> blockOffsets = getAllBlockOffsets(playerWidth);
         for (int x = minX; x <= maxX; x++) {
@@ -85,6 +96,45 @@ public class StraightSegmentCalculator implements SegmentCalculator {
             }
         }
         return reachableBlockOffsets;
+    }
+
+    private boolean canUseJumpHeight(Vec3 from, LocalPlayer player, ClientLevel level) {
+        EntityDimensions dimensions = player.getDimensions(player.getPose());
+        double halfWidth = dimensions.width() / 2;
+        double playerHeight = dimensions.height();
+        AABB startBox = new AABB(
+                from.x - halfWidth, from.y, from.z - halfWidth,
+                from.x + halfWidth, from.y + playerHeight, from.z + halfWidth
+        );
+        CollisionContext collisionContext = CollisionContext.of(player);
+
+        if (hasBlockCollision(level, startBox, collisionContext)) {
+            return false;
+        }
+        if (!hasBlockCollision(level, startBox.move(0, -0.05, 0), collisionContext)) {
+            return false;
+        }
+
+        int minBlockX = Mth.floor(startBox.minX + 1e-7);
+        int maxBlockX = Mth.floor(startBox.maxX - 1e-7);
+        int minBlockY = Mth.floor(startBox.minY + 1e-7);
+        int maxBlockY = Mth.floor(startBox.maxY - 1e-7);
+        int minBlockZ = Mth.floor(startBox.minZ + 1e-7);
+        int maxBlockZ = Mth.floor(startBox.maxZ - 1e-7);
+
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+        for (int x = minBlockX; x <= maxBlockX; x++) {
+            for (int y = minBlockY; y <= maxBlockY; y++) {
+                for (int z = minBlockZ; z <= maxBlockZ; z++) {
+                    pos.set(x, y, z);
+                    if (level.getBlockState(pos).is(Blocks.COBWEB) || level.getBlockState(pos).is(Blocks.LADDER)) {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return true;
     }
 
     //first calculates if it has to step up/fall down
@@ -167,6 +217,12 @@ public class StraightSegmentCalculator implements SegmentCalculator {
             if (!hasBlockCollision(level, targetBox.move(0, -0.05, 0), collisionContext)) {
                 continue;
             }
+            if(hasBlockCollision(level, targetBox.move(from.subtract(to).multiply(.5,0,.5)), collisionContext)
+                    && hasBlockCollision(level, startBox.move(to.subtract(from).multiply(.5,0,.5)), collisionContext) ){
+//                EdenRenderUtils.drawAreaOutline( targetBox.move(from.subtract(to).multiply(.5,0,.5)).getMinPosition(),
+//                        targetBox.move(from.subtract(to).multiply(.5,0,.5)).getMaxPosition(), Color4f.WHITE);
+                continue;
+            }
 
             boolean reachable;
             if (deltaY > 1e-4) {
@@ -227,7 +283,7 @@ public class StraightSegmentCalculator implements SegmentCalculator {
     private boolean hasBlockCollision(ClientLevel level, AABB box, CollisionContext collisionContext) {
         int minBlockX = Mth.floor(box.minX + 1e-7);
         int maxBlockX = Mth.floor(box.maxX - 1e-7);
-        int minBlockY = Mth.floor(box.minY + 1e-7);
+        int minBlockY = Mth.floor(box.minY + 1e-7) - MAX_COLLISION_SOURCE_BLOCK_EXTENSION_BELOW;
         int maxBlockY = Mth.floor(box.maxY - 1e-7);
         int minBlockZ = Mth.floor(box.minZ + 1e-7);
         int maxBlockZ = Mth.floor(box.maxZ - 1e-7);

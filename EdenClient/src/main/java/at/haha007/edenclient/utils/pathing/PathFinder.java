@@ -1,5 +1,8 @@
 package at.haha007.edenclient.utils.pathing;
 
+import at.haha007.edenclient.utils.pathing.optimization.MasterSegmentCombiner;
+import at.haha007.edenclient.utils.pathing.optimization.SegmentCombiner;
+import at.haha007.edenclient.utils.pathing.optimization.StraightSegmentCombiner;
 import at.haha007.edenclient.utils.pathing.segment.MasterPathSegment;
 import at.haha007.edenclient.utils.pathing.segment.PathSegment;
 import at.haha007.edenclient.utils.pathing.segmentcalculator.MasterSegmentCalculator;
@@ -15,6 +18,7 @@ public class PathFinder {
     private static final double REACH_DISTANCE_SQUARED = REACH_DISTANCE * REACH_DISTANCE;
     private static final double POSITION_KEY_SCALE = 1_000.0;
     public static final int DEFAULT_NODE_BUDGET_PER_TICK = 1_000;
+    private static final SegmentCombiner SEGMENT_COMBINER = SegmentCombiner.getDefault();
 
     private final SegmentCalculator calculator;
 
@@ -206,8 +210,43 @@ public class PathFinder {
             node = node.parent;
         }
         Collections.reverse(path);
-        if(path.isEmpty()) return null;
+        if (path.isEmpty()) return null;
+        int size = path.size();
+        while(true){
+            path = optimizePath(path);
+            if(path.size() >= size) break;
+            size = path.size();
+        }
         return new MasterPathSegment(path);
+    }
+
+    private static List<PathSegment> optimizePath(List<PathSegment> path) {
+        if (path.size() < 2) {
+            return path;
+        }
+
+        List<PathSegment> optimized = new ArrayList<>();
+        PathSegment current = path.getFirst();
+        for (int i = 1; i < path.size(); i++) {
+            PathSegment next = path.get(i);
+            PathSegment combined = combine(current, next);
+            if (combined != null) {
+                current = combined;
+                continue;
+            }
+            optimized.add(current);
+            current = next;
+        }
+        optimized.add(current);
+        return optimized;
+    }
+
+    private static PathSegment combine(PathSegment a, PathSegment b) {
+        PathSegment combined = SEGMENT_COMBINER.combine(a, b);
+        if (combined != null) {
+            return combined;
+        }
+        return null;
     }
 
     private static class PathNode {
