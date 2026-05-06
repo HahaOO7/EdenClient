@@ -6,12 +6,10 @@ import java.util.List;
 
 public interface ContainerCloseCallback {
     Event<ContainerCloseCallback> EVENT = new Event<>(
-            listeners -> {
-                return items -> {
-                    for (ContainerCloseCallback listener : listeners) {
-                        listener.close(items);
-                    }
-                };
+            listeners -> items -> {
+                for (ContainerCloseCallback listener : listeners) {
+                    listener.close(items);
+                }
             });
 
     void close(List<ItemStack> items);

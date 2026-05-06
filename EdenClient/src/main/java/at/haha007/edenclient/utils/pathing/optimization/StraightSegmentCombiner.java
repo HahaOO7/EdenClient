@@ -18,14 +18,18 @@ public class StraightSegmentCombiner implements SegmentCombiner {
     private static final double EPSILON = 1e-6;
     private static final double SUPPORT_CHECK_DEPTH = 0.05;
     private static final double SAMPLE_STEP = 0.1;
+    private static final double MIN_DOT_FOR_COMBINE = Math.cos(1e-6);
 
     @Override
     public @Nullable PathSegment combine(@NotNull PathSegment a, @NotNull PathSegment b) {
-        if(!(a instanceof StraightPathSegment sa) || !(b instanceof StraightPathSegment sb)) return null;
-        if(sa.to().distanceToSqr(sb.from()) > EPSILON) return null;
-        if(Math.abs(sa.from().y - sa.to().y) > EPSILON) return null;
-        if(Math.abs(sb.from().y - sb.to().y) > EPSILON) return null;
-        if(Math.abs(sa.from().y - sb.to().y) > EPSILON) return null;
+        if (!(a instanceof StraightPathSegment sa) || !(b instanceof StraightPathSegment sb)) return null;
+        if (sa.to().distanceToSqr(sb.from()) > EPSILON) return null;
+        if ( isSmallTurnAngle(sa, sb))
+            return new StraightPathSegment(sa.from(), sb.to());
+
+        if (Math.abs(sa.from().y - sa.to().y) > EPSILON) return null;
+        if (Math.abs(sb.from().y - sb.to().y) > EPSILON) return null;
+        if (Math.abs(sa.from().y - sb.to().y) > EPSILON) return null;
 
         ClientLevel level = Minecraft.getInstance().level;
         if (level == null) return null;
@@ -40,6 +44,13 @@ public class StraightSegmentCombiner implements SegmentCombiner {
 
         //pre-checks done, check if a straight walkable path between start of a and end of b exists
         return new StraightPathSegment(from, to);
+    }
+
+    private boolean isSmallTurnAngle(StraightPathSegment a, StraightPathSegment b) {
+        Vec3 aDirection = a.to().subtract(a.from()).multiply(1, 0, 1).normalize();
+        Vec3 bDirection = b.to().subtract(b.from()).multiply(1, 0, 1).normalize();
+        double dot = aDirection.dot(bDirection);
+        return dot >= MIN_DOT_FOR_COMBINE;
     }
 
     private boolean hasWalkableDirectPath(ClientLevel level, Vec3 from, Vec3 to, EntityDimensions dimensions) {

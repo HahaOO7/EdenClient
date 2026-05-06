@@ -6,10 +6,11 @@ import at.haha007.edenclient.utils.EdenRenderUtils;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
-import at.haha007.edenclient.utils.pathing.Path;
-import at.haha007.edenclient.utils.pathing.SimplePathFinder;
-import at.haha007.edenclient.utils.pathing.PathFollower;
-import at.haha007.edenclient.utils.pathing.SimplePathRenderer;
+import at.haha007.edenclient.utils.pathing.PathFinder;
+import at.haha007.edenclient.utils.pathing.PathRenderer;
+import at.haha007.edenclient.utils.pathing.segment.PathSegment;
+import at.haha007.edenclient.utils.tasks.Task;
+import at.haha007.edenclient.utils.tasks.TaskManager;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
@@ -63,7 +64,7 @@ public class HeadHunt {
     float blue;
     Set<Vec3i> heads = new HashSet<>();
     Set<Vec3i> foundHeads = new HashSet<>();
-    private Path path;
+    private PathSegment path;
 
     public HeadHunt() {
         GameRenderCallback.EVENT.register(this::render, getClass());
@@ -119,13 +120,6 @@ public class HeadHunt {
         }
 
         if (follow) {
-            if (path != null) {
-                PathFollower.follow(path);
-                Vec3 last = Vec3.atBottomCenterOf(path.getPath().getLast());
-                if (last.distanceTo(player.position()) < .2)
-                    path = null;
-                return;
-            }
             //path does not exist, create path to nearest reachable egg
             long startTime = System.currentTimeMillis();
             for (Vec3i head : heads.stream().sorted(Comparator.comparingDouble(pp::distSqr)).toList()) {
@@ -135,16 +129,24 @@ public class HeadHunt {
                     break;
                 }
                 //try to create a path to the head
-                Path possiblePath = SimplePathFinder.createDefault().findPath(pp, new BlockPos(head), false);
-                double dist = possiblePath.getPath().getLast().distSqr(head);
+                PathSegment possiblePath = PathFinder.createDefault().findPath(pp.getBottomCenter(), new BlockPos(head).getBottomCenter(), false);
+                if(possiblePath == null) continue;
+                double dist = possiblePath.to().distanceToSqr(new BlockPos(head).getBottomCenter());
                 if (dist > 15) {
                     //can't get near enough to head
                     continue;
                 }
                 path = possiblePath;
+                if (follow && path.from().distanceTo(path.to()) > 1) {
+                    Task follower = path.follower();
+                    TaskManager tm = new TaskManager();
+                    tm.then(follower);
+                    tm.then(() -> PlayerUtils.getPlayer().setDeltaMovement(Vec3.ZERO));
+                    tm.start();
+                }
                 break;
             }
-            if(path == null){
+            if (path == null) {
                 follow = false;
                 PlayerUtils.sendModMessage("Disabled follow, no path found!");
             }
@@ -231,7 +233,7 @@ public class HeadHunt {
         GL11.glEnable(GL11.GL_LINE_SMOOTH);
         GL11.glDisable(GL11.GL_DEPTH_TEST);
         if (path != null)
-            SimplePathRenderer.renderPath(path, tickDelta);
+            PathRenderer.renderPath(path);
         if (tracer) {
             EdenRenderUtils.drawTracers(heads.stream().map(Vec3::atCenterOf).toList(), Color4f.fromColor(new Color(red, green, blue).getRGB()));
         }

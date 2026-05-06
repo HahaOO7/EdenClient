@@ -18,7 +18,8 @@
     "LocalPlayerMixin",
     "MinecraftClientMixin",
     "PlayerControllerMixin",
-    "PlayerInventoryMixin"
+    "PlayerInventoryMixin",
+    "PlayerMixin"
   ],
   "injectors": {
     "defaultRequire": 1

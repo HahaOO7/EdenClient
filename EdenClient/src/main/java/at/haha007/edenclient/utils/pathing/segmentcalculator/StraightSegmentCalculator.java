@@ -10,6 +10,7 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.level.block.Blocks;
@@ -127,7 +128,9 @@ public class StraightSegmentCalculator implements SegmentCalculator {
             for (int y = minBlockY; y <= maxBlockY; y++) {
                 for (int z = minBlockZ; z <= maxBlockZ; z++) {
                     pos.set(x, y, z);
-                    if (level.getBlockState(pos).is(Blocks.COBWEB) || level.getBlockState(pos).is(Blocks.LADDER)) {
+                    if (level.getBlockState(pos).is(Blocks.COBWEB)
+                            || level.getBlockState(pos).is(BlockTags.CLIMBABLE)
+                            || level.getBlockState(pos).is(Blocks.POWDER_SNOW)) {
                         return false;
                     }
                 }
@@ -331,7 +334,6 @@ public class StraightSegmentCalculator implements SegmentCalculator {
 
 
     private List<Vec3> getAllBlockOffsets(float playerWidth) {
-        playerWidth += 1e-3f;
         List<Vec3> blockOffsets = new ArrayList<>();
         // hugging walls
         blockOffsets.add(new Vec3(playerWidth / 2, 0, 0));
