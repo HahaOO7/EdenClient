@@ -6,6 +6,9 @@ import at.haha007.edenclient.utils.pathing.segment.PathSegment;
 import at.haha007.edenclient.utils.pathing.segmentcalculator.MasterSegmentCalculator;
 import at.haha007.edenclient.utils.pathing.segmentcalculator.SegmentCalculator;
 import lombok.Getter;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.*;
@@ -15,6 +18,7 @@ public class PathFinder {
     private static final double REACH_DISTANCE = 1.0;
     private static final double REACH_DISTANCE_SQUARED = REACH_DISTANCE * REACH_DISTANCE;
     private static final double POSITION_KEY_SCALE = 1_000.0;
+    private static final int UNLOADED_CHUNK_GUARD_RADIUS = 1;
     public static final int DEFAULT_NODE_BUDGET_PER_TICK = 1_000;
     private static final SegmentCombiner SEGMENT_COMBINER = SegmentCombiner.getDefault();
 
@@ -69,8 +73,12 @@ public class PathFinder {
         private final boolean exact;
         private final PriorityQueue<OpenSetEntry> openSet = new PriorityQueue<>(Comparator.comparingDouble(n -> n.fScore));
         private final Map<PositionKey, PathNode> allNodes = new HashMap<>(MAX_NODES);
+        private final Set<PathNode> chunkBlockedNodes = Collections.newSetFromMap(new IdentityHashMap<>());
 
-        /** Segments from previous resets that are now fixed and prepended to every returned path. */
+        /**
+         * Segments from previous resets that are now fixed and prepended to every returned path.
+         * This prefix is kept incrementally optimized as new committed segments are appended.
+         */
         private final List<PathSegment> committedSegments = new ArrayList<>();
 
         private PathNode bestNode;
@@ -112,6 +120,17 @@ public class PathFinder {
                 return true;
             }
 
+            // Retry deferred frontier nodes when their surrounding chunks become available.
+            reactivateChunkBlockedNodes();
+
+            if (openSet.isEmpty()) {
+                if (!chunkBlockedNodes.isEmpty()) {
+                    return false;
+                }
+                status = exact ? SearchStatus.FAILED : SearchStatus.FOUND_BEST_EFFORT;
+                return true;
+            }
+
             int processedEntries = 0;
             while (processedEntries < maxNodesToProcess && !openSet.isEmpty()) {
                 // When the node budget is exhausted, commit the first half of the current best
@@ -129,6 +148,13 @@ public class PathFinder {
                 // Lazy open-set updates: old entries remain in the queue and are skipped here.
                 if (Double.compare(entry.gScoreSnapshot, current.gScore) != 0) {
                     continue;
+                }
+
+                // Don't expand near not-yet-loaded chunk borders; retry these nodes later.
+                if (isNearUnloadedChunk(current.pos)) {
+                    chunkBlockedNodes.add(current);
+                    // Pause as soon as we touch an unloaded-chunk frontier.
+                    break;
                 }
 
                 double currentDistanceSquared = current.pos.distanceToSqr(target);
@@ -166,9 +192,24 @@ public class PathFinder {
             }
 
             if (openSet.isEmpty()) {
+                if (!chunkBlockedNodes.isEmpty()) {
+                    return false;
+                }
                 status = exact ? SearchStatus.FAILED : SearchStatus.FOUND_BEST_EFFORT;
             }
             return status.isDone();
+        }
+
+        private void reactivateChunkBlockedNodes() {
+            Iterator<PathNode> it = chunkBlockedNodes.iterator();
+            while (it.hasNext()) {
+                PathNode node = it.next();
+                if (!isNearUnloadedChunk(node.pos)) {
+                    openSet.add(new OpenSetEntry(node, node.gScore,
+                            node.gScore + node.pos.distanceTo(target)));
+                    it.remove();
+                }
+            }
         }
 
         public PathSegment advanceUntilDone() {
@@ -255,11 +296,11 @@ public class PathFinder {
             PathNode midNode = nodePath.get(midIdx);
             double midGScore = midNode.gScore;
 
-            // 1. Append the first-half segments to the committed history.
+            // 1. Append the first-half segments to the committed history, optimizing as we go.
             for (int i = 1; i <= midIdx; i++) {
                 PathNode pn = nodePath.get(i);
                 if (pn.segment != null) {
-                    committedSegments.add(pn.segment);
+                    appendOptimizedSegment(committedSegments, pn.segment);
                 }
             }
 
@@ -354,6 +395,29 @@ public class PathFinder {
         return new PositionKey(x, y, z);
     }
 
+    private static boolean isNearUnloadedChunk(Vec3 pos) {
+        ClientLevel level = Minecraft.getInstance().level;
+        if (level == null) {
+            return true;
+        }
+
+        BlockPos blockPos = BlockPos.containing(pos);
+        int chunkX = blockPos.getX() >> 4;
+        int chunkZ = blockPos.getZ() >> 4;
+
+        int r = UNLOADED_CHUNK_GUARD_RADIUS;
+        // Check only diagonal guard points around the current chunk.
+        return isChunkUnavailable(level, chunkX + r, chunkZ - r)   // NE
+                || isChunkUnavailable(level, chunkX + r, chunkZ + r) // SE
+                || isChunkUnavailable(level, chunkX - r, chunkZ + r) // SW
+                || isChunkUnavailable(level, chunkX - r, chunkZ - r); // NW
+    }
+
+    private static boolean isChunkUnavailable(ClientLevel level, int chunkX, int chunkZ) {
+        // getChunkNow only returns a chunk when it is currently loaded client-side.
+        return level.getChunkSource().getChunkNow(chunkX, chunkZ) == null;
+    }
+
     private static PathSegment reconstructPath(PathNode node) {
         List<PathSegment> path = new ArrayList<>();
         while (node != null && node.segment != null) {
@@ -369,6 +433,24 @@ public class PathFinder {
             size = path.size();
         }
         return new MasterPathSegment(path);
+    }
+
+    private static void appendOptimizedSegment(List<PathSegment> path, PathSegment segment) {
+        if (segment == null) {
+            return;
+        }
+
+        PathSegment current = segment;
+        while (!path.isEmpty()) {
+            int lastIndex = path.size() - 1;
+            PathSegment combined = SEGMENT_COMBINER.combine(path.get(lastIndex), current);
+            if (combined == null) {
+                break;
+            }
+            path.remove(lastIndex);
+            current = combined;
+        }
+        path.add(current);
     }
 
     private static List<PathSegment> optimizePath(List<PathSegment> path) {
