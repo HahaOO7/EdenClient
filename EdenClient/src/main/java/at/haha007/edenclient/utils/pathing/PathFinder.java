@@ -12,6 +12,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 public class PathFinder {
     private static final int MAX_NODES = 100_000;
@@ -36,7 +37,11 @@ public class PathFinder {
      * Creates a resumable path search that can be advanced over multiple ticks.
      */
     public PathSearch startSearch(Vec3 start, Vec3 target, boolean exact) {
-        return new PathSearch(start, target, exact);
+        return new PathSearch(start, target, exact, null);
+    }
+
+    public PathSearch startSearch(Vec3 start, Vec3 target, boolean exact, Consumer<PathSegment> callback) {
+        return new PathSearch(start, target, exact, callback);
     }
 
     /**
@@ -80,15 +85,24 @@ public class PathFinder {
          * This prefix is kept incrementally optimized as new committed segments are appended.
          */
         private final List<PathSegment> committedSegments = new ArrayList<>();
+        /**
+         * Segments are only finalized (passed to segmentConsumer) once they are committed and optimized
+         * and can't change anymore as part of the committed prefix.
+         */
+        private final Consumer<PathSegment> segmentConsumer;
+        private int consumedSegmentsCount;
+        private boolean doneSegmentsConsumed;
 
         private PathNode bestNode;
         private double bestDistanceSquared;
         @Getter
         private SearchStatus status;
 
-        private PathSearch(Vec3 start, Vec3 target, boolean exact) {
+        private PathSearch(Vec3 start, Vec3 target, boolean exact, Consumer<PathSegment> finalizedSegmentConsumer) {
             this.target = target;
             this.exact = exact;
+            this.segmentConsumer = finalizedSegmentConsumer == null ? s -> {
+            } : finalizedSegmentConsumer;
             PathNode startNode = new PathNode(start, null, null, 0);
             this.bestNode = startNode;
             this.bestDistanceSquared = start.distanceToSqr(target);
@@ -103,8 +117,8 @@ public class PathFinder {
             allNodes.put(posKey(start), startNode);
         }
 
-        public boolean advance() {
-            return advance(DEFAULT_NODE_BUDGET_PER_TICK);
+        public void advance() {
+            advance(DEFAULT_NODE_BUDGET_PER_TICK);
         }
 
         /**
@@ -117,6 +131,7 @@ public class PathFinder {
                 throw new IllegalArgumentException("maxNodesToProcess has to be >= 1");
             }
             if (status.isDone()) {
+                consumeRemainingSegmentsIfDone();
                 return true;
             }
 
@@ -128,6 +143,7 @@ public class PathFinder {
                     return false;
                 }
                 status = exact ? SearchStatus.FAILED : SearchStatus.FOUND_BEST_EFFORT;
+                consumeRemainingSegmentsIfDone();
                 return true;
             }
 
@@ -162,6 +178,7 @@ public class PathFinder {
                     bestNode = current;
                     bestDistanceSquared = currentDistanceSquared;
                     status = SearchStatus.FOUND_EXACT;
+                    consumeRemainingSegmentsIfDone();
                     return true;
                 }
 
@@ -197,6 +214,7 @@ public class PathFinder {
                 }
                 status = exact ? SearchStatus.FAILED : SearchStatus.FOUND_BEST_EFFORT;
             }
+            consumeRemainingSegmentsIfDone();
             return status.isDone();
         }
 
@@ -227,13 +245,50 @@ public class PathFinder {
         }
 
         /**
+         * Returns the committed prefix that will no longer change across future resets.
+         */
+        public PathSegment getCommittedPathSoFar() {
+            return buildPathFromSegments(committedSegments);
+        }
+
+        /**
+         * Returns only the currently in-progress suffix from the active search origin to the best node.
+         */
+        public PathSegment getCalculatedPathSoFar() {
+            return buildTailPath(bestNode);
+        }
+
+        /**
          * Returns the final result using the same semantics as {@link PathFinder#findPath(Vec3, Vec3, boolean)}.
          */
         public PathSegment getResolvedPath() {
+            consumeRemainingSegmentsIfDone();
             return switch (status) {
                 case FOUND_EXACT, FOUND_BEST_EFFORT -> buildFullPath(bestNode);
                 case RUNNING, FAILED, ALREADY_AT_TARGET -> null;
             };
+        }
+
+        private void consumeRemainingSegmentsIfDone() {
+            if (doneSegmentsConsumed || !status.isDone()) {
+                return;
+            }
+            doneSegmentsConsumed = true;
+
+            if (status != SearchStatus.FOUND_EXACT && status != SearchStatus.FOUND_BEST_EFFORT) {
+                return;
+            }
+
+            PathSegment resolvedPath = buildFullPath(bestNode);
+            if (!(resolvedPath instanceof MasterPathSegment masterPathSegment)) {
+                return;
+            }
+
+            List<PathSegment> finalSegments = masterPathSegment.children();
+            for (int i = consumedSegmentsCount; i < finalSegments.size(); i++) {
+                segmentConsumer.accept(finalSegments.get(i));
+            }
+            consumedSegmentsCount = finalSegments.size();
         }
 
         public boolean isDone() {
@@ -242,10 +297,22 @@ public class PathFinder {
 
         /**
          * Combines {@link #committedSegments} with the node-chain path from {@code endNode}
-         * to form the complete path, then applies the same optimization loop as
-         * {@link PathFinder#reconstructPath(PathNode)}.
+         * to form the complete path, then applies iterative optimization until no further improvements can be found.
          */
         private PathSegment buildFullPath(PathNode endNode) {
+            List<PathSegment> tail = collectTailSegments(endNode);
+
+            List<PathSegment> all = new ArrayList<>(committedSegments.size() + tail.size());
+            all.addAll(committedSegments);
+            all.addAll(tail);
+            return buildPathFromSegments(all);
+        }
+
+        private PathSegment buildTailPath(PathNode endNode) {
+            return buildPathFromSegments(collectTailSegments(endNode));
+        }
+
+        private List<PathSegment> collectTailSegments(PathNode endNode) {
             // Tail: walk parent chain of endNode
             List<PathSegment> tail = new ArrayList<>();
             PathNode n = endNode;
@@ -254,13 +321,16 @@ public class PathFinder {
                 n = n.parent;
             }
             Collections.reverse(tail);
+            return tail;
+        }
 
-            List<PathSegment> all = new ArrayList<>(committedSegments.size() + tail.size());
-            all.addAll(committedSegments);
-            all.addAll(tail);
-            if (all.isEmpty()) return null;
+        private PathSegment buildPathFromSegments(List<PathSegment> segments) {
+            if (segments.isEmpty()) {
+                return null;
+            }
 
-            // Apply the same iterative optimization as reconstructPath
+            List<PathSegment> all = new ArrayList<>(segments);
+            // Apply iterative optimization until no further improvements can be found.
             int size = all.size();
             while (true) {
                 all = optimizePath(all);
@@ -291,7 +361,7 @@ public class PathFinder {
                 return;
             }
 
-            int midIdx = nodePath.size() / 4;
+            int midIdx = nodePath.size() / 2;
             // commit the first 25% of the path to be more conservative about resets
             PathNode midNode = nodePath.get(midIdx);
             double midGScore = midNode.gScore;
@@ -301,6 +371,11 @@ public class PathFinder {
                 PathNode pn = nodePath.get(i);
                 if (pn.segment != null) {
                     appendOptimizedSegment(committedSegments, pn.segment);
+                    for (int j = consumedSegmentsCount; j < committedSegments.size() - 1; j++) {
+                        // the last segment might still be optimized by future commits, so only finalize up to the second-last one
+                        segmentConsumer.accept(committedSegments.get(j));
+                    }
+                    consumedSegmentsCount = Math.max(consumedSegmentsCount, committedSegments.size() - 1);
                 }
             }
 
@@ -416,23 +491,6 @@ public class PathFinder {
     private static boolean isChunkUnavailable(ClientLevel level, int chunkX, int chunkZ) {
         // getChunkNow only returns a chunk when it is currently loaded client-side.
         return level.getChunkSource().getChunkNow(chunkX, chunkZ) == null;
-    }
-
-    private static PathSegment reconstructPath(PathNode node) {
-        List<PathSegment> path = new ArrayList<>();
-        while (node != null && node.segment != null) {
-            path.add(node.segment);
-            node = node.parent;
-        }
-        Collections.reverse(path);
-        if (path.isEmpty()) return null;
-        int size = path.size();
-        while (true) {
-            path = optimizePath(path);
-            if (path.size() >= size) break;
-            size = path.size();
-        }
-        return new MasterPathSegment(path);
     }
 
     private static void appendOptimizedSegment(List<PathSegment> path, PathSegment segment) {

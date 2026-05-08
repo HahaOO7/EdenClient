@@ -222,8 +222,6 @@ public class StraightSegmentCalculator implements SegmentCalculator {
             }
             if(hasBlockCollision(level, targetBox.move(from.subtract(to).multiply(.5,0,.5)), collisionContext)
                     && hasBlockCollision(level, startBox.move(to.subtract(from).multiply(.5,0,.5)), collisionContext) ){
-//                EdenRenderUtils.drawAreaOutline( targetBox.move(from.subtract(to).multiply(.5,0,.5)).getMinPosition(),
-//                        targetBox.move(from.subtract(to).multiply(.5,0,.5)).getMaxPosition(), Color4f.WHITE);
                 continue;
             }
 
@@ -334,7 +332,7 @@ public class StraightSegmentCalculator implements SegmentCalculator {
 
 
     private List<Vec3> getAllBlockOffsets(float playerWidth) {
-        playerWidth *= 1.001f;
+        playerWidth *= 1.01f;
         List<Vec3> blockOffsets = new ArrayList<>();
         // hugging walls
         blockOffsets.add(new Vec3(playerWidth / 2, 0, 0));

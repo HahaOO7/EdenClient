@@ -233,7 +233,7 @@ public class HeadHunt {
         GL11.glEnable(GL11.GL_LINE_SMOOTH);
         GL11.glDisable(GL11.GL_DEPTH_TEST);
         if (path != null)
-            PathRenderer.renderPath(path);
+            new PathRenderer(Color.BLUE).renderPath(path);
         if (tracer) {
             EdenRenderUtils.drawTracers(heads.stream().map(Vec3::atCenterOf).toList(), Color4f.fromColor(new Color(red, green, blue).getRGB()));
         }
