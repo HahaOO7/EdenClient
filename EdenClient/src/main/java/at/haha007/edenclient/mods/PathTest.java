@@ -150,7 +150,7 @@ public class PathTest {
         pathSearchFinished = false;
         pathSearchThread = new Thread(() -> {
             while (!Thread.currentThread().isInterrupted() && searchGeneration == activeSearchGeneration.get() && !search.isDone()) {
-                search.advance(PathFinder.DEFAULT_NODE_BUDGET_PER_TICK);
+                search.advance();
                 path = search.getBestPathSoFar();
             }
             if (searchGeneration == activeSearchGeneration.get()) {

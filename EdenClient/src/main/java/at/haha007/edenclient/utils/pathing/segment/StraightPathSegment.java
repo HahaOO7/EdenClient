@@ -25,7 +25,8 @@ public class StraightPathSegment extends PathSegment {
     @NonNull
     public Task follower() {
         return new TickingTask(() -> {
-            fakeSneak = 2;
+            if (to().y >= from().y)
+                fakeSneak = 2;
             return !PlayerUtils.walkTowards(to());
         });
     }

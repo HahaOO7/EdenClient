@@ -334,6 +334,7 @@ public class StraightSegmentCalculator implements SegmentCalculator {
 
 
     private List<Vec3> getAllBlockOffsets(float playerWidth) {
+        playerWidth *= 1.001f;
         List<Vec3> blockOffsets = new ArrayList<>();
         // hugging walls
         blockOffsets.add(new Vec3(playerWidth / 2, 0, 0));
