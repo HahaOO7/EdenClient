@@ -8,13 +8,14 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.NonNull;
 
-public class ClimbingPathSegment extends PathSegment {
-    private static final double COMPLETE_DISTANCE_SQUARED = 0.05 * 0.05;
+public class SwimmingPathSegment extends PathSegment {
+    private static final double COMPLETE_DISTANCE_SQUARED = 0.08 * 0.08;
     private static final double HORIZONTAL_EPSILON = 1e-4;
-    private static final double MAX_VERTICAL_SPEED = 0.1176;
+    private static final double MAX_HORIZONTAL_SPEED = 0.12;
+    private static final double MAX_VERTICAL_SPEED = 0.1;
 
-    public ClimbingPathSegment(Vec3 from, Vec3 to) {
-        super(from, to, from.distanceTo(to));
+    public SwimmingPathSegment(Vec3 from, Vec3 to, double cost) {
+        super(from, to, cost);
     }
 
     @Override
@@ -30,7 +31,7 @@ public class ClimbingPathSegment extends PathSegment {
         }
 
         double horizontalDistance = Math.hypot(delta.x, delta.z);
-        double horizontalSpeed = Math.min(PlayerUtils.getWalkingSpeed(), horizontalDistance);
+        double horizontalSpeed = Math.min(MAX_HORIZONTAL_SPEED, horizontalDistance);
 
         double vx = 0;
         double vz = 0;

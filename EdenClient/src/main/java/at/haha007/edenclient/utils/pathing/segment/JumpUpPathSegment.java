@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class JumpUpPathSegment extends PathSegment{
     public JumpUpPathSegment(Vec3 from, Vec3 to) {
-        super(from, to);
+        super(from, to, from.distanceTo(to));
     }
 
     @Override

@@ -10,7 +10,7 @@ public class MasterPathSegment extends PathSegment {
     private final List<PathSegment> children;
 
     public MasterPathSegment(List<PathSegment> children) {
-        super(children.getFirst().from(), children.getLast().to());
+        super(children.getFirst().from(), children.getLast().to(), 1);
         this.children = Collections.unmodifiableList(children);
     }
 

@@ -137,11 +137,11 @@ public class PathFinder {
 
             // Retry deferred frontier nodes when their surrounding chunks become available.
             reactivateChunkBlockedNodes();
+            if (!chunkBlockedNodes.isEmpty()) {
+                return false;
+            }
 
             if (openSet.isEmpty()) {
-                if (!chunkBlockedNodes.isEmpty()) {
-                    return false;
-                }
                 status = exact ? SearchStatus.FAILED : SearchStatus.FOUND_BEST_EFFORT;
                 consumeRemainingSegmentsIfDone();
                 return true;
@@ -189,7 +189,8 @@ public class PathFinder {
 
                 for (PathSegment segment : calculator.calculateSegments(current.pos)) {
                     Vec3 neighborPos = segment.to();
-                    double tentativeGScore = current.gScore + current.pos.distanceTo(neighborPos);
+                    // Let each segment define its own traversal penalty for better route quality.
+                    double tentativeGScore = current.gScore + segment.cost();
                     PositionKey neighborKey = posKey(neighborPos);
 
                     PathNode neighborNode = allNodes.get(neighborKey);

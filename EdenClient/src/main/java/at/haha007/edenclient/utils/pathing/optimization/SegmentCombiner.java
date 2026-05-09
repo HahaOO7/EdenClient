@@ -8,6 +8,7 @@ public interface SegmentCombiner {
     static SegmentCombiner getDefault(){
         return new MasterSegmentCombiner(
                 new StraightSegmentCombiner(),
+                new SwimmingSegmentCombiner(),
                 new ClimbingSegmentCombiner()
         );
     }

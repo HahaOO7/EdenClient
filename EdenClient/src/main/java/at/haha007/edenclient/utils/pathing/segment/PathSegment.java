@@ -9,11 +9,13 @@ import org.jetbrains.annotations.NotNull;
 public abstract class PathSegment {
     private final Vec3 from;
     private final Vec3 to;
+    private final double cost;
     protected final PlayerAssumptions playerAssumptions;
 
-    protected PathSegment(Vec3 from, Vec3 to) {
+    protected PathSegment(Vec3 from, Vec3 to, double cost) {
         this.from = from;
         this.to = to;
+        this.cost = cost;
         playerAssumptions = PlayerAssumptions.create();
     }
 
@@ -23,6 +25,10 @@ public abstract class PathSegment {
 
     public Vec3 to() {
         return to;
+    }
+
+    public double cost() {
+        return cost;
     }
 
     /**

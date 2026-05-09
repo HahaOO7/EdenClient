@@ -17,8 +17,8 @@ public class StraightPathSegment extends PathSegment {
                 fakeSneak = fakeSneak > 0 ? fakeSneak - 1 : fakeSneak, StraightPathSegment.class);
     }
 
-    public StraightPathSegment(Vec3 from, Vec3 to) {
-        super(from, to);
+    public StraightPathSegment(Vec3 from, Vec3 to, double cost) {
+        super(from, to, cost);
     }
 
     @Override

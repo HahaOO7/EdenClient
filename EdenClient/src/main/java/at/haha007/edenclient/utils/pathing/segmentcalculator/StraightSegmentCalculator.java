@@ -45,7 +45,7 @@ public class StraightSegmentCalculator implements SegmentCalculator {
     public Collection<PathSegment> calculateSegments(Vec3 from) {
         LocalPlayer player = PlayerUtils.getPlayer();
         ClientLevel level = Minecraft.getInstance().level;
-        if(level == null) return Collections.emptyList();
+        if (level == null) return Collections.emptyList();
         resetCollisionCacheIfNeeded(level);
         float playerWidth = player.getBbWidth();
         List<PathSegment> segments = new ArrayList<>();
@@ -56,7 +56,7 @@ public class StraightSegmentCalculator implements SegmentCalculator {
             if (deltaY > maxStepUp) {
                 segments.add(new JumpUpPathSegment(from, target));
             } else {
-                segments.add(new StraightPathSegment(from, target));
+                segments.add(new StraightPathSegment(from, target, 1));
             }
         }
         return segments;
@@ -211,7 +211,7 @@ public class StraightSegmentCalculator implements SegmentCalculator {
                     to.x - halfWidth, candidateY, to.z - halfWidth,
                     to.x + halfWidth, candidateY + playerHeight, to.z + halfWidth
             );
-            if(hasFluidCollision(level, targetBox)){
+            if (hasFluidCollision(level, targetBox)) {
                 continue;
             }
             if (hasBlockCollision(level, targetBox, collisionContext)) {
@@ -220,8 +220,8 @@ public class StraightSegmentCalculator implements SegmentCalculator {
             if (!hasBlockCollision(level, targetBox.move(0, -0.05, 0), collisionContext)) {
                 continue;
             }
-            if(hasBlockCollision(level, targetBox.move(from.subtract(to).multiply(.5,0,.5)), collisionContext)
-                    && hasBlockCollision(level, startBox.move(to.subtract(from).multiply(.5,0,.5)), collisionContext) ){
+            if (hasBlockCollision(level, targetBox.move(from.subtract(to).multiply(.5, 0, .5)), collisionContext)
+                    && hasBlockCollision(level, startBox.move(to.subtract(from).multiply(.5, 0, .5)), collisionContext)) {
                 continue;
             }
 
@@ -241,7 +241,7 @@ public class StraightSegmentCalculator implements SegmentCalculator {
         return Double.NaN;
     }
 
-    private boolean hasFluidCollision(ClientLevel level, AABB box){
+    private boolean hasFluidCollision(ClientLevel level, AABB box) {
         int minBlockX = Mth.floor(box.minX + 1e-7);
         int maxBlockX = Mth.floor(box.maxX - 1e-7);
         int minBlockY = Mth.floor(box.minY + 1e-7);
@@ -255,10 +255,10 @@ public class StraightSegmentCalculator implements SegmentCalculator {
                 for (int z = minBlockZ; z <= maxBlockZ; z++) {
                     pos.set(x, y, z);
                     long key = pos.asLong();
-                    if(fluidBlocks.contains(key)){
+                    if (fluidBlocks.contains(key)) {
                         return true;
                     }
-                    if(level.getFluidState(pos).isEmpty()){
+                    if (level.getFluidState(pos).isEmpty()) {
                         continue;
                     }
                     fluidBlocks.add(key);
@@ -332,17 +332,18 @@ public class StraightSegmentCalculator implements SegmentCalculator {
 
 
     private List<Vec3> getAllBlockOffsets(float playerWidth) {
-        playerWidth *= 1.01f;
+
         List<Vec3> blockOffsets = new ArrayList<>();
         // hugging walls
-        blockOffsets.add(new Vec3(playerWidth / 2, 0, 0));
-        blockOffsets.add(new Vec3(1 - playerWidth / 2, 0, 0));
-        blockOffsets.add(new Vec3(0, 0, playerWidth / 2));
-        blockOffsets.add(new Vec3(0, 0, 1 - playerWidth / 2));
-        blockOffsets.add(new Vec3(1 - playerWidth / 2, 0, 1 - playerWidth / 2));
-        blockOffsets.add(new Vec3(playerWidth / 2, 0, 1 - playerWidth / 2));
-        blockOffsets.add(new Vec3(1 - playerWidth / 2, 0, playerWidth / 2));
-        blockOffsets.add(new Vec3(playerWidth / 2, 0, playerWidth / 2));
+        float halfPlayerWidth = playerWidth / 2;
+        blockOffsets.add(new Vec3(halfPlayerWidth, 0, 0));
+        blockOffsets.add(new Vec3(1 - halfPlayerWidth, 0, 0));
+        blockOffsets.add(new Vec3(0, 0, halfPlayerWidth));
+        blockOffsets.add(new Vec3(0, 0, 1 - halfPlayerWidth));
+        blockOffsets.add(new Vec3(1 - halfPlayerWidth, 0, 1 - halfPlayerWidth));
+        blockOffsets.add(new Vec3(halfPlayerWidth, 0, 1 - halfPlayerWidth));
+        blockOffsets.add(new Vec3(1 - halfPlayerWidth, 0, halfPlayerWidth));
+        blockOffsets.add(new Vec3(halfPlayerWidth, 0, halfPlayerWidth));
         // middle of block
         // between blocks
         blockOffsets.add(new Vec3(0, 0, 0));
@@ -354,6 +355,21 @@ public class StraightSegmentCalculator implements SegmentCalculator {
         blockOffsets.add(new Vec3(1, 0, 0));
         blockOffsets.add(new Vec3(1, 0, .5));
         blockOffsets.add(new Vec3(1, 0, 1));
+        //next to fence
+        double fenceOffset = .5 - halfPlayerWidth - 2 / 16d;
+//        blockOffsets.add(new Vec3(fenceOffset, 0, 0));
+//        blockOffsets.add(new Vec3(1 - fenceOffset, 0, 0));
+//        blockOffsets.add(new Vec3(0, 0, fenceOffset));
+//        blockOffsets.add(new Vec3(0, 0, 1 - fenceOffset));
+        blockOffsets.add(new Vec3(1 - fenceOffset, 0, 1 - fenceOffset));
+        blockOffsets.add(new Vec3(fenceOffset, 0, 1 - fenceOffset));
+        blockOffsets.add(new Vec3(1 - fenceOffset, 0, fenceOffset));
+        blockOffsets.add(new Vec3(fenceOffset, 0, fenceOffset));
+        blockOffsets.add(new Vec3(fenceOffset, 0, .5));
+        blockOffsets.add(new Vec3(1 - fenceOffset, 0, .5));
+        blockOffsets.add(new Vec3(.5, 0, fenceOffset));
+        blockOffsets.add(new Vec3(.5, 0, 1 - fenceOffset));
+
 
         return blockOffsets;
     }

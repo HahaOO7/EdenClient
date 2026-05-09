@@ -3,15 +3,22 @@ package at.haha007.edenclient.mods;
 import at.haha007.edenclient.annotations.Mod;
 import at.haha007.edenclient.callbacks.GameRenderCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
+import at.haha007.edenclient.utils.EdenRenderUtils;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.Scheduler;
 import at.haha007.edenclient.utils.pathing.PathFinder;
 import at.haha007.edenclient.utils.pathing.PathRenderer;
+import at.haha007.edenclient.utils.pathing.optimization.SegmentCombiner;
 import at.haha007.edenclient.utils.pathing.segment.PathSegment;
 import at.haha007.edenclient.utils.pathing.segment.SegmentTaskAccumulator;
+import at.haha007.edenclient.utils.pathing.segment.SwimmingPathSegment;
+import at.haha007.edenclient.utils.pathing.segmentcalculator.MasterSegmentCalculator;
+import at.haha007.edenclient.utils.pathing.segmentcalculator.SegmentCalculator;
+import at.haha007.edenclient.utils.pathing.segmentcalculator.SwimmingSegmentCalculator;
 import at.haha007.edenclient.utils.tasks.TaskManager;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import fi.dy.masa.malilib.util.data.Color4f;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
@@ -20,6 +27,7 @@ import net.minecraft.world.phys.Vec3;
 import org.lwjgl.opengl.GL11;
 
 import java.awt.*;
+import java.util.Collection;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static at.haha007.edenclient.command.CommandManager.*;
@@ -73,6 +81,15 @@ public class PathTest {
     }
 
     private void render(float tickDelta) {
+
+//        SegmentCalculator calculator = MasterSegmentCalculator.createDefault();
+//        Collection<PathSegment> segments = calculator.calculateSegments(PlayerUtils.getPlayer().position());
+//        for (PathSegment segment : segments) {
+//            Vec3 to = segment.to();
+//            EdenRenderUtils.drawAreaOutline(to.add(-.2,0,-.2), to.add(.2,.5,.2), Color4f.fromColor(Color.GREEN.getRGB()));
+//        }
+
+
         if (!shouldRender) return;
         GL11.glEnable(GL11.GL_LINE_SMOOTH);
         GL11.glEnable(GL11.GL_DEPTH_TEST);
