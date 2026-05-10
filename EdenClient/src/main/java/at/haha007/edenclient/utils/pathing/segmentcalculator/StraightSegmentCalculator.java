@@ -56,7 +56,7 @@ public class StraightSegmentCalculator implements SegmentCalculator {
             if (deltaY > maxStepUp) {
                 segments.add(new JumpUpPathSegment(from, target));
             } else {
-                segments.add(new StraightPathSegment(from, target, 1));
+                segments.add(new StraightPathSegment(from, target, 1 + Math.abs(deltaY) + from.distanceTo(target)));
             }
         }
         return segments;
@@ -335,7 +335,7 @@ public class StraightSegmentCalculator implements SegmentCalculator {
 
         List<Vec3> blockOffsets = new ArrayList<>();
         // hugging walls
-        float halfPlayerWidth = playerWidth / 2;
+        double halfPlayerWidth = playerWidth / 2.0 + .01;
         blockOffsets.add(new Vec3(halfPlayerWidth, 0, 0));
         blockOffsets.add(new Vec3(1 - halfPlayerWidth, 0, 0));
         blockOffsets.add(new Vec3(0, 0, halfPlayerWidth));
@@ -357,10 +357,6 @@ public class StraightSegmentCalculator implements SegmentCalculator {
         blockOffsets.add(new Vec3(1, 0, 1));
         //next to fence
         double fenceOffset = .5 - halfPlayerWidth - 2 / 16d;
-//        blockOffsets.add(new Vec3(fenceOffset, 0, 0));
-//        blockOffsets.add(new Vec3(1 - fenceOffset, 0, 0));
-//        blockOffsets.add(new Vec3(0, 0, fenceOffset));
-//        blockOffsets.add(new Vec3(0, 0, 1 - fenceOffset));
         blockOffsets.add(new Vec3(1 - fenceOffset, 0, 1 - fenceOffset));
         blockOffsets.add(new Vec3(fenceOffset, 0, 1 - fenceOffset));
         blockOffsets.add(new Vec3(1 - fenceOffset, 0, fenceOffset));

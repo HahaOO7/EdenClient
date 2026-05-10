@@ -18,6 +18,8 @@ import java.util.Set;
 //ladder/vine
 public class ClimbingSegmentCalculator implements SegmentCalculator {
     private static final double EDGE_EPSILON = 1e-3;
+    private static final double CENTER_EPSILON = 1e-2;
+    private static final double BLOCK_CENTER = 0.5;
     private static final double TARGET_EPSILON_SQUARED = 1e-6;
     private static final double VERTICAL_STEP = 0.5;
     private static final double POSITION_KEY_SCALE = 1_000.0;
@@ -86,7 +88,7 @@ public class ClimbingSegmentCalculator implements SegmentCalculator {
     }
 
     private void addVerticalClimbingMoves(ClientLevel level, Vec3 from, List<PathSegment> segments, Set<PositionKey> seenTargets) {
-        if (!isFullyInsideClimbableBlock(level, from)) {
+        if (!isCenteredOnClimbableBlock(level, from)) {
             return;
         }
 
@@ -112,7 +114,7 @@ public class ClimbingSegmentCalculator implements SegmentCalculator {
         segments.add(new ClimbingPathSegment(from, target));
     }
 
-    private boolean isFullyInsideClimbableBlock(ClientLevel level, Vec3 pos) {
+    private boolean isCenteredOnClimbableBlock(ClientLevel level, Vec3 pos) {
         BlockPos blockPos = BlockPos.containing(pos);
         if (!isClimbable(level, blockPos)) {
             return false;
@@ -120,8 +122,8 @@ public class ClimbingSegmentCalculator implements SegmentCalculator {
 
         double localX = pos.x - blockPos.getX();
         double localZ = pos.z - blockPos.getZ();
-        return localX > EDGE_EPSILON && localX < 1 - EDGE_EPSILON
-                && localZ > EDGE_EPSILON && localZ < 1 - EDGE_EPSILON;
+        return Math.abs(localX - BLOCK_CENTER) < CENTER_EPSILON
+                && Math.abs(localZ - BLOCK_CENTER) < CENTER_EPSILON;
     }
 
     private boolean isClimbable(ClientLevel level, BlockPos pos) {

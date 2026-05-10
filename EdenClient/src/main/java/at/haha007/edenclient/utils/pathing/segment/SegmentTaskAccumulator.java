@@ -4,10 +4,11 @@ import at.haha007.edenclient.utils.tasks.Task;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.List;
 
 public class SegmentTaskAccumulator implements Task {
     private final Object lock = new Object();
-    private final Deque<Task> tasks = new ArrayDeque<>();
+    private final Deque<PathSegment> tasks = new ArrayDeque<>();
     private boolean closed = false;
 
     @Override
@@ -21,9 +22,16 @@ public class SegmentTaskAccumulator implements Task {
                 if (tasks.isEmpty()) {
                     return;
                 }
-                task = tasks.removeFirst();
+                task = tasks.removeFirst().follower();
             }
             task.run();
+        }
+    }
+
+    public PathSegment getScheduledPathSegments() {
+        synchronized (lock) {
+            List<PathSegment> children = List.copyOf(tasks);
+            return children.size() > 2 ? new MasterPathSegment(children) : null;
         }
     }
 
@@ -32,7 +40,7 @@ public class SegmentTaskAccumulator implements Task {
             if (closed) {
                 throw new IllegalStateException("Cannot add segment after closing the accumulator");
             }
-            tasks.addLast(segment.follower());
+            tasks.addLast(segment);
             lock.notifyAll();
         }
     }

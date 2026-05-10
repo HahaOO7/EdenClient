@@ -10,8 +10,8 @@ public class ClimbingSegmentCombiner implements SegmentCombiner {
     @Nullable
     public PathSegment combine(@NotNull PathSegment a, @NotNull PathSegment b) {
         if(! (a instanceof ClimbingPathSegment sa) || ! (b instanceof ClimbingPathSegment sb)) return null;
-        if (sa.from().subtract(sa.to()).multiply(1,0,1).lengthSqr() > 1e-5) return null;
-        if (sb.from().subtract(sb.to()).multiply(1,0,1).lengthSqr() > 1e-5) return null;
+        if (sa.from().subtract(sa.to()).multiply(10,0,10).lengthSqr() > 1e-5) return null;
+        if (sb.from().subtract(sb.to()).multiply(10,0,10).lengthSqr() > 1e-5) return null;
         return new ClimbingPathSegment(sa.from(), sb.to());
     }
 }

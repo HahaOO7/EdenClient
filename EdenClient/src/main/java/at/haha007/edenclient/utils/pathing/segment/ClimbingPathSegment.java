@@ -14,7 +14,7 @@ public class ClimbingPathSegment extends PathSegment {
     private static final double MAX_VERTICAL_SPEED = 0.1176;
 
     public ClimbingPathSegment(Vec3 from, Vec3 to) {
-        super(from, to, from.distanceTo(to));
+        super(from, to, from.distanceTo(to) + from.multiply(10, 0, 10).distanceTo(to.multiply(10, 0, 10)));
     }
 
     @Override

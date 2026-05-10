@@ -113,7 +113,7 @@ public class StraightSegmentCombiner implements SegmentCombiner {
         return new AABB(
                 pos.x - halfWidth, pos.y, pos.z - halfWidth,
                 pos.x + halfWidth, pos.y + dimensions.height(), pos.z + halfWidth
-        ).inflate(.01, 0, .01);
+        ).inflate(.05, 0, .05);
     }
 
     private boolean hasFluidCollision(ClientLevel level, AABB box) {

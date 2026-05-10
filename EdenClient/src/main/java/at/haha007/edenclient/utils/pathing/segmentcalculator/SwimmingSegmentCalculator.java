@@ -2,47 +2,27 @@ package at.haha007.edenclient.utils.pathing.segmentcalculator;
 
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.pathing.segment.PathSegment;
+import at.haha007.edenclient.utils.pathing.segment.StraightPathSegment;
 import at.haha007.edenclient.utils.pathing.segment.SwimmingPathSegment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.EntityDimensions;
+import net.minecraft.world.entity.Pose;
+import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class SwimmingSegmentCalculator implements SegmentCalculator {
-    private static final double TARGET_EPSILON_SQUARED = 1e-6;
-    private static final double POSITION_KEY_SCALE = 1_000.0;
-    private static final double SWIM_STEP = 1;
-    private static final double SAMPLE_STEP = 0.6;
+    private record BlockData(boolean solid, boolean water, boolean collisionFree) {
+    }
 
-    private static final Vec3[] OFFSETS = new Vec3[]{
-            // Horizontal swim movement
-            new Vec3(SWIM_STEP, 0, 0),
-            new Vec3(-SWIM_STEP, 0, 0),
-            new Vec3(0, 0, SWIM_STEP),
-            new Vec3(0, 0, -SWIM_STEP),
-            // Pure vertical swim movement
-            new Vec3(0, SWIM_STEP, 0),
-            new Vec3(0, -SWIM_STEP, 0),
-            // Step out of water: move horizontally while rising
-            new Vec3(SWIM_STEP, SWIM_STEP, 0),
-            new Vec3(-SWIM_STEP, SWIM_STEP, 0),
-            new Vec3(0, SWIM_STEP, SWIM_STEP),
-            new Vec3(0, SWIM_STEP, -SWIM_STEP),
-            // Enter water from a block edge: move horizontally while dropping a bit
-            new Vec3(SWIM_STEP, -SWIM_STEP, 0),
-            new Vec3(-SWIM_STEP, -SWIM_STEP, 0),
-            new Vec3(0, -SWIM_STEP, SWIM_STEP),
-            new Vec3(0, -SWIM_STEP, -SWIM_STEP)
-    };
+    private final Map<Long, BlockData> blockCache = new HashMap<>();
+    private long cachedCollisionGameTime;
+    private ClientLevel cachedCollisionLevel;
+
 
     @Override
     public Collection<PathSegment> calculateSegments(Vec3 from) {
@@ -50,127 +30,216 @@ public class SwimmingSegmentCalculator implements SegmentCalculator {
         if (level == null) {
             return List.of();
         }
+        resetCollisionCacheIfNeeded(level);
+        AABB startingAABB = PlayerUtils.getPlayer().getDimensions(Pose.STANDING).makeBoundingBox(from);
+        if (isOnOneBlock(startingAABB)) {
+            return getTargetsOnOneBlock(level, from);
+        } else {
+            return getTargetsBetweenBlocks(level, startingAABB);
+        }
+    }
 
-        var player = PlayerUtils.getPlayer();
-        EntityDimensions dimensions = player.getDimensions(player.getPose());
-        double eyeHeight = player.getEyeHeight(player.getPose());
-
+    private Collection<PathSegment> getTargetsBetweenBlocks(ClientLevel level, AABB fromAABB) {
+        AABB bottomAABB = fromAABB.setMaxY(fromAABB.minY);
+        List<BlockPos> onBlocks = getOnBlocks(bottomAABB);
         List<PathSegment> segments = new ArrayList<>();
-        Set<PositionKey> seenTargets = new HashSet<>();
-        for (Vec3 offset : OFFSETS) {
-            Vec3 target = from.add(offset);
-            addTarget(level, dimensions, eyeHeight, from, target, segments, seenTargets);
+        for (BlockPos block : onBlocks) {
+            Vec3 toPos = Vec3.atBottomCenterOf(block);
+            double cost = getMovementCost(block, level);
+            if (Double.isNaN(cost)) {
+                continue;
+            }
+            segments.add(new SwimmingPathSegment(bottomAABB.getCenter(), toPos, cost));
+        }
+        return segments;
+    }
+
+    private Collection<PathSegment> getTargetsOnOneBlock(ClientLevel level, Vec3 from) {
+        BlockPos fromPos = BlockPos.containing(from);
+        BlockData data = getBlockData(fromPos, level);
+        if(data.water){
+            //if in water step to center of neighbors
+            return getStepFromWater(level, from);
+        }else{
+            //if outside water step in water
+            return getStepIntoWater(level, from);
+        }
+    }
+
+    private Collection<PathSegment> getStepFromWater(ClientLevel level, Vec3 from) {
+        BlockPos fromPos = BlockPos.containing(from);
+        List<PathSegment> segments = new ArrayList<>();
+        //from water to water
+        double cost = getMovementCost(fromPos.north(), level);
+        if (!Double.isNaN(cost)) {
+            segments.add(new SwimmingPathSegment(from, Vec3.atBottomCenterOf(fromPos.north()), cost));
+        }
+        cost = getMovementCost(fromPos.south(), level);
+        if (!Double.isNaN(cost)) {
+            segments.add(new SwimmingPathSegment(from, Vec3.atBottomCenterOf(fromPos.south()), cost));
+        }
+        cost = getMovementCost(fromPos.east(), level);
+        if (!Double.isNaN(cost)) {
+            segments.add(new SwimmingPathSegment(from, Vec3.atBottomCenterOf(fromPos.east()), cost));
+        }
+        cost = getMovementCost(fromPos.west(), level);
+        if (!Double.isNaN(cost)) {
+            segments.add(new SwimmingPathSegment(from, Vec3.atBottomCenterOf(fromPos.west()), cost));
+        }
+        cost = getMovementCost(fromPos.above(), level);
+        if (!Double.isNaN(cost)) {
+            segments.add(new SwimmingPathSegment(from, Vec3.atBottomCenterOf(fromPos.above()), cost));
+        }
+        cost = getMovementCost(fromPos.below(), level);
+        if (!Double.isNaN(cost)) {
+            segments.add(new SwimmingPathSegment(from, Vec3.atBottomCenterOf(fromPos.below()), cost));
+        }
+        //from water to land
+        if(getBlockData(fromPos.above(), level).water){
+            return segments;
+        }
+        if(canStepOut(fromPos.north(), level)){
+            segments.add(new SwimmingPathSegment(from, Vec3.atBottomCenterOf(fromPos.north().above()), 10));
+        }
+        if(canStepOut(fromPos.south(), level)){
+            segments.add(new SwimmingPathSegment(from, Vec3.atBottomCenterOf(fromPos.south().above()), 10));
+        }
+        if(canStepOut(fromPos.east(), level)){
+            segments.add(new SwimmingPathSegment(from, Vec3.atBottomCenterOf(fromPos.east().above()), 10));
+        }
+        if(canStepOut(fromPos.west(), level)){
+            segments.add(new SwimmingPathSegment(from, Vec3.atBottomCenterOf(fromPos.west().above()), 10));
         }
 
         return segments;
     }
 
-    private void addTarget(ClientLevel level,
-                           EntityDimensions dimensions,
-                           double eyeHeight,
-                           Vec3 from,
-                           Vec3 target,
-                           List<PathSegment> segments,
-                           Set<PositionKey> seenTargets) {
-        if (from.distanceToSqr(target) < TARGET_EPSILON_SQUARED) {
-            return;
-        }
-        boolean swimmableTarget = isSwimmable(level, target, dimensions);
-        boolean walkableTarget = isWalkableTarget(level, target, dimensions);
-        if (!swimmableTarget && !walkableTarget) {
-            return;
-        }
-        if (!hasSwimmableDirectPath(level, from, target, dimensions)) {
-            return;
-        }
-
-        PositionKey key = toKey(target);
-        if (!seenTargets.add(key)) {
-            return;
-        }
-        double cost = isHeadUnderWater(level, target, eyeHeight) ? 10 : 5;
-        segments.add(new SwimmingPathSegment(from, target, cost));
-    }
-
-    private boolean hasSwimmableDirectPath(ClientLevel level, Vec3 from, Vec3 to, EntityDimensions dimensions) {
-        double distance = from.distanceTo(to);
-        int steps = Math.max(1, (int) Math.ceil(distance / SAMPLE_STEP));
-        boolean touchesFluid = false;
-        for (int i = 0; i <= steps; i++) {
-            double progress = i / (double) steps;
-            Vec3 sample = from.lerp(to, progress);
-            AABB box = getPlayerBox(sample, dimensions);
-            if (!level.noBlockCollision(null, box, false)) {
-                return false;
-            }
-            if (hasFluidCollision(level, box)) {
-                touchesFluid = true;
-            }
-        }
-        return touchesFluid;
-    }
-
-    private boolean isSwimmable(ClientLevel level, Vec3 pos, EntityDimensions dimensions) {
-        AABB box = getPlayerBox(pos, dimensions);
-        return level.noBlockCollision(null, box, false) && hasFluidCollision(level, box);
-    }
-
-    private boolean isWalkableTarget(ClientLevel level, Vec3 pos, EntityDimensions dimensions) {
-        AABB box = getPlayerBox(pos, dimensions);
-        if (!level.noBlockCollision(null, box, false)) {
+    private boolean canStepOut(BlockPos pos, ClientLevel level) {
+        BlockData data = getBlockData(pos, level);
+        if(!data.solid){
             return false;
         }
-        if (hasFluidCollision(level, box)) {
+        data = getBlockData(pos.above(), level);
+        if(!data.collisionFree) {
             return false;
         }
-
-        // Require supporting collision slightly below the feet so the exit target is standable.
-        return !level.noBlockCollision(null, box.move(0, -0.05, 0), false);
+        return getBlockData(pos.above(2), level).collisionFree;
     }
 
-    private AABB getPlayerBox(Vec3 pos, EntityDimensions dimensions) {
-        double halfWidth = dimensions.width() / 2;
-        return new AABB(
-                pos.x - halfWidth, pos.y, pos.z - halfWidth,
-                pos.x + halfWidth, pos.y + dimensions.height(), pos.z + halfWidth
-        ).inflate(0.001, 0, 0.001);
-    }
+    private Collection<PathSegment> getStepIntoWater(ClientLevel level, Vec3 fromVec) {
+        BlockPos fromPos = BlockPos.containing(fromVec);
+        BlockData data = getBlockData(fromPos, level);
+        if (data == null || !data.collisionFree) {
+            return List.of();
+        }
+        data = getBlockData(fromPos.above(), level);
+        if (data == null || !data.collisionFree) {
+            return List.of();
+        }
+        List<PathSegment> segments = new ArrayList<>();
 
-    private boolean hasFluidCollision(ClientLevel level, AABB box) {
-        int minBlockX = Mth.floor(box.minX + 1e-7);
-        int maxBlockX = Mth.floor(box.maxX - 1e-7);
-        int minBlockY = Mth.floor(box.minY + 1e-7);
-        int maxBlockY = Mth.floor(box.maxY - 1e-7);
-        int minBlockZ = Mth.floor(box.minZ + 1e-7);
-        int maxBlockZ = Mth.floor(box.maxZ - 1e-7);
-
-        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
-        for (int x = minBlockX; x <= maxBlockX; x++) {
-            for (int y = minBlockY; y <= maxBlockY; y++) {
-                for (int z = minBlockZ; z <= maxBlockZ; z++) {
-                    pos.set(x, y, z);
-                    if (!level.getFluidState(pos).isEmpty()) {
-                        return true;
-                    }
-                }
+        //north
+        BlockPos north = fromPos.north();
+        data = getBlockData(north.above(), level);
+        if (data.collisionFree) {
+            double cost = getMovementCost(north.below(), level);
+            if (!Double.isNaN(cost)) {
+                segments.add(new StraightPathSegment(fromVec, Vec3.atBottomCenterOf(north.below()), cost));
+            }
+        }
+        //south
+        BlockPos south = fromPos.south();
+        data = getBlockData(south.above(), level);
+        if (data.collisionFree) {
+            double cost = getMovementCost(south.below(), level);
+            if (!Double.isNaN(cost)) {
+                segments.add(new SwimmingPathSegment(fromVec, Vec3.atBottomCenterOf(south.below()), cost));
+            }
+        }
+        //west
+        BlockPos west = fromPos.west();
+        data = getBlockData(west.above(), level);
+        if (data.collisionFree) {
+            double cost = getMovementCost(west.below(), level);
+            if (!Double.isNaN(cost)) {
+                segments.add(new SwimmingPathSegment(fromVec, Vec3.atBottomCenterOf(west.below()), cost));
+            }
+        }
+        //east
+        BlockPos east = fromPos.east();
+        data = getBlockData(east.above(), level);
+        if (data.collisionFree) {
+            double cost = getMovementCost(east.below(), level);
+            if (!Double.isNaN(cost)) {
+                segments.add(new SwimmingPathSegment(fromVec, Vec3.atBottomCenterOf(east.below()), cost));
             }
         }
 
-        return false;
+        return segments;
     }
 
-    private boolean isHeadUnderWater(ClientLevel level, Vec3 pos, double eyeHeight) {
-        BlockPos eyePos = BlockPos.containing(pos.x, pos.y + eyeHeight, pos.z);
-        return !level.getFluidState(eyePos).isEmpty();
+    private boolean isOnOneBlock(AABB aabb) {
+        return Mth.floor(aabb.minX) == Mth.floor(aabb.maxX)
+                && Mth.floor(aabb.minZ) == Mth.floor(aabb.maxZ);
     }
 
-    private PositionKey toKey(Vec3 pos) {
-        long x = Math.round(pos.x * POSITION_KEY_SCALE);
-        long y = Math.round(pos.y * POSITION_KEY_SCALE);
-        long z = Math.round(pos.z * POSITION_KEY_SCALE);
-        return new PositionKey(x, y, z);
+    private List<BlockPos> getOnBlocks(AABB boundingBox) {
+        List<BlockPos> standingOnBlocks = new ArrayList<>();
+        int minX = Mth.floor(boundingBox.minX);
+        int maxX = Mth.floor(boundingBox.maxX);
+        int minZ = Mth.floor(boundingBox.minZ);
+        int maxZ = Mth.floor(boundingBox.maxZ);
+        int y = Mth.floor(boundingBox.minY);
+        for (int x = minX; x <= maxX; x++) {
+            for (int z = minZ; z <= maxZ; z++) {
+                standingOnBlocks.add(new BlockPos(x, y, z));
+            }
+        }
+        return standingOnBlocks;
     }
 
-    private record PositionKey(long x, long y, long z) {
+
+    private double getMovementCost(BlockPos pos, ClientLevel level) {
+        BlockData blockData = getBlockData(pos, level);
+        if (blockData == null) {
+            return Double.NaN;
+        }
+        if (!blockData.water) {
+            return Double.NaN;
+        }
+        if (!blockData.collisionFree) {
+            return Double.NaN;
+        }
+
+        BlockData blockDataAbove = getBlockData(pos.above(), level);
+        if (blockDataAbove == null) {
+            return Double.NaN;
+        }
+        if (!blockDataAbove.collisionFree) {
+            return Double.NaN;
+        }
+        //prefer the head sticking out of the water
+        return blockDataAbove.water ? 10 : 5;
     }
+
+
+    private BlockData getBlockData(BlockPos pos, ClientLevel level) {
+        return blockCache.computeIfAbsent(pos.asLong(), key -> {
+            boolean solid = level.getBlockState(pos).isCollisionShapeFullBlock(level, pos);
+            boolean water = level.getFluidState(pos).is(Fluids.WATER) && level.getFluidState(pos).isSource();
+            boolean collisionFree = level.getBlockState(pos).getCollisionShape(level, pos).isEmpty();
+            return new BlockData(solid, water, collisionFree);
+        });
+    }
+
+    private void resetCollisionCacheIfNeeded(ClientLevel level) {
+        long gameTime = level.getGameTime();
+        if (level == cachedCollisionLevel && gameTime == cachedCollisionGameTime) {
+            return;
+        }
+        blockCache.clear();
+        cachedCollisionLevel = level;
+        cachedCollisionGameTime = gameTime;
+    }
+
 }

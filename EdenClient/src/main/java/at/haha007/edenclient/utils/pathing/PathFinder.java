@@ -249,7 +249,7 @@ public class PathFinder {
          * Returns the committed prefix that will no longer change across future resets.
          */
         public PathSegment getCommittedPathSoFar() {
-            return buildPathFromSegments(committedSegments);
+            return committedSegments.size() > 1 ? new MasterPathSegment(new ArrayList<>(committedSegments)) : null;
         }
 
         /**
