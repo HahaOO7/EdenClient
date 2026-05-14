@@ -37,6 +37,13 @@ public class StraightSegmentCalculator implements SegmentCalculator {
     private ClientLevel cachedCollisionLevel;
     private long cachedCollisionGameTime = Long.MIN_VALUE;
 
+    private enum CardinalDirection {
+        POS_X,
+        NEG_X,
+        POS_Z,
+        NEG_Z
+    }
+
     public StraightSegmentCalculator(double maxDropDistance) {
         this.maxDropDistance = maxDropDistance;
     }
@@ -69,33 +76,25 @@ public class StraightSegmentCalculator implements SegmentCalculator {
             return List.of();
         }
 
-        int minX = Mth.floor(from.x - playerWidth);
-        int maxX = Mth.floor(from.x + playerWidth);
-        int minZ = Mth.floor(from.z - playerWidth);
-        int maxZ = Mth.floor(from.z + playerWidth);
         double jumpHeight = PathingUtils.getMaxJumpHeight(PathingUtils.getJumpPower());
         if (canUseJumpHeight(from, player, level)) {
             maxStepUp = Math.max(jumpHeight, maxStepUp);
         }
         List<Vec3> reachableBlockOffsets = new ArrayList<>();
-        List<Vec3> blockOffsets = getAllBlockOffsets(playerWidth);
-        for (int x = minX; x <= maxX; x++) {
-            for (int z = minZ; z <= maxZ; z++) {
-                for (Vec3 blockOffset : blockOffsets) {
-                    Vec3 to = blockOffset.add(x, 0, z);
-                    double deltaX = Math.abs(from.x - to.x);
-                    double deltaZ = Math.abs(from.z - to.z);
-                    if (deltaX > playerWidth || deltaZ > playerWidth) {
-                        continue;
-                    }
-                    double targetY = getTargetY(from, to, maxStepUp);
-                    if (Double.isNaN(targetY)) {
-                        continue;
-                    }
-                    reachableBlockOffsets.add(to.add(0, targetY - to.y, 0));
-                }
+        List<Vec3> blockOffsets = getAllBlockOffsets(from, playerWidth);
+        for (Vec3 to : blockOffsets) {
+            double deltaX = Math.abs(from.x - to.x);
+            double deltaZ = Math.abs(from.z - to.z);
+            if (deltaX > playerWidth || deltaZ > playerWidth) {
+                continue;
             }
+            double targetY = getTargetY(from, to, maxStepUp);
+            if (Double.isNaN(targetY)) {
+                continue;
+            }
+            reachableBlockOffsets.add(to.add(0, targetY - to.y, 0));
         }
+
         return reachableBlockOffsets;
     }
 
@@ -330,42 +329,41 @@ public class StraightSegmentCalculator implements SegmentCalculator {
         return cachedWorldBoxes;
     }
 
+    private List<Double> getBlockOffsets(float playerWidth) {
+        double EPSILON = 1e-2;
+        List<Double> offsets = new ArrayList<>();
+        //standard offsets
+        offsets.add(0d);
+        offsets.add(.5);
+        offsets.add(1d);
+        //wall hugging offsets
+        offsets.add(playerWidth / 2 + EPSILON);
+        offsets.add(1 - playerWidth / 2 - EPSILON);
+        //fence hugging
+        offsets.add(.5 - playerWidth / 2 - 2 / 16d);
+        offsets.add(.5 + playerWidth / 2 + 2 / 16d);
+        return offsets;
+    }
 
-    private List<Vec3> getAllBlockOffsets(float playerWidth) {
+    private List<Vec3> getAllBlockOffsets(Vec3 from, float playerWidth) {
 
         List<Vec3> blockOffsets = new ArrayList<>();
-        // hugging walls
-        double halfPlayerWidth = playerWidth / 2.0 + .01;
-        blockOffsets.add(new Vec3(halfPlayerWidth, 0, 0));
-        blockOffsets.add(new Vec3(1 - halfPlayerWidth, 0, 0));
-        blockOffsets.add(new Vec3(0, 0, halfPlayerWidth));
-        blockOffsets.add(new Vec3(0, 0, 1 - halfPlayerWidth));
-        blockOffsets.add(new Vec3(1 - halfPlayerWidth, 0, 1 - halfPlayerWidth));
-        blockOffsets.add(new Vec3(halfPlayerWidth, 0, 1 - halfPlayerWidth));
-        blockOffsets.add(new Vec3(1 - halfPlayerWidth, 0, halfPlayerWidth));
-        blockOffsets.add(new Vec3(halfPlayerWidth, 0, halfPlayerWidth));
-        // middle of block
-        // between blocks
-        blockOffsets.add(new Vec3(0, 0, 0));
-        blockOffsets.add(new Vec3(0, 0, .5));
-        blockOffsets.add(new Vec3(0, 0, 1));
-        blockOffsets.add(new Vec3(.5, 0, 0));
-        blockOffsets.add(new Vec3(.5, 0, .5));
-        blockOffsets.add(new Vec3(.5, 0, 1));
-        blockOffsets.add(new Vec3(1, 0, 0));
-        blockOffsets.add(new Vec3(1, 0, .5));
-        blockOffsets.add(new Vec3(1, 0, 1));
-        //next to fence
-        double fenceOffset = .5 - halfPlayerWidth - 2 / 16d;
-        blockOffsets.add(new Vec3(1 - fenceOffset, 0, 1 - fenceOffset));
-        blockOffsets.add(new Vec3(fenceOffset, 0, 1 - fenceOffset));
-        blockOffsets.add(new Vec3(1 - fenceOffset, 0, fenceOffset));
-        blockOffsets.add(new Vec3(fenceOffset, 0, fenceOffset));
-        blockOffsets.add(new Vec3(fenceOffset, 0, .5));
-        blockOffsets.add(new Vec3(1 - fenceOffset, 0, .5));
-        blockOffsets.add(new Vec3(.5, 0, fenceOffset));
-        blockOffsets.add(new Vec3(.5, 0, 1 - fenceOffset));
-
+        double xOffset = from.x;
+        double zOffset = from.z;
+        int minX = Mth.floor(xOffset - playerWidth * 1);
+        int maxX = Mth.floor(xOffset + playerWidth * 1);
+        int minZ = Mth.floor(zOffset - playerWidth * 1);
+        int maxZ = Mth.floor(zOffset + playerWidth * 1);
+        for (int x = minX; x <= maxX; x++) {
+            for (Double offset : getBlockOffsets(playerWidth)) {
+                blockOffsets.add(new Vec3(offset + x, 0, zOffset));
+            }
+        }
+        for (int z = minZ; z <= maxZ; z++) {
+            for (Double offset : getBlockOffsets(playerWidth)) {
+                blockOffsets.add(new Vec3(xOffset, 0, offset + z));
+            }
+        }
 
         return blockOffsets;
     }

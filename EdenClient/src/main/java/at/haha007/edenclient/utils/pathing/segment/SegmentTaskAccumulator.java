@@ -1,6 +1,7 @@
 package at.haha007.edenclient.utils.pathing.segment;
 
 import at.haha007.edenclient.utils.tasks.Task;
+import com.mojang.logging.LogUtils;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -39,6 +40,12 @@ public class SegmentTaskAccumulator implements Task {
         synchronized (lock) {
             if (closed) {
                 throw new IllegalStateException("Cannot add segment after closing the accumulator");
+            }
+            if(!tasks.isEmpty()) {
+                PathSegment last = tasks.peekLast();
+                if(last.to().distanceTo(segment.from()) > 0.01) {
+                    LogUtils.getLogger().warn("Adding a segment that does not start where the last one ended! This may cause issues in the path optimization. Please report this to the mod author.");
+                }
             }
             tasks.addLast(segment);
             lock.notifyAll();

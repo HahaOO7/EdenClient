@@ -371,7 +371,8 @@ public class PathFinder {
             for (int i = 1; i <= midIdx; i++) {
                 PathNode pn = nodePath.get(i);
                 if (pn.segment != null) {
-                    appendOptimizedSegment(committedSegments, pn.segment);
+                    // Never rewrite already finalized prefix segments; only optimize the mutable tail.
+                    appendOptimizedSegment(committedSegments, pn.segment, consumedSegmentsCount);
                     for (int j = consumedSegmentsCount; j < committedSegments.size() - 1; j++) {
                         // the last segment might still be optimized by future commits, so only finalize up to the second-last one
                         segmentConsumer.accept(committedSegments.get(j));
@@ -494,13 +495,13 @@ public class PathFinder {
         return level.getChunkSource().getChunkNow(chunkX, chunkZ) == null;
     }
 
-    private static void appendOptimizedSegment(List<PathSegment> path, PathSegment segment) {
+    private static void appendOptimizedSegment(List<PathSegment> path, PathSegment segment, int protectedPrefixSize) {
         if (segment == null) {
             return;
         }
 
         PathSegment current = segment;
-        while (!path.isEmpty()) {
+        while (path.size() > protectedPrefixSize) {
             int lastIndex = path.size() - 1;
             PathSegment combined = SEGMENT_COMBINER.combine(path.get(lastIndex), current);
             if (combined == null) {

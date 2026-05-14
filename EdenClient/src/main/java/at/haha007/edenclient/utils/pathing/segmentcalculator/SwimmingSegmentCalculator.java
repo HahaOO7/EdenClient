@@ -2,7 +2,6 @@ package at.haha007.edenclient.utils.pathing.segmentcalculator;
 
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.pathing.segment.PathSegment;
-import at.haha007.edenclient.utils.pathing.segment.StraightPathSegment;
 import at.haha007.edenclient.utils.pathing.segment.SwimmingPathSegment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -144,7 +143,7 @@ public class SwimmingSegmentCalculator implements SegmentCalculator {
         if (data.collisionFree) {
             double cost = getMovementCost(north.below(), level);
             if (!Double.isNaN(cost)) {
-                segments.add(new StraightPathSegment(fromVec, Vec3.atBottomCenterOf(north.below()), cost));
+                segments.add(new SwimmingPathSegment(fromVec, Vec3.atBottomCenterOf(north.below()), cost));
             }
         }
         //south

@@ -1,12 +1,10 @@
 package at.haha007.edenclient.utils.pathing.optimization;
 
 import at.haha007.edenclient.utils.PlayerUtils;
-import at.haha007.edenclient.utils.pathing.PathingUtils;
 import at.haha007.edenclient.utils.pathing.segment.PathSegment;
 import at.haha007.edenclient.utils.pathing.segment.StraightPathSegment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.phys.AABB;
@@ -16,8 +14,7 @@ import org.jspecify.annotations.Nullable;
 
 public class StraightSegmentCombiner implements SegmentCombiner {
     private static final double EPSILON = 1e-6;
-    private static final double SUPPORT_CHECK_DEPTH = 0.05;
-    private static final double SAMPLE_STEP = 0.05;
+    private static final double STEPS_PER_BLOCK = 5;
     private static final double MAX_LENGTH = 50;
     private static final double MIN_DOT_FOR_COMBINE = Math.cos(1e-6);
 
@@ -61,11 +58,6 @@ public class StraightSegmentCombiner implements SegmentCombiner {
         EntityDimensions dimensions = PlayerUtils.getPlayer().getDimensions(PlayerUtils.getPlayer().getPose());
         Vec3 from = sa.from();
         Vec3 to = sb.to();
-        AABB startBox = getStandingBox(from, dimensions);
-        Vec3 movement = to.subtract(from);
-        if (!PathingUtils.isCollisionFreeMove(startBox, movement)) {
-            return null;
-        }
         if (!hasWalkableDirectPath(level, from, to, dimensions)) {
             return null;
         }
@@ -81,6 +73,28 @@ public class StraightSegmentCombiner implements SegmentCombiner {
         return new StraightPathSegment(from, to, newCost);
     }
 
+    private boolean hasWalkableDirectPath(ClientLevel level, Vec3 from, Vec3 to, EntityDimensions dimensions) {
+        int stepCount =  Mth.ceil(from.distanceTo(to) * STEPS_PER_BLOCK);
+        double inflateSize = 1.5 / STEPS_PER_BLOCK;
+        for (int i = 1; i <= stepCount; i++) {
+            Vec3 pos = from.lerp(to, (double) i / stepCount);
+            AABB bigBox = getStandingBox(pos.add(0, EPSILON, 0), dimensions)
+                    .inflate(inflateSize, 0, inflateSize);
+            //make sure there are no collisions with big box
+            if (!level.noCollision(null, bigBox, true)) {
+                return false;
+            }
+
+            AABB smallBox = getStandingBox(pos.add(0, -.1, 0), dimensions)
+                    .deflate(inflateSize, 0, inflateSize);
+            //check for floor with small box
+            if (level.noCollision(null, smallBox, false)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     private boolean isSmallTurnAngle(StraightPathSegment a, StraightPathSegment b) {
         Vec3 aDirection = a.to().subtract(a.from()).multiply(1, 0, 1).normalize();
         Vec3 bDirection = b.to().subtract(b.from()).multiply(1, 0, 1).normalize();
@@ -88,54 +102,11 @@ public class StraightSegmentCombiner implements SegmentCombiner {
         return dot >= MIN_DOT_FOR_COMBINE;
     }
 
-    private boolean hasWalkableDirectPath(ClientLevel level, Vec3 from, Vec3 to, EntityDimensions dimensions) {
-        double distance = from.distanceTo(to);
-        int steps = Math.max(1, (int) Math.ceil(distance / SAMPLE_STEP));
-        for (int i = 0; i <= steps; i++) {
-            double progress = i / (double) steps;
-            Vec3 sample = from.lerp(to, progress);
-            AABB box = getStandingBox(sample, dimensions);
-            if (!level.noCollision(box)) {
-                return false;
-            }
-            if (hasFluidCollision(level, box)) {
-                return false;
-            }
-            if (level.noCollision(box.move(0, -SUPPORT_CHECK_DEPTH, 0))) {
-                return false;
-            }
-        }
-        return true;
-    }
-
     private AABB getStandingBox(Vec3 pos, EntityDimensions dimensions) {
         double halfWidth = dimensions.width() / 2;
         return new AABB(
                 pos.x - halfWidth, pos.y, pos.z - halfWidth,
                 pos.x + halfWidth, pos.y + dimensions.height(), pos.z + halfWidth
-        ).inflate(.05, 0, .05);
-    }
-
-    private boolean hasFluidCollision(ClientLevel level, AABB box) {
-        int minBlockX = Mth.floor(box.minX + 1e-7);
-        int maxBlockX = Mth.floor(box.maxX - 1e-7);
-        int minBlockY = Mth.floor(box.minY + 1e-7);
-        int maxBlockY = Mth.floor(box.maxY - 1e-7);
-        int minBlockZ = Mth.floor(box.minZ + 1e-7);
-        int maxBlockZ = Mth.floor(box.maxZ - 1e-7);
-
-        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
-        for (int x = minBlockX; x <= maxBlockX; x++) {
-            for (int y = minBlockY; y <= maxBlockY; y++) {
-                for (int z = minBlockZ; z <= maxBlockZ; z++) {
-                    pos.set(x, y, z);
-                    if (!level.getFluidState(pos).isEmpty()) {
-                        return true;
-                    }
-                }
-            }
-        }
-
-        return false;
+        );
     }
 }
