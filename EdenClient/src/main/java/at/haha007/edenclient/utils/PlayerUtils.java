@@ -4,8 +4,10 @@ import at.haha007.edenclient.callbacks.JoinWorldCallback;
 import at.haha007.edenclient.mixinterface.HandledScreenAccessor;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.mojang.serialization.JsonOps;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.serializer.ComponentSerializer;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -24,6 +26,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.ComponentSerialization;
 import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.contents.PlainTextContents;
 import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
 import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -104,6 +107,22 @@ public class PlayerUtils {
         sendMessage(component);
     }
 
+    public static net.kyori.adventure.text.Component minecraftToMinimessage(Component text) {
+        JsonElement jsonElement = ComponentSerialization.CODEC
+                .encodeStart(JsonOps.INSTANCE, text)
+                .getOrThrow();
+        return  GsonComponentSerializer.gson().deserializeFromTree(jsonElement);
+    }
+
+    public static Component minimessageToMinecraft(net.kyori.adventure.text.Component text) {
+        Gson gson = new Gson();
+        String json = GsonComponentSerializer.gson().serialize(text);
+        return ComponentSerialization.CODEC
+                .decode(JsonOps.INSTANCE, gson.fromJson(json, JsonElement.class))
+                .getOrThrow()
+                .getFirst();
+    }
+
     @SuppressWarnings("unused")
     public static void sendTitle(Component title, Component subtitle, int in, int keep, int out) {
         Minecraft.getInstance().gui.setSubtitle(subtitle);
@@ -145,7 +164,7 @@ public class PlayerUtils {
         //get delta vec
         Vec3 vec = target.subtract(player.position());
         //remove vertical component
-        if(vec.multiply(1,0,1).lengthSqr() < 1e-3 && Math.abs(vec.y) < .6 && player.onGround()) {
+        if (vec.multiply(1, 0, 1).lengthSqr() < 1e-3 && Math.abs(vec.y) < .6 && player.onGround()) {
             return true;
         }
         vec = vec.subtract(0, vec.y, 0);

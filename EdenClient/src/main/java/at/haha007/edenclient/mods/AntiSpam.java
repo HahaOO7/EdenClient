@@ -3,6 +3,7 @@ package at.haha007.edenclient.mods;
 import at.haha007.edenclient.annotations.Mod;
 import at.haha007.edenclient.callbacks.AddChatMessageCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
+import at.haha007.edenclient.utils.JustGiveMeTheStringVisitor;
 import at.haha007.edenclient.utils.MathUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
@@ -16,7 +17,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.util.FormattedCharSequence;
-import net.minecraft.util.FormattedCharSink;
 import net.minecraft.util.Mth;
 
 import java.text.SimpleDateFormat;
@@ -59,20 +59,6 @@ public class AntiSpam {
         if (chatText == null) return;
         if (chatLines.isEmpty()) return;
 
-        class JustGiveMeTheStringVisitor implements FormattedCharSink {
-            final StringBuilder sb = new StringBuilder();
-
-            @Override
-            public boolean accept(int index, Style style, int codePoint) {
-                sb.appendCodePoint(codePoint);
-                return true;
-            }
-
-            @Override
-            public String toString() {
-                return sb.toString();
-            }
-        }
         int maxTextLength = Mth.floor(ChatComponent.getWidth(Minecraft.getInstance().options.chatWidth().get())
                 / Minecraft.getInstance().options.chatScale().get());
         List<FormattedCharSequence> newLines = ComponentRenderUtils.wrapComponents(chatText, maxTextLength, Minecraft.getInstance().font);
@@ -152,4 +138,5 @@ public class AntiSpam {
 
         event.setChatText(chatText);
     }
+
 }

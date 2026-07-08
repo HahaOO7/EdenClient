@@ -83,11 +83,15 @@ public class NbtInfo {
             return false;
         }
 
+        showItemNbtScreen(stack);
+        return true;
+    }
+
+    public void showItemNbtScreen(ItemStack stack) {
         RegistryOps<Tag> nbtOps = RegistryOps.create(NbtOps.INSTANCE, PlayerUtils.getPlayer().registryAccess());
         Tag tag = ItemStack.CODEC.encodeStart(nbtOps, stack).getOrThrow();
         Component text = NbtFormatter.format(tag, true, 2, Integer.MAX_VALUE, true);
         ShowTextScreen showTextScreen = new ShowTextScreen(text);
         EdenClient.getMod(Scheduler.class).scheduleSyncDelayed(() -> Minecraft.getInstance().setScreen(showTextScreen), 1);
-        return true;
     }
 }

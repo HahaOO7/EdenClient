@@ -68,13 +68,14 @@ public abstract class ClientPacketListenerMixin {
         ci.cancel();
     }
 
-    @Inject(method = "sendUnattendedCommand", at = @At("HEAD"))
+    @Inject(method = "sendUnattendedCommand", at = @At("HEAD"), cancellable = true)
     private void sendUnattendedCommand(String message, Screen screen, CallbackInfo ci) {
         if (!CommandManager.isClientSideCommand(message.split(" ")[0])) return;
         ClientPacketListener connection = Minecraft.getInstance().getConnection();
         if (connection == null) return;
         FabricClientCommandSource suggestionsProvider = (FabricClientCommandSource) connection.getSuggestionsProvider();
         CommandManager.execute(message, suggestionsProvider);
+        ci.cancel();
     }
 
     @Inject(method = "sendChat", at = @At("HEAD"), cancellable = true)
