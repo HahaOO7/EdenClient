@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "id": "edenclient",
+  "version": "${version}",
+
+  "name": "EdenClient",
+  "description": "Random Client Stuff!",
+  "authors": [
+    "Haha007"
+  ],
+  "contact": {
+    "homepage": "https://github.com/HahaOO7/",
+    "sources": "https://github.com/HahaOO7/EdenClient/"
+  },
+
+  "license": "CC0-1.0",
+  "icon": "assets/edenclient/icon.png",
+
+  "environment": "*",
+  "entrypoints": {
+    "client": [
+      "at.haha007.edenclient.EdenClient"
+    ]
+  },
+  "mixins": [
+    "edenclient.mixins.json"
+  ],
+
+  "depends": {
+    "fabricloader": ">=0.19.3",
+    "minecraft": "~26.1",
+    "java": ">=25"
+  },
+  "suggests": {
+  }
+}

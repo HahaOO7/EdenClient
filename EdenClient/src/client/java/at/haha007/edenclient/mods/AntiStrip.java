@@ -1,0 +1,71 @@
+package at.haha007.edenclient.mods;
+
+import at.haha007.edenclient.annotations.Mod;
+import at.haha007.edenclient.callbacks.PlayerInteractBlockCallback;
+import at.haha007.edenclient.utils.config.ConfigSubscriber;
+import at.haha007.edenclient.utils.config.PerWorldConfig;
+import net.fabricmc.fabric.impl.tag.convention.v2.TagRegistration;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.Registry;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.structure.templatesystem.TagMatchTest;
+import net.minecraft.world.phys.BlockHitResult;
+
+import java.util.Set;
+
+import static at.haha007.edenclient.command.CommandManager.literal;
+import static at.haha007.edenclient.command.CommandManager.register;
+import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
+
+@Mod
+public class AntiStrip {
+    private final Set<Item> axeItems = Set.of(
+            Items.WOODEN_AXE,
+            Items.STONE_AXE,
+            Items.IRON_AXE,
+            Items.GOLDEN_AXE,
+            Items.DIAMOND_AXE,
+            Items.NETHERITE_AXE
+    );
+
+    @ConfigSubscriber("false")
+    private boolean enabled = false;
+
+    public AntiStrip() {
+        PlayerInteractBlockCallback.EVENT.register(this::onInteractBlock, getClass());
+        PerWorldConfig.get().register(this, "antiStrip");
+        registerCommand();
+    }
+
+    private void registerCommand() {
+        var node = literal("eantistrip");
+        node.then(literal("toggle").executes(c -> {
+            enabled = !enabled;
+            sendModMessage((enabled ? "Enabled AntiStrip." : "Disabled AntiStrip."));
+            return 1;
+        }));
+
+        register(node,
+                "AntiStrip disables stripping of wood with any axe.");
+    }
+
+    private InteractionResult onInteractBlock(LocalPlayer player, ClientLevel world, InteractionHand hand, BlockHitResult blockHitResult) {
+        if (!enabled) return InteractionResult.PASS;
+        if (player.isCreative()) return InteractionResult.PASS;
+        if (!axeItems.contains((hand == InteractionHand.MAIN_HAND ? player.getMainHandItem() : player.getOffhandItem()).getItem()))
+            return InteractionResult.PASS;
+        BlockState blockState = world.getBlockState(blockHitResult.getBlockPos());
+        return blockState.is(BlockTags.LOGS) ? InteractionResult.FAIL : InteractionResult.PASS;
+    }
+}

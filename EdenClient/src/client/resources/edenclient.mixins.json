@@ -1,0 +1,26 @@
+{
+  "required": true,
+  "package": "at.haha007.edenclient.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "mixins": [
+  ],
+  "client": [
+    "AbstractContainerScreenMixin",
+    "AbstractSignEditScreenMixin",
+    "ChatComponentMixin",
+    "ChatListenerMixin",
+    "ChatScreenMixin",
+    "ClientPacketListenerMixin",
+    "FishingHookMixin",
+    "HandledScreenMixin",
+    "LivingEntityMixin",
+    "LocalPlayerMixin",
+    "MinecraftClientMixin",
+    "PlayerControllerMixin",
+    "PlayerInventoryMixin",
+    "PlayerMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

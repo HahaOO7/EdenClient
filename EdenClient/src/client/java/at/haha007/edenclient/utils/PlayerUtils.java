@@ -1,0 +1,490 @@
+package at.haha007.edenclient.utils;
+
+import at.haha007.edenclient.callbacks.JoinWorldCallback;
+import at.haha007.edenclient.mixinterface.HandledScreenAccessor;
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.mojang.serialization.JsonOps;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.ContainerScreen;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.client.multiplayer.MultiPlayerGameMode;
+import net.minecraft.client.multiplayer.PlayerInfo;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.Registry;
+import net.minecraft.core.Vec3i;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.ComponentSerialization;
+import net.minecraft.network.chat.Style;
+import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
+import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.ContainerInput;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.CollisionContext;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.Optional;
+
+public class PlayerUtils {
+
+    private static final Component prefix = Component.literal("[EC] ").setStyle(Style.EMPTY.applyFormats(ChatFormatting.LIGHT_PURPLE, ChatFormatting.BOLD));
+    public static boolean checkSpectator = true;
+    public static boolean checkNearbyPlayers = true;
+
+    static {
+        JoinWorldCallback.EVENT.register(() -> {
+            checkSpectator = true;
+            checkNearbyPlayers = true;
+        }, PlayerUtils.class);
+    }
+
+    private PlayerUtils() {
+    }
+
+    public static void messageC2S(String msg) {
+        LocalPlayer player = PlayerUtils.getPlayer();
+        if (msg.length() > 256) {
+            sendModMessage("Tried sending message longer than 256 characters: " + msg);
+            return;
+        }
+        if (msg.startsWith("/")) player.connection.sendCommand(msg.substring(1));
+        else player.connection.sendChat(msg);
+    }
+
+    public static void sendMessage(Component text) {
+        Minecraft.getInstance().gui.getChat().addClientSystemMessage(text);
+    }
+
+    public static void sendMessage(net.kyori.adventure.text.Component text) {
+        Gson gson = new Gson();
+        String json = GsonComponentSerializer.gson().serialize(text);
+        Component component = ComponentSerialization.CODEC
+                .decode(JsonOps.INSTANCE, gson.fromJson(json, JsonElement.class))
+                .getOrThrow()
+                .getFirst();
+        sendMessage(component);
+    }
+
+    public static net.kyori.adventure.text.Component minecraftToMinimessage(Component text) {
+        JsonElement jsonElement = ComponentSerialization.CODEC
+                .encodeStart(JsonOps.INSTANCE, text)
+                .getOrThrow();
+        return GsonComponentSerializer.gson().deserializeFromTree(jsonElement);
+    }
+
+    public static Component minimessageToMinecraft(net.kyori.adventure.text.Component text) {
+        Gson gson = new Gson();
+        String json = GsonComponentSerializer.gson().serialize(text);
+        return ComponentSerialization.CODEC
+                .decode(JsonOps.INSTANCE, gson.fromJson(json, JsonElement.class))
+                .getOrThrow()
+                .getFirst();
+    }
+
+    @SuppressWarnings("unused")
+    public static void sendTitle(Component title, Component subtitle, int in, int keep, int out) {
+        Minecraft.getInstance().gui.setSubtitle(subtitle);
+        Minecraft.getInstance().gui.setTitle(title);
+        Minecraft.getInstance().gui.setTimes(in, keep, out);
+    }
+
+    public static void sendActionBar(net.kyori.adventure.text.Component text) {
+        Gson gson = new Gson();
+        String json = GsonComponentSerializer.gson().serialize(text);
+        Component component = ComponentSerialization.CODEC
+                .decode(JsonOps.INSTANCE, gson.fromJson(json, JsonElement.class))
+                .getOrThrow()
+                .getFirst();
+        component = Component.empty().append(Component.empty().append(component));
+        Minecraft.getInstance().gui.setOverlayMessage(component, true);
+    }
+
+    public static void sendModMessage(net.kyori.adventure.text.Component text) {
+        Gson gson = new Gson();
+        String json = GsonComponentSerializer.gson().serialize(text);
+        Component component = ComponentSerialization.CODEC
+                .decode(JsonOps.INSTANCE, gson.fromJson(json, JsonElement.class))
+                .getOrThrow()
+                .getFirst();
+        sendMessage(Component.empty().append(prefix).append(component));
+    }
+
+    public static void sendModMessage(Component text) {
+        sendMessage(Component.empty().append(prefix).append(text));
+    }
+
+    public static void sendModMessage(String text) {
+        sendModMessage(net.kyori.adventure.text.Component.text(text, NamedTextColor.GOLD));
+    }
+
+    public static boolean walkTowards(Vec3 target) {
+        LocalPlayer player = getPlayer();
+        //get delta vec
+        Vec3 vec = target.subtract(player.position());
+        //remove vertical component
+        if (vec.multiply(1, 0, 1).lengthSqr() < 1e-3 && Math.abs(vec.y) < .6 && player.onGround()) {
+            return true;
+        }
+        vec = vec.subtract(0, vec.y, 0);
+        double horizontalDistance = vec.length();
+
+        player.setSprinting(true);
+        double speed = getWalkingSpeed();
+        speed = Math.min(speed, horizontalDistance);
+        vec = vec.normalize().scale(speed);
+
+        //move the player
+        double fallingSpeed = player.getDeltaMovement().y();
+        player.setDeltaMovement(vec.x, fallingSpeed, vec.z);
+
+        return false;
+    }
+
+    public static boolean walkTowards(Vec3 target, boolean autoJump) {
+        boolean targetReached = walkTowards(target);
+        if (targetReached) return true;
+        if (!autoJump) return false;
+
+        LocalPlayer player = getPlayer();
+        if (player.horizontalCollision && player.onGround()) {
+            ClientLevel level = Minecraft.getInstance().level;
+            if (level == null) return false;
+            float f = level.getBlockState(player.blockPosition()).getBlock().getJumpFactor();
+            float g = level.getBlockState(player.getBlockPosBelowThatAffectsMyMovement()).getBlock().getJumpFactor();
+            double blockJumpFactor = f == 1.0 ? g : f;
+            double jumpPower = player.getAttributeValue(Attributes.JUMP_STRENGTH) * blockJumpFactor + player.getJumpBoostPower();
+            player.setDeltaMovement(player.getDeltaMovement().multiply(1, 0, 1).add(0, jumpPower, 0));
+        }
+        return false;
+    }
+
+
+    public static void walkTowards(Vec3i target) {
+        Vec3 t = Vec3.atBottomCenterOf(target);
+        walkTowards(t);
+    }
+
+
+    public static double getWalkingSpeed() {
+        double speed = 4.317;
+        LocalPlayer player = getPlayer();
+        ClientLevel level = Minecraft.getInstance().level;
+        if (level == null) {
+            return 0;
+        }
+        speed *= player.getAttributeValue(Attributes.MOVEMENT_SPEED) * 10;
+
+        boolean sneaking = player.isMovingSlowly();
+        if (sneaking) {
+            speed *= player.getAttributeValue(Attributes.SNEAKING_SPEED);
+        }
+
+        Block block = level.getBlockState(player.getBlockPosBelowThatAffectsMyMovement()).getBlock();
+
+        ItemStack boots = player.getItemBySlot(EquipmentSlot.FEET);
+        Registry<Enchantment> lookup = player.registryAccess().lookupOrThrow(Registries.ENCHANTMENT);
+        int soulSpeedLevel = EnchantmentHelper.getItemEnchantmentLevel(lookup.getOrThrow(Enchantments.SOUL_SPEED), boots);
+
+        if ((block == Blocks.SOUL_SAND || block == Blocks.SOUL_SOIL) && soulSpeedLevel <= 0) {
+            speed *= 0.581;
+        }
+
+
+        if (block == (Blocks.HONEY_BLOCK)) speed *= 0.581;
+        if (block == (Blocks.SLIME_BLOCK)) speed *= 0.73;
+
+        return (Math.max(speed, 0) / 20);
+    }
+
+    public static void clickSlot(int slotId) {
+        Screen screen = Minecraft.getInstance().screen;
+        if (!(screen instanceof ContainerScreen gcs)) return;
+        ((HandledScreenAccessor) screen).edenClient$clickMouse(gcs.getMenu().slots.get(slotId), slotId, 0, ContainerInput.PICKUP_ALL);
+    }
+
+    public static Vec3 getClientLookVec() {
+        Entity entity = Minecraft.getInstance().getCameraEntity();
+        if (entity == null) return Vec3.ZERO;
+        float f = 0.017453292F;
+        float pi = (float) Math.PI;
+
+        float f1 = Mth.cos(-entity.getYRot() * f - pi);
+        float f2 = Mth.sin(-entity.getYRot() * f - pi);
+        float f3 = -Mth.cos(-entity.getXRot() * f);
+        float f4 = Mth.sin(-entity.getXRot() * f);
+
+        return new Vec3(f2 * f3, f4, f1 * f3);
+    }
+
+    public static LocalPlayer getPlayer() {
+        LocalPlayer player = Minecraft.getInstance().player;
+        if (player == null) throw new IllegalStateException("Player is null.");
+        return player;
+    }
+
+    public static Direction getHitDirectionForBlock(LocalPlayer player, BlockPos target) {
+        Vec3 playerPos = player.getEyePosition();
+        Optional<Direction> direction = Arrays.stream(Direction.values()).min(Comparator.comparingDouble(dir -> Vec3.atLowerCornerOf(dir.getUnitVec3i()).multiply(.5, .5, .5).add(Vec3.atLowerCornerOf(target)).distanceTo(playerPos)));
+
+        return direction.orElse(Direction.UP);
+    }
+
+    /**
+     * Attack a block
+     *
+     * @param pos The position to break
+     * @return if the block was broken
+     */
+    public static boolean breakBlock(BlockPos pos) {
+        LocalPlayer player = getPlayer();
+        ClientLevel world = Minecraft.getInstance().level;
+        if (world == null) return false;
+        BlockState state = world.getBlockState(pos);
+        Block block = state.getBlock();
+        float delta = state.getDestroyProgress(player, world, pos);
+        ClientPacketListener nh = player.connection;
+        boolean instantMine = delta >= 1;
+        Direction dir = getHitDirectionForBlock(player, pos);
+        if (instantMine) {
+            nh.send(new ServerboundPlayerActionPacket(ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK, pos, dir));
+            world.setBlockAndUpdate(pos, Blocks.AIR.defaultBlockState());
+            return true;
+        }
+        MultiPlayerGameMode gameMode = Minecraft.getInstance().gameMode;
+        if (gameMode == null) return false;
+        gameMode.continueDestroyBlock(pos, dir);
+        state = world.getBlockState(pos);
+        return state.getBlock() != block;
+    }
+
+    public static boolean worldHasSpectator() {
+        Minecraft instance = Minecraft.getInstance();
+        LocalPlayer player = instance.player;
+        if (player == null) return false;
+        Collection<PlayerInfo> onlinePlayers = player.connection.getListedOnlinePlayers();
+        for (PlayerInfo onlinePlayer : onlinePlayers) {
+            if (onlinePlayer.getGameMode() == GameType.SPECTATOR) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static boolean hasNearbyPlayers() {
+        Minecraft instance = Minecraft.getInstance();
+        ClientLevel level = instance.level;
+        LocalPlayer player = instance.player;
+        if (level == null) return false;
+        if (player == null) return false;
+        for (Entity entity : level.entitiesForRendering()) {
+            if (entity != player && entity instanceof Player) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static boolean shouldPlayLegit() {
+        return (checkNearbyPlayers && hasNearbyPlayers()) || (checkSpectator && worldHasSpectator());
+    }
+
+    public static boolean selectPlacableBlock() {
+        LocalPlayer player = getPlayer();
+        Inventory inventory = player.getInventory();
+
+        ClientPacketListener connection = Minecraft.getInstance().getConnection();
+        if (connection == null) return false;
+        MultiPlayerGameMode gameMode = Minecraft.getInstance().gameMode;
+        if (gameMode == null) return false;
+        ClientLevel level = Minecraft.getInstance().level;
+        if (level == null) {
+            return false;
+        }
+
+        int slot = -1;
+        for (int i = 0; i < 36; i++) {
+            ItemStack stack = inventory.getItem(i);
+            if (stack.isEmpty()) continue;
+            Item item = stack.getItem();
+            if (!(item instanceof BlockItem blockItem)) continue;
+            Block block = blockItem.getBlock();
+            BlockState defaultState = block.defaultBlockState();
+            if (!defaultState.isCollisionShapeFullBlock(level, BlockPos.ZERO)) continue;
+            slot = i;
+            break;
+        }
+        if (slot < 0) return false;
+
+        if (slot < 9 && inventory.getSelectedSlot() == slot) return true;
+
+        if (slot < 9) {
+            inventory.setSelectedSlot(slot);
+            connection.send(new ServerboundSetCarriedItemPacket(slot));
+            return true;
+        }
+
+        //replace slot 9
+        inventory.setSelectedSlot(8);
+        connection.send(new ServerboundSetCarriedItemPacket(8));
+        return true;
+    }
+
+
+    public static boolean selectItem(Item item) {
+        LocalPlayer player = getPlayer();
+        Inventory inventory = player.getInventory();
+
+        ClientPacketListener connection = Minecraft.getInstance().getConnection();
+        if (connection == null) return false;
+        MultiPlayerGameMode gameMode = Minecraft.getInstance().gameMode;
+        if (gameMode == null) return false;
+
+        int slot = -1;
+        for (int i = 0; i < 36; i++) {
+            ItemStack stack = inventory.getItem(i);
+            if (stack.isEmpty()) continue;
+            if (!item.equals(inventory.getItem(i).getItem())) continue;
+            slot = i;
+            break;
+        }
+        if (slot < 0) return false;
+
+        if (slot < 9 && inventory.getSelectedSlot() == slot) return true;
+
+        if (slot < 9) {
+            inventory.setSelectedSlot(slot);
+            connection.send(new ServerboundSetCarriedItemPacket(slot));
+            return true;
+        }
+
+        //select slot 9 and pickblock
+        //as of 1.21.4 you can't pick a item but need to pick a block
+        inventory.setSelectedSlot(8);
+        connection.send(new ServerboundSetCarriedItemPacket(8));
+        ClientLevel level = Minecraft.getInstance().level;
+        if (level == null) {
+            return false;
+        }
+        BlockPos.withinManhattanStream(player.blockPosition(), 5, 5, 5)
+                .filter(b -> level.getBlockState(b).getBlock().asItem() == item)
+                .findFirst()
+                .ifPresent(b -> gameMode.handlePickItemFromBlock(b, false));
+        return true;
+    }
+
+    public static Optional<Item> selectAnyItem(Collection<Item> options) {
+        LocalPlayer player = getPlayer();
+        Inventory inventory = player.getInventory();
+
+        ClientPacketListener connection = Minecraft.getInstance().getConnection();
+        if (connection == null) return Optional.empty();
+        MultiPlayerGameMode gameMode = Minecraft.getInstance().gameMode;
+        if (gameMode == null) return Optional.empty();
+
+        int slot = -1;
+        Item select = null;
+        for (int i = 0; i < 36; i++) {
+            ItemStack stack = inventory.getItem(i);
+            if (stack.isEmpty()) continue;
+            Item item = stack.getItem();
+            if (!options.contains(item)) continue;
+            slot = i;
+            select = item;
+            break;
+        }
+        if (slot < 0) return Optional.empty();
+
+        if (slot < 9 && inventory.getSelectedSlot() == slot) return Optional.of(select);
+
+        if (slot < 9) {
+            inventory.setSelectedSlot(slot);
+            connection.send(new ServerboundSetCarriedItemPacket(slot));
+            return Optional.of(select);
+        }
+
+        //replace slot 9
+        inventory.setSelectedSlot(8);
+        connection.send(new ServerboundSetCarriedItemPacket(8));
+        return Optional.of(select);
+    }
+
+    public static String removeColorCodes(String msg) {
+        msg = msg.replaceAll("§[0-9a-fk-or]", "");
+        return msg;
+    }
+
+    public static BlockHitResult rayTraceBlocks(Vec3 from, Vec3 direction, double distance, AABB shape) {
+        ClientLevel level = Minecraft.getInstance().level;
+        if (level == null || from == null || direction == null || shape == null || distance <= 0) {
+            return BlockHitResult.miss(from == null ? Vec3.ZERO : from, Direction.DOWN, BlockPos.ZERO);
+        }
+
+        double dirLength = direction.length();
+        if (dirLength < 1e-6) {
+            return BlockHitResult.miss(from, Direction.DOWN, BlockPos.containing(from));
+        }
+
+        Vec3 normalizedDirection = direction.scale(1.0 / dirLength);
+        Vec3 movement = normalizedDirection.scale(distance);
+        Vec3 end = from.add(movement);
+
+        LocalPlayer player = Minecraft.getInstance().player;
+        CollisionContext collisionContext = player == null ? CollisionContext.empty() : CollisionContext.of(player);
+        ClipContext context = new ClipContext(from, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, collisionContext);
+        BlockHitResult lineHit = level.clip(context);
+
+        Direction hitFace = Direction.getNearest(
+                (int) Math.signum(movement.x),
+                (int) Math.signum(movement.y),
+                (int) Math.signum(movement.z),
+                Direction.UP
+        ).getOpposite();
+
+        // Also sweep the provided shape to catch side collisions that center-line clipping can miss.
+        if (!level.noCollision(shape)) {
+            return new BlockHitResult(from, hitFace, BlockPos.containing(from), false);
+        }
+
+        double stepSize = 0.1;
+        int steps = (int) Math.ceil(distance / stepSize);
+        for (int i = 1; i <= steps; i++) {
+            double t = Math.min(i * stepSize, distance);
+            AABB swept = shape.move(normalizedDirection.scale(t));
+            if (!level.noCollision(swept)) {
+                Vec3 hitPos = from.add(normalizedDirection.scale(t));
+                return new BlockHitResult(hitPos, hitFace, BlockPos.containing(hitPos), false);
+            }
+        }
+
+        return lineHit;
+    }
+}

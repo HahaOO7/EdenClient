@@ -24,7 +24,7 @@ dependencies {
 }
 
 tasks.jar {
-    dependsOn ':EdenClient:remapJar'
+    dependsOn ':EdenClient:jar'
     dependsOn ':EcAnnotations:jar'
 
     // Include the compiled classes from EcAnnotations

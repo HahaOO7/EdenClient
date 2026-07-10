@@ -15,7 +15,7 @@ EdenClient is built with Fabric Loom and targets modern Java (Java 21). The proj
 
 Prerequisites
 -------------
-- Java 21 (JDK 21) installed and JAVA_HOME pointing to it.
+- Java 25 (JDK 25) installed and JAVA_HOME pointing to it.
 - Git (optional, for cloning and contributing).
 - No global Gradle install is required — the project provides a Gradle wrapper (`gradlew`).
 
