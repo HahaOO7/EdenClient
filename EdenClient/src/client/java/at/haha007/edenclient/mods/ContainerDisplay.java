@@ -18,7 +18,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import dev.xpple.clientarguments.arguments.CBlockPosArgument;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
-import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext;
+import net.fabricmc.fabric.api.client.rendering.v1.level.LevelExtractionContext;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.JoinConfiguration;
@@ -37,8 +37,10 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Quaternionf;
+import org.jspecify.annotations.Nullable;
 import org.lwjgl.opengl.GL11;
 
 import java.util.ArrayList;
@@ -66,14 +68,14 @@ public class ContainerDisplay {
         UpdateLevelChunkCallback.EVENT.register(c -> updateLater(), getClass());
         PlayerBreakBlockCallback.EVENT.register((a, b, c) -> updateLater(), getClass());
         PerWorldConfig.get().register(this, "ContainerDisplay");
-        LevelRenderEvents.AFTER_SOLID_FEATURES.register(this::render);
+        LevelRenderEvents.AFTER_BLOCK_OUTLINE_EXTRACTION.register(this::render);
         registerCommand();
     }
 
-    private void render(LevelRenderContext context) {
+    private void render(LevelExtractionContext context, @Nullable HitResult hitResult) {
         GL11.glEnable(GL11.GL_DEPTH_TEST);
         Minecraft mc = Minecraft.getInstance();
-        PoseStack poseStack = context.poseStack();
+        PoseStack poseStack = new PoseStack();
         poseStack.pushPose();
         Vec3 cam = mc.gameRenderer.getMainCamera().position();
         Entity camera = Minecraft.getInstance().getCameraEntity();
@@ -124,11 +126,13 @@ public class ContainerDisplay {
                         mc.player,
                         255
                 );
-                SubmitNodeCollector collector = context.submitNodeCollector();
+                @SuppressWarnings("resource")
+                SubmitNodeCollector collector = context.gameRenderer().getSubmitNodeStorage();
+
                 state.submit(
                         poseStack,
                         collector,
-                        15,
+                        15 << 4 | 15 << 20,
                         OverlayTexture.NO_OVERLAY,
                         0
                 );
@@ -143,7 +147,7 @@ public class ContainerDisplay {
         poseStack.popPose();
     }
 
-    private static void render3x3(LevelRenderContext context,
+    private static void render3x3(LevelExtractionContext context,
                                   List<Item> items,
                                   Direction direction,
                                   PoseStack poseStack,
@@ -199,11 +203,12 @@ public class ContainerDisplay {
                     mc.player,
                     255
             );
-            SubmitNodeCollector collector = context.submitNodeCollector();
+            @SuppressWarnings("resource")
+            SubmitNodeCollector collector = context.gameRenderer().getSubmitNodeStorage();
             state.submit(
                     poseStack,
                     collector,
-                    15,
+                    15 << 4 | 15 << 20,
                     OverlayTexture.NO_OVERLAY,
                     0
             );
