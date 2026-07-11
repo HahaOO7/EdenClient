@@ -149,7 +149,7 @@ public abstract class ClientPacketListenerMixin {
     @Inject(method = "handleSystemChat", at = @At("HEAD"), cancellable = true)
     void onGameMessage(ClientboundSystemChatPacket packet, CallbackInfo ci) {
         ci.cancel();
-        Minecraft.getInstance().getChatListener().handleSystemMessage(packet.content(), packet.overlay());
+        EdenClient.chatMessagesToHandle.add(packet.content());
     }
 
     @Unique
