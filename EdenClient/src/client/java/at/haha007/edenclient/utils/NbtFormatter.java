@@ -169,7 +169,7 @@ public class NbtFormatter {
         out.append(text("[" + prefix + "; ", ChatFormatting.GRAY, colors));
         if (array instanceof byte[] b) {
             for (int i = 0; i < b.length; i++) {
-                out.append(text(Byte.toString(b[i]) + "b", ChatFormatting.YELLOW, colors));
+                out.append(text(b[i] + "b", ChatFormatting.YELLOW, colors));
                 if (i < b.length - 1) out.append(text(", ", ChatFormatting.GRAY, colors));
             }
         } else if (array instanceof int[] b) {
@@ -179,7 +179,7 @@ public class NbtFormatter {
             }
         } else if (array instanceof long[] b) {
             for (int i = 0; i < b.length; i++) {
-                out.append(text(Long.toString(b[i]) + "L", ChatFormatting.LIGHT_PURPLE, colors));
+                out.append(text(b[i] + "L", ChatFormatting.LIGHT_PURPLE, colors));
                 if (i < b.length - 1) out.append(text(", ", ChatFormatting.GRAY, colors));
             }
         }

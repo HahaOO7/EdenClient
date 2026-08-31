@@ -28,12 +28,6 @@ public class MasterSegmentCalculator implements SegmentCalculator {
         for (SegmentCalculator calculator : calculators) {
             Collection<PathSegment> add = calculator.calculateSegments(from);
             segments.addAll(add);
-            for (PathSegment segment : add) {
-                Vec3 f = segment.from();
-                if(f.distanceTo(from) > 0.0001) {
-                    System.out.println();
-                }
-            }
         }
         return segments;
     }

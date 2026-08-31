@@ -16,6 +16,7 @@ import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.PacketUtils;
 import net.minecraft.network.protocol.game.*;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.ItemStack;
@@ -148,8 +149,13 @@ public abstract class ClientPacketListenerMixin {
 
     @Inject(method = "handleSystemChat", at = @At("HEAD"), cancellable = true)
     void onGameMessage(ClientboundSystemChatPacket packet, CallbackInfo ci) {
-        ci.cancel();
-        EdenClient.chatMessagesToHandle.add(packet.content());
+        if (packet.overlay()) {
+            PacketUtils.ensureRunningOnSameThread(packet, (ClientGamePacketListener) this, Minecraft.getInstance().packetProcessor());
+            Minecraft.getInstance().getChatListener().handleOverlay(packet.content());
+        } else {
+            ci.cancel();
+            EdenClient.chatMessagesToHandle.add(packet.content());
+        }
     }
 
     @Unique

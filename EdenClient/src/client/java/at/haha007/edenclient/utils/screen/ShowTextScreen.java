@@ -27,7 +27,7 @@ public class ShowTextScreen extends Screen {
     @Override
     protected void init() {
         Button closeButton = Button.builder(Component.literal("Exit").withStyle(ChatFormatting.RED),
-                        button -> Minecraft.getInstance().setScreen(parent))
+                        _ -> Minecraft.getInstance().setScreen(parent))
                 .bounds(width - 210, height - 30, 200, 20)
                 .tooltip(Tooltip.create(Component.literal("Tooltip of button1")))
                 .build();

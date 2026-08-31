@@ -62,7 +62,6 @@ public class AntiSpam {
         int maxTextLength = Mth.floor(ChatComponent.getWidth(Minecraft.getInstance().options.chatWidth().get())
                 / Minecraft.getInstance().options.chatScale().get());
         List<FormattedCharSequence> newLines = ComponentRenderUtils.wrapComponents(chatText, maxTextLength, Minecraft.getInstance().font);
-        System.out.println(chatText);
         int spamCounter = 1;
         int matchingLines = 0;
 
