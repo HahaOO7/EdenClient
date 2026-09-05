@@ -10,6 +10,7 @@ import at.haha007.edenclient.utils.config.loaders.*;
 import at.haha007.edenclient.utils.config.wrappers.*;
 import com.mojang.logging.LogUtils;
 import fi.dy.masa.malilib.util.nbt.PrettyNbtStringifier;
+import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtAccounter;
@@ -73,6 +74,8 @@ public class PerWorldConfig {
         register(new ItemLoader(), Item.class);
         register(new ItemSetLoader(), ItemSet.class);
         register(new ItemListLoader(), ItemList.class);
+
+        register(new DirectionLoader(), Direction.class);
 
         register(new EntityTypeLoader(), EntityType.class);
         register(new EntityTypeSetLoader(), EntityTypeSet.class);
