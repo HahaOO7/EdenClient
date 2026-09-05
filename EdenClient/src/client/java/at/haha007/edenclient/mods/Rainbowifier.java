@@ -94,7 +94,7 @@ public class Rainbowifier {
             return 1;
         })));
 
-        node.executes(c -> {
+        node.executes(_ -> {
             sendDebugMessage();
             return 1;
         });

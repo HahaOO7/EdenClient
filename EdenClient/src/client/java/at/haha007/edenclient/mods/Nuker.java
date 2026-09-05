@@ -13,12 +13,12 @@ import at.haha007.edenclient.utils.area.SavableBlockArea;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import at.haha007.edenclient.utils.config.wrappers.BlockSet;
-import fi.dy.masa.malilib.util.data.Color4f;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import fi.dy.masa.malilib.util.data.Color4f;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -42,7 +42,7 @@ import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.Vec3;
 import org.lwjgl.opengl.GL11;
 
-import java.awt.Color;
+import java.awt.*;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -113,7 +113,7 @@ public class Nuker {
                     return 1;
                 }
         )));
-        cmd.then(literal("toggle").executes(c -> {
+        cmd.then(literal("toggle").executes(_ -> {
             enabled = !enabled;
             PlayerUtils.sendModMessage(enabled ? "Nuker enabled" : "Nuker disabled");
             return 1;
@@ -124,52 +124,52 @@ public class Nuker {
             return 1;
         })));
         cmd.then(literal("render")
-                .then(literal("mining").executes(c -> {
+                .then(literal("mining").executes(_ -> {
                     renderMining = !renderMining;
                     PlayerUtils.sendModMessage(renderMining ? "Render mining enabled" : "Render mining disabled");
                     return 1;
                 }))
-                .then(literal("area").executes(c -> {
+                .then(literal("area").executes(_ -> {
                     renderArea = !renderArea;
                     PlayerUtils.sendModMessage(renderArea ? "Render area enabled" : "Render area disabled");
                     return 1;
                 })));
         var areaCmd = literal("area");
-        areaCmd.then(literal("max").executes(c -> {
+        areaCmd.then(literal("max").executes(_ -> {
             Vec3i min = new Vec3i(-1000000, -1000000, -1000000);
             Vec3i max = new Vec3i(1000000, 1000000, 1000000);
             this.area = new SavableBlockArea(new CubeArea(min, max));
             PlayerUtils.sendModMessage("Nuke area updated.");
             return 1;
         }));
-        BlockArea.commands((c, blockArea) -> {
+        BlockArea.commands((_, blockArea) -> {
             this.area = new SavableBlockArea(blockArea);
             PlayerUtils.sendModMessage("Nuke area updated.");
         }).forEach(areaCmd::then);
         cmd.then(areaCmd);
         cmd.then(literal("filter")
-                .then(literal("toggle").executes(c -> {
+                .then(literal("toggle").executes(_ -> {
                     filterBlocks = !filterBlocks;
                     PlayerUtils.sendModMessage(filterBlocks ? "Filter enabled" : "Filter disabled");
                     return 1;
                 }))
-                .then(literal("height").executes(c -> {
+                .then(literal("height").executes(_ -> {
                     this.filterHeight = !this.filterHeight;
                     PlayerUtils.sendModMessage(this.filterHeight ? "Filter height enabled" : "Filter height disabled");
                     return 1;
                 }))
-                .then(literal("liquid").executes(c -> {
+                .then(literal("liquid").executes(_ -> {
                     this.filterLiquids = !this.filterLiquids;
                     PlayerUtils.sendModMessage(this.filterLiquids ? "Filter liquids enabled" : "Filter liquids disabled");
                     return 1;
                 }))
                 .then(addCommand())
                 .then(removeCommand())
-                .then(literal("clear").executes(c -> {
+                .then(literal("clear").executes(_ -> {
                     filter = new BlockSet();
                     PlayerUtils.sendModMessage("List cleared.");
                     return 1;
-                })).executes(c -> {
+                })).executes(_ -> {
                     Component text = Component.text("Nuke Blocks: ", NamedTextColor.GOLD);
                     StringBuilder sb = new StringBuilder();
                     for (Block block : filter) {
@@ -188,7 +188,7 @@ public class Nuker {
         LiteralArgumentBuilder<FabricClientCommandSource> cmd = literal("add");
         BuiltInRegistries.BLOCK.forEach(block -> {
             String name = BuiltInRegistries.BLOCK.getKey(block).getPath();
-            cmd.then(literal(name).executes(context -> {
+            cmd.then(literal(name).executes(_ -> {
                 filter.add(block);
 
                 PlayerUtils.sendModMessage("Added " + name);
@@ -200,7 +200,7 @@ public class Nuker {
 
     private ArgumentBuilder<FabricClientCommandSource, ?> removeCommand() {
         LiteralArgumentBuilder<FabricClientCommandSource> cmd = literal("remove");
-        cmd.then(argument("type", StringArgumentType.word()).suggests((context, builder) -> {
+        cmd.then(argument("type", StringArgumentType.word()).suggests((_, builder) -> {
             for (Block block : filter) {
                 builder.suggest(BuiltInRegistries.BLOCK.getKey(block).getPath());
             }

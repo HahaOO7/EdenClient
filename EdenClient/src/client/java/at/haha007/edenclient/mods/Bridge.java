@@ -48,12 +48,22 @@ public class Bridge {
         if (!enabled) {
             return;
         }
-        if(PlayerUtils.shouldPlayLegit()) return;
+        if (PlayerUtils.shouldPlayLegit()) {
+            return;
+        }
         Item item = player.getInventory().getSelectedItem().getItem();
-        if (!(item instanceof BlockItem blockItem)) return;
+        if (!(item instanceof BlockItem blockItem)) {
+            return;
+        }
         Block block = blockItem.getBlock();
         BlockState defaultState = block.defaultBlockState();
-        if (!defaultState.isCollisionShapeFullBlock(Minecraft.getInstance().level, player.blockPosition())) return;
+        ClientLevel level = Minecraft.getInstance().level;
+        if (level == null) {
+            return;
+        }
+        if (!defaultState.isCollisionShapeFullBlock(level, player.blockPosition())) {
+            return;
+        }
 
         streamPlaceBlocks().limit(3).forEach(this::clickPos);
     }
@@ -62,7 +72,9 @@ public class Bridge {
         BlockPos bp = new BlockPos(target);
         Direction dir = Direction.UP;
         MultiPlayerGameMode im = Minecraft.getInstance().gameMode;
-        if (im == null) return;
+        if (im == null) {
+            return;
+        }
         BlockHitResult hitResult = new BlockHitResult(Vec3.atLowerCornerOf(bp.relative(dir)), dir, bp, false);
         im.useItemOn(getPlayer(), InteractionHand.MAIN_HAND, hitResult);
     }
@@ -74,6 +86,9 @@ public class Bridge {
     private Stream<BlockPos> streamPlaceBlocks() {
         LocalPlayer player = PlayerUtils.getPlayer();
         ClientLevel level = Minecraft.getInstance().level;
+        if (level == null) {
+            return Stream.of();
+        }
         BlockPos center = player.blockPosition().below();
         Stream<BlockPos> stream = BlockPos.withinManhattanStream(center, range, 1, range);
         stream = stream.map(BlockPos::new);
@@ -85,7 +100,7 @@ public class Bridge {
 
     private void registerCommand() {
         LiteralArgumentBuilder<FabricClientCommandSource> cmd = literal("ebridge");
-        cmd.then(literal("toggle").executes(c -> {
+        cmd.then(literal("toggle").executes(_ -> {
             enabled = !enabled;
             sendModMessage(enabled ? "Bridge enabled" : "Bridge disabled");
             return 1;

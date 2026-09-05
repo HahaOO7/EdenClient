@@ -24,7 +24,7 @@ public class AntiAfk {
     public AntiAfk() {
         var node = literal("eantiafk");
 
-        node.then(literal("toggle").executes(c -> {
+        node.then(literal("toggle").executes(_ -> {
             startPos = PlayerUtils.getPlayer().blockPosition();
             EdenClient.getMod(Scheduler.class).scheduleSyncRepeating(this::moveAround, 20 * 60 * 5, 0);
             PlayerUtils.sendModMessage("Start moving around randomly in a 3x3 area, walk away to cancel.");

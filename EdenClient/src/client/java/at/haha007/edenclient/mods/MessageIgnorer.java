@@ -9,7 +9,6 @@ import at.haha007.edenclient.utils.config.wrappers.StringList;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import com.mojang.logging.LogUtils;
 import lombok.Getter;
 import lombok.Setter;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
@@ -18,8 +17,6 @@ import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.Style;
-import net.minecraft.commands.CommandSourceStack;
-
 
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -86,7 +83,7 @@ public class MessageIgnorer {
     private void registerCommand(String cmd) {
         LiteralArgumentBuilder<FabricClientCommandSource> node = literal(cmd);
 
-        node.then(literal("toggle").executes(c -> {
+        node.then(literal("toggle").executes(_ -> {
             enabled = !enabled;
             String msg = enabled ? "Message ignoring enabled" : "Message ignoring disabled";
             sendModMessage(msg);
@@ -125,7 +122,7 @@ public class MessageIgnorer {
             return 1;
         })));
 
-        node.then(literal("list").executes(c -> {
+        node.then(literal("list").executes(_ -> {
             if (regex.isEmpty()) {
                 sendModMessage("No regexes registered!");
                 return 1;
@@ -138,7 +135,7 @@ public class MessageIgnorer {
             return 1;
         }));
 
-        node.then(literal("clear").executes(c -> {
+        node.then(literal("clear").executes(_ -> {
             regex.clear();
             sendModMessage("Cleared ignored messages");
             return 1;
@@ -146,7 +143,7 @@ public class MessageIgnorer {
 
         LiteralArgumentBuilder<FabricClientCommandSource> predefined = literal("predefined");
         for (Predefined pre : Predefined.values()) {
-            predefined.then(literal(pre.getKey()).executes(c -> {
+            predefined.then(literal(pre.getKey()).executes(_ -> {
                 boolean disable = isEnabled(pre);
                 if (disable) {
                     disable(pre);
@@ -160,7 +157,7 @@ public class MessageIgnorer {
         }
         node.then(predefined);
 
-        node.executes(c -> {
+        node.executes(_ -> {
             sendDebugMessage();
             return 1;
         });

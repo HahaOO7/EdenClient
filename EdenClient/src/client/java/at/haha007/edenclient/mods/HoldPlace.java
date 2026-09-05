@@ -7,6 +7,7 @@ import at.haha007.edenclient.utils.PlayerUtils;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.InteractionHand;
@@ -20,7 +21,7 @@ public class HoldPlace {
     private boolean enabled = false;
     public HoldPlace() {
         PlayerTickCallback.EVENT.register(this::tick, getClass());
-        LiteralArgumentBuilder<FabricClientCommandSource> cmd = CommandManager.literal("eholdplace").executes(c -> {
+        LiteralArgumentBuilder<FabricClientCommandSource> cmd = CommandManager.literal("eholdplace").executes(_ -> {
             enabled = !enabled;
             PlayerUtils.sendModMessage(enabled ? "Hold place enabled" : "Hold place disabled");
             return 1;
@@ -39,7 +40,9 @@ public class HoldPlace {
         Vec3 look = localPlayer.getLookAngle();
         double reach = localPlayer.blockInteractionRange();
         Vec3 end = eyePos.add(look.scale(reach));
-        HitResult hitResult = localPlayer.level().clip(new ClipContext(
+        ClientLevel level = Minecraft.getInstance().level;
+        if (level == null) return;
+        HitResult hitResult = level.clip(new ClipContext(
                 eyePos,
                 end,
                 ClipContext.Block.OUTLINE,

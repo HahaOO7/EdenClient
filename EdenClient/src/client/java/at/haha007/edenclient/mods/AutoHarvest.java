@@ -9,6 +9,7 @@ import at.haha007.edenclient.utils.config.PerWorldConfig;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.client.player.LocalPlayer;
@@ -52,7 +53,7 @@ public class AutoHarvest {
         PerWorldConfig.get().register(this, "autoHarvest");
         PlayerTickCallback.EVENT.register(this::tick, getClass());
         LiteralArgumentBuilder<FabricClientCommandSource> cmd = CommandManager.literal("eautoharvest");
-        cmd.executes(c -> {
+        cmd.executes(_ -> {
             enabled = !enabled;
             PlayerUtils.sendModMessage(enabled ? "AutoHarvest enabled" : "AutoHarvest disabled");
             return 1;
@@ -61,9 +62,12 @@ public class AutoHarvest {
     }
 
     private void tick(LocalPlayer player) {
-        if (!enabled)
+        if (!enabled) {
             return;
-        if(PlayerUtils.shouldPlayLegit()) return;
+        }
+        if (PlayerUtils.shouldPlayLegit()) {
+            return;
+        }
         if (place != null) {
             clickPos(place);
             place = null;
@@ -113,7 +117,9 @@ public class AutoHarvest {
     }
 
     private void harvestCrop(BlockPos pos) {
-        if (cropsHarvestedThisTick > 2) return;
+        if (cropsHarvestedThisTick > 2) {
+            return;
+        }
         //harvest sugarcane
         sameBelow(pos);
         //harvest normal crops
@@ -125,11 +131,15 @@ public class AutoHarvest {
     private void harvestNormalCrop(BlockPos pos) {
         BlockState state = world.getBlockState(pos);
         Block block = state.getBlock();
-        if (!justReplant.contains(block)) return;
-        if (!(block instanceof CropBlock cropBlock))
+        if (!justReplant.contains(block)) {
             return;
-        if (!cropBlock.isMaxAge(state))
+        }
+        if (!(block instanceof CropBlock cropBlock)) {
             return;
+        }
+        if (!cropBlock.isMaxAge(state)) {
+            return;
+        }
         cropsHarvestedThisTick++;
         attackPos(pos);
     }
@@ -137,10 +147,12 @@ public class AutoHarvest {
     private void harvestNetherWarts(BlockPos pos) {
         BlockState state = world.getBlockState(pos);
         Block block = state.getBlock();
-        if (!(block instanceof NetherWartBlock))
+        if (!(block instanceof NetherWartBlock)) {
             return;
-        if (state.getValue(BlockStateProperties.AGE_3) < 3)
+        }
+        if (state.getValue(BlockStateProperties.AGE_3) < 3) {
             return;
+        }
         cropsHarvestedThisTick++;
         attackPos(pos);
     }
@@ -148,10 +160,12 @@ public class AutoHarvest {
     private void sameBelow(BlockPos pos) {
         BlockState state = world.getBlockState(pos);
         Block block = state.getBlock();
-        if (!sameBelow.contains(block))
+        if (!sameBelow.contains(block)) {
             return;
-        if (world.getBlockState(pos.below()).getBlock() != block)
+        }
+        if (world.getBlockState(pos.below()).getBlock() != block) {
             return;
+        }
         cropsHarvestedThisTick++;
         attackPos(pos);
     }
@@ -167,9 +181,14 @@ public class AutoHarvest {
     private void attackPos(BlockPos target) {
         LocalPlayer player = PlayerUtils.getPlayer();
         ClientPacketListener nh = Minecraft.getInstance().getConnection();
-        if (nh == null)
+        if (nh == null) {
             return;
-        Minecraft.getInstance().level.setBlockAndUpdate(target, Blocks.AIR.defaultBlockState());
+        }
+        ClientLevel level = Minecraft.getInstance().level;
+        if (level == null) {
+            return;
+        }
+        level.setBlockAndUpdate(target, Blocks.AIR.defaultBlockState());
         nh.send(new ServerboundPlayerActionPacket(ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK, target, getHitDirectionForBlock(player, target)));
     }
 
@@ -177,7 +196,9 @@ public class AutoHarvest {
         BlockPos bp = new BlockPos(target);
         Direction dir = Direction.UP;
         MultiPlayerGameMode im = Minecraft.getInstance().gameMode;
-        if (im == null) return;
+        if (im == null) {
+            return;
+        }
         im.useItemOn(getPlayer(), InteractionHand.MAIN_HAND, new BlockHitResult(Vec3.atLowerCornerOf(bp.relative(dir)), dir, bp, false));
     }
 }

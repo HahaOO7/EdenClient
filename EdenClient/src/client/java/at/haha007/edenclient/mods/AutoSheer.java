@@ -8,6 +8,7 @@ import at.haha007.edenclient.utils.config.PerWorldConfig;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.InteractionHand;
@@ -32,7 +33,7 @@ public class AutoSheer {
 
     private void registerCommand() {
         LiteralArgumentBuilder<FabricClientCommandSource> node = literal("eautoshear");
-        node.then(literal("toggle").executes(c -> {
+        node.then(literal("toggle").executes(_ -> {
             enabled = !enabled;
             PlayerUtils.sendModMessage((enabled ? "AutoShear enabled" : "AutoShear disabled"));
             return 1;
@@ -62,7 +63,11 @@ public class AutoSheer {
     }
 
     private static void interactOffhand(LocalPlayer player, Vec3 pos, MultiPlayerGameMode interactionManager) {
-        Minecraft.getInstance().level.getEntitiesOfClass(Sheep.class, player.getBoundingBox().inflate(5), Sheep::readyForShearing).forEach(sheep -> {
+        ClientLevel level = Minecraft.getInstance().level;
+        if (level == null) {
+            return;
+        }
+        level.getEntitiesOfClass(Sheep.class, player.getBoundingBox().inflate(5), Sheep::readyForShearing).forEach(sheep -> {
             if (!sheep.readyForShearing()) return;
             if (sheep.position().distanceToSqr(pos) < 25) {
                 interactionManager.interact(player, sheep, new EntityHitResult(sheep), InteractionHand.MAIN_HAND);
@@ -72,7 +77,11 @@ public class AutoSheer {
     }
 
     private static void interactMainHand(LocalPlayer player, Vec3 pos, MultiPlayerGameMode interactionManager) {
-        Minecraft.getInstance().level.getEntitiesOfClass(Sheep.class, player.getBoundingBox().inflate(5), Sheep::readyForShearing).forEach(sheep -> {
+        ClientLevel level = Minecraft.getInstance().level;
+        if (level == null) {
+            return;
+        }
+        level.getEntitiesOfClass(Sheep.class, player.getBoundingBox().inflate(5), Sheep::readyForShearing).forEach(sheep -> {
             if (!sheep.readyForShearing()) return;
             if (sheep.position().distanceToSqr(pos) < 25) {
                 interactionManager.interact(player, sheep, new EntityHitResult(sheep), InteractionHand.MAIN_HAND);

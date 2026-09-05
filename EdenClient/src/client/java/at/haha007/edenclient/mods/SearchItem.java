@@ -23,7 +23,7 @@ public class SearchItem {
     private void registerCommand() {
         var cmd = CommandManager.literal("esearchitem");
         for (Item item : BuiltInRegistries.ITEM) {
-            cmd.then(CommandManager.literal(BuiltInRegistries.ITEM.getKey(item).getPath()).executes(c -> {
+            cmd.then(CommandManager.literal(BuiltInRegistries.ITEM.getKey(item).getPath()).executes(_ -> {
                 Vec3 playerPosf = PlayerUtils.getPlayer().getPosition(0f);
                 Vec3i playerPos = new Vec3i((int) playerPosf.x(), (int) playerPosf.y(), (int) playerPosf.z());
                 Optional<Vec3i> nearest = findContainersWithItem(item)

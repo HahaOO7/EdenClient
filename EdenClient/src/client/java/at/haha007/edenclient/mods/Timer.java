@@ -10,6 +10,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.minecraft.client.player.LocalPlayer;
+import org.jspecify.annotations.NonNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,7 +22,7 @@ import static at.haha007.edenclient.command.CommandManager.register;
 public class Timer {
     private boolean enabled = false;
     private long startTime = 0;
-    private List<Long> stepTimes = new ArrayList<>();
+    private final List<Long> stepTimes = new ArrayList<>();
 
     public Timer() {
         PerWorldConfig.get().register(this, "timer");
@@ -32,7 +33,7 @@ public class Timer {
     private void registerCommand() {
         LiteralArgumentBuilder<FabricClientCommandSource> command = literal("etimer");
 
-        command.then(literal("start").executes(c -> {
+        command.then(literal("start").executes(_ -> {
             if (enabled) {
                 PlayerUtils.sendModMessage("Timer is already started.");
                 return 1;
@@ -43,7 +44,7 @@ public class Timer {
             return 1;
         }));
 
-        command.then(literal("step").executes(c -> {
+        command.then(literal("step").executes(_ -> {
             if (!enabled) {
                 PlayerUtils.sendModMessage("Timer is not started. Use /etimer start to start the timer.");
                 return 1;
@@ -59,7 +60,7 @@ public class Timer {
             return 1;
         }));
 
-        command.then(literal("stop").executes(c -> {
+        command.then(literal("stop").executes(_ -> {
             if (!enabled) {
                 PlayerUtils.sendModMessage("Timer is not started. Use /etimer start to start the timer.");
                 return 1;
@@ -71,18 +72,7 @@ public class Timer {
             // Display all step times with total time and step deltas
             PlayerUtils.sendModMessage("Timer stopped.");
             for (int i = 0; i < stepTimes.size(); i++) {
-                long stepTime = stepTimes.get(i);
-                String stepString = formatDeltaTime(stepTime);
-                String stepDeltaString;
-                if (i == 0) {
-                    stepDeltaString = stepString;
-                } else {
-                    long stepDelta = stepTime - stepTimes.get(i - 1);
-                    stepDeltaString = formatDeltaTime(stepDelta);
-                }
-                Component message = Component.empty().append(Component.text("Step " + (i + 1) + ": ", NamedTextColor.DARK_AQUA))
-                        .append(Component.text(stepDeltaString, NamedTextColor.GOLD, TextDecoration.BOLD))
-                        .append(Component.text(" [" + stepString + "]", NamedTextColor.YELLOW));
+                Component message = getTimerMessage(i);
                 PlayerUtils.sendMessage(message);
             }
             enabled = false;
@@ -91,6 +81,21 @@ public class Timer {
         }));
 
         register(command, "Timer [start,step,stop]", "Displays the elapsed time since starting the timer.");
+    }
+
+    private @NonNull Component getTimerMessage(int i) {
+        long stepTime = stepTimes.get(i);
+        String stepString = formatDeltaTime(stepTime);
+        String stepDeltaString;
+        if (i == 0) {
+            stepDeltaString = stepString;
+        } else {
+            long stepDelta = stepTime - stepTimes.get(i - 1);
+            stepDeltaString = formatDeltaTime(stepDelta);
+        }
+        return Component.empty().append(Component.text("Step " + (i + 1) + ": ", NamedTextColor.DARK_AQUA))
+                .append(Component.text(stepDeltaString, NamedTextColor.GOLD, TextDecoration.BOLD))
+                .append(Component.text(" [" + stepString + "]", NamedTextColor.YELLOW));
     }
 
     private void tick(LocalPlayer localPlayer) {

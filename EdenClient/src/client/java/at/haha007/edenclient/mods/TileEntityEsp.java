@@ -18,6 +18,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientChunkCache;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Registry;
@@ -71,7 +72,9 @@ public class TileEntityEsp {
             return;
         }
         ChunkPos chunkPos = player.chunkPosition();
-        ClientChunkCache cm = Minecraft.getInstance().level.getChunkSource();
+        ClientLevel level = Minecraft.getInstance().level;
+        if (level == null) return;
+        ClientChunkCache cm = level.getChunkSource();
         BlockPos pp = player.blockPosition();
         tileEntities = ChunkPos.rangeClosed(chunkPos, distance)
                 .flatMap(cp -> {
@@ -93,7 +96,7 @@ public class TileEntityEsp {
     private void registerCommand() {
         LiteralArgumentBuilder<FabricClientCommandSource> cmd = literal("etileentityesp");
         LiteralArgumentBuilder<FabricClientCommandSource> toggle = literal("toggle");
-        toggle.executes(c -> {
+        toggle.executes(_ -> {
             enabled = !enabled;
             sendModMessage(enabled ? "TileEntityEsp enabled" : "TileEntityEsp disabled");
             return 1;
@@ -103,7 +106,7 @@ public class TileEntityEsp {
 
         for (BlockEntityType<?> type : registry) {
             toggle.then(literal(Objects.requireNonNull(registry.getKey(type)).toString().replace("minecraft:", ""))
-                    .executes(c -> {
+                    .executes(_ -> {
                         if (types.contains(type)) {
                             types.remove(type);
                             sendModMessage("TileEntityType removed");
@@ -115,13 +118,13 @@ public class TileEntityEsp {
                     }));
         }
 
-        cmd.then(literal("tracer").executes(c -> {
+        cmd.then(literal("tracer").executes(_ -> {
             tracer = !tracer;
             sendModMessage(tracer ? "Tracer enabled" : "Tracer disabled");
             return 1;
         }));
 
-        cmd.then(literal("distance").executes(c -> {
+        cmd.then(literal("distance").executes(_ -> {
             sendModMessage(Component.text("Distance: ", NamedTextColor.GOLD)
                     .append(Component.text(distance, NamedTextColor.AQUA)));
             return 1;
@@ -132,7 +135,7 @@ public class TileEntityEsp {
             return 1;
         })));
 
-        cmd.then(literal("count").executes(c -> {
+        cmd.then(literal("count").executes(_ -> {
             sendModMessage(Component.text("Max count: ", NamedTextColor.GOLD)
                     .append(Component.text(maxCount, NamedTextColor.AQUA)));
 
@@ -144,7 +147,7 @@ public class TileEntityEsp {
             return 1;
         })));
 
-        cmd.then(literal("list").executes(c -> {
+        cmd.then(literal("list").executes(_ -> {
             String str = types.stream()
                     .map(BuiltInRegistries.BLOCK_ENTITY_TYPE::getKey)
                     .map(String::valueOf)
@@ -154,7 +157,7 @@ public class TileEntityEsp {
             return 1;
         }));
 
-        cmd.then(literal("tracer").executes(c -> {
+        cmd.then(literal("tracer").executes(_ -> {
             tracer = !tracer;
             sendModMessage(tracer ? "Tracer enabled" : "Tracer disabled");
             return 1;
@@ -163,7 +166,7 @@ public class TileEntityEsp {
         cmd.then(literal("color").then(arg("r").then(arg("g").then(arg("b")
                 .executes(this::setColor)))));
 
-        cmd.then(literal("clear").executes(c -> {
+        cmd.then(literal("clear").executes(_ -> {
             types.clear();
             sendModMessage("Cleared rendered types");
             return 1;

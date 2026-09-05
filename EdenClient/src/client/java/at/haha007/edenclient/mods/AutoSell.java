@@ -47,26 +47,26 @@ public class AutoSell {
     private void registerCommand(String cmd) {
         LiteralArgumentBuilder<FabricClientCommandSource> node = literal(cmd);
 
-        node.then(literal("toggle").executes(c -> {
+        node.then(literal("toggle").executes(_ -> {
             enabled = !enabled;
             sendModMessage(enabled ? "AutoSell enabled" : "AutoSell disabled");
             return 1;
         }));
 
-        node.then(literal("clear").executes(c -> {
+        node.then(literal("clear").executes(_ -> {
             autoSellItems.clear();
             sendModMessage("Removed all entries");
             return 1;
         }));
 
-        node.then(literal("list").executes(c -> {
+        node.then(literal("list").executes(_ -> {
             sendModMessage(autoSellItems.toString());
             return 1;
         }));
 
         DefaultedRegistry<Item> registry = BuiltInRegistries.ITEM;
         for (Item item : registry) {
-            node.then(literal("add").then(literal(registry.getKey(item).toString().replace("minecraft:", "")).executes(c -> {
+            node.then(literal("add").then(literal(registry.getKey(item).toString().replace("minecraft:", "")).executes(_ -> {
                 autoSellItems.add(item);
                 sendModMessage("Added /sell " + registry.getKey(item).getPath());
                 return 1;
@@ -80,7 +80,7 @@ public class AutoSell {
                 return 1;
             }
             if (autoSellItems.remove(opt.get()))
-                sendModMessage("Removed /sell " +registry.getKey(opt.get()).getPath());
+                sendModMessage("Removed /sell " + registry.getKey(opt.get()).getPath());
             else {
                 sendModMessage("Couldn't remove /sell " + registry.getKey(opt.get()).getPath() + " because it wasn't in your sell list.");
             }
@@ -88,14 +88,14 @@ public class AutoSell {
         })));
 
 
-        node.then(literal("stats").executes(c -> {
+        node.then(literal("stats").executes(_ -> {
             ClientPacketListener networkHandler = Minecraft.getInstance().getConnection();
             if (networkHandler == null) return -1;
             networkHandler.sendChat("/esellstatstracker global");
             return 1;
         }));
 
-        node.executes(c -> {
+        node.executes(_ -> {
             sendModMessage("/autosell clear");
             sendModMessage("/autosell list");
             sendModMessage("/autosell toggle");

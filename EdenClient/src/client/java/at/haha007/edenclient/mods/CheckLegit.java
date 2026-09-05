@@ -25,14 +25,14 @@ public class CheckLegit {
         PerWorldConfig.get().register(this, "checkLegit");
         ConfigLoadedCallback.EVENT.register(this::updateConfig, getClass());
         LiteralArgumentBuilder<FabricClientCommandSource> cmd = literal("echecklegit")
-                .executes(c -> {
+                .executes(_ -> {
                     sendStatusMessage(Component.text("Current status: "));
                     return 1;
-                }).then(literal("spectator").executes(c -> {
+                }).then(literal("spectator").executes(_ -> {
                     PlayerUtils.checkSpectator = !PlayerUtils.checkSpectator;
                     sendStatusMessage(Component.text("Spectator updated: "));
                     return 1;
-                })).then(literal("nearby").executes(c -> {
+                })).then(literal("nearby").executes(_ -> {
                     PlayerUtils.checkNearbyPlayers = !PlayerUtils.checkNearbyPlayers;
                     sendStatusMessage(Component.text("Nearby players updated: "));
                     return 1;

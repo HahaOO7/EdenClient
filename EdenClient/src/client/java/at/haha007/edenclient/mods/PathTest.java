@@ -3,19 +3,15 @@ package at.haha007.edenclient.mods;
 import at.haha007.edenclient.annotations.Mod;
 import at.haha007.edenclient.callbacks.GameRenderCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
-import at.haha007.edenclient.utils.EdenRenderUtils;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.Scheduler;
 import at.haha007.edenclient.utils.pathing.PathFinder;
 import at.haha007.edenclient.utils.pathing.PathRenderer;
 import at.haha007.edenclient.utils.pathing.segment.PathSegment;
 import at.haha007.edenclient.utils.pathing.segment.SegmentTaskAccumulator;
-import at.haha007.edenclient.utils.pathing.segmentcalculator.MasterSegmentCalculator;
-import at.haha007.edenclient.utils.pathing.segmentcalculator.SegmentCalculator;
 import at.haha007.edenclient.utils.tasks.TaskManager;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import fi.dy.masa.malilib.util.data.Color4f;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.kyori.adventure.text.Component;
 import net.minecraft.client.Minecraft;
@@ -25,7 +21,6 @@ import net.minecraft.world.phys.Vec3;
 import org.lwjgl.opengl.GL11;
 
 import java.awt.*;
-import java.util.Collection;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static at.haha007.edenclient.command.CommandManager.*;
@@ -84,15 +79,6 @@ public class PathTest {
     }
 
     private void render(float tickDelta) {
-
-        SegmentCalculator calculator = MasterSegmentCalculator.createDefault();
-        Collection<PathSegment> segments = calculator.calculateSegments(PlayerUtils.getPlayer().position());
-        for (PathSegment segment : segments) {
-            Vec3 to = segment.to();
-//            EdenRenderUtils.drawAreaOutline(to.add(-.2, 0, -.2), to.add(.2, .5, .2), Color4f.fromColor(Color.GREEN.getRGB()));
-        }
-
-
         if (!shouldRender) return;
         GL11.glEnable(GL11.GL_LINE_SMOOTH);
         GL11.glEnable(GL11.GL_DEPTH_TEST);
@@ -110,19 +96,19 @@ public class PathTest {
     private void registerCommand() {
         LiteralArgumentBuilder<FabricClientCommandSource> node = literal("epathtest");
 
-        node.executes(c -> {
+        node.executes(_ -> {
             shouldRender = !shouldRender;
             PlayerUtils.sendModMessage(shouldRender ? "Enabled" : "Disabled");
             return 1;
         }).then(argument("distance", DoubleArgumentType.doubleArg(1)).executes(c -> {
             startPathTowards(c.getArgument("distance", Double.class));
             return 1;
-        })).then(literal("clear").executes(c -> {
+        })).then(literal("clear").executes(_ -> {
             committedPath = null;
             calculatedPath = null;
             stopPathSearch();
             return 1;
-        })).then(literal("start").executes(c -> {
+        })).then(literal("start").executes(_ -> {
             if (segmentTaskAccumulator == null) {
                 PlayerUtils.sendModMessage("No path generated yet. Use /epathtest <distance> to generate a path.");
                 return 1;
@@ -135,7 +121,7 @@ public class PathTest {
             taskManager.then(() -> taskManager = null);
             taskManager.start();
             return 1;
-        })).then(literal("stop").executes(c -> {
+        })).then(literal("stop").executes(_ -> {
             if (taskManager != null) {
                 taskManager.cancel();
                 taskManager = null;

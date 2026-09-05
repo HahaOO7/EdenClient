@@ -2,16 +2,8 @@ package at.haha007.edenclient.mods;
 
 import at.haha007.edenclient.annotations.Mod;
 import at.haha007.edenclient.callbacks.ChatKeyCallback;
-import at.haha007.edenclient.utils.config.ConfigSubscriber;
-import at.haha007.edenclient.utils.config.PerWorldConfig;
-import net.minecraft.client.Minecraft;
-import net.minecraft.util.ArrayListDeque;
 
 import java.util.List;
-
-import static at.haha007.edenclient.command.CommandManager.literal;
-import static at.haha007.edenclient.command.CommandManager.register;
-import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 
 @Mod
 public class PageKeyChatCompletion {

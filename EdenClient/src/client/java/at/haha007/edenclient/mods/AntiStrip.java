@@ -4,22 +4,14 @@ import at.haha007.edenclient.annotations.Mod;
 import at.haha007.edenclient.callbacks.PlayerInteractBlockCallback;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
-import net.fabricmc.fabric.impl.tag.convention.v2.TagRegistration;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.core.Registry;
-import net.minecraft.core.RegistryAccess;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.levelgen.structure.templatesystem.TagMatchTest;
 import net.minecraft.world.phys.BlockHitResult;
 
 import java.util.Set;
@@ -50,7 +42,7 @@ public class AntiStrip {
 
     private void registerCommand() {
         var node = literal("eantistrip");
-        node.then(literal("toggle").executes(c -> {
+        node.then(literal("toggle").executes(_ -> {
             enabled = !enabled;
             sendModMessage((enabled ? "Enabled AntiStrip." : "Disabled AntiStrip."));
             return 1;

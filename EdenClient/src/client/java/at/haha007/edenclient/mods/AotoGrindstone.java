@@ -42,7 +42,7 @@ public class AotoGrindstone {
 
     private void registerCommand() {
         LiteralArgumentBuilder<FabricClientCommandSource> node = literal("eautogrindstone");
-        node.then(literal("toggle").executes(c -> {
+        node.then(literal("toggle").executes(_ -> {
             enabled = !enabled;
             PlayerUtils.sendModMessage((enabled ? "AutoGrindstone enabled" : "AutoGrindstone disabled"));
             return 1;

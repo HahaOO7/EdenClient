@@ -64,9 +64,9 @@ public class ContainerDisplay {
 
     public ContainerDisplay() {
         PlayerTickCallback.EVENT.register(this::tick, getClass());
-        ContainerCloseCallback.EVENT.register(t -> shouldUpdate = true, getClass());
-        UpdateLevelChunkCallback.EVENT.register(c -> updateLater(), getClass());
-        PlayerBreakBlockCallback.EVENT.register((a, b, c) -> updateLater(), getClass());
+        ContainerCloseCallback.EVENT.register(_ -> shouldUpdate = true, getClass());
+        UpdateLevelChunkCallback.EVENT.register(_ -> updateLater(), getClass());
+        PlayerBreakBlockCallback.EVENT.register((_, _, _) -> updateLater(), getClass());
         PerWorldConfig.get().register(this, "ContainerDisplay");
         LevelRenderEvents.AFTER_BLOCK_OUTLINE_EXTRACTION.register(this::render);
         registerCommand();
@@ -267,14 +267,14 @@ public class ContainerDisplay {
     private void registerCommand() {
         LiteralArgumentBuilder<FabricClientCommandSource> cmd = literal("econtainerdisplay");
         LiteralArgumentBuilder<FabricClientCommandSource> toggle = literal("toggle");
-        toggle.executes(c -> {
+        toggle.executes(_ -> {
             enabled = !enabled;
             shouldUpdate = true;
             sendModMessage(enabled ? "ContainerDisplay enabled" : "ContainerDisplay disabled");
             return 1;
         });
 
-        cmd.then(literal("clear").executes(c -> {
+        cmd.then(literal("clear").executes(_ -> {
             entries.clear();
             sendModMessage("Cleared cached containers.");
             return 1;

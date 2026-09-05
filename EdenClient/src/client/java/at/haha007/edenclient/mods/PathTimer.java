@@ -202,7 +202,7 @@ public class PathTimer {
 
     private void registerCommand() {
         LiteralArgumentBuilder<FabricClientCommandSource> command = literal("epathtimer");
-        command.then(literal("toggle").executes(c -> {
+        command.then(literal("toggle").executes(_ -> {
             enabled = !enabled;
             if (enabled) {
                 onEnable();
@@ -211,17 +211,17 @@ public class PathTimer {
             }
             return 1;
         }));
-        command.then(literal("start").executes(c -> {
+        command.then(literal("start").executes(_ -> {
             onEnable();
             return 1;
         }));
-        command.then(literal("stop").executes(c -> {
+        command.then(literal("stop").executes(_ -> {
             enabled = false;
             PlayerUtils.sendModMessage("Path timer stopped.");
             return 1;
         }));
 
-        command.then(literal("render").executes(c -> {
+        command.then(literal("render").executes(_ -> {
             shouldRender = !shouldRender;
             if (shouldRender) {
                 PlayerUtils.sendModMessage("Path timer rendering enabled.");
@@ -245,7 +245,7 @@ public class PathTimer {
                     return 1;
                 })));
         command.then(literal("load-path").then(argument("path", StringArgumentType.word())
-                .suggests((c, b) -> {
+                .suggests((_, b) -> {
                     savedPaths.keySet().forEach(b::suggest);
                     return b.buildFuture();
                 })
@@ -262,7 +262,7 @@ public class PathTimer {
                 })));
 
         command.then(literal("export-times").then(argument("path", StringArgumentType.word())
-                .suggests((c, b) -> {
+                .suggests((_, b) -> {
                     savedPaths.keySet().forEach(b::suggest);
                     return b.buildFuture();
                 })
@@ -291,7 +291,7 @@ public class PathTimer {
                     return 1;
                 })));
         command.then(literal("reset-times").then(argument("path", StringArgumentType.word())
-                .suggests((c, b) -> {
+                .suggests((_, b) -> {
                     savedPaths.keySet().forEach(b::suggest);
                     return b.buildFuture();
                 })
@@ -332,7 +332,7 @@ public class PathTimer {
     }
 
     private @NonNull LiteralArgumentBuilder<FabricClientCommandSource> createCheckpointCommand() {
-        LiteralArgumentBuilder<FabricClientCommandSource> checkpointCommand = literal("checkpoint").executes(c -> {
+        LiteralArgumentBuilder<FabricClientCommandSource> checkpointCommand = literal("checkpoint").executes(_ -> {
             if (checkpointsEnabled) {
                 checkpointsEnabled = false;
                 PlayerUtils.sendModMessage("Checkpoint areas disabled.");
@@ -344,7 +344,7 @@ public class PathTimer {
         });
 
         LiteralArgumentBuilder<FabricClientCommandSource> addCommand = literal("add");
-        List<ArgumentBuilder<FabricClientCommandSource, ?>> addCmds = BlockArea.commands((context, area) -> {
+        List<ArgumentBuilder<FabricClientCommandSource, ?>> addCmds = BlockArea.commands((_, area) -> {
             Path path = loadedPath();
             if (path == null) {
                 PlayerUtils.sendModMessage("No path loaded. Set a path key first.");
@@ -361,7 +361,7 @@ public class PathTimer {
         checkpointCommand.then(addCommand);
 
         RequiredArgumentBuilder<FabricClientCommandSource, Integer> insertCommand = argument("checkpoint", IntegerArgumentType.integer(1))
-                .suggests((c, b) -> {
+                .suggests((_, b) -> {
                     Path path = loadedPath();
                     if (path == null) return b.buildFuture();
                     int size = path.path.size();
@@ -389,7 +389,7 @@ public class PathTimer {
         }
         checkpointCommand.then(literal("insert").then(insertCommand));
 
-        checkpointCommand.then(literal("list").executes(c -> {
+        checkpointCommand.then(literal("list").executes(_ -> {
             Path path = loadedPath();
             if (path == null) {
                 PlayerUtils.sendModMessage("No path loaded. Set a path key first.");
@@ -407,7 +407,7 @@ public class PathTimer {
             return 1;
         }));
 
-        checkpointCommand.then(literal("clear").executes(c -> {
+        checkpointCommand.then(literal("clear").executes(_ -> {
             Path path = loadedPath();
             if (path == null) {
                 PlayerUtils.sendModMessage("No path loaded. Set a path key first.");
@@ -436,7 +436,7 @@ public class PathTimer {
             return 1;
         })));
 
-        checkpointCommand.then(literal("nearest").executes(c -> {
+        checkpointCommand.then(literal("nearest").executes(_ -> {
             Path path = loadedPath();
             if (path == null) {
                 PlayerUtils.sendModMessage("No path loaded. Set a path key first.");
@@ -473,7 +473,7 @@ public class PathTimer {
         if (loadedPathKey == null) {
             return null;
         }
-        return savedPaths.computeIfAbsent(loadedPathKey, k -> new Path(new SavableBlockAreaList(), new PathTimesList()));
+        return savedPaths.computeIfAbsent(loadedPathKey, _ -> new Path(new SavableBlockAreaList(), new PathTimesList()));
     }
 
     private void onRender(float deltaTick) {

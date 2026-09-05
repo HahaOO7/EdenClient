@@ -36,13 +36,13 @@ public class AntiSpam {
     public AntiSpam() {
         registerCommand();
         AddChatMessageCallback.EVENT.register(this::onChat, getClass());
-        PlayerTickCallback.EVENT.register(p -> ticksPassed++, getClass());
+        PlayerTickCallback.EVENT.register(_ -> ticksPassed++, getClass());
         PerWorldConfig.get().register(this, "antiSpam");
     }
 
     private void registerCommand() {
         LiteralArgumentBuilder<FabricClientCommandSource> node = literal("eantispam");
-        node.then(literal("toggle").executes(c -> {
+        node.then(literal("toggle").executes(_ -> {
             enabled = !enabled;
             sendModMessage((enabled ? "Antispam enabled" : "Antispam disabled"));
             return 1;

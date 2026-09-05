@@ -45,10 +45,16 @@ public class AutoMoss {
         if (!enabled || ((tick++) % 3 != 0)) {
             return;
         }
-        if(PlayerUtils.shouldPlayLegit()) return;
-        if (player.getInventory().getSelectedItem().getItem() != Items.BONE_MEAL)
+        if(PlayerUtils.shouldPlayLegit()) {
             return;
+        }
+        if (player.getInventory().getSelectedItem().getItem() != Items.BONE_MEAL) {
+            return;
+        }
         ClientLevel world = Minecraft.getInstance().level;
+        if (world == null) {
+            return;
+        }
         Optional<BlockPos> moss = getNearby(player)
                 .filter(bp -> world.getBlockState(bp).getBlock() == Blocks.MOSS_BLOCK)
                 .filter(bp -> world.getBlockState(bp.offset(0, 1, 0)).getBlock() == Blocks.AIR)
@@ -60,12 +66,16 @@ public class AutoMoss {
 
     private boolean hasStoneNeighbor(BlockPos blockPos) {
         ClientLevel world = Minecraft.getInstance().level;
+        if (world == null) {
+            return false;
+        }
         ResourceKey<? extends Registry<Block>> registry = BlockTags.MOSS_REPLACEABLE.registry();
         RegistryAccess manager = world.registryAccess();
         for (BlockPos pos : BlockPos.betweenClosed(blockPos.offset(-1, -1, -1), blockPos.offset(1, 1, 1))) {
             Identifier id = BuiltInRegistries.BLOCK.getKey(world.getBlockState(pos).getBlock());
-            if (manager.lookupOrThrow(registry).containsKey(id) && world.getBlockState(pos.offset(0, 1, 0)).getBlock() == Blocks.AIR)
+            if (manager.lookupOrThrow(registry).containsKey(id) && world.getBlockState(pos.offset(0, 1, 0)).getBlock() == Blocks.AIR) {
                 return true;
+            }
         }
         return false;
     }
@@ -80,7 +90,9 @@ public class AutoMoss {
         BlockPos bp = new BlockPos(target);
         Direction dir = Direction.UP;
         MultiPlayerGameMode im = Minecraft.getInstance().gameMode;
-        if (im == null) return;
+        if (im == null) {
+            return;
+        }
         im.useItemOn(getPlayer(), InteractionHand.MAIN_HAND, new BlockHitResult(Vec3.atLowerCornerOf(bp.relative(dir)), dir, bp, false));
     }
 
@@ -90,7 +102,7 @@ public class AutoMoss {
 
     private void registerCommand() {
         LiteralArgumentBuilder<FabricClientCommandSource> cmd = literal("eautomoss");
-        cmd.executes(c -> {
+        cmd.executes(_ -> {
             enabled = !enabled;
             sendModMessage(enabled ? "AutoMoss enabled" : "AutoMoss disabled");
             return 1;

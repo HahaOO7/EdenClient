@@ -90,7 +90,9 @@ public class HeadHunt {
         }
         if (PlayerUtils.shouldPlayLegit()) return;
         ChunkPos chunkPos = player.chunkPosition();
-        ClientChunkCache cm = Minecraft.getInstance().level.getChunkSource();
+        ClientLevel level = Minecraft.getInstance().level;
+        if (level == null) return;
+        ClientChunkCache cm = level.getChunkSource();
         BlockPos pp = player.blockPosition();
         heads = ChunkPos.rangeClosed(chunkPos, 20)
                 .flatMap(cp -> {
@@ -177,31 +179,31 @@ public class HeadHunt {
     private void registerCommand() {
         LiteralArgumentBuilder<FabricClientCommandSource> cmd = literal("eheadhunt");
         LiteralArgumentBuilder<FabricClientCommandSource> toggle = literal("toggle");
-        toggle.executes(c -> {
+        toggle.executes(_ -> {
             enabled = !enabled;
             sendModMessage(enabled ? "HeadHunt enabled" : "HeadHunt disabled");
             return 1;
         });
 
-        cmd.then(literal("tracer").executes(c -> {
+        cmd.then(literal("tracer").executes(_ -> {
             tracer = !tracer;
             sendModMessage(tracer ? "Tracer enabled" : "Tracer disabled");
             return 1;
         }));
 
-        cmd.then(literal("tracer").executes(c -> {
+        cmd.then(literal("tracer").executes(_ -> {
             tracer = !tracer;
             sendModMessage(tracer ? "Tracer enabled" : "Tracer disabled");
             return 1;
         }));
 
-        cmd.then(literal("click").executes(c -> {
+        cmd.then(literal("click").executes(_ -> {
             clickHeads = !clickHeads;
             sendModMessage(clickHeads ? "Atomatic click enabled" : "Atomatic click disabled");
             return 1;
         }));
 
-        cmd.then(literal("follow").executes(c -> {
+        cmd.then(literal("follow").executes(_ -> {
             follow = !follow;
             path = null;
             sendModMessage(follow ? "Atomatic walk to next head enabled" : "Atomatic walk to next head disabled");

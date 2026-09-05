@@ -49,8 +49,8 @@ public class EdenStorageMod {
     public EdenStorageMod() {
         registerPayloadTypes();
 
-        // 2. Setup the receiver
-        ClientPlayNetworking.registerGlobalReceiver(EdenStoragePayload.TYPE, (payload, context) -> {
+        // 2. Set up the receiver
+        ClientPlayNetworking.registerGlobalReceiver(EdenStoragePayload.TYPE, (payload, _) -> {
             String serverMsg = payload.esPayloadType();
             byte[] data = payload.data();
             if (serverMsg.equals("store_data")) {
@@ -142,23 +142,24 @@ public class EdenStorageMod {
     }
 
     public static byte[] decompress(byte[] compressedData) throws IOException {
-        Inflater inflater = new Inflater();
-        inflater.setInput(compressedData);
+        ByteArrayOutputStream outputStream;
+        try (Inflater inflater = new Inflater()) {
+            inflater.setInput(compressedData);
 
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream(compressedData.length);
-        byte[] buffer = new byte[1024];
+            outputStream = new ByteArrayOutputStream(compressedData.length);
+            byte[] buffer = new byte[1024];
 
-        try {
-            while (!inflater.finished()) {
-                int count = inflater.inflate(buffer);
-                outputStream.write(buffer, 0, count);
+            try {
+                while (!inflater.finished()) {
+                    int count = inflater.inflate(buffer);
+                    outputStream.write(buffer, 0, count);
+                }
+            } catch (DataFormatException e) {
+                throw new IOException("Data format exception during decompression", e);
+            } finally {
+                inflater.end();
             }
-        } catch (DataFormatException e) {
-            throw new IOException("Data format exception during decompression", e);
-        } finally {
-            inflater.end();
         }
-
         return outputStream.toByteArray();
     }
 

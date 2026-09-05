@@ -16,6 +16,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -48,14 +49,14 @@ public class SignEdit {
 
     public SignEdit() {
         PlayerEditSignCallback.EVENT.register(this::onEditSign, getClass());
-        PlayerAttackBlockCallback.EVENT.register(this::onAttackBlock, getClass());
+        PlayerAttackBlockCallback.EVENT.register((_, side, side2) -> onAttackBlock(side, side2), getClass());
         registerCommand();
         PerWorldConfig.get().register(this, "signEdit");
     }
 
     private void registerCommand() {
         var node = literal("esignedit");
-        node.then(literal("toggle").executes(c -> {
+        node.then(literal("toggle").executes(_ -> {
             enabled = !enabled;
             sendModMessage((enabled ? "SignEdit enabled" : "SignEdit disabled"));
             return 1;
@@ -79,7 +80,7 @@ public class SignEdit {
     }
 
     @SuppressWarnings("ConstantConditions")
-    private InteractionResult onAttackBlock(LocalPlayer entity, BlockPos pos, Direction side) {
+    private InteractionResult onAttackBlock(BlockPos pos, Direction ignoredSide) {
         if (!enabled) return InteractionResult.PASS;
         BlockEntity b = Minecraft.getInstance().level.getBlockEntity(pos);
         Registry<Item> registry = Minecraft.getInstance().level.registryAccess().lookupOrThrow(ItemTags.SIGNS.registry());
@@ -96,18 +97,20 @@ public class SignEdit {
             this.copy.addAll(Arrays.asList(copiedLines));
             return InteractionResult.FAIL;
         } else if (b instanceof Container) {
-            return handlePipeSignCreation(entity, pos);
+            return handlePipeSignCreation(pos);
         } else {
             return InteractionResult.PASS;
         }
     }
 
-    private @NotNull InteractionResult handlePipeSignCreation(LocalPlayer entity, BlockPos pos) {
+    private @NotNull InteractionResult handlePipeSignCreation(BlockPos pos) {
         if (!PluginSignature.CRAFTBOOK.isPluginPresent()) return InteractionResult.PASS;
         DataFetcher dataFetcher = EdenClient.getMod(DataFetcher.class);
         ContainerInfo containerInfoMod = dataFetcher.getContainerInfo();
         if (containerInfoMod == null) return InteractionResult.PASS;
-        ContainerInfo.ChestMap chunkMap = containerInfoMod.getContainerInfo(Minecraft.getInstance().level.getChunk(pos).getPos());
+        ClientLevel level = Minecraft.getInstance().level;
+        if (level == null) return InteractionResult.PASS;
+        ContainerInfo.ChestMap chunkMap = containerInfoMod.getContainerInfo(level.getChunk(pos).getPos());
         if (chunkMap == null) return InteractionResult.PASS;
         ContainerInfo.ChestInfo chestInfo = chunkMap.get(pos);
         if (chestInfo == null) return InteractionResult.PASS;

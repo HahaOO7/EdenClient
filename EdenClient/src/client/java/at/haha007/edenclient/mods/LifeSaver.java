@@ -37,7 +37,7 @@ public class LifeSaver {
     private void registerCommand() {
         LiteralArgumentBuilder<FabricClientCommandSource> node = literal("elifesaver");
 
-        node.then(literal("toggle").executes(c -> {
+        node.then(literal("toggle").executes(_ -> {
             enabled = !enabled;
             sendModMessage((enabled ? "Enabled LifeSaver." : "Disabled LifeSaver."));
             return 1;

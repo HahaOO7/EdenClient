@@ -41,7 +41,7 @@ public class NbtInfo {
     }
 
     private void registerCommand() {
-        CommandManager.register(literal("enbt").executes(c -> {
+        CommandManager.register(literal("enbt").executes(_ -> {
                     LocalPlayer player = PlayerUtils.getPlayer();
                     Inventory inv = player.getInventory();
                     ItemStack stack = inv.getSelectedItem();
@@ -59,7 +59,7 @@ public class NbtInfo {
                         }
                     }
                     return 1;
-                }).then(literal("set-key").executes(c -> {
+                }).then(literal("set-key").executes(_ -> {
                     EdenClient.getMod(Scheduler.class).scheduleSyncDelayed(() ->
                             Minecraft.getInstance().setScreen(new PressKeyScreen(k -> NbtInfo.this.key = k)), 1);
                     return 1;

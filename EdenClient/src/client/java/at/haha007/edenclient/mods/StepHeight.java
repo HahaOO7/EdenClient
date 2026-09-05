@@ -34,11 +34,11 @@ public class StepHeight {
             height = c.getArgument("height", Float.class);
             PlayerUtils.sendModMessage("Set step height to " + height);
             return 1;
-        })).then(literal("reset").executes(c -> {
+        })).then(literal("reset").executes(_ -> {
             height = Float.NaN;
             PlayerUtils.sendModMessage("Set step height reset");
             return 1;
-        })).executes(c -> {
+        })).executes(_ -> {
             PlayerUtils.sendModMessage("Current step height is " + height);
             return 1;
         });

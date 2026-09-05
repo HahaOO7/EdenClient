@@ -18,8 +18,6 @@ import net.minecraft.world.level.block.state.properties.DoorHingeSide;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.Objects;
-
 import static at.haha007.edenclient.command.CommandManager.literal;
 import static at.haha007.edenclient.command.CommandManager.register;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
@@ -38,7 +36,7 @@ public class DoubleDoor {
 
     private void registerCommand() {
         var node = literal("edoubledoor");
-        node.then(literal("toggle").executes(c -> {
+        node.then(literal("toggle").executes(_ -> {
             enabled = !enabled;
             sendModMessage((enabled ? "Enabled DoubleDoor." : "Disabled DoubleDoor."));
             return 1;

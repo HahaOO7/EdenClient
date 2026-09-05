@@ -35,7 +35,7 @@ public class GetTo {
 
     public GetTo() {
         registerCommand();
-        GameRenderCallback.EVENT.register(f -> render(), getClass());
+        GameRenderCallback.EVENT.register(_ -> render(), getClass());
         PlayerTickCallback.EVENT.register(this::tick, getClass());
     }
 
@@ -62,7 +62,7 @@ public class GetTo {
             BlockPos pos = CBlockPosArgument.getBlockPos(c, "target");
             getTo(pos, true, true, true);
             return 1;
-        }).then(argument("tags", StringArgumentType.word()).suggests((c, b) -> {
+        }).then(argument("tags", StringArgumentType.word()).suggests((_, b) -> {
             b.suggest("-t");
             b.suggest("-b");
             b.suggest("-p");
@@ -82,7 +82,7 @@ public class GetTo {
             getTo(pos, tags.contains("t"), tags.contains("b"), tags.contains("p"));
             return 1;
         })));
-        cmd.then(literal("clear").executes(c -> {
+        cmd.then(literal("clear").executes(_ -> {
             target = null;
             PlayerUtils.sendModMessage("Target disabled");
             return 1;

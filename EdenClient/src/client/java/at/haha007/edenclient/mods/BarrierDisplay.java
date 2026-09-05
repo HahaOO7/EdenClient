@@ -39,14 +39,23 @@ public class BarrierDisplay {
     }
 
     private void onTick(LocalPlayer player) {
-        if (!enabled) return;
+        if (!enabled) {
+            return;
+        }
         tickCounter++;
-        if (player.getInventory().getSelectedItem().getItem() == Items.BARRIER) return;
+        if (player.getInventory().getSelectedItem().getItem() == Items.BARRIER) {
+            return;
+        }
         Vec3 cameraPos = EdenRenderUtils.getCameraPos();
-        if (cameraPos == null) return;
+        if (cameraPos == null) {
+            return;
+        }
         BlockPos center = new BlockPos((int) cameraPos.x, (int) cameraPos.y, (int) cameraPos.z);
         BlockParticleOption effect = new BlockParticleOption(ParticleTypes.BLOCK_MARKER, Blocks.BARRIER.defaultBlockState());
         ClientLevel level = Minecraft.getInstance().level;
+        if (level == null) {
+            return;
+        }
         ParticleEngine particleEngine = Minecraft.getInstance().particleEngine;
         BlockPos.withinManhattanStream(center, range, range, range)
                 .filter(bp -> level.getBlockState(bp).getBlock() == Blocks.BARRIER)
@@ -69,11 +78,11 @@ public class BarrierDisplay {
             range = c.getArgument("range", Integer.class);
             sendModMessage(("Barrier display range is " + range));
             return 1;
-        })).executes(c -> {
+        })).executes(_ -> {
             sendModMessage(("Barrier display range is " + range));
             return 1;
         }));
-        node.then(literal("toggle").executes(c -> {
+        node.then(literal("toggle").executes(_ -> {
             enabled = !enabled;
             sendModMessage(enabled ? "Enabled barrierdisplay." : "Disabled barrierdisplay");
             return 1;

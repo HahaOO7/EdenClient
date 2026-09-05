@@ -77,7 +77,7 @@ public class WorldEditReplaceHelper {
                     return replaceCommandRequest(fromBlock, toBlock, delay, true);
                 }))));
 
-        node.then(literal("undo").executes(c -> {
+        node.then(literal("undo").executes(_ -> {
             if (undoCommandStack.isEmpty()) {
                 sendModMessage("Nothing left to undo.");
                 return 0;
@@ -90,7 +90,7 @@ public class WorldEditReplaceHelper {
             return 1;
         }));
 
-        node.then(literal("redo").executes(c -> {
+        node.then(literal("redo").executes(_ -> {
             if (redoCommandStack.isEmpty()) {
                 sendModMessage("Nothing left to redo.");
                 return 0;
@@ -111,7 +111,7 @@ public class WorldEditReplaceHelper {
             return 1;
         })));
 
-        node.then(literal("togglemessages").executes(c -> {
+        node.then(literal("togglemessages").executes(_ -> {
 
             LocalPlayer entityPlayer = PlayerUtils.getPlayer();
 
@@ -120,7 +120,7 @@ public class WorldEditReplaceHelper {
             return 1;
         }));
 
-        node.requires(c -> PluginSignature.WORLDEDIT.isPluginPresent());
+        node.requires(_ -> PluginSignature.WORLDEDIT.isPluginPresent());
 
         register(node,
                 "The WorldEditReplaceHelper helps you replace blocks that have specific properties which normal WorldEdit doesn't take into consideration when replacing blocks.",

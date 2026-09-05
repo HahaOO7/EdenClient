@@ -15,6 +15,7 @@ import com.mojang.brigadier.context.CommandContext;
 import fi.dy.masa.malilib.util.data.Color4f;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.DefaultedRegistry;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -63,7 +64,11 @@ public class EntityEsp {
             entities = new ArrayList<>();
             return;
         }
-        entities = Minecraft.getInstance().level.getEntitiesOfClass(Entity.class,
+        ClientLevel level = Minecraft.getInstance().level;
+        if (level == null) {
+            return;
+        }
+        entities = level.getEntitiesOfClass(Entity.class,
                 player.getBoundingBox().inflate(10000, 500, 10000),
                 e -> entityTypes.contains(e.getType()) && e.isAlive() && e != player);
     }
@@ -76,7 +81,7 @@ public class EntityEsp {
     private void registerCommand() {
         LiteralArgumentBuilder<FabricClientCommandSource> cmd = literal("eentityesp");
         LiteralArgumentBuilder<FabricClientCommandSource> toggle = literal("toggle");
-        toggle.executes(c -> {
+        toggle.executes(_ -> {
             enabled = !enabled;
             sendModMessage(enabled ? "EntityEsp enabled" : "EntityEsp disabled");
             return 1;
@@ -84,7 +89,7 @@ public class EntityEsp {
 
         DefaultedRegistry<EntityType<?>> registry = BuiltInRegistries.ENTITY_TYPE;
         for (EntityType<?> type : registry) {
-            toggle.then(literal(registry.getKey(type).toString().replace("minecraft:", "")).executes(c -> {
+            toggle.then(literal(registry.getKey(type).toString().replace("minecraft:", "")).executes(_ -> {
                 if (!entityTypes.contains(type)) {
                     add(type);
                     sendModMessage("Enabled EntityEsp for EntityType " + type.toShortString());
@@ -96,13 +101,13 @@ public class EntityEsp {
             }));
         }
 
-        cmd.then(literal("clear").executes(c -> {
+        cmd.then(literal("clear").executes(_ -> {
             entityTypes.clear();
             sendModMessage("EntityEsp cleared!");
             return 1;
         }));
 
-        cmd.then(literal("list").executes(c -> {
+        cmd.then(literal("list").executes(_ -> {
             String str = entityTypes.stream()
                     .map(BuiltInRegistries.ENTITY_TYPE::getKey)
                     .map(Identifier::toString)
@@ -113,7 +118,7 @@ public class EntityEsp {
         }));
 
 
-        cmd.then(literal("tracer").executes(c -> {
+        cmd.then(literal("tracer").executes(_ -> {
             tracer = !tracer;
             sendModMessage(tracer ? "Tracer enabled" : "Tracer disabled");
             return 1;

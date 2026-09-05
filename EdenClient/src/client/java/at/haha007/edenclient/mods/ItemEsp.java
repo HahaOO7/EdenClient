@@ -14,6 +14,7 @@ import com.mojang.brigadier.context.CommandContext;
 import fi.dy.masa.malilib.util.data.Color4f;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.phys.AABB;
@@ -49,7 +50,9 @@ public class ItemEsp {
     }
 
     private void tick(LocalPlayer player) {
-        items = Minecraft.getInstance().level.getEntitiesOfClass(ItemEntity.class, player.getBoundingBox().inflate(10000, 500, 10000), i -> true);
+        ClientLevel level = Minecraft.getInstance().level;
+        if (level == null) return;
+        items = level.getEntitiesOfClass(ItemEntity.class, player.getBoundingBox().inflate(10000, 500, 10000), _ -> true);
     }
 
     private void render(float tickDelta) {
@@ -69,7 +72,7 @@ public class ItemEsp {
     private void registerCommand() {
         LiteralArgumentBuilder<FabricClientCommandSource> node = literal("eitemesp");
 
-        node.then(literal("toggle").executes(c -> {
+        node.then(literal("toggle").executes(_ -> {
             enabled = !enabled;
             sendModMessage(("Item ESP " + (enabled ? "enabled" : "disabled")));
             return 1;
@@ -80,7 +83,7 @@ public class ItemEsp {
             return 0;
         })))));
 
-        node.executes(c -> {
+        node.executes(_ -> {
             sendModMessage("/itemesp toggle");
             sendModMessage("/itemesp solid");
             sendModMessage("/itemesp size <size>");

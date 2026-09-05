@@ -51,7 +51,7 @@ public class PrintPicture {
             }).start();
             return 1;
         })));
-        cmd = cmd.then(literal("legacy").executes(c -> {
+        cmd = cmd.then(literal("legacy").executes(_ -> {
             legacyFormatting = !legacyFormatting;
             String message = "Legacy formatting is now " + (legacyFormatting ? "enabled" : "disabled") + ".";
             PlayerUtils.sendModMessage(Component.text(message).color(NamedTextColor.GREEN));

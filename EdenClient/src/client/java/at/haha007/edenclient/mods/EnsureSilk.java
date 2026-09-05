@@ -12,6 +12,7 @@ import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -49,26 +50,36 @@ public class EnsureSilk {
     }
 
     private InteractionResult onAttackBlock(LocalPlayer localPlayer, BlockPos blockPos, Direction direction) {
-        if (!enabled) return InteractionResult.PASS;
-        Block block = Minecraft.getInstance().level.getBlockState(blockPos).getBlock();
-        if (!filter.contains(block)) return InteractionResult.PASS;
+        if (!enabled) {
+            return InteractionResult.PASS;
+        }
+        ClientLevel level = Minecraft.getInstance().level;
+        if (level == null) {
+            return InteractionResult.PASS;
+        }
+        Block block = level.getBlockState(blockPos).getBlock();
+        if (!filter.contains(block)) {
+            return InteractionResult.PASS;
+        }
         ItemStack tool = localPlayer.getMainHandItem();
-        if (tool.isEmpty()) return InteractionResult.FAIL;
-        Holder.Reference<Enchantment> silk = Minecraft.getInstance().level.registryAccess().lookup(Registries.ENCHANTMENT).orElseThrow().get(Enchantments.SILK_TOUCH).orElseThrow();
+        if (tool.isEmpty()) {
+            return InteractionResult.FAIL;
+        }
+        Holder.Reference<Enchantment> silk = level.registryAccess().lookup(Registries.ENCHANTMENT).orElseThrow().get(Enchantments.SILK_TOUCH).orElseThrow();
         boolean hasSilkTouch = tool.getEnchantments().getLevel(silk) > 0;
         return hasSilkTouch ? InteractionResult.PASS : InteractionResult.FAIL;
     }
 
     private void registerCommand() {
         LiteralArgumentBuilder<FabricClientCommandSource> node = literal("eensuresilk");
-        node.then(literal("toggle").executes(c -> {
+        node.then(literal("toggle").executes(_ -> {
             enabled = !enabled;
             PlayerUtils.sendModMessage((enabled ? "SilkTouch enabled" : "SilkTouch disabled"));
             return 1;
         }));
         node.then(addCommand());
         node.then(removeCommand());
-        node.then(literal("clear").executes(c -> {
+        node.then(literal("clear").executes(_ -> {
             filter.clear();
             PlayerUtils.sendModMessage("Cleared filter");
             return 1;
@@ -81,7 +92,7 @@ public class EnsureSilk {
         LiteralArgumentBuilder<FabricClientCommandSource> cmd = literal("add");
         BuiltInRegistries.BLOCK.forEach(block -> {
             String name = BuiltInRegistries.BLOCK.getKey(block).getPath();
-            cmd.then(literal(name).executes(context -> {
+            cmd.then(literal(name).executes(_ -> {
                 filter.add(block);
                 PlayerUtils.sendModMessage("Added " + name);
                 return 1;
@@ -92,7 +103,7 @@ public class EnsureSilk {
 
     private ArgumentBuilder<FabricClientCommandSource, ?> removeCommand() {
         LiteralArgumentBuilder<FabricClientCommandSource> cmd = literal("remove");
-        cmd.then(argument("type", StringArgumentType.word()).suggests((context, builder) -> {
+        cmd.then(argument("type", StringArgumentType.word()).suggests((_, builder) -> {
             for (Block block : filter) {
                 builder.suggest(BuiltInRegistries.BLOCK.getKey(block).getPath());
             }

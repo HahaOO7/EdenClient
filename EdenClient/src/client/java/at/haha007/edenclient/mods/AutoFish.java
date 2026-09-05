@@ -32,12 +32,12 @@ public class AutoFish {
 
     private void registerCommand() {
         LiteralArgumentBuilder<FabricClientCommandSource> node = literal("eautofish");
-        node.then(literal("toggle").executes(c -> {
+        node.then(literal("toggle").executes(_ -> {
             enabled = !enabled;
             PlayerUtils.sendModMessage((enabled ? "AutoFish enabled" : "AutoFish disabled"));
             return 1;
         }));
-        node.then(literal("turn").executes(c -> {
+        node.then(literal("turn").executes(_ -> {
                     PlayerUtils.sendModMessage("Turning %.2f after fish".formatted(turn));
                     return 1;
                 }).then(argument("turn", CAngleArgument.angle()).executes(c -> {

@@ -58,8 +58,12 @@ public class Excavator {
     }
 
     private void tick(LocalPlayer player) {
-        if (!enabled) return;
-        if (PlayerUtils.shouldPlayLegit()) return;
+        if (!enabled) {
+            return;
+        }
+        if (PlayerUtils.shouldPlayLegit()) {
+            return;
+        }
         if (area == null) {
             PlayerUtils.sendModMessage("Excavator area not defined");
             enabled = false;
@@ -76,21 +80,29 @@ public class Excavator {
             }
             return;
         }
-        if (target.tick(player)) target = null;
+        if (target.tick(player)) {
+            target = null;
+        }
     }
 
     private Target dropDownTarget(LocalPlayer player) {
         BlockPos playerPos = player.blockPosition();
         int floorY = playerPos.getY() - 1;
         BlockPos dropPos = area.stream().filter(p -> p.getY() == floorY).min(Comparator.comparingDouble(pos -> pos.distSqr(playerPos))).map(BlockPos::above).orElse(null);
-        if (dropPos == null) return null;
+        if (dropPos == null) {
+            return null;
+        }
         BlockPos dropFloor = dropPos.below().below();
-        BlockState state = Minecraft.getInstance().level.getBlockState(dropFloor);
+        ClientLevel level = Minecraft.getInstance().level;
+        if (level == null) {
+            return null;
+        }
+        BlockState state = level.getBlockState(dropFloor);
         //if it is not safe to drop
-        if (!state.getShape(Minecraft.getInstance().level, dropFloor).isEmpty() && !state.isFaceSturdy(Minecraft.getInstance().level, dropFloor, Direction.UP)) {
+        if (!state.getShape(level, dropFloor).isEmpty() && !state.isFaceSturdy(level, dropFloor, Direction.UP)) {
             return new Target(dropFloor, 5, breakBlockTargetAction(dropFloor));
         }
-        if (state.isFaceSturdy(Minecraft.getInstance().level, dropFloor, Direction.UP)) {
+        if (state.isFaceSturdy(level, dropFloor, Direction.UP)) {
             Vec3 center = Vec3.atBottomCenterOf(playerPos);
 
             return new Target(dropFloor, 5, new BooleanSupplier() {
@@ -98,7 +110,9 @@ public class Excavator {
                 private final BooleanSupplier destroyBlock = breakBlockTargetAction(dropFloor.above());
 
                 public boolean getAsBoolean() {
-                    if (!destroyBlock.getAsBoolean()) return false;
+                    if (!destroyBlock.getAsBoolean()) {
+                        return false;
+                    }
                     return noActionDelay++ >= 10;
                 }
             }) {
@@ -119,11 +133,17 @@ public class Excavator {
     private Target findTarget(LocalPlayer player) {
         BlockPos playerPos = player.blockPosition();
         Target foundTarget = areaTarget(playerPos);
-        if (foundTarget != null) return foundTarget;
+        if (foundTarget != null) {
+            return foundTarget;
+        }
         foundTarget = ceilingTarget(playerPos);
-        if (foundTarget != null) return foundTarget;
+        if (foundTarget != null) {
+            return foundTarget;
+        }
         foundTarget = floorTarget(playerPos);
-        if (foundTarget != null) return foundTarget;
+        if (foundTarget != null) {
+            return foundTarget;
+        }
         foundTarget = wallTarget(playerPos);
         return foundTarget;
     }
@@ -147,7 +167,9 @@ public class Excavator {
         int maxY = playerPos.getY() + 4;
         List<BlockPos> c = area.ceilingStream().filter(p -> filterMinY(minY, p)).filter(p -> p.getY() < maxY).sorted(Comparator.comparingDouble(playerPos::distManhattan)).toList();
         Optional<Target> optionalTarget = c.stream().map(this::breakWaterloggedTarget).filter(Objects::nonNull).findFirst();
-        if (optionalTarget.isPresent()) return optionalTarget.get();
+        if (optionalTarget.isPresent()) {
+            return optionalTarget.get();
+        }
 
         optionalTarget = c.stream().map(this::placeTarget).filter(Objects::nonNull).findFirst();
         return optionalTarget.orElse(null);
@@ -158,7 +180,9 @@ public class Excavator {
         int maxY = playerPos.getY() + 2;
         List<BlockPos> c = area.floorStream().filter(p -> filterMinY(minY, p)).filter(p -> p.getY() < maxY).sorted(Comparator.comparingDouble(playerPos::distManhattan)).toList();
         Optional<Target> foundTarget = c.stream().map(this::breakWaterloggedTarget).filter(Objects::nonNull).findFirst();
-        if (foundTarget.isPresent()) return foundTarget.get();
+        if (foundTarget.isPresent()) {
+            return foundTarget.get();
+        }
 
         foundTarget = c.stream().map(this::placeTarget).filter(Objects::nonNull).findFirst();
         return foundTarget.orElse(null);
@@ -169,7 +193,9 @@ public class Excavator {
         int maxY = playerPos.getY() + 2;
         List<BlockPos> c = area.wallStream().filter(p -> filterMinY(minY, p)).filter(p -> p.getY() < maxY).sorted(Comparator.comparingDouble(playerPos::distManhattan)).toList();
         Optional<Target> foundTarget = c.stream().map(this::breakWaterloggedTarget).filter(Objects::nonNull).findFirst();
-        if (foundTarget.isPresent()) return foundTarget.get();
+        if (foundTarget.isPresent()) {
+            return foundTarget.get();
+        }
 
         foundTarget = c.stream().map(this::placeTarget).filter(Objects::nonNull).findFirst();
         return foundTarget.orElse(null);
@@ -182,6 +208,9 @@ public class Excavator {
     private Target placeTarget(BlockPos pos) {
         LocalPlayer player = PlayerUtils.getPlayer();
         ClientLevel level = Minecraft.getInstance().level;
+        if (level == null) {
+            return null;
+        }
         Target foundTarget = new Target(pos, 4.5, placeBlockTargetAction(pos));
         BlockState blockState = level.getBlockState(pos);
         FluidState fluidState = level.getFluidState(pos);
@@ -200,33 +229,57 @@ public class Excavator {
 
     private Target breakTarget(BlockPos pos) {
         ClientLevel level = Minecraft.getInstance().level;
+        if (level == null) {
+            return null;
+        }
         BlockState blockState = level.getBlockState(pos);
         FluidState fluidState = level.getFluidState(pos);
         Target breakTarget = new Target(pos, 5, breakBlockTargetAction(pos));
         boolean hasCollisionShape = !blockState.getShape(level, pos).isEmpty();
-        if (!fluidState.isEmpty() && hasCollisionShape) return breakTarget;
-        if (hasNeighboringFluids(pos, level)) return null;
-        if (hasCollisionShape) return breakTarget;
+        if (!fluidState.isEmpty() && hasCollisionShape) {
+            return breakTarget;
+        }
+        if (hasNeighboringFluids(pos, level)) {
+            return null;
+        }
+        if (hasCollisionShape) {
+            return breakTarget;
+        }
         return null;
     }
 
     private Target breakWaterloggedTarget(BlockPos pos) {
         ClientLevel level = Minecraft.getInstance().level;
+        if (level == null) {
+            return null;
+        }
         BlockState blockState = level.getBlockState(pos);
         FluidState fluidState = level.getFluidState(pos);
         Target foundTarget = new Target(pos, 5, breakBlockTargetAction(pos));
         boolean hasCollisionShape = !blockState.getShape(level, pos).isEmpty();
-        if (!fluidState.isEmpty() && hasCollisionShape) return foundTarget;
+        if (!fluidState.isEmpty() && hasCollisionShape) {
+            return foundTarget;
+        }
         return null;
     }
 
     @SuppressWarnings("RedundantIfStatement")
     private boolean hasNeighboringFluids(BlockPos pos, ClientLevel level) {
-        if (!level.getFluidState(pos.above()).isEmpty()) return true;
-        if (!level.getFluidState(pos.north()).isEmpty()) return true;
-        if (!level.getFluidState(pos.south()).isEmpty()) return true;
-        if (!level.getFluidState(pos.east()).isEmpty()) return true;
-        if (!level.getFluidState(pos.west()).isEmpty()) return true;
+        if (!level.getFluidState(pos.above()).isEmpty()) {
+            return true;
+        }
+        if (!level.getFluidState(pos.north()).isEmpty()) {
+            return true;
+        }
+        if (!level.getFluidState(pos.south()).isEmpty()) {
+            return true;
+        }
+        if (!level.getFluidState(pos.east()).isEmpty()) {
+            return true;
+        }
+        if (!level.getFluidState(pos.west()).isEmpty()) {
+            return true;
+        }
         return false;
     }
 
@@ -234,8 +287,13 @@ public class Excavator {
         return () -> {
             LocalPlayer player = PlayerUtils.getPlayer();
             ClientLevel level = Minecraft.getInstance().level;
+            if (level == null) {
+                return false;
+            }
             BlockState state = level.getBlockState(pos);
-            if (state.getShape(level, pos).isEmpty()) return true;
+            if (state.getShape(level, pos).isEmpty()) {
+                return true;
+            }
             selectBestTool(pos, player);
             return PlayerUtils.breakBlock(pos);
         };
@@ -259,20 +317,29 @@ public class Excavator {
 
     private void selectBestTool(BlockPos pos, LocalPlayer player) {
         ClientLevel level = Minecraft.getInstance().level;
+        if (level == null) {
+            return;
+        }
         BlockState state = level.getBlockState(pos);
         int originalSlot = player.getInventory().getSelectedSlot();
         float bestDelta = state.getDestroyProgress(player, level, pos);
         int bestSlot = originalSlot;
-        if (bestDelta >= 1) return;
+        if (bestDelta >= 1) {
+            return;
+        }
         for (int i = 0; i < 9; i++) {
             player.getInventory().setSelectedSlot(i);
             float delta = state.getDestroyProgress(player, level, pos);
-            if (delta <= bestDelta) continue;
+            if (delta <= bestDelta) {
+                continue;
+            }
             bestSlot = i;
             bestDelta = delta;
         }
         player.getInventory().setSelectedSlot(originalSlot);
-        if (bestSlot == originalSlot) return;
+        if (bestSlot == originalSlot) {
+            return;
+        }
         player.getInventory().setSelectedSlot(bestSlot);
         player.connection.send(new ServerboundSetCarriedItemPacket(bestSlot));
     }
@@ -304,9 +371,12 @@ public class Excavator {
         var on = CommandManager.literal("on");
         var toggle = CommandManager.literal("toggle");
 
-        cmd.then(CommandManager.literal("don't").executes(c -> {
+        cmd.then(CommandManager.literal("don't").executes(_ -> {
             Scheduler scheduler = getMod(Scheduler.class);
             ClientLevel world = Minecraft.getInstance().level;
+            if (world == null) {
+                return 1;
+            }
             scheduler.runAsync(() -> streamOut(PlayerUtils.getPlayer().blockPosition().below()).map(BlockPos::new).forEach(b -> {
                 try {
                     world.setBlockAndUpdate(b, Blocks.WATER.defaultBlockState());
@@ -328,28 +398,31 @@ public class Excavator {
             return 1;
         })));
 
-        cmd.executes(c -> {
+        cmd.executes(_ -> {
             PlayerUtils.sendModMessage("/eexcavate <from> <to>");
             PlayerUtils.sendModMessage("/eexcavate off");
             PlayerUtils.sendModMessage("/eexcavate on");
             PlayerUtils.sendModMessage("/eexcavate toggle");
             return 1;
         });
-        off.executes(c -> {
+        off.executes(_ -> {
             enabled = false;
             PlayerUtils.sendModMessage("Excavator disabled.");
             return 1;
         });
-        on.executes(c -> {
+        on.executes(_ -> {
             enabled = true;
             PlayerUtils.sendModMessage("Excavator enabled.");
             target = null;
             return 1;
         });
-        toggle.executes(c -> {
+        toggle.executes(_ -> {
             enabled = !enabled;
-            if (enabled) PlayerUtils.sendModMessage("Excavator enabled.");
-            else PlayerUtils.sendModMessage("Excavator disabled.");
+            if (enabled) {
+                PlayerUtils.sendModMessage("Excavator enabled.");
+            } else {
+                PlayerUtils.sendModMessage("Excavator disabled.");
+            }
             target = null;
             return 1;
         });
@@ -359,7 +432,7 @@ public class Excavator {
         cmd.then(toggle);
 
         LiteralArgumentBuilder<FabricClientCommandSource> areaCmd = CommandManager.literal("area");
-        var cmds = BlockArea.commands((c, a) -> {
+        var cmds = BlockArea.commands((_, a) -> {
             setArea(a);
             PlayerUtils.sendModMessage("Updated area. Use '/eexcavate on' to start.");
         });
@@ -402,12 +475,16 @@ public class Excavator {
         }
 
         public boolean tick(LocalPlayer player) {
-            if (player.position().subtract(pos.getCenter()).horizontalDistance() > 2) PlayerUtils.walkTowards(pos);
+            if (player.position().subtract(pos.getCenter()).horizontalDistance() > 2) {
+                PlayerUtils.walkTowards(pos);
+            }
             return performAction(player);
         }
 
         private boolean performAction(LocalPlayer player) {
-            if (pos.getCenter().distanceTo(player.position()) > actionDistance) return false;
+            if (pos.getCenter().distanceTo(player.position()) > actionDistance) {
+                return false;
+            }
             return action.getAsBoolean();
         }
 
@@ -417,8 +494,12 @@ public class Excavator {
 
         @Override
         public boolean equals(Object obj) {
-            if (obj == this) return true;
-            if (obj == null || obj.getClass() != this.getClass()) return false;
+            if (obj == this) {
+                return true;
+            }
+            if (obj == null || obj.getClass() != this.getClass()) {
+                return false;
+            }
             var that = (Target) obj;
             return Objects.equals(this.pos, that.pos) && Double.doubleToLongBits(this.actionDistance) == Double.doubleToLongBits(that.actionDistance) && Objects.equals(this.action, that.action);
         }

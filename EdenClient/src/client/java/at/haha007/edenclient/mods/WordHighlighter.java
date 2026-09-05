@@ -54,7 +54,7 @@ public class WordHighlighter {
 
     private void registerCommand(String name) {
         LiteralArgumentBuilder<FabricClientCommandSource> node = literal(name);
-        node.then(literal("toggle").executes(c -> {
+        node.then(literal("toggle").executes(_ -> {
             enabled = !enabled;
             sendModMessage(enabled ? "Enabled WordHighlighter!" : "Disabled WordHighlighter!");
             return 0;
@@ -80,27 +80,27 @@ public class WordHighlighter {
                                             c.getArgument("b", Integer.class));
                                     return 0;
                                 })))));
-        node.then(literal("list").executes(c -> {
+        node.then(literal("list").executes(_ -> {
             listWords();
             return 0;
         }));
-        node.then(literal("clear").executes(c -> {
+        node.then(literal("clear").executes(_ -> {
             clearWords();
             return 0;
         }));
-        node.then(literal("bold").executes(c -> {
+        node.then(literal("bold").executes(_ -> {
             setBold(!style.isBold());
             return 0;
         }));
-        node.then(literal("italic").executes(c -> {
+        node.then(literal("italic").executes(_ -> {
             setItalic(!style.isItalic());
             return 0;
         }));
-        node.then(literal("underline").executes(c -> {
+        node.then(literal("underline").executes(_ -> {
             setUnderlined(!style.isUnderlined());
             return 0;
         }));
-        node.executes(c -> {
+        node.executes(_ -> {
             sendDebugMessage();
             return 0;
         });
