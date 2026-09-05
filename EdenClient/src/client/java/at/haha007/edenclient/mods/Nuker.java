@@ -2,14 +2,18 @@ package at.haha007.edenclient.mods;
 
 import at.haha007.edenclient.annotations.Mod;
 import at.haha007.edenclient.callbacks.ConfigLoadedCallback;
+import at.haha007.edenclient.callbacks.GameRenderCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
+import at.haha007.edenclient.utils.EdenRenderUtils;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.area.BlockArea;
+import at.haha007.edenclient.utils.area.BlockAreaRenderFactory;
 import at.haha007.edenclient.utils.area.CubeArea;
 import at.haha007.edenclient.utils.area.SavableBlockArea;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import at.haha007.edenclient.utils.config.wrappers.BlockSet;
+import fi.dy.masa.malilib.util.data.Color4f;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -36,9 +40,13 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.Vec3;
+import org.lwjgl.opengl.GL11;
 
+import java.awt.Color;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -64,10 +72,16 @@ public class Nuker {
     private boolean filterHeight;
     @ConfigSubscriber("true")
     private boolean filterLiquids;
+    @ConfigSubscriber("true")
+    private boolean renderMining = true;
+    @ConfigSubscriber("true")
+    private boolean renderArea = true;
+    private final Map<SavableBlockArea, Runnable> rendererCache = new HashMap<>();
 
     public Nuker() {
         registerCommand();
         PlayerTickCallback.EVENT.register(this::onTick, getClass());
+        GameRenderCallback.EVENT.register(this::onRender, getClass());
         ConfigLoadedCallback.EVENT.register(this::configLoaded, getClass());
         PerWorldConfig.get().register(this, "nuker");
     }
@@ -75,6 +89,19 @@ public class Nuker {
     private void configLoaded() {
         if (area == null) {
             area = new SavableBlockArea(new CubeArea(new Vec3i(-1000000, -1000000, -1000000), new Vec3i(1000000, 1000000, 1000000)));
+        }
+    }
+
+    private void onRender(float tickDelta) {
+        if (!enabled) return;
+        if (renderMining && target != null) {
+            GL11.glDisable(GL11.GL_DEPTH_TEST);
+            EdenRenderUtils.drawAreaOutline(Vec3.atLowerCornerOf(target), Vec3.atLowerCornerOf(target.offset(1, 1, 1)), Color4f.fromColor(Color.WHITE.getRGB()));
+            GL11.glEnable(GL11.GL_DEPTH_TEST);
+        }
+        if (renderArea) {
+            Runnable renderer = rendererCache.computeIfAbsent(area, BlockAreaRenderFactory::createRenderTask);
+            renderer.run();
         }
     }
 
@@ -96,6 +123,17 @@ public class Nuker {
             PlayerUtils.sendModMessage("Nuker limit per tick is " + limit);
             return 1;
         })));
+        cmd.then(literal("render")
+                .then(literal("mining").executes(c -> {
+                    renderMining = !renderMining;
+                    PlayerUtils.sendModMessage(renderMining ? "Render mining enabled" : "Render mining disabled");
+                    return 1;
+                }))
+                .then(literal("area").executes(c -> {
+                    renderArea = !renderArea;
+                    PlayerUtils.sendModMessage(renderArea ? "Render area enabled" : "Render area disabled");
+                    return 1;
+                })));
         var areaCmd = literal("area");
         areaCmd.then(literal("max").executes(c -> {
             Vec3i min = new Vec3i(-1000000, -1000000, -1000000);
