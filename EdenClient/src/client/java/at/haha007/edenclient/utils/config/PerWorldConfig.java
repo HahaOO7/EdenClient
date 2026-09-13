@@ -9,14 +9,19 @@ import at.haha007.edenclient.utils.area.*;
 import at.haha007.edenclient.utils.config.loaders.*;
 import at.haha007.edenclient.utils.config.wrappers.*;
 import com.mojang.logging.LogUtils;
-import fi.dy.masa.malilib.util.nbt.PrettyNbtStringifier;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.client.multiplayer.ServerData;
+import net.minecraft.client.server.IntegratedServer;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Style;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.ChunkPos;
@@ -76,6 +81,7 @@ public class PerWorldConfig {
         register(new ItemListLoader(), ItemList.class);
 
         register(new DirectionLoader(), Direction.class);
+        register(new IdentifierLoader(), Identifier.class);
 
         register(new EntityTypeLoader(), EntityType.class);
         register(new EntityTypeSetLoader(), EntityTypeSet.class);
@@ -156,9 +162,6 @@ public class PerWorldConfig {
             LogUtils.getLogger().error("Error while loading PerWorldConfig: {}", worldName, e);
         }
         LogUtils.getLogger().info("LOADING CONFIG: {}", worldName);
-        @SuppressWarnings("UnstableApiUsage")
-        String json = String.join("\n", new PrettyNbtStringifier().getNbtLines(tag));
-//        LogUtils.getLogger().info("LOADED VALUES: {}", json);
         LogUtils.getLogger().info("FROM: {}", file);
         CompoundTag finalTag = tag;
         registered.forEach((key, obj) -> load(getCompound(finalTag, key), obj));
@@ -307,23 +310,24 @@ public class PerWorldConfig {
 
 
     private String getWorldOrServerName() {
-        net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+        Minecraft mc = Minecraft.getInstance();
+        System.out.println(Minecraft.getInstance().level.dimension().identifier().getPath());
 
         if (mc.hasSingleplayerServer()) {
-            net.minecraft.client.server.IntegratedServer server = mc.getSingleplayerServer();
+            IntegratedServer server = mc.getSingleplayerServer();
 
             if (server != null) {
                 return server.getWorldData().getLevelName();
             }
         }
 
-        net.minecraft.client.multiplayer.ServerData server = mc.getCurrentServer();
+        ServerData server = mc.getCurrentServer();
         if (server != null) {
             return server.ip.trim().replace(':', '_');
         }
 
-        net.minecraft.client.multiplayer.ClientPacketListener handler = mc.getConnection();
-        net.minecraft.network.Connection connection = handler != null ? handler.getConnection() : null;
+        ClientPacketListener handler = mc.getConnection();
+        Connection connection = handler != null ? handler.getConnection() : null;
         if (connection != null) {
             return "realms_" + stringifyAddress(connection.getRemoteAddress());
         }

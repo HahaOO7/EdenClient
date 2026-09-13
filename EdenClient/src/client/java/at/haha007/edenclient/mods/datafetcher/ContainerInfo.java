@@ -14,7 +14,6 @@ import at.haha007.edenclient.utils.tasks.TaskManager;
 import at.haha007.edenclient.utils.tasks.WaitForInventoryTask;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.logging.LogUtils;
-import lombok.Getter;
 import lombok.experimental.Accessors;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.Minecraft;
@@ -31,6 +30,7 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ServerboundUseItemOnPacket;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.Container;
 import net.minecraft.world.InteractionHand;
@@ -70,9 +70,8 @@ import static net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal;
 
 @Accessors(fluent = true)
 public class ContainerInfo {
-    @ConfigSubscriber()
-    @Getter
-    private final ChunkChestMap chunkMap;
+    @ConfigSubscriber
+    private final WorldChestMap worldMap = new WorldChestMap();
     private BlockPos lastInteractedBlock = null;
     private Direction lastClickedDirection = null;
 
@@ -82,15 +81,13 @@ public class ContainerInfo {
 
 
     ContainerInfo() {
-        chunkMap = new ChunkChestMap();
-
         PlayerAttackBlockCallback.EVENT.register(this::attackBlock, getClass());
         PlayerInteractBlockCallback.EVENT.register(this::interactBlock, getClass());
         ContainerCloseCallback.EVENT.register(itemStacks -> {
             updateInventory(itemStacks);
             lastInteractedBlock = null;
         }, getClass());
-        PlayerBreakBlockCallback.EVENT.register((a, b, c) -> {
+        PlayerBreakBlockCallback.EVENT.register((_, b, _) -> {
             lastInteractedBlock = b;
             updateInventory(Collections.emptyList());
             lastInteractedBlock = null;
@@ -101,7 +98,8 @@ public class ContainerInfo {
         ContainerOpenCallback.EVENT.register(this::shouldCancelContainerOpen, getClass());
         LeaveWorldCallback.EVENT.register(this::destroy, getClass());
 
-        PerWorldConfig.get().register(new ContainerConfigLoader(), ChunkChestMap.class);
+        PerWorldConfig.get().register(new ChunkChestMapLoader(), ChunkChestMap.class);
+        PerWorldConfig.get().register(new WorldChestMapLoader(), WorldChestMap.class);
         PerWorldConfig.get().register(new ChestMapLoader(), ChestMap.class);
         PerWorldConfig.get().register(new ChestInfoLoader(), ChestInfo.class);
         PerWorldConfig.get().register(this, "ContainerInfo");
@@ -120,7 +118,7 @@ public class ContainerInfo {
 
     public LiteralArgumentBuilder<FabricClientCommandSource> registerCommand() {
         LiteralArgumentBuilder<FabricClientCommandSource> cmd = literal("chestinfo");
-        cmd.then(literal("empty").executes(c -> {
+        cmd.then(literal("empty").executes(_ -> {
             if (autoMode != null) {
                 PlayerUtils.sendModMessage("AutoUpdate already running");
                 return 1;
@@ -130,7 +128,7 @@ public class ContainerInfo {
             PlayerUtils.sendModMessage("AutoUpdate enabled");
             return 1;
         }));
-        cmd.then(literal("old").executes(c -> {
+        cmd.then(literal("old").executes(_ -> {
             if (autoMode != null) {
                 PlayerUtils.sendModMessage("AutoUpdate already running");
                 return 1;
@@ -140,7 +138,7 @@ public class ContainerInfo {
             PlayerUtils.sendModMessage("AutoUpdate enabled");
             return 1;
         }));
-        cmd.then(literal("old_empty").executes(c -> {
+        cmd.then(literal("old_empty").executes(_ -> {
             if (autoMode != null) {
                 PlayerUtils.sendModMessage("AutoUpdate already running");
                 return 1;
@@ -150,7 +148,7 @@ public class ContainerInfo {
             PlayerUtils.sendModMessage("AutoUpdate enabled");
             return 1;
         }));
-        cmd.then(literal("all").executes(c -> {
+        cmd.then(literal("all").executes(_ -> {
             if (autoMode != null) {
                 PlayerUtils.sendModMessage("AutoUpdate already running");
                 return 1;
@@ -160,7 +158,7 @@ public class ContainerInfo {
             PlayerUtils.sendModMessage("AutoUpdate enabled");
             return 1;
         }));
-        cmd.then(literal("stop").executes(c -> {
+        cmd.then(literal("stop").executes(_ -> {
             if (autoMode == null) {
                 PlayerUtils.sendModMessage("AutoUpdate not running");
                 return 1;
@@ -298,6 +296,7 @@ public class ContainerInfo {
      */
     private void storeChest(BlockPos pos, List<ItemStack> stacks, Level level, Registry<Block> registry) {
         ChunkPos cp = ChunkPos.containing(pos);
+        ChunkChestMap chunkMap = worldMap.computeIfAbsent(PlayerUtils.getCurrentWorldName(), _ -> new ChunkChestMap());
 
         if (stacks.isEmpty()) {
             ChestMap map = chunkMap.get(cp);
@@ -350,13 +349,14 @@ public class ContainerInfo {
 
     private void putChestInfo(Vec3i position, List<Item> items, @Nullable Direction face) {
         ChunkPos chunkPos = ChunkPos.containing(lastInteractedBlock);
-        ChestMap map = chunkMap.computeIfAbsent(chunkPos, cp -> new ChestMap());
+        ChunkChestMap chunkMap = worldMap.computeIfAbsent(PlayerUtils.getCurrentWorldName(), _ -> new ChunkChestMap());
+        ChestMap map = chunkMap.computeIfAbsent(chunkPos, _ -> new ChestMap());
         if (items.isEmpty()) {
             map.remove(position);
             return;
         }
 
-        ChestInfo chestInfo = map.computeIfAbsent(position, pos -> new ChestInfo());
+        ChestInfo chestInfo = map.computeIfAbsent(position, _ -> new ChestInfo());
         chestInfo.items.clear();
         chestInfo.items.addAll(items);
         if (face != null) {
@@ -384,6 +384,7 @@ public class ContainerInfo {
             hand, BlockHitResult blockHitResult) {
         //remove all positions in same chunk without block entity
         ChunkPos cp = ChunkPos.containing(blockHitResult.getBlockPos());
+        ChunkChestMap chunkMap = worldMap.computeIfAbsent(PlayerUtils.getCurrentWorldName(), _ -> new ChunkChestMap());
         ChestMap chestMap = chunkMap.getOrDefault(cp, new ChestMap());
         Set<Vec3i> chests = chestMap.keySet();
         chests.removeIf(Predicate.not(e -> world.getBlockEntity(new BlockPos(e)) instanceof Container));
@@ -402,6 +403,7 @@ public class ContainerInfo {
         if (chunk.isEmpty()) return;
         Map<BlockPos, BlockEntity> be = Map.copyOf(chunk.getBlockEntities());
         if (be.isEmpty()) return;
+        ChunkChestMap chunkMap = worldMap.computeIfAbsent(PlayerUtils.getCurrentWorldName(), _ -> new ChunkChestMap());
         ChestMap map = chunkMap.get(chunk.getPos());
         if (map == null) return;
         map.keySet().removeIf(Predicate.not(e -> be.containsKey(new BlockPos(e))));
@@ -409,7 +411,12 @@ public class ContainerInfo {
 
 
     public ChestMap getContainerInfo(ChunkPos chunkPos) {
+        ChunkChestMap chunkMap = worldMap.computeIfAbsent(PlayerUtils.getCurrentWorldName(), _ -> new ChunkChestMap());
         return chunkMap.containsKey(chunkPos) ? chunkMap.get(chunkPos) : new ChestMap();
+    }
+
+    public ChunkChestMap chunkMap() {
+        return worldMap.computeIfAbsent(PlayerUtils.getCurrentWorldName(), _ -> new ChunkChestMap());
     }
 
     public static class ChestMap extends HashMap<Vec3i, ChestInfo> {
@@ -492,10 +499,45 @@ public class ContainerInfo {
         }
     }
 
+    public static class WorldChestMap extends HashMap<Identifier, ChunkChestMap> {
+    }
+
     public static class ChunkChestMap extends HashMap<ChunkPos, ChestMap> {
     }
 
-    private static class ContainerConfigLoader implements ConfigLoader<ListTag, ChunkChestMap> {
+    private static class WorldChestMapLoader implements ConfigLoader<ListTag, WorldChestMap> {
+        @NotNull
+        public ListTag save(@NotNull WorldChestMap map) {
+            ListTag list = new ListTag();
+            map.forEach((k, v) -> {
+                CompoundTag c = new CompoundTag();
+                c.putString("world", k.toString());
+                c.put("map", PerWorldConfig.get().toNbt(v));
+                list.add(c);
+            });
+            return list;
+        }
+
+        @NotNull
+        public WorldChestMap load(@NotNull ListTag tag) {
+            WorldChestMap map = new WorldChestMap();
+            tag.forEach(e -> {
+                CompoundTag c = (CompoundTag) e;
+                Identifier worldId = PerWorldConfig.get().toObject(c.get("world"), Identifier.class);
+                ChunkChestMap chunkMap = PerWorldConfig.get().toObject(c.get("map"), ChunkChestMap.class);
+                map.put(worldId, chunkMap);
+            });
+            return map;
+        }
+
+        @NotNull
+        public ListTag parse(@NotNull String s) {
+            return new ListTag();
+        }
+    }
+
+
+    private static class ChunkChestMapLoader implements ConfigLoader<ListTag, ChunkChestMap> {
         @NotNull
         public ListTag save(@NotNull ChunkChestMap map) {
             ListTag list = new ListTag();
@@ -545,6 +587,7 @@ public class ContainerInfo {
         LevelChunk levelChunk = level.getChunkAt(pos);
         if (levelChunk.isEmpty()) return false;
         ChunkPos chunkPos = levelChunk.getPos();
+        ChunkChestMap chunkMap = worldMap.computeIfAbsent(PlayerUtils.getCurrentWorldName(), _ -> new ChunkChestMap());
         ChestMap chestMap = chunkMap.get(chunkPos);
         if (chestMap == null) return true;
         ChestInfo chestInfo = chestMap.get(pos);

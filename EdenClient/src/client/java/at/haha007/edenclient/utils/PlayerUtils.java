@@ -26,6 +26,7 @@ import net.minecraft.network.chat.ComponentSerialization;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
 import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -76,8 +77,19 @@ public class PlayerUtils {
             sendModMessage("Tried sending message longer than 256 characters: " + msg);
             return;
         }
-        if (msg.startsWith("/")) player.connection.sendCommand(msg.substring(1));
-        else player.connection.sendChat(msg);
+        if (msg.startsWith("/")) {
+            player.connection.sendCommand(msg.substring(1));
+        } else {
+            player.connection.sendChat(msg);
+        }
+    }
+
+    public static Identifier getCurrentWorldName() {
+        ClientLevel level = Minecraft.getInstance().level;
+        if (level == null) {
+            return Identifier.tryBuild("minecraft", "overworld");
+        }
+        return level.dimension().identifier();
     }
 
     public static void sendMessage(Component text) {
@@ -171,13 +183,19 @@ public class PlayerUtils {
 
     public static boolean walkTowards(Vec3 target, boolean autoJump) {
         boolean targetReached = walkTowards(target);
-        if (targetReached) return true;
-        if (!autoJump) return false;
+        if (targetReached) {
+            return true;
+        }
+        if (!autoJump) {
+            return false;
+        }
 
         LocalPlayer player = getPlayer();
         if (player.horizontalCollision && player.onGround()) {
             ClientLevel level = Minecraft.getInstance().level;
-            if (level == null) return false;
+            if (level == null) {
+                return false;
+            }
             float f = level.getBlockState(player.blockPosition()).getBlock().getJumpFactor();
             float g = level.getBlockState(player.getBlockPosBelowThatAffectsMyMovement()).getBlock().getJumpFactor();
             double blockJumpFactor = f == 1.0 ? g : f;
@@ -219,21 +237,29 @@ public class PlayerUtils {
         }
 
 
-        if (block == (Blocks.HONEY_BLOCK)) speed *= 0.581;
-        if (block == (Blocks.SLIME_BLOCK)) speed *= 0.73;
+        if (block == (Blocks.HONEY_BLOCK)) {
+            speed *= 0.581;
+        }
+        if (block == (Blocks.SLIME_BLOCK)) {
+            speed *= 0.73;
+        }
 
         return (Math.max(speed, 0) / 20);
     }
 
     public static void clickSlot(int slotId) {
         Screen screen = Minecraft.getInstance().screen;
-        if (!(screen instanceof ContainerScreen gcs)) return;
+        if (!(screen instanceof ContainerScreen gcs)) {
+            return;
+        }
         ((HandledScreenAccessor) screen).edenClient$clickMouse(gcs.getMenu().slots.get(slotId), slotId, 0, ContainerInput.PICKUP_ALL);
     }
 
     public static Vec3 getClientLookVec() {
         Entity entity = Minecraft.getInstance().getCameraEntity();
-        if (entity == null) return Vec3.ZERO;
+        if (entity == null) {
+            return Vec3.ZERO;
+        }
         float f = 0.017453292F;
         float pi = (float) Math.PI;
 
@@ -247,7 +273,9 @@ public class PlayerUtils {
 
     public static LocalPlayer getPlayer() {
         LocalPlayer player = Minecraft.getInstance().player;
-        if (player == null) throw new IllegalStateException("Player is null.");
+        if (player == null) {
+            throw new IllegalStateException("Player is null.");
+        }
         return player;
     }
 
@@ -267,7 +295,9 @@ public class PlayerUtils {
     public static boolean breakBlock(BlockPos pos) {
         LocalPlayer player = getPlayer();
         ClientLevel world = Minecraft.getInstance().level;
-        if (world == null) return false;
+        if (world == null) {
+            return false;
+        }
         BlockState state = world.getBlockState(pos);
         Block block = state.getBlock();
         float delta = state.getDestroyProgress(player, world, pos);
@@ -280,7 +310,9 @@ public class PlayerUtils {
             return true;
         }
         MultiPlayerGameMode gameMode = Minecraft.getInstance().gameMode;
-        if (gameMode == null) return false;
+        if (gameMode == null) {
+            return false;
+        }
         gameMode.continueDestroyBlock(pos, dir);
         state = world.getBlockState(pos);
         return state.getBlock() != block;
@@ -289,7 +321,9 @@ public class PlayerUtils {
     public static boolean worldHasSpectator() {
         Minecraft instance = Minecraft.getInstance();
         LocalPlayer player = instance.player;
-        if (player == null) return false;
+        if (player == null) {
+            return false;
+        }
         Collection<PlayerInfo> onlinePlayers = player.connection.getListedOnlinePlayers();
         for (PlayerInfo onlinePlayer : onlinePlayers) {
             if (onlinePlayer.getGameMode() == GameType.SPECTATOR) {
@@ -303,8 +337,12 @@ public class PlayerUtils {
         Minecraft instance = Minecraft.getInstance();
         ClientLevel level = instance.level;
         LocalPlayer player = instance.player;
-        if (level == null) return false;
-        if (player == null) return false;
+        if (level == null) {
+            return false;
+        }
+        if (player == null) {
+            return false;
+        }
         for (Entity entity : level.entitiesForRendering()) {
             if (entity != player && entity instanceof Player) {
                 return true;
@@ -322,9 +360,13 @@ public class PlayerUtils {
         Inventory inventory = player.getInventory();
 
         ClientPacketListener connection = Minecraft.getInstance().getConnection();
-        if (connection == null) return false;
+        if (connection == null) {
+            return false;
+        }
         MultiPlayerGameMode gameMode = Minecraft.getInstance().gameMode;
-        if (gameMode == null) return false;
+        if (gameMode == null) {
+            return false;
+        }
         ClientLevel level = Minecraft.getInstance().level;
         if (level == null) {
             return false;
@@ -333,18 +375,28 @@ public class PlayerUtils {
         int slot = -1;
         for (int i = 0; i < 36; i++) {
             ItemStack stack = inventory.getItem(i);
-            if (stack.isEmpty()) continue;
+            if (stack.isEmpty()) {
+                continue;
+            }
             Item item = stack.getItem();
-            if (!(item instanceof BlockItem blockItem)) continue;
+            if (!(item instanceof BlockItem blockItem)) {
+                continue;
+            }
             Block block = blockItem.getBlock();
             BlockState defaultState = block.defaultBlockState();
-            if (!defaultState.isCollisionShapeFullBlock(level, BlockPos.ZERO)) continue;
+            if (!defaultState.isCollisionShapeFullBlock(level, BlockPos.ZERO)) {
+                continue;
+            }
             slot = i;
             break;
         }
-        if (slot < 0) return false;
+        if (slot < 0) {
+            return false;
+        }
 
-        if (slot < 9 && inventory.getSelectedSlot() == slot) return true;
+        if (slot < 9 && inventory.getSelectedSlot() == slot) {
+            return true;
+        }
 
         if (slot < 9) {
             inventory.setSelectedSlot(slot);
@@ -364,21 +416,33 @@ public class PlayerUtils {
         Inventory inventory = player.getInventory();
 
         ClientPacketListener connection = Minecraft.getInstance().getConnection();
-        if (connection == null) return false;
+        if (connection == null) {
+            return false;
+        }
         MultiPlayerGameMode gameMode = Minecraft.getInstance().gameMode;
-        if (gameMode == null) return false;
+        if (gameMode == null) {
+            return false;
+        }
 
         int slot = -1;
         for (int i = 0; i < 36; i++) {
             ItemStack stack = inventory.getItem(i);
-            if (stack.isEmpty()) continue;
-            if (!item.equals(inventory.getItem(i).getItem())) continue;
+            if (stack.isEmpty()) {
+                continue;
+            }
+            if (!item.equals(inventory.getItem(i).getItem())) {
+                continue;
+            }
             slot = i;
             break;
         }
-        if (slot < 0) return false;
+        if (slot < 0) {
+            return false;
+        }
 
-        if (slot < 9 && inventory.getSelectedSlot() == slot) return true;
+        if (slot < 9 && inventory.getSelectedSlot() == slot) {
+            return true;
+        }
 
         if (slot < 9) {
             inventory.setSelectedSlot(slot);
@@ -406,24 +470,36 @@ public class PlayerUtils {
         Inventory inventory = player.getInventory();
 
         ClientPacketListener connection = Minecraft.getInstance().getConnection();
-        if (connection == null) return Optional.empty();
+        if (connection == null) {
+            return Optional.empty();
+        }
         MultiPlayerGameMode gameMode = Minecraft.getInstance().gameMode;
-        if (gameMode == null) return Optional.empty();
+        if (gameMode == null) {
+            return Optional.empty();
+        }
 
         int slot = -1;
         Item select = null;
         for (int i = 0; i < 36; i++) {
             ItemStack stack = inventory.getItem(i);
-            if (stack.isEmpty()) continue;
+            if (stack.isEmpty()) {
+                continue;
+            }
             Item item = stack.getItem();
-            if (!options.contains(item)) continue;
+            if (!options.contains(item)) {
+                continue;
+            }
             slot = i;
             select = item;
             break;
         }
-        if (slot < 0) return Optional.empty();
+        if (slot < 0) {
+            return Optional.empty();
+        }
 
-        if (slot < 9 && inventory.getSelectedSlot() == slot) return Optional.of(select);
+        if (slot < 9 && inventory.getSelectedSlot() == slot) {
+            return Optional.of(select);
+        }
 
         if (slot < 9) {
             inventory.setSelectedSlot(slot);
