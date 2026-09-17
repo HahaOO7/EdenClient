@@ -475,14 +475,14 @@ public class Excavator {
         }
 
         public boolean tick(LocalPlayer player) {
-            if (player.position().subtract(pos.getCenter()).horizontalDistance() > 2) {
+            if (player.position().subtract(Vec3.atCenterOf(pos)).horizontalDistance() > 2) {
                 PlayerUtils.walkTowards(pos);
             }
             return performAction(player);
         }
 
         private boolean performAction(LocalPlayer player) {
-            if (pos.getCenter().distanceTo(player.position()) > actionDistance) {
+            if (Vec3.atCenterOf(pos).distanceTo(player.position()) > actionDistance) {
                 return false;
             }
             return action.getAsBoolean();

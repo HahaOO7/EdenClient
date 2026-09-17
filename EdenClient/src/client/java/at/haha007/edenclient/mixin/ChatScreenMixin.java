@@ -24,10 +24,10 @@ public abstract class ChatScreenMixin {
     private int historyPos;
 
     @Inject(at = @At("HEAD"), method = "keyPressed", cancellable = true)
-    private void onKeyPressed(KeyEvent keyEvent, CallbackInfoReturnable<Boolean> cir) {
-        ArrayListDeque<String> recentChat = Minecraft.getInstance().gui.getChat().getRecentChat();
+    private void onKeyPressed(KeyEvent event, CallbackInfoReturnable<Boolean> cir) {
+        ArrayListDeque<String> recentChat = Minecraft.getInstance().gui.hud.getChat().getRecentChat();
         String prefix = input.getValue().substring(0, input.getCursorPosition());
-        int newPos = ChatKeyCallback.EVENT.invoker().getNewPosInHistory(keyEvent.key(), recentChat, prefix, historyPos);
+        int newPos = ChatKeyCallback.EVENT.invoker().getNewPosInHistory(event.key(), recentChat, prefix, historyPos);
         if (newPos < 0 || newPos > recentChat.size() - 1 || historyPos == newPos) return;
         moveInHistory(newPos - historyPos);
         input.setCursorPosition(prefix.length());

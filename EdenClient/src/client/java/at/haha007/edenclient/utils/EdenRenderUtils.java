@@ -26,10 +26,10 @@ public enum EdenRenderUtils {
     }
 
     public static void drawTracers(List<Vec3> positions, Color4f color) {
-        RenderContext ctx = new RenderContext(() -> "edenclient:drawTracers", MaLiLibPipelines.DEBUG_LINES_MASA_SIMPLE_NO_DEPTH_NO_CULL);
+        RenderContext ctx = new RenderContext(() -> "edenclient:drawTracers", MaLiLibPipelines.DEBUG_LINES_MASA_SIMPLE_NO_DEPTH_NO_CULL, 0);
         BufferBuilder buffer = ctx.getBuilder();
         Vec3 eyePos = PlayerUtils.getClientLookVec();
-        Vec3 cameraPos = Minecraft.getInstance().gameRenderer.getMainCamera().position();
+        Vec3 cameraPos = Minecraft.getInstance().gameRenderer.mainCamera().position();
         for (Vec3 pos : positions) {
             pos = pos.subtract(cameraPos);
             buffer.addVertex((float) eyePos.x, (float) eyePos.y, (float) eyePos.z).setColor(color.r, color.g, color.b, color.a).setLineWidth(1f);
@@ -70,7 +70,7 @@ public enum EdenRenderUtils {
                                              float maxY,
                                              float maxZ,
                                              Color4f color) {
-        RenderContext ctx = new RenderContext(() -> "edenclient:drawBoundingBoxEdges", MaLiLibPipelines.DEBUG_LINES_MASA_SIMPLE_NO_CULL);
+        RenderContext ctx = new RenderContext(() -> "edenclient:drawBoundingBoxEdges", MaLiLibPipelines.DEBUG_LINES_MASA_SIMPLE_NO_CULL, 0);
         BufferBuilder buffer = ctx.getBuilder();
 
         drawBoundingBoxLinesX(buffer, minX, minY, minZ, maxX, maxY, maxZ, color);
@@ -94,7 +94,7 @@ public enum EdenRenderUtils {
     }
 
     public static void drawLines(List<Pair<Vec3, Vec3>> lines, Color4f color, float lineWidth) {
-        try (RenderContext ctx = new RenderContext(() -> "edenclient:drawLines", MaLiLibPipelines.DEBUG_LINES_MASA_SIMPLE_NO_CULL)) {
+        try (RenderContext ctx = new RenderContext(() -> "edenclient:drawLines", MaLiLibPipelines.DEBUG_LINES_MASA_SIMPLE_NO_CULL, 0)) {
             BufferBuilder buffer = ctx.getBuilder();
             for (Pair<Vec3, Vec3> line : lines) {
                 Vec3 start = line.getA().subtract(RenderUtils.camPos());

@@ -96,7 +96,7 @@ public class BlockAreaRenderFactory {
 
         public SphereAreaRenderTask(SphereArea sphereArea, int detail, Color color) {
             this.color = Color4f.fromColor(color.getRGB());
-            lines = SphereTriangulator.triangulateSphere(sphereArea.center().getCenter(), sphereArea.getRadius(), detail);
+            lines = SphereTriangulator.triangulateSphere(Vec3.atCenterOf(sphereArea.center()), sphereArea.getRadius(), detail);
         }
 
         @Override
@@ -111,7 +111,7 @@ public class BlockAreaRenderFactory {
 
         public CylinderAreaRenderTask(CylinderArea cylinderArea, int horizontalSteps, int verticalSteps, Color color) {
             this.color = Color4f.fromColor(color.getRGB());
-            Vec3 bottomCenter = cylinderArea.getBottomCenter().getBottomCenter();
+            Vec3 bottomCenter = Vec3.atBottomCenterOf(cylinderArea.getBottomCenter());
             Vec3 topCenter = bottomCenter.add(0, cylinderArea.getHeight(), 0);
             double radius = cylinderArea.getRadius() - .5;
             // Generate horizontal layers

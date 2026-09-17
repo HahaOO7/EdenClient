@@ -30,7 +30,7 @@ import net.minecraft.core.Vec3i;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.entity.BlockEntityTypes;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
@@ -100,7 +100,7 @@ public class HeadHunt {
                     if (wc == null) return null;
                     return wc.getBlockEntities().entrySet().stream();
                 })
-                .filter(e -> e.getValue().getType() == BlockEntityType.SKULL)
+                .filter(e -> e.getValue().getType() == BlockEntityTypes.SKULL)
                 .map(Map.Entry::getKey)
                 .sorted(Comparator.comparingDouble(pos -> pos.distSqr(pp)))
                 .limit(1000)
@@ -110,7 +110,7 @@ public class HeadHunt {
         int foundHeadCount = this.foundHeads.size();
         int subtracted = heads.size();
         Vec3i nearest = heads.stream().min(Comparator.comparingDouble(h -> h.distSqr(player.blockPosition()))).orElse(null);
-        LogUtils.getLogger().info("Total:%s Found:%s Subtracted:%s Nearest: %s".formatted(totalHeads, foundHeadCount, subtracted, nearest));
+        LogUtils.getLogger().info("Total: {} Found: {} Subtracted: {} Nearest: {}", totalHeads, foundHeadCount, subtracted, nearest);
 
         if (clickHeads) {
             heads.stream()
@@ -131,9 +131,9 @@ public class HeadHunt {
                     break;
                 }
                 //try to create a path to the head
-                PathSegment possiblePath = PathFinder.createDefault().findPath(pp.getBottomCenter(), new BlockPos(head).getBottomCenter(), false);
+                PathSegment possiblePath = PathFinder.createDefault().findPath(Vec3.atBottomCenterOf(pp), Vec3.atBottomCenterOf(head), false);
                 if (possiblePath == null) continue;
-                double dist = possiblePath.to().distanceToSqr(new BlockPos(head).getBottomCenter());
+                double dist = possiblePath.to().distanceToSqr(Vec3.atBottomCenterOf(head));
                 if (dist > 15) {
                     //can't get near enough to head
                     continue;

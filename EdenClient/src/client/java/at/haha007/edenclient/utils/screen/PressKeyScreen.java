@@ -17,7 +17,7 @@ public class PressKeyScreen extends ShowTextScreen{
     @Override
     public boolean keyPressed(KeyEvent keyEvent) {
         action.accept(keyEvent.key());
-        Minecraft.getInstance().setScreen(null);
+        Minecraft.getInstance().gui.setScreen(null);
         return true;
     }
 }

@@ -16,7 +16,6 @@ import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.logging.LogUtils;
-import fi.dy.masa.malilib.render.RenderUtils;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -274,17 +273,7 @@ public class PathTimer {
                         return 1;
                     }
                     File userHome = new File(System.getProperty("user.home"));
-                    File downloadsDirectory = new File(userHome, "Downloads");
-                    Calendar calendar = Calendar.getInstance();
-                    String dateTimeString = "%s_%s_%s_%s_%s_%s".formatted(
-                            calendar.get(Calendar.YEAR),
-                            calendar.get(Calendar.MONTH),
-                            calendar.get(Calendar.DAY_OF_MONTH),
-                            calendar.get(Calendar.HOUR_OF_DAY),
-                            calendar.get(Calendar.MINUTE),
-                            calendar.get(Calendar.SECOND)
-                    );
-                    File outFile = new File(downloadsDirectory, "%s_%s.csv".formatted(pathKey, dateTimeString));
+                    File outFile = getOutFile(userHome, pathKey);
                     saveTimesToCsv(outFile, path.times);
                     PlayerUtils.sendModMessage(Component.text("Saved as ").append(Component.text(outFile.getName())
                             .clickEvent(ClickEvent.copyToClipboard(outFile.getPath()))));
@@ -307,6 +296,20 @@ public class PathTimer {
                     return 1;
                 })));
         register(command, "Track checkpoint times.");
+    }
+
+    private static @NonNull File getOutFile(File userHome, String pathKey) {
+        File downloadsDirectory = new File(userHome, "Downloads");
+        Calendar calendar = Calendar.getInstance();
+        String dateTimeString = "%s_%s_%s_%s_%s_%s".formatted(
+                calendar.get(Calendar.YEAR),
+                calendar.get(Calendar.MONTH),
+                calendar.get(Calendar.DAY_OF_MONTH),
+                calendar.get(Calendar.HOUR_OF_DAY),
+                calendar.get(Calendar.MINUTE),
+                calendar.get(Calendar.SECOND)
+        );
+        return new File(downloadsDirectory, "%s_%s.csv".formatted(pathKey, dateTimeString));
     }
 
     private void saveTimesToCsv(File file, PathTimesList pathTimes) {
@@ -453,7 +456,7 @@ public class PathTimer {
             double nearestDistance = Double.MAX_VALUE;
             for (int i = 0; i < loadedPath.size(); i++) {
                 SavableBlockArea area = loadedPath.get(i);
-                double distance = area.center().getCenter().distanceTo(player.position());
+                double distance = Vec3.atCenterOf(area.center()).distanceTo(player.position());
                 if (distance < nearestDistance) {
                     nearestDistance = distance;
                     nearestArea = area;
@@ -538,14 +541,12 @@ public class PathTimer {
         SavableBlockAreaList loadedPath = path.path;
         Entity cameraEntity = Minecraft.getInstance().getCameraEntity();
         if (cameraEntity == null) return;
-        float xRot = cameraEntity.getXRot();
-        float yRot = cameraEntity.getYRot();
+//        float xRot = cameraEntity.getXRot();
+//        float yRot = cameraEntity.getYRot();
         for (int i = 0; i < loadedPath.size(); i++) {
             SavableBlockArea area = loadedPath.get(i);
-            Runnable renderer = rendererCache.computeIfAbsent(area, BlockAreaRenderFactory::createRenderTask);
-            Vec3 center = area.center().getCenter();
-            RenderUtils.drawTextPlate(List.of("" + (i + 1)), center.x(), center.y() + .25, center.z(), yRot, xRot, .05f, 0xFFFFFFFF, 0x40000000, false);
-            renderer.run();
+//            Vec3 center = Vec3.atCenterOf(area.center());
+            rendererCache.computeIfAbsent(area, BlockAreaRenderFactory::createRenderTask).run();
         }
     }
 

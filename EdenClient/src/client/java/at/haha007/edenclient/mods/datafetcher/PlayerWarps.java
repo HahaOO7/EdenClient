@@ -164,7 +164,7 @@ public class PlayerWarps {
         q.add(new SyncTask(() -> fetchPwarpData(tm, q, warps, "other", 16)));
         q.add(new SyncTask(() -> fetchPwarpData(tm, q, warps, "hidden", 22)));
         q.add(new SyncTask(() -> {
-            Screen screen = Minecraft.getInstance().screen;
+            Screen screen = Minecraft.getInstance().gui.screen();
             if (screen == null) return;
             screen.onClose();
         }));
@@ -176,7 +176,7 @@ public class PlayerWarps {
     private int fetchPwarpData(PlayerWarpList map, String category, int slot) {
         TaskManager tm = new TaskManager();
         fetchPwarpData(tm, new LinkedList<>(List.of(new SyncTask(() -> {
-            Screen screen = Minecraft.getInstance().screen;
+            Screen screen = Minecraft.getInstance().gui.screen();
             if (screen == null) return;
             screen.onClose();
         }))), map, category, slot);
@@ -192,7 +192,7 @@ public class PlayerWarps {
         tm.then(new WaitForInventoryTask(Pattern.compile(". PlayerWarps - Seite 1/\\d{1,2}")));
         tm.then(new SyncTask(() -> {
             Pattern pattern = Pattern.compile(". PlayerWarps - Seite 1/(?<pages>\\d{1,2})");
-            Screen screen = Minecraft.getInstance().screen;
+            Screen screen = Minecraft.getInstance().gui.screen();
             if (screen == null) return;
             Matcher matcher = pattern.matcher(screen.getTitle().getString());
             if (!matcher.matches()) return;
@@ -212,7 +212,7 @@ public class PlayerWarps {
 
 
     private void scanWarps(PlayerWarpList map, String category) {
-        Screen sc = Minecraft.getInstance().screen;
+        Screen sc = Minecraft.getInstance().gui.screen();
         if (sc == null) return;
         if (!(sc instanceof ContainerScreen containerScreen)) return;
         Container inventory = containerScreen.getMenu().getContainer();

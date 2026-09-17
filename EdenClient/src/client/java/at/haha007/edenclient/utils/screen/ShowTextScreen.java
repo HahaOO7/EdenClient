@@ -21,13 +21,13 @@ public class ShowTextScreen extends Screen {
     public ShowTextScreen(Component text) {
         super(Component.literal("Unused!").withStyle(ChatFormatting.AQUA));
         this.text = text;
-        this.parent = Minecraft.getInstance().screen;
+        this.parent = Minecraft.getInstance().gui.screen();
     }
 
     @Override
     protected void init() {
         Button closeButton = Button.builder(Component.literal("Exit").withStyle(ChatFormatting.RED),
-                        _ -> Minecraft.getInstance().setScreen(parent))
+                        _ -> Minecraft.getInstance().gui.setScreen(parent))
                 .bounds(width - 210, height - 30, 200, 20)
                 .tooltip(Tooltip.create(Component.literal("Tooltip of button1")))
                 .build();
@@ -48,6 +48,6 @@ public class ShowTextScreen extends Screen {
 
     @Override
     public void onClose() {
-        minecraft.setScreen(parent);
+        minecraft.gui.setScreen(parent);
     }
 }

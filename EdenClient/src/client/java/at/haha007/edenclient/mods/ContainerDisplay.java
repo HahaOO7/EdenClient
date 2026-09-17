@@ -18,7 +18,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import dev.xpple.clientarguments.arguments.CBlockPosArgument;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
-import net.fabricmc.fabric.api.client.rendering.v1.level.LevelExtractionContext;
+import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.JoinConfiguration;
@@ -37,11 +37,8 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Quaternionf;
-import org.jspecify.annotations.Nullable;
-import org.lwjgl.opengl.GL11;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -68,16 +65,15 @@ public class ContainerDisplay {
         UpdateLevelChunkCallback.EVENT.register(_ -> updateLater(), getClass());
         PlayerBreakBlockCallback.EVENT.register((_, _, _) -> updateLater(), getClass());
         PerWorldConfig.get().register(this, "ContainerDisplay");
-        LevelRenderEvents.AFTER_BLOCK_OUTLINE_EXTRACTION.register(this::render);
+        LevelRenderEvents.COLLECT_SUBMITS.register(this::render);
         registerCommand();
     }
 
-    private void render(LevelExtractionContext context, @Nullable HitResult hitResult) {
-        GL11.glEnable(GL11.GL_DEPTH_TEST);
+    private void render(LevelRenderContext context) {
         Minecraft mc = Minecraft.getInstance();
         PoseStack poseStack = new PoseStack();
         poseStack.pushPose();
-        Vec3 cam = mc.gameRenderer.getMainCamera().position();
+        Vec3 cam = mc.gameRenderer.mainCamera().position();
         Entity camera = Minecraft.getInstance().getCameraEntity();
         if (camera == null) {
             return;
@@ -126,8 +122,7 @@ public class ContainerDisplay {
                         mc.player,
                         255
                 );
-                @SuppressWarnings("resource")
-                SubmitNodeCollector collector = context.gameRenderer().getSubmitNodeStorage();
+                SubmitNodeCollector collector = context.submitNodeCollector();
 
                 state.submit(
                         poseStack,
@@ -147,7 +142,7 @@ public class ContainerDisplay {
         poseStack.popPose();
     }
 
-    private static void render3x3(LevelExtractionContext context,
+    private static void render3x3(LevelRenderContext context,
                                   List<Item> items,
                                   Direction direction,
                                   PoseStack poseStack,
@@ -182,7 +177,6 @@ public class ContainerDisplay {
 
             // Convert grid (x,y) into block-face relative 3D offsets
             switch (direction) {
-                case DOWN, UP -> delta = new Vec3(x, 0, y);
                 case NORTH -> delta = new Vec3(-x, y, 0);
                 case SOUTH -> delta = new Vec3(x, y, 0);
                 case WEST -> delta = new Vec3(0, y, x);
@@ -203,8 +197,7 @@ public class ContainerDisplay {
                     mc.player,
                     255
             );
-            @SuppressWarnings("resource")
-            SubmitNodeCollector collector = context.gameRenderer().getSubmitNodeStorage();
+            SubmitNodeCollector collector = context.submitNodeCollector();
             state.submit(
                     poseStack,
                     collector,

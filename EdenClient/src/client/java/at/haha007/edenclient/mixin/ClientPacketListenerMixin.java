@@ -43,10 +43,10 @@ public abstract class ClientPacketListenerMixin {
     private CommandDispatcher<SharedSuggestionProvider> commands;
 
     @Shadow
-    public abstract void sendUnattendedCommand(String string, @Nullable Screen screen);
+    public abstract void sendUnattendedCommand(String command, @Nullable Screen screenAfterCommand);
 
     @Inject(method = "handleLogin", at = @At("RETURN"))
-    private void onLogin(ClientboundLoginPacket clientboundLoginPacket, CallbackInfo ci) {
+    private void onLogin(ClientboundLoginPacket packet, CallbackInfo ci) {
         boolean connect = level != null;
         if (connect && !EdenClient.connected) {
             EdenClient.onJoin();
@@ -60,30 +60,30 @@ public abstract class ClientPacketListenerMixin {
     }
 
     @Inject(method = "sendCommand", at = @At("HEAD"), cancellable = true)
-    private void onSendCommand(String message, CallbackInfo ci) {
-        if (!CommandManager.isClientSideCommand(message.split(" ")[0])) return;
+    private void onSendCommand(String command, CallbackInfo ci) {
+        if (!CommandManager.isClientSideCommand(command.split(" ")[0])) return;
         ClientPacketListener connection = Minecraft.getInstance().getConnection();
         if (connection == null) return;
         FabricClientCommandSource suggestionsProvider = (FabricClientCommandSource) connection.getSuggestionsProvider();
-        CommandManager.execute(message, suggestionsProvider);
+        CommandManager.execute(command, suggestionsProvider);
         ci.cancel();
     }
 
     @Inject(method = "sendUnattendedCommand", at = @At("HEAD"), cancellable = true)
-    private void sendUnattendedCommand(String message, Screen screen, CallbackInfo ci) {
-        if (!CommandManager.isClientSideCommand(message.split(" ")[0])) return;
+    private void sendUnattendedCommand(String command, Screen screenAfterCommand, CallbackInfo ci) {
+        if (!CommandManager.isClientSideCommand(command.split(" ")[0])) return;
         ClientPacketListener connection = Minecraft.getInstance().getConnection();
         if (connection == null) return;
         FabricClientCommandSource suggestionsProvider = (FabricClientCommandSource) connection.getSuggestionsProvider();
-        CommandManager.execute(message, suggestionsProvider);
+        CommandManager.execute(command, suggestionsProvider);
         ci.cancel();
     }
 
     @Inject(method = "sendChat", at = @At("HEAD"), cancellable = true)
-    private void onSendChat(String message, CallbackInfo ci) {
-        if (!message.startsWith("/")) return;
+    private void onSendChat(String content, CallbackInfo ci) {
+        if (!content.startsWith("/")) return;
         ci.cancel();
-        sendUnattendedCommand(message.substring(1), null);
+        sendUnattendedCommand(content.substring(1), null);
     }
 
     @Inject(method = "handleCommandSuggestions", at = @At("HEAD"))
@@ -99,7 +99,7 @@ public abstract class ClientPacketListenerMixin {
     }
 
     @Inject(method = "<init>", at = @At("RETURN"))
-    private void onConstruct(Minecraft minecraft, Connection connection, CommonListenerCookie commonListenerCookie, CallbackInfo ci) {
+    private void onConstruct(Minecraft minecraft, Connection connection, CommonListenerCookie cookie, CallbackInfo ci) {
         ecAddCommands();
     }
 
@@ -117,8 +117,8 @@ public abstract class ClientPacketListenerMixin {
     }
 
     @Inject(method = "updateLevelChunk", at = @At("RETURN"))
-    private void onUpdateLevelChunk(int i, int j, ClientboundLevelChunkPacketData clientboundLevelChunkPacketData, CallbackInfo ci) {
-        LevelChunk chunk = Objects.requireNonNull(this.level).getChunkSource().getChunkNow(i, j);
+    private void onUpdateLevelChunk(int x, int z, ClientboundLevelChunkPacketData chunkData, CallbackInfo ci) {
+        LevelChunk chunk = Objects.requireNonNull(this.level).getChunkSource().getChunkNow(x, z);
         UpdateLevelChunkCallback.EVENT.invoker().updateLevelChunk(chunk);
     }
 
@@ -151,7 +151,7 @@ public abstract class ClientPacketListenerMixin {
     void onGameMessage(ClientboundSystemChatPacket packet, CallbackInfo ci) {
         if (packet.overlay()) {
             PacketUtils.ensureRunningOnSameThread(packet, (ClientGamePacketListener) this, Minecraft.getInstance().packetProcessor());
-            Minecraft.getInstance().getChatListener().handleOverlay(packet.content());
+            Minecraft.getInstance().gui.chatListener().handleOverlay(packet.content());
         } else {
             ci.cancel();
             EdenClient.chatMessagesToHandle.add(packet.content());

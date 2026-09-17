@@ -93,7 +93,7 @@ public class PlayerUtils {
     }
 
     public static void sendMessage(Component text) {
-        Minecraft.getInstance().gui.getChat().addClientSystemMessage(text);
+        Minecraft.getInstance().gui.hud.getChat().addClientSystemMessage(text);
     }
 
     public static void sendMessage(net.kyori.adventure.text.Component text) {
@@ -124,9 +124,9 @@ public class PlayerUtils {
 
     @SuppressWarnings("unused")
     public static void sendTitle(Component title, Component subtitle, int in, int keep, int out) {
-        Minecraft.getInstance().gui.setSubtitle(subtitle);
-        Minecraft.getInstance().gui.setTitle(title);
-        Minecraft.getInstance().gui.setTimes(in, keep, out);
+        Minecraft.getInstance().gui.hud.setSubtitle(subtitle);
+        Minecraft.getInstance().gui.hud.setTitle(title);
+        Minecraft.getInstance().gui.hud.setTimes(in, keep, out);
     }
 
     public static void sendActionBar(net.kyori.adventure.text.Component text) {
@@ -137,7 +137,7 @@ public class PlayerUtils {
                 .getOrThrow()
                 .getFirst();
         component = Component.empty().append(Component.empty().append(component));
-        Minecraft.getInstance().gui.setOverlayMessage(component, true);
+        Minecraft.getInstance().gui.hud.setOverlayMessage(component, true);
     }
 
     public static void sendModMessage(net.kyori.adventure.text.Component text) {
@@ -248,7 +248,7 @@ public class PlayerUtils {
     }
 
     public static void clickSlot(int slotId) {
-        Screen screen = Minecraft.getInstance().screen;
+        Screen screen = Minecraft.getInstance().gui.screen();
         if (!(screen instanceof ContainerScreen gcs)) {
             return;
         }

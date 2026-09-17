@@ -61,7 +61,7 @@ public class NbtInfo {
                     return 1;
                 }).then(literal("set-key").executes(_ -> {
                     EdenClient.getMod(Scheduler.class).scheduleSyncDelayed(() ->
-                            Minecraft.getInstance().setScreen(new PressKeyScreen(k -> NbtInfo.this.key = k)), 1);
+                            Minecraft.getInstance().gui.setScreen(new PressKeyScreen(k -> NbtInfo.this.key = k)), 1);
                     return 1;
                 })),
                 "E-NBT displays all the Nbt-Data of the item you are currently holding.");
@@ -92,6 +92,6 @@ public class NbtInfo {
         Tag tag = ItemStack.CODEC.encodeStart(nbtOps, stack).getOrThrow();
         Component text = NbtFormatter.format(tag, true, 2, Integer.MAX_VALUE, true);
         ShowTextScreen showTextScreen = new ShowTextScreen(text);
-        EdenClient.getMod(Scheduler.class).scheduleSyncDelayed(() -> Minecraft.getInstance().setScreen(showTextScreen), 1);
+        EdenClient.getMod(Scheduler.class).scheduleSyncDelayed(() -> Minecraft.getInstance().gui.setScreen(showTextScreen), 1);
     }
 }

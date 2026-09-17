@@ -5,6 +5,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.entity.BlockEntityTypes;
 import org.jetbrains.annotations.NotNull;
 
 public class BlockEntityTypeLoader implements ConfigLoader<StringTag, BlockEntityType<?>> {
@@ -19,7 +20,7 @@ public class BlockEntityTypeLoader implements ConfigLoader<StringTag, BlockEntit
     @NotNull
     public BlockEntityType<?> load(@NotNull StringTag nbtElement) {
         BlockEntityType<?> type = registry.getValue(Identifier.parse(nbtElement.asString().orElseThrow()));
-        return type == null ? BlockEntityType.STRUCTURE_BLOCK : type;
+        return type == null ? BlockEntityTypes.STRUCTURE_BLOCK : type;
     }
 
     @NotNull

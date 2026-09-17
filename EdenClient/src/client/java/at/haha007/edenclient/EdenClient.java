@@ -48,6 +48,7 @@ public class EdenClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         setInstance(this);
+        //noinspection ResultOfMethodCallIgnored
         PerWorldConfig.get();
         modInitializer.initializeMods(c -> c.getAnnotation(Mod.class).required());
         WorldLoadHandler.getInstance().registerWorldLoadPostHandler(new IWorldLoadListener() {
@@ -62,13 +63,13 @@ public class EdenClient implements ClientModInitializer {
 
                 Component component = chatMessagesToHandle.poll();
                 if (component == null) return;
-                ChatComponentAccessor chat = (ChatComponentAccessor) Minecraft.getInstance().gui.getChat();
+                ChatComponentAccessor chat = (ChatComponentAccessor) Minecraft.getInstance().gui.hud.getChat();
                 LocalPlayer player = PlayerUtils.getPlayer();
                 ChatAddEvent event = new ChatAddEvent(player, component, chat.edenClient$getTrimmedMessages());
                 AddChatMessageCallback.EVENT.invoker().onChatAdd(event);
                 Component chatText = event.getChatText();
                 if (chatText != null && !chatText.getString().isBlank() && !event.isCanceled()) {
-                    Minecraft.getInstance().gui.getChat().addClientSystemMessage(chatText);
+                    Minecraft.getInstance().gui.hud.getChat().addClientSystemMessage(chatText);
                 }
             }
         });
