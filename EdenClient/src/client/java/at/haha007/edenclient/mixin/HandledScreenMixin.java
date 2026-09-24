@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.Shadow;
 @Mixin(AbstractContainerScreen.class)
 public abstract class HandledScreenMixin implements HandledScreenAccessor {
     @Shadow
-    protected abstract void slotClicked(Slot slot, int slotId, int button, ContainerInput actionType);
+    protected abstract void slotClicked(Slot slot, int slotId, int buttonNum, ContainerInput containerInput);
 
     @Override
     public void edenClient$clickMouse(Slot slot, int slotId, int button, ContainerInput actionType) {

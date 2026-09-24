@@ -29,7 +29,7 @@ public class CylinderAreaLoader implements ConfigLoader<CompoundTag, CylinderAre
         Vec3i center = loader.load((IntArrayTag) Objects.requireNonNull(nbtElement.get("center")));
         double radius = nbtElement.getDouble("radius").orElseThrow();
         int height = nbtElement.getInt("height").orElseThrow();
-        return new CylinderArea(new BlockPos(center), height, radius);
+        return new CylinderArea(new BlockPos(center.getX(), center.getY(), center.getZ()), height, radius);
     }
 
     @NotNull

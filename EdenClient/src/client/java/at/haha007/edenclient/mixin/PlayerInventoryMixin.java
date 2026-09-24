@@ -14,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class PlayerInventoryMixin {
 
     @Inject(at = @At("TAIL"), method = "setItem")
-    void addItem(int slot, ItemStack stack, CallbackInfo ci) {
+    void addItem(int slot, ItemStack itemStack, CallbackInfo ci) {
         try {
             PlayerInvChangeCallback.EVENT.invoker().onInvChange(PlayerUtils.getPlayer().getInventory());
         } catch (IllegalStateException e) {

@@ -111,7 +111,7 @@ public class ContainerDisplay {
             } else if (loopCount == 1) {
                 poseStack.pushPose();
                 poseStack.translate(offset);
-                poseStack.mulPose(rotation);
+                poseStack.rotate(rotation);
                 ItemStack stack = chestInfo.items().getFirst().getDefaultInstance();
                 ItemStackRenderState state = new ItemStackRenderState();
                 mc.getItemModelResolver().updateForTopItem(
@@ -186,7 +186,7 @@ public class ContainerDisplay {
 
             poseStack.pushPose();
             poseStack.translate(delta.add(offset));
-            poseStack.mulPose(rotation);
+            poseStack.rotate(rotation);
             poseStack.scale(0.4f, 0.4f, 0.4f);
             ItemStackRenderState state = new ItemStackRenderState();
             mc.getItemModelResolver().updateForTopItem(
@@ -249,7 +249,7 @@ public class ContainerDisplay {
             }
         });
         entries = entries.entrySet().stream()
-                .filter(e -> level.getBlockEntity(new BlockPos(e.getKey())) != null)
+                .filter(e -> level.getBlockEntity(new BlockPos(e.getKey().getX(), e.getKey().getY(), e.getKey().getZ())) != null)
                 .sorted(Comparator.comparingInt(e -> e.getKey().distManhattan(pp)))
                 .limit(250)
                 .collect(Collectors.toConcurrentMap(Map.Entry::getKey, Map.Entry::getValue));

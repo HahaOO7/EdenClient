@@ -15,7 +15,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(ChatScreen.class)
 public abstract class ChatScreenMixin {
     @Shadow
-    public abstract void moveInHistory(int i);
+    public abstract void moveInHistory(int dir);
 
     @Shadow
     protected EditBox input;

@@ -13,7 +13,6 @@ import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.Vec3i;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.phys.BlockHitResult;
@@ -74,8 +73,7 @@ public class PlaceDirection {
         return InteractionResult.FAIL;
     }
 
-    private void clickPos(Vec3i target) {
-        BlockPos bp = new BlockPos(target);
+    private void clickPos(BlockPos bp) {
         MultiPlayerGameMode im = Minecraft.getInstance().gameMode;
         if (im == null) {
             return;

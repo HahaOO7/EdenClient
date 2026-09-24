@@ -458,7 +458,7 @@ public class PlayerUtils {
         if (level == null) {
             return false;
         }
-        BlockPos.withinManhattanStream(player.blockPosition(), 5, 5, 5)
+        BlockPos.betweenClosedStream(player.blockPosition().offset(-5, -5, -5), player.blockPosition().offset(5, 5, 5))
                 .filter(b -> level.getBlockState(b).getBlock().asItem() == item)
                 .findFirst()
                 .ifPresent(b -> gameMode.handlePickItemFromBlock(b, false));

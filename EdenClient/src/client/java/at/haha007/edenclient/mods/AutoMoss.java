@@ -83,11 +83,10 @@ public class AutoMoss {
     private Stream<BlockPos> getNearby(LocalPlayer player) {
         BlockPos pos = player.blockPosition();
         int dist = 5;
-        return BlockPos.withinManhattanStream(pos, dist, dist, dist);
+        return BlockPos.betweenClosedStream(pos.offset(-dist, -dist, -dist), pos.offset(dist, dist, dist));
     }
 
-    private void clickPos(Vec3i target) {
-        BlockPos bp = new BlockPos(target);
+    private void clickPos(BlockPos bp) {
         Direction dir = Direction.UP;
         MultiPlayerGameMode im = Minecraft.getInstance().gameMode;
         if (im == null) {

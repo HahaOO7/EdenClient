@@ -7,6 +7,7 @@ import net.minecraft.core.Vec3i;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.entity.SignBlockEntity;
+import net.minecraft.world.level.block.entity.SignTextSlot;
 
 public class ChestShopEntry {
     @Getter
@@ -23,7 +24,7 @@ public class ChestShopEntry {
     public ChestShopEntry(SignBlockEntity sign) {
         String[] linesFront = new String[4];
         for (int i = 0; i < linesFront.length; i++) {
-            linesFront[i] = sign.getFrontText().getMessage(i, true).getString().trim();
+            linesFront[i] = sign.getText(SignTextSlot.FRONT).getMessages(true).get(i).getString().trim();
         }
 
         String player = linesFront[0];
@@ -121,7 +122,7 @@ public class ChestShopEntry {
     }
 
     public ChunkPos getChunkPos() {
-        return ChunkPos.containing(new BlockPos(pos));
+        return ChunkPos.containing(new BlockPos(pos.getX(), pos.getY(), pos.getZ()));
     }
 
     public String formattedString(boolean buy) {

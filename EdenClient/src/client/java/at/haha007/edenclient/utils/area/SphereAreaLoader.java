@@ -29,7 +29,7 @@ public class SphereAreaLoader implements ConfigLoader<CompoundTag, SphereArea> {
         Vec3iLoader loader = new Vec3iLoader();
         Vec3i center = loader.load((IntArrayTag) Objects.requireNonNull(nbtElement.get("center")));
         double radius = nbtElement.getDouble("radius").orElseThrow();
-        return new SphereArea(new BlockPos(center), radius);
+        return new SphereArea(new BlockPos(center.getX(), center.getY(), center.getZ()), radius);
     }
 
     @Override

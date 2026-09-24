@@ -62,8 +62,8 @@ public class HeadHunt {
     float green;
     @ConfigSubscriber("1")
     float blue;
-    Set<Vec3i> heads = new HashSet<>();
-    Set<Vec3i> foundHeads = new HashSet<>();
+    Set<BlockPos> heads = new HashSet<>();
+    Set<BlockPos> foundHeads = new HashSet<>();
     private PathSegment path;
 
     public HeadHunt() {
@@ -104,7 +104,7 @@ public class HeadHunt {
                 .map(Map.Entry::getKey)
                 .sorted(Comparator.comparingDouble(pos -> pos.distSqr(pp)))
                 .limit(1000)
-                .map(v -> (Vec3i) v).collect(Collectors.toSet());
+                .collect(Collectors.toSet());
         int totalHeads = heads.size();
         heads.removeAll(foundHeads);
         int foundHeadCount = this.foundHeads.size();
@@ -155,13 +155,12 @@ public class HeadHunt {
         }
     }
 
-    private void clickPos(Vec3i target) {
-        BlockPos bp = new BlockPos(target);
+    private void clickPos(BlockPos bp) {
         Direction dir = Direction.UP;
         MultiPlayerGameMode im = Minecraft.getInstance().gameMode;
         if (im == null) return;
         im.useItemOn(getPlayer(), InteractionHand.MAIN_HAND, new BlockHitResult(Vec3.atLowerCornerOf(bp.relative(dir)), dir, bp, false));
-        foundHeads.add(target);
+        foundHeads.add(bp);
         path = null;
     }
 
@@ -240,8 +239,8 @@ public class HeadHunt {
             EdenRenderUtils.drawTracers(heads.stream().map(Vec3::atCenterOf).toList(), Color4f.fromColor(new Color(red, green, blue).getRGB()));
         }
 
-        for (Vec3i c : heads) {
-            RenderUtils.renderBlockOutline(new BlockPos(c), 0, 1, Color4f.fromColor(new Color(red, green, blue).getRGB()));
+        for (BlockPos c : heads) {
+            RenderUtils.renderBlockOutline(c, 0, 1, Color4f.fromColor(new Color(red, green, blue).getRGB()));
         }
     }
 }

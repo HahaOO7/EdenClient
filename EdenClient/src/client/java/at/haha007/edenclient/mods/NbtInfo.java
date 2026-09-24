@@ -24,7 +24,7 @@ import net.minecraft.resources.RegistryOps;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import static at.haha007.edenclient.command.CommandManager.literal;
 import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
@@ -32,7 +32,7 @@ import static at.haha007.edenclient.utils.PlayerUtils.sendModMessage;
 @Mod(dependencies = Scheduler.class)
 public class NbtInfo {
     @ConfigSubscriber
-    private int key = GLFW.GLFW_KEY_ESCAPE;
+    private int key = InputConstants.KEY_ESCAPE;
 
     private NbtInfo() {
         registerCommand();
@@ -68,7 +68,7 @@ public class NbtInfo {
     }
 
     private boolean onInventoryKey(KeyEvent event, AbstractContainerScreen<?> screen) {
-        if (key == GLFW.GLFW_KEY_ESCAPE) {
+        if (key == InputConstants.KEY_ESCAPE) {
             return false;
         }
         if (event.key() != key) {

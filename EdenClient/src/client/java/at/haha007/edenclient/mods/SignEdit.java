@@ -30,6 +30,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.SignBlockEntity;
 import net.minecraft.world.level.block.entity.SignText;
+import net.minecraft.world.level.block.entity.SignTextSlot;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -87,12 +88,12 @@ public class SignEdit {
         if (!registry.containsKey(BuiltInRegistries.ITEM.getKey(PlayerUtils.getPlayer().getInventory().getSelectedItem().getItem())))
             return InteractionResult.PASS;
         if (b instanceof SignBlockEntity sign) {
-            SignText frontText = sign.getFrontText();
+            SignText frontText = sign.getText(SignTextSlot.FRONT);
             String[] copiedLines = new String[4];
-            copiedLines[0] = frontText.getMessage(0, true).getString();
-            copiedLines[1] = frontText.getMessage(1, true).getString();
-            copiedLines[2] = frontText.getMessage(2, true).getString();
-            copiedLines[3] = frontText.getMessage(3, true).getString();
+            copiedLines[0] = frontText.getMessages(true).get(0).getString();
+            copiedLines[1] = frontText.getMessages(true).get(1).getString();
+            copiedLines[2] = frontText.getMessages(true).get(2).getString();
+            copiedLines[3] = frontText.getMessages(true).get(3).getString();
             this.copy = new StringList();
             this.copy.addAll(Arrays.asList(copiedLines));
             return InteractionResult.FAIL;
@@ -142,11 +143,8 @@ public class SignEdit {
         if (!enabled) return InteractionResult.PASS;
         ServerboundSignUpdatePacket packet = new ServerboundSignUpdatePacket(
                 sign.getBlockPos(),
-                front,
-                copy.get(0),
-                copy.get(1),
-                copy.get(2),
-                copy.get(3));
+                List.of(copy.get(0), copy.get(1), copy.get(2), copy.get(3)),
+                front ? SignTextSlot.FRONT : SignTextSlot.BACK);
         Objects.requireNonNull(Minecraft.getInstance().getConnection()).send(packet);
         return InteractionResult.FAIL;
     }
