@@ -8,7 +8,6 @@ import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.level.block.entity.SignBlockEntity;
-import net.minecraft.world.level.block.entity.SignTextSlot;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -29,9 +28,9 @@ public abstract class LocalPlayerMixin {
     protected Minecraft minecraft;
 
     @Inject(at = @At("HEAD"), method = "openTextEdit", cancellable = true)
-    private void onEditSign(SignBlockEntity sign, SignTextSlot slot, CallbackInfo ci) {
-        InteractionResult result = PlayerEditSignCallback.EVENT.invoker().interact(PlayerUtils.getPlayer(), sign, slot == SignTextSlot.FRONT);
-        if (result == InteractionResult.FAIL) ci.cancel();
+    private void onEditSign(SignBlockEntity sign, boolean front, CallbackInfo info) {
+        InteractionResult result = PlayerEditSignCallback.EVENT.invoker().interact(PlayerUtils.getPlayer(), sign, front);
+        if (result == InteractionResult.FAIL) info.cancel();
     }
 
     @Inject(at = @At("HEAD"), method = "tick")

@@ -116,9 +116,9 @@ public abstract class ClientPacketListenerMixin {
         ContainerInfo.remove(id);
     }
 
-    @Inject(method = "handleLevelChunkWithLight", at = @At("RETURN"))
-    private void onUpdateLevelChunk(ClientboundLevelChunkWithLightPacket packet, CallbackInfo ci) {
-        LevelChunk chunk = Objects.requireNonNull(this.level).getChunkSource().getChunkNow(packet.x(), packet.z());
+    @Inject(method = "updateLevelChunk", at = @At("RETURN"))
+    private void onUpdateLevelChunk(int x, int z, ClientboundLevelChunkPacketData chunkData, CallbackInfo ci) {
+        LevelChunk chunk = Objects.requireNonNull(this.level).getChunkSource().getChunkNow(x, z);
         UpdateLevelChunkCallback.EVENT.invoker().updateLevelChunk(chunk);
     }
 

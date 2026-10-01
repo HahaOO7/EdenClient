@@ -32,8 +32,9 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
-import net.minecraft.network.protocol.game.ServerboundPunchPacket;
+import net.minecraft.network.protocol.game.ServerboundSwingPacket;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -241,7 +242,7 @@ public class Nuker {
         Direction dir = getHitDirectionForBlock(player, target);
 
         if (im.continueDestroyBlock(target, dir))
-            nh.send(ServerboundPunchPacket.INSTANCE);
+            nh.send(new ServerboundSwingPacket(InteractionHand.MAIN_HAND));
         else
             target = null;
     }
@@ -261,7 +262,7 @@ public class Nuker {
         if (filterBlocks) {
             stream = stream.filter(p -> applyFilter(world.getBlockState(p).getBlock()));
         }
-        target = stream.min(Comparator.comparingDouble(p -> Vec3.atCenterOf(p).distanceTo(playerPos))).orElse(null);
+        target = stream.map(BlockPos::new).min(Comparator.comparingDouble(p -> Vec3.atCenterOf(p).distanceTo(playerPos))).orElse(null);
     }
 
     private List<BlockPos> getInstantMinableBlocksInRange(LocalPlayer player) {
@@ -280,7 +281,7 @@ public class Nuker {
             stream = stream.filter(p -> applyFilter(world.getBlockState(p).getBlock()));
         }
         stream = stream.limit(limit);
-        return stream.toList();
+        return stream.map(BlockPos::new).toList();
 
     }
 
@@ -315,6 +316,6 @@ public class Nuker {
     private Stream<BlockPos> getNearby(LocalPlayer player) {
         BlockPos pos = player.blockPosition();
         int dist = (int) (distance + 1);
-        return BlockPos.betweenClosedStream(pos.offset(-dist, -dist, -dist), pos.offset(dist, dist, dist));
+        return BlockPos.withinManhattanStream(pos, dist, dist, dist);
     }
 }

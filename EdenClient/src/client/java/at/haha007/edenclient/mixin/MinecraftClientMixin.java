@@ -3,6 +3,7 @@ package at.haha007.edenclient.mixin;
 import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.callbacks.LeaveWorldCallback;
 import at.haha007.edenclient.command.CommandManager;
+import com.mojang.logging.LogUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -21,7 +22,7 @@ public class MinecraftClientMixin {
     public ClientLevel level;
 
     @Inject(at = @At("RETURN"), method = "disconnect(Lnet/minecraft/client/gui/screens/Screen;ZZ)V")
-    void onDisconnect(Screen screen, boolean keepResourcePacks, boolean stopSound, CallbackInfo ci) {
+    void onDisconnect(Screen screen, boolean bl, boolean bl2, CallbackInfo ci) {
         if(!EdenClient.connected) {
             return;
         }

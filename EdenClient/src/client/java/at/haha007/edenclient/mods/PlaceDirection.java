@@ -14,13 +14,13 @@ import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Vec3i;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.component.SwingAnimation;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
@@ -123,7 +123,8 @@ public class PlaceDirection {
         return InteractionResult.FAIL;
     }
 
-    private void clickPos(BlockPos bp) {
+    private void clickPos(Vec3i target) {
+        BlockPos bp = new BlockPos(target);
         MultiPlayerGameMode im = Minecraft.getInstance().gameMode;
         if (im == null) {
             return;
@@ -133,8 +134,7 @@ public class PlaceDirection {
 
         BlockHitResult hitResult = new BlockHitResult(middle, direction, bp, false);
         LocalPlayer player = PlayerUtils.getPlayer();
-        SwingAnimation swingAnimation = player.getItemInHand(InteractionHand.MAIN_HAND).getInteractAnimation();
-        player.swing(InteractionHand.MAIN_HAND, swingAnimation, false);
+        player.swing(InteractionHand.MAIN_HAND, false);
         im.useItemOn(player, InteractionHand.MAIN_HAND, hitResult);
     }
 

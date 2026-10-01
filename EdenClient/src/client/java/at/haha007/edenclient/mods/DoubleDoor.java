@@ -78,7 +78,8 @@ public class DoubleDoor {
         clickPos(neighbor);
     }
 
-    private void clickPos(BlockPos bp) {
+    private void clickPos(BlockPos target) {
+        BlockPos bp = new BlockPos(target);
         Direction dir = Direction.UP;
         var nh = Minecraft.getInstance().getConnection();
         if (nh == null) return;

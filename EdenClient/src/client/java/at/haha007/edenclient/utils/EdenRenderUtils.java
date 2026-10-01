@@ -69,14 +69,14 @@ public enum EdenRenderUtils {
         if (state.isLiving) {
             if (state.isDeadOrDying) {
                 float duration = Math.min(state.deathTime, 20.0F);
-                Axis.ZP.rotateDegrees(pose, 40.0F - 8000.0F / (duration + 200.0F));
+                pose.rotate(Axis.ZP.rotationDegrees( 40.0F - 8000.0F / (duration + 200.0F)));
             }
             if (state.hurtTime >= 0.0F) {
                 float hurt = state.hurtTime / state.hurtDuration;
                 hurt = Mth.sin(hurt * hurt * hurt * hurt * (float) Math.PI);
-                Axis.YP.rotateDegrees(pose, -state.hurtDir);
-                Axis.ZP.rotateDegrees(pose, (float) (-hurt * 14.0 * damageTiltStrength));
-                Axis.YP.rotateDegrees(pose, state.hurtDir);
+                pose.rotate(Axis.YP.rotationDegrees(-state.hurtDir));
+                pose.rotate(Axis.ZP.rotationDegrees((float) (-hurt * 14.0 * damageTiltStrength)));
+                pose.rotate(Axis.YP.rotationDegrees(state.hurtDir));
             }
         }
         if (bobView && state.isPlayer) {
@@ -85,8 +85,8 @@ public enum EdenRenderUtils {
             pose.translate(Mth.sin(walkDistance * (float) Math.PI) * bob * 0.5F,
                     -Math.abs(Mth.cos(walkDistance * (float) Math.PI) * bob),
                     0.0F);
-            Axis.ZP.rotateDegrees(pose, Mth.sin(walkDistance * (float) Math.PI) * bob * 3.0F);
-            Axis.XP.rotateDegrees(pose, Math.abs(Mth.cos(walkDistance * (float) Math.PI - 0.2F) * bob) * 5.0F);
+            pose.rotate(Axis.ZP.rotationDegrees(Mth.sin(walkDistance * (float) Math.PI) * bob * 3.0F));
+            pose.rotate(Axis.XP.rotationDegrees(Math.abs(Mth.cos(walkDistance * (float) Math.PI - 0.2F) * bob) * 5.0F));
         }
         return pose;
     }

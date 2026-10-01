@@ -23,8 +23,8 @@ public class PlayerControllerMixin {
     @Inject(at = @At("HEAD"),
             method = "useItemOn",
             cancellable = true)
-    void interactBlock(LocalPlayer player, InteractionHand hand, BlockHitResult blockHit, CallbackInfoReturnable<InteractionResult> ci) {
-        InteractionResult result = PlayerInteractBlockCallback.EVENT.invoker().interact(player, Minecraft.getInstance().level, hand, blockHit);
+    void interactBlock(LocalPlayer player, InteractionHand hand, BlockHitResult hitResult, CallbackInfoReturnable<InteractionResult> ci) {
+        InteractionResult result = PlayerInteractBlockCallback.EVENT.invoker().interact(player, Minecraft.getInstance().level, hand, hitResult);
         if (result == InteractionResult.FAIL) {
             ci.setReturnValue(InteractionResult.FAIL);
             ci.cancel();
@@ -32,21 +32,21 @@ public class PlayerControllerMixin {
     }
 
     @Inject(method = "startDestroyBlock", at = @At("HEAD"), cancellable = true)
-    private void onAttackBlock(BlockPos pos, Direction direction, CallbackInfoReturnable<Boolean> cir) {
-        InteractionResult result = PlayerAttackBlockCallback.EVENT.invoker().interact(PlayerUtils.getPlayer(), pos, direction);
+    private void onAttackBlock(BlockPos pos, Direction side, CallbackInfoReturnable<Boolean> cir) {
+        InteractionResult result = PlayerAttackBlockCallback.EVENT.invoker().interact(PlayerUtils.getPlayer(), pos, side);
         if (result == InteractionResult.FAIL) cir.setReturnValue(false);
     }
 
     @Inject(method = "continueDestroyBlock", at = @At("HEAD"), cancellable = true)
-    private void onContinueDestroyBlock(BlockPos pos, Direction direction, CallbackInfoReturnable<Boolean> cir) {
-        InteractionResult result = PlayerAttackBlockCallback.EVENT.invoker().interact(PlayerUtils.getPlayer(), pos, direction);
+    private void onContinueDestroyBlock(BlockPos pos, Direction side, CallbackInfoReturnable<Boolean> cir) {
+        InteractionResult result = PlayerAttackBlockCallback.EVENT.invoker().interact(PlayerUtils.getPlayer(), pos, side);
         if (result == InteractionResult.FAIL) cir.setReturnValue(false);
     }
 
     @Inject(method = "destroyBlock", at = @At("HEAD"), cancellable = true)
-    private void onDestroyBlock(BlockPos pos, CallbackInfoReturnable<Boolean> cir) {
-        InteractionResult result = PlayerAttackBlockCallback.EVENT.invoker().interact(PlayerUtils.getPlayer(), pos, Direction.UP);
-        PlayerBreakBlockCallback.EVENT.invoker().breakBlock(PlayerUtils.getPlayer(), pos, Direction.UP);
+    private void onDestroyBlock(BlockPos blockPos, CallbackInfoReturnable<Boolean> cir) {
+        InteractionResult result = PlayerAttackBlockCallback.EVENT.invoker().interact(PlayerUtils.getPlayer(), blockPos, Direction.UP);
+        PlayerBreakBlockCallback.EVENT.invoker().breakBlock(PlayerUtils.getPlayer(), blockPos, Direction.UP);
         if (result == InteractionResult.FAIL) cir.setReturnValue(false);
     }
 

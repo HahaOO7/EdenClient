@@ -199,6 +199,7 @@ public class ContainerInfo {
         }
 
         Optional<BlockPos> closest = BlockPos.betweenClosedStream(minBlockPos, maxBlockPos)
+                .map(BlockPos::new)
                 .filter(p -> Vec3.atCenterOf(p).subtract(playerEyePosition).lengthSqr() < range * range)
                 .filter(p -> world.getBlockEntity(p) != null)
                 .filter(p -> world.getBlockEntity(p) instanceof BaseContainerBlockEntity)
@@ -260,7 +261,7 @@ public class ContainerInfo {
 
         Level level = PlayerUtils.getPlayer().level();
         Registry<Block> registry = level.registryAccess().lookupOrThrow(BlockTags.SHULKER_BOXES.registry());
-        BlockPos basePos = lastInteractedBlock;
+        BlockPos basePos = new BlockPos(lastInteractedBlock);
 
         // Default behavior: single chests, shulkers, etc.
         storeChest(basePos, itemStacks, level, registry);
@@ -386,7 +387,7 @@ public class ContainerInfo {
         ChunkChestMap chunkMap = worldMap.computeIfAbsent(PlayerUtils.getCurrentWorldName(), _ -> new ChunkChestMap());
         ChestMap chestMap = chunkMap.getOrDefault(cp, new ChestMap());
         Set<Vec3i> chests = chestMap.keySet();
-        chests.removeIf(Predicate.not(e -> world.getBlockEntity(new BlockPos(e.getX(), e.getY(), e.getZ())) instanceof Container));
+        chests.removeIf(Predicate.not(e -> world.getBlockEntity(new BlockPos(e)) instanceof Container));
         BlockEntity be = world.getBlockEntity(blockHitResult.getBlockPos());
         if (be instanceof Container) {
             lastInteractedBlock = blockHitResult.getBlockPos();
@@ -405,7 +406,7 @@ public class ContainerInfo {
         ChunkChestMap chunkMap = worldMap.computeIfAbsent(PlayerUtils.getCurrentWorldName(), _ -> new ChunkChestMap());
         ChestMap map = chunkMap.get(chunk.getPos());
         if (map == null) return;
-        map.keySet().removeIf(Predicate.not(e -> be.containsKey(new BlockPos(e.getX(), e.getY(), e.getZ()))));
+        map.keySet().removeIf(Predicate.not(e -> be.containsKey(new BlockPos(e))));
     }
 
 

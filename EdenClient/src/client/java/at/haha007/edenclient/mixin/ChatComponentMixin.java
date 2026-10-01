@@ -4,6 +4,7 @@ import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.mixinterface.ChatComponentAccessor;
 import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.client.multiplayer.chat.GuiMessage;
+import net.minecraft.client.multiplayer.chat.GuiMessageSource;
 import net.minecraft.client.multiplayer.chat.GuiMessageTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MessageSignature;
@@ -29,7 +30,6 @@ public abstract class ChatComponentMixin implements ChatComponentAccessor {
         ci.cancel();
         EdenClient.chatMessagesToHandle.add(message);
     }
-
     @Inject(at = @At("HEAD"), method = "addServerSystemMessage", cancellable = true)
     private void onAddMessage(Component message, CallbackInfo ci) {
         ci.cancel();

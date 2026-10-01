@@ -68,7 +68,8 @@ public class Bridge {
         streamPlaceBlocks().limit(3).forEach(this::clickPos);
     }
 
-    private void clickPos(BlockPos bp) {
+    private void clickPos(Vec3i target) {
+        BlockPos bp = new BlockPos(target);
         Direction dir = Direction.UP;
         MultiPlayerGameMode im = Minecraft.getInstance().gameMode;
         if (im == null) {
@@ -89,7 +90,8 @@ public class Bridge {
             return Stream.of();
         }
         BlockPos center = player.blockPosition().below();
-        Stream<BlockPos> stream = BlockPos.betweenClosedStream(center.offset(-range, -1, -range), center.offset(range, 1, range));
+        Stream<BlockPos> stream = BlockPos.withinManhattanStream(center, range, 1, range);
+        stream = stream.map(BlockPos::new);
         stream = stream.filter(p -> p.getY() == center.getY());
         stream = stream.filter(p -> level.getBlockState(p).isAir() || level.getBlockState(p).canBeReplaced());
         stream = stream.sorted(Comparator.comparingInt(p -> p.distManhattan(center)));

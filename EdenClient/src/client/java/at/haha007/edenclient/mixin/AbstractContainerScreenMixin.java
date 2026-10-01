@@ -37,8 +37,8 @@ public class AbstractContainerScreenMixin<T extends AbstractContainerMenu> imple
     }
 
     @Inject(at = @At("HEAD"), method = "keyPressed")
-    private void onKeyPressed(KeyEvent event, CallbackInfoReturnable<Boolean> cir) {
-        InventoryKeyCallback.EVENT.invoker().onKeyEvent(event, (AbstractContainerScreen<?>) (Object) this);
+    private void onKeyPressed(KeyEvent keyEvent, CallbackInfoReturnable<Boolean> cir) {
+        InventoryKeyCallback.EVENT.invoker().onKeyEvent(keyEvent, (AbstractContainerScreen<?>) (Object) this);
     }
 
     @Override

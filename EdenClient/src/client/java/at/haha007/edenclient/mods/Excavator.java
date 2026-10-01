@@ -344,21 +344,21 @@ public class Excavator {
         player.connection.send(new ServerboundSetCarriedItemPacket(bestSlot));
     }
 
-    private Stream<BlockPos> streamOut(BlockPos source) {
+    private Stream<Vec3i> streamOut(Vec3i source) {
         return Stream.generate(new Supplier<>() {
-            private BlockPos last = source.relative(Direction.WEST);
+            private Vec3i last = source.relative(Direction.WEST);
             private long maxI = -2;
             private long i = 0;
             private Direction direction = Direction.NORTH;
 
             @Override
-            public BlockPos get() {
+            public Vec3i get() {
                 if (i++ >= maxI / 2) {
                     direction = direction.getClockWise();
                     i = 0;
                     maxI++;
                 }
-                BlockPos vec = last.relative(direction);
+                Vec3i vec = last.relative(direction);
                 last = vec;
                 return vec;
             }
@@ -377,7 +377,7 @@ public class Excavator {
             if (world == null) {
                 return 1;
             }
-            scheduler.runAsync(() -> streamOut(PlayerUtils.getPlayer().blockPosition().below()).forEach(b -> {
+            scheduler.runAsync(() -> streamOut(PlayerUtils.getPlayer().blockPosition().below()).map(BlockPos::new).forEach(b -> {
                 try {
                     world.setBlockAndUpdate(b, Blocks.WATER.defaultBlockState());
                     Thread.sleep(1);

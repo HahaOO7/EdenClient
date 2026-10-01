@@ -12,7 +12,6 @@ import net.minecraft.world.level.block.entity.SignBlockEntity;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Mutable;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -24,8 +23,6 @@ public abstract class AbstractSignEditScreenMixin extends Screen {
     @Shadow
     protected abstract void onDone();
 
-    @Mutable
-    @Final
     @Shadow
     @Nullable
     private TextFieldHelper signField;
@@ -42,7 +39,7 @@ public abstract class AbstractSignEditScreenMixin extends Screen {
 
     @Shadow
     @Final
-    protected SignBlockEntity sign;
+    private SignBlockEntity sign;
 
     protected AbstractSignEditScreenMixin(Component component) {
         super(component);
@@ -50,11 +47,12 @@ public abstract class AbstractSignEditScreenMixin extends Screen {
 
     @Inject(at = @At("HEAD"), method = "init", cancellable = true)
     private void onKeyPressed(CallbackInfo ci) {
-        addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, _ -> this.onDone()).bounds(this.width / 2 - 100, this.height / 4 + 144, 200, 20).build());
+        addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, button -> this.onDone()).bounds(this.width / 2 - 100, this.height / 4 + 144, 200, 20).build());
         this.signField = new TextFieldHelper(() -> this.messages[this.line],
                 this::setMessage, TextFieldHelper.createClipboardGetter(Minecraft.getInstance()),
                 TextFieldHelper.createClipboardSetter(Minecraft.getInstance()),
                 string -> {
+                    if (this.minecraft == null) return false;
                     int textWidth = this.minecraft.font.width(string);
                     int maxTextLineWidth = this.sign.getMaxTextLineWidth();
                     return SignWidthCallback.EVENT.invoker().canContinueWriting(textWidth, maxTextLineWidth, textWidth <= maxTextLineWidth);

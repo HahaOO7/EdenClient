@@ -79,19 +79,19 @@ public class AutoHarvest {
         cropsHarvestedThisTick = 0;
         switch (cycle) {
             case 0 ->//harvest
-                    BlockPos.betweenClosedStream(blockPos.offset(-5, -5, -5), blockPos.offset(5, 5, 5)).
+                    BlockPos.withinManhattanStream(blockPos, 5, 5, 5).
                             filter(b -> Vec3.atCenterOf(b).closerThan(pos, 4)).
                             forEach(this::harvestCrop);
             case 1 -> {//select
                 boolean found = false;
-                if (BlockPos.betweenClosedStream(blockPos.offset(-5, -5, -5), blockPos.offset(5, 5, 5)).
+                if (BlockPos.withinManhattanStream(blockPos, 5, 5, 5).
                         anyMatch(b -> world.getBlockState(b).getBlock() == Blocks.FARMLAND)) {
                     if (selectFarmlandItem()) {
                         found = true;
                     }
                     farmland = true;
                 }
-                if (!found && BlockPos.betweenClosedStream(blockPos.offset(-5, -5, -5), blockPos.offset(5, 5, 5)).
+                if (!found && BlockPos.withinManhattanStream(blockPos, 5, 5, 5).
                         anyMatch(b -> world.getBlockState(b).getBlock() == Blocks.SOUL_SAND)) {
                     if (selectNetherwartItem()) {
                         found = true;
@@ -105,7 +105,7 @@ public class AutoHarvest {
             }
             case 2 -> {//plant
                 Block filter = farmland ? Blocks.FARMLAND : Blocks.SOUL_SAND;
-                BlockPos.betweenClosedStream(blockPos.offset(-5, -5, -5), blockPos.offset(5, 5, 5)).
+                BlockPos.withinManhattanStream(blockPos, 5, 5, 5).
                         filter(b -> world.getBlockState(b).getBlock() == filter).
                         filter(b -> world.getBlockState(b.above()).getBlock() == Blocks.AIR).
                         limit(2).
@@ -192,7 +192,8 @@ public class AutoHarvest {
         nh.send(new ServerboundPlayerActionPacket(ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK, target, getHitDirectionForBlock(player, target)));
     }
 
-    private void clickPos(BlockPos bp) {
+    private void clickPos(Vec3i target) {
+        BlockPos bp = new BlockPos(target);
         Direction dir = Direction.UP;
         MultiPlayerGameMode im = Minecraft.getInstance().gameMode;
         if (im == null) {

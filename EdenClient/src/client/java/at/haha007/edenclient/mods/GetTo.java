@@ -28,7 +28,7 @@ import static at.haha007.edenclient.command.CommandManager.*;
 
 @Mod(dependencies = Scheduler.class)
 public class GetTo {
-    private BlockPos target;
+    private Vec3i target;
     private boolean tracer;
     private boolean box;
     private static final String COMMAND_NAME = "egetto";
@@ -49,7 +49,7 @@ public class GetTo {
         GL11.glDisable(GL11.GL_DEPTH_TEST);
         GL11.glEnable(GL11.GL_LINE_SMOOTH);
         if (box) {
-            RenderUtils.renderAreaOutline(target, target, 10, Color4f.WHITE, Color4f.WHITE, Color4f.WHITE);
+            RenderUtils.renderAreaOutline(new BlockPos(target), new BlockPos(target), 10, Color4f.WHITE, Color4f.WHITE, Color4f.WHITE);
         }
         if (tracer) {
             EdenRenderUtils.drawTracers(List.of(Vec3.atCenterOf(target)), Color4f.WHITE);

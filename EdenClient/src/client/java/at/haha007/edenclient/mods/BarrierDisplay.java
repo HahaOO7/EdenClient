@@ -57,7 +57,7 @@ public class BarrierDisplay {
             return;
         }
         ParticleEngine particleEngine = Minecraft.getInstance().particleEngine;
-        BlockPos.betweenClosedStream(center.offset(-range, -range, -range), center.offset(range, range, range))
+        BlockPos.withinManhattanStream(center, range, range, range)
                 .filter(bp -> level.getBlockState(bp).getBlock() == Blocks.BARRIER)
                 .filter(bp -> (bp.hashCode() + tickCounter) % DELAY == 0)
                 .forEach(pos -> particleEngine.add(new BlockMarker.Provider().createParticle(
