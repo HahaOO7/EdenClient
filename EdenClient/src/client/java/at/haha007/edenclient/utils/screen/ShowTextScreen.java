@@ -1,8 +1,10 @@
 package at.haha007.edenclient.utils.screen;
 
+import at.haha007.edenclient.utils.PlayerUtils;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -29,7 +31,15 @@ public class ShowTextScreen extends Screen {
         Button closeButton = Button.builder(Component.literal("Exit").withStyle(ChatFormatting.RED),
                         _ -> Minecraft.getInstance().gui.setScreen(parent))
                 .bounds(width - 210, height - 30, 200, 20)
-                .tooltip(Tooltip.create(Component.literal("Tooltip of button1")))
+                .tooltip(Tooltip.create(Component.literal("Exit the screen")))
+                .build();
+        Button copyButton = Button.builder(Component.literal("Copy").withStyle(ChatFormatting.AQUA),
+                        _ -> {
+                            String plainText = PlainTextComponentSerializer.plainText().serialize(PlayerUtils.minecraftToMinimessage(text));
+                            Minecraft.getInstance().keyboardHandler.setClipboard(plainText);
+                        })
+                .bounds(width - 420, height - 30, 200, 20)
+                .tooltip(Tooltip.create(Component.literal("Copy the text to clipboard")))
                 .build();
 
         SimpleTextWidget textWidget = SimpleTextWidget.builder(text, font)
@@ -37,6 +47,7 @@ public class ShowTextScreen extends Screen {
                 .build();
 
         addRenderableWidget(closeButton);
+        addRenderableWidget(copyButton);
         addRenderableWidget(textWidget);
     }
 
