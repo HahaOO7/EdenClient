@@ -45,14 +45,14 @@ public class LifeSaver {
 
         node.then(literal("health").then(argument("health", IntegerArgumentType.integer(0, 20)).executes(c -> {
             this.health = c.getArgument("health", Integer.class);
-            sendModMessage(Component.text("Set health at which LifeSaver activates to: " + health, NamedTextColor.GOLD)
+            sendModMessage(Component.text("Set health at which LifeSaver activates to: ", NamedTextColor.GOLD)
                     .append(Component.text(" (" + (health % 2 == 0 ? health / 2 : health / 2 + ",5") + " full hearts)", NamedTextColor.GRAY)));
             return 1;
         })));
 
         node.then(literal("height").then(argument("height", IntegerArgumentType.integer(Integer.MIN_VALUE, 256)).executes(c -> {
             this.height = c.getArgument("height", Integer.class);
-            sendModMessage(Component.text("Set height at which LifeSaver activates to: " + height, NamedTextColor.GOLD)
+            sendModMessage(Component.text("Set height at which LifeSaver activates to: ", NamedTextColor.GOLD)
                     .append(Component.text(c.getArgument("height", Integer.class), NamedTextColor.AQUA)));
             return 1;
         })));

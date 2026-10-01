@@ -94,7 +94,7 @@ public class GetTo {
         return String.format("/%s %d %d %d", COMMAND_NAME, target.getX(), target.getY(), target.getZ());
     }
 
-    private void getTo(BlockPos pos, boolean tracer, boolean box, boolean tp) {
+    public void getTo(BlockPos pos, boolean tracer, boolean box, boolean tp) {
         target = pos;
         this.tracer = tracer;
         this.box = box;

@@ -2,6 +2,8 @@ package at.haha007.edenclient.utils;
 
 import at.haha007.edenclient.callbacks.JoinWorldCallback;
 import at.haha007.edenclient.mixinterface.HandledScreenAccessor;
+import at.haha007.edenclient.utils.tasks.SyncTask;
+import at.haha007.edenclient.utils.tasks.TaskManager;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.mojang.serialization.JsonOps;
@@ -93,7 +95,7 @@ public class PlayerUtils {
     }
 
     public static void sendMessage(Component text) {
-        Minecraft.getInstance().gui.hud.getChat().addClientSystemMessage(text);
+        new TaskManager().then(new SyncTask(() -> Minecraft.getInstance().gui.hud.getChat().addClientSystemMessage(text))).start();
     }
 
     public static void sendMessage(net.kyori.adventure.text.Component text) {
@@ -255,20 +257,18 @@ public class PlayerUtils {
         ((HandledScreenAccessor) screen).edenClient$clickMouse(gcs.getMenu().slots.get(slotId), slotId, 0, ContainerInput.PICKUP_ALL);
     }
 
-    public static Vec3 getClientLookVec() {
+    public static Vec3 getClientLookVec(float partialTick) {
         Entity entity = Minecraft.getInstance().getCameraEntity();
         if (entity == null) {
             return Vec3.ZERO;
         }
-        float f = 0.017453292F;
-        float pi = (float) Math.PI;
+        return lookVec(entity.getViewYRot(partialTick), entity.getViewXRot(partialTick));
+    }
 
-        float f1 = Mth.cos(-entity.getYRot() * f - pi);
-        float f2 = Mth.sin(-entity.getYRot() * f - pi);
-        float f3 = -Mth.cos(-entity.getXRot() * f);
-        float f4 = Mth.sin(-entity.getXRot() * f);
-
-        return new Vec3(f2 * f3, f4, f1 * f3);
+    static Vec3 lookVec(float yaw, float pitch) {
+        float radians = 0.017453292F;
+        float cosPitch = Mth.cos(pitch * radians);
+        return new Vec3(Mth.sin(yaw * radians) * -cosPitch, -Mth.sin(pitch * radians), Mth.cos(yaw * radians) * cosPitch);
     }
 
     public static LocalPlayer getPlayer() {

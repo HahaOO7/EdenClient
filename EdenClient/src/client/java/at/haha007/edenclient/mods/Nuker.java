@@ -253,7 +253,7 @@ public class Nuker {
         Stream<BlockPos> stream = getNearby(player);
         stream = stream.filter(p -> Vec3.atCenterOf(p).closerThan(playerPos, distance));
         if (filterHeight)
-            stream = stream.filter(p -> player.getBlockY() <= p.getY());
+            stream = stream.filter(p -> player.getY() + 0.6 <= p.getY());
         stream = stream.filter(area::contains);
         stream = stream.filter(p -> !world.getBlockState(p).isAir());
         if (filterLiquids)
@@ -270,7 +270,7 @@ public class Nuker {
         Stream<BlockPos> stream = getNearby(player);
         stream = stream.filter(p -> Vec3.atCenterOf(p).closerThan(player.getEyePosition(), distance));
         if (filterHeight)
-            stream = stream.filter(p -> player.getBlockY() <= p.getY());
+            stream = stream.filter(p -> player.getY() + 0.6 <= p.getY());
         stream = stream.filter(area::contains);
         stream = stream.filter(p -> !world.getBlockState(p).isAir());
         stream = stream.filter(p -> instantMinable(p, player));
