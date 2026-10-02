@@ -15,10 +15,10 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.ProblemReporter;
+import net.minecraft.server.commands.data.BlockDataAccessor;
+import net.minecraft.server.commands.data.EntityDataAccessor;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.storage.TagValueOutput;
 
 import static at.haha007.edenclient.command.CommandManager.*;
 
@@ -54,23 +54,14 @@ public class GetData {
 
 
     public void showEntityNbtScreen(Entity entity) {
-        ClientLevel level = Minecraft.getInstance().level;
-        if (level == null) {
-            return;
-        }
-        TagValueOutput output = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, level.registryAccess());
-        if (!entity.save(output)) {
-            PlayerUtils.sendModMessage("Could not serialize entity data");
-            return;
-        }
-        CompoundTag tag = output.buildResult();
+        CompoundTag tag = new EntityDataAccessor(entity).getData();
         Component text = NbtFormatter.format(tag, true, 2, Integer.MAX_VALUE, true);
         ShowTextScreen showTextScreen = new ShowTextScreen(text);
         EdenClient.getMod(Scheduler.class).scheduleSyncDelayed(() -> Minecraft.getInstance().gui.setScreen(showTextScreen), 1);
     }
 
     public void showBlockNbtScreen(BlockEntity blockEntity) {
-        CompoundTag tag = blockEntity.saveWithFullMetadata(PlayerUtils.getPlayer().registryAccess());
+        CompoundTag tag = new BlockDataAccessor(blockEntity, blockEntity.getBlockPos()).getData();
         Component text = NbtFormatter.format(tag, true, 2, Integer.MAX_VALUE, true);
         ShowTextScreen showTextScreen = new ShowTextScreen(text);
         EdenClient.getMod(Scheduler.class).scheduleSyncDelayed(() -> Minecraft.getInstance().gui.setScreen(showTextScreen), 1);
