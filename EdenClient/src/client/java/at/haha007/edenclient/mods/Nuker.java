@@ -18,6 +18,7 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.logging.LogUtils;
 import fi.dy.masa.malilib.util.data.Color4f;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.kyori.adventure.text.Component;
@@ -254,7 +255,7 @@ public class Nuker {
         Stream<BlockPos> stream = getNearby(player);
         stream = stream.filter(p -> Vec3.atCenterOf(p).closerThan(playerPos, distance));
         if (filterHeight)
-            stream = stream.filter(p -> player.getY() + 0.6 <= p.getY());
+            stream = stream.filter(p -> (int) (player.getY() + 0.6) <= p.getY());
         stream = stream.filter(area::contains);
         stream = stream.filter(p -> !world.getBlockState(p).isAir());
         if (filterLiquids)
@@ -263,6 +264,7 @@ public class Nuker {
             stream = stream.filter(p -> applyFilter(world.getBlockState(p).getBlock()));
         }
         target = stream.map(BlockPos::new).min(Comparator.comparingDouble(p -> Vec3.atCenterOf(p).distanceTo(playerPos))).orElse(null);
+        LogUtils.getLogger().warn("Target: " + target + " State: " + (target == null ? "null" : world.getBlockState(target)));
     }
 
     private List<BlockPos> getInstantMinableBlocksInRange(LocalPlayer player) {
@@ -271,7 +273,7 @@ public class Nuker {
         Stream<BlockPos> stream = getNearby(player);
         stream = stream.filter(p -> Vec3.atCenterOf(p).closerThan(player.getEyePosition(), distance));
         if (filterHeight)
-            stream = stream.filter(p -> player.getY() + 0.6 <= p.getY());
+            stream = stream.filter(p -> (int) (player.getY() + 0.6) <= p.getY());
         stream = stream.filter(area::contains);
         stream = stream.filter(p -> !world.getBlockState(p).isAir());
         stream = stream.filter(p -> instantMinable(p, player));
@@ -316,6 +318,6 @@ public class Nuker {
     private Stream<BlockPos> getNearby(LocalPlayer player) {
         BlockPos pos = player.blockPosition();
         int dist = (int) (distance + 1);
-        return BlockPos.withinManhattanStream(pos, dist, dist, dist);
+        return BlockPos.withinManhattanStream(pos, dist, dist, dist).map(BlockPos::immutable);
     }
 }
