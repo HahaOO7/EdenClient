@@ -37,11 +37,9 @@ public class KillAura {
     private final EntityTypeSet entityTypes = new EntityTypeSet();
     @ConfigSubscriber("20")
     private int delay = 1;
-
     private long counter;
 
     public KillAura() {
-
         LiteralArgumentBuilder<FabricClientCommandSource> cmd = literal("ekillaura");
         cmd.then(literal("toggle").executes(_ -> {
             enabled = !enabled;
@@ -64,7 +62,7 @@ public class KillAura {
 
         cmd.then(removeCommand());
 
-        cmd.then(literal("list").executes(_ ->{
+        cmd.then(literal("list").executes(_ -> {
             String str = entityTypes.stream()
                     .map(BuiltInRegistries.ENTITY_TYPE::getKey)
                     .map(Identifier::getPath)
@@ -73,26 +71,34 @@ public class KillAura {
             return 1;
         }));
 
-        cmd.then(literal("delay").then(argument("delay", IntegerArgumentType.integer(1)).executes(c ->{
+        cmd.then(literal("delay").then(argument("delay", IntegerArgumentType.integer(1)).executes(c -> {
             delay = c.getArgument("delay", Integer.class);
             sendModMessage("Delay is set to " + delay + " ticks");
             return 1;
         })));
-        register(cmd,"Hits all entities around the player.");
+        register(cmd, "Hits all entities around the player.");
 
         PlayerTickCallback.EVENT.register(this::onTick, getClass());
         PerWorldConfig.get().register(this, "killaura");
     }
 
     private void onTick(LocalPlayer player) {
-        if (!enabled) return;
-        if (PlayerUtils.shouldPlayLegit()) return;
+        if (!enabled) {
+            return;
+        }
+        if (PlayerUtils.shouldPlayLegit()) {
+            return;
+        }
 
-        counter ++;
-        if (counter % delay != 0) return;
+        counter++;
+        if (counter % delay != 0) {
+            return;
+        }
 
         ClientLevel level = Minecraft.getInstance().level;
-        if (level == null) return;
+        if (level == null) {
+            return;
+        }
 
         List<Entity> entities = level.getEntitiesOfClass(Entity.class,
                 player.getBoundingBox().inflate(10, 10, 10),
@@ -100,12 +106,14 @@ public class KillAura {
 
         entities.stream()
                 .min(Comparator.comparingDouble(e -> e.distanceTo(player)))
-                .filter(e ->  player.isWithinAttackRange(player.getMainHandItem(),e.getBoundingBox(),0))
+                .filter(e -> player.isWithinAttackRange(player.getMainHandItem(), e.getBoundingBox(), 0))
                 .ifPresent(e -> {
-            ClientPacketListener connection = Minecraft.getInstance().getConnection();
-            if (connection == null) {return;}
-            connection.send(new ServerboundAttackPacket(e.getId()));
-        });
+                    ClientPacketListener connection = Minecraft.getInstance().getConnection();
+                    if (connection == null) {
+                        return;
+                    }
+                    connection.send(new ServerboundAttackPacket(e.getId()));
+                });
 
     }
 
