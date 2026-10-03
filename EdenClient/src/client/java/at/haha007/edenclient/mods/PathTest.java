@@ -12,6 +12,7 @@ import at.haha007.edenclient.utils.pathing.segment.SegmentTaskAccumulator;
 import at.haha007.edenclient.utils.tasks.TaskManager;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import dev.xpple.clientarguments.arguments.CBlockPosArgument;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.kyori.adventure.text.Component;
 import net.minecraft.client.Minecraft;
@@ -126,6 +127,16 @@ public class PathTest {
                 taskManager.cancel();
                 taskManager = null;
             }
+            return 1;
+        })).then(argument("pos", CBlockPosArgument.blockPos()).executes(c -> {
+
+            Vec3 target = Vec3.atBottomCenterOf(CBlockPosArgument.getBlockPos(c,"pos"));
+            Vec3 playerPos = PlayerUtils.getPlayer().position();
+
+            segmentTaskAccumulator = new SegmentTaskAccumulator();
+            pathSearch = PathFinder.createDefault().startSearch(playerPos, target, false, segmentTaskAccumulator::addSegment);
+            startPathSearchThread(pathSearch);
+            PlayerUtils.sendModMessage("Started incremental path search.");
             return 1;
         }));
 
