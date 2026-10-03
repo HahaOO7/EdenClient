@@ -4,9 +4,15 @@ import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.annotations.Mod;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.Scheduler;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
+import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.phys.Vec3;
 
@@ -19,23 +25,51 @@ import static at.haha007.edenclient.command.CommandManager.register;
 public class AntiAfk {
 
     private BlockPos startPos;
-    private final Random random = new Random();
+    private boolean modeWalk = false;
 
     public AntiAfk() {
-        var node = literal("eantiafk");
+        LiteralArgumentBuilder<FabricClientCommandSource> node = literal("eantiafk");
 
         node.then(literal("toggle").executes(_ -> {
             startPos = PlayerUtils.getPlayer().blockPosition();
+            EdenClient.getMod(Scheduler.class).scheduleSyncRepeating(this::interact, 20 * 60 * 5, 0);
             EdenClient.getMod(Scheduler.class).scheduleSyncRepeating(this::moveAround, 20 * 60 * 5, 0);
-            PlayerUtils.sendModMessage("Start moving around randomly in a 3x3 area, walk away to cancel.");
+            PlayerUtils.sendModMessage("Anti afk active, walk away to cancel.");
+            return 1;
+        }));
+
+        node.then(literal("mode").executes(_ -> {
+            modeWalk = !modeWalk;
+            PlayerUtils.sendModMessage("Anti afk mode set to " + (modeWalk ? "walk" : "interact"));
             return 1;
         }));
 
         register(node, "AntiAfk stops you from getting kicked for being afk. ");
     }
 
+    private boolean interact() {
+        if (PlayerUtils.shouldPlayLegit()) {
+            PlayerUtils.sendModMessage("Anti afk paused because of PlayLegit.");
+            return true;
+        }
+        LocalPlayer player = PlayerUtils.getPlayer();
+
+        if (startPos.distSqr(player.blockPosition()) > 5) {
+            PlayerUtils.sendModMessage("Anti afk canceled.");
+            return false;
+        }
+        ClientPacketListener connection = Minecraft.getInstance().getConnection();
+        if (connection == null) {
+            return false;
+        }
+        connection.send(new ServerboundPlayerActionPacket(ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK, player.blockPosition(), Direction.UP));
+        return true;
+    }
+
+    private final Random random = new Random();
+
     private boolean moveAround() {
-        if(PlayerUtils.shouldPlayLegit()) return false;
+        if (PlayerUtils.shouldPlayLegit()) return false;
         LocalPlayer player = PlayerUtils.getPlayer();
         BlockPos bp = player.blockPosition();
         if (maxDistance(bp, startPos) > 1) return false;

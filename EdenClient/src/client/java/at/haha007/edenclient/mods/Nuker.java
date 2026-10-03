@@ -94,7 +94,9 @@ public class Nuker {
     }
 
     private void onRender(float tickDelta) {
-        if (!enabled) return;
+        if (!enabled) {
+            return;
+        }
         if (renderMining && target != null) {
             GL11.glDisable(GL11.GL_DEPTH_TEST);
             EdenRenderUtils.drawAreaOutline(Vec3.atLowerCornerOf(target), Vec3.atLowerCornerOf(target.offset(1, 1, 1)), Color4f.fromColor(Color.WHITE.getRGB()));
@@ -217,18 +219,28 @@ public class Nuker {
     }
 
     private void onTick(LocalPlayer player) {
-        if (!enabled) return;
-        if (PlayerUtils.shouldPlayLegit()) return;
+        if (!enabled) {
+            return;
+        }
+        if (PlayerUtils.shouldPlayLegit()) {
+            return;
+        }
         ClientPacketListener nh = Minecraft.getInstance().getConnection();
         BlockState air = Blocks.AIR.defaultBlockState();
         MultiPlayerGameMode im = Minecraft.getInstance().gameMode;
-        if (im == null) return;
-        if (nh == null) return;
+        if (im == null) {
+            return;
+        }
+        if (nh == null) {
+            return;
+        }
         if (target == null) {
             List<BlockPos> minableBlocks = getInstantMinableBlocksInRange(player);
             if (!minableBlocks.isEmpty()) {
                 ClientLevel world = Minecraft.getInstance().level;
-                if (world == null) return;
+                if (world == null) {
+                    return;
+                }
                 minableBlocks.stream().limit(limit).forEach(p -> {
                     nh.send(new ServerboundPlayerActionPacket(ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK, p, getHitDirectionForBlock(player, p)));
                     world.setBlockAndUpdate(p, air);
@@ -237,48 +249,60 @@ public class Nuker {
             }
         }
 
-        if (target == null || Vec3.atCenterOf(target).distanceTo(player.getEyePosition()) > distance)
+        if (target == null || Vec3.atCenterOf(target).distanceTo(player.getEyePosition()) > distance) {
             findTarget(player);
-        if (target == null) return;
+        }
+        if (target == null) {
+            return;
+        }
         Direction dir = getHitDirectionForBlock(player, target);
 
-        if (im.continueDestroyBlock(target, dir))
+        if (im.continueDestroyBlock(target, dir)) {
             nh.send(new ServerboundSwingPacket(InteractionHand.MAIN_HAND));
-        else
+        } else {
             target = null;
+        }
     }
 
     private void findTarget(LocalPlayer player) {
         ClientLevel world = Minecraft.getInstance().level;
-        if (world == null) return;
+        if (world == null) {
+            return;
+        }
         Vec3 playerPos = player.getEyePosition();
         Stream<BlockPos> stream = getNearby(player);
         stream = stream.filter(p -> Vec3.atCenterOf(p).closerThan(playerPos, distance));
-        if (filterHeight)
+        if (filterHeight) {
             stream = stream.filter(p -> (int) (player.getY() + 0.6) <= p.getY());
+        }
         stream = stream.filter(area::contains);
         stream = stream.filter(p -> !world.getBlockState(p).isAir());
-        if (filterLiquids)
+        if (filterLiquids) {
             stream = stream.filter(Predicate.not(this::isNextToLiquid));
+        }
         if (filterBlocks) {
             stream = stream.filter(p -> applyFilter(world.getBlockState(p).getBlock()));
         }
         target = stream.map(BlockPos::new).min(Comparator.comparingDouble(p -> Vec3.atCenterOf(p).distanceTo(playerPos))).orElse(null);
-        LogUtils.getLogger().warn("Target: " + target + " State: " + (target == null ? "null" : world.getBlockState(target)));
+        LogUtils.getLogger().warn("Target: {} State: {}", target, target == null ? "null" : world.getBlockState(target));
     }
 
     private List<BlockPos> getInstantMinableBlocksInRange(LocalPlayer player) {
         ClientLevel world = Minecraft.getInstance().level;
-        if (world == null) return List.of();
+        if (world == null) {
+            return List.of();
+        }
         Stream<BlockPos> stream = getNearby(player);
         stream = stream.filter(p -> Vec3.atCenterOf(p).closerThan(player.getEyePosition(), distance));
-        if (filterHeight)
+        if (filterHeight) {
             stream = stream.filter(p -> (int) (player.getY() + 0.6) <= p.getY());
+        }
         stream = stream.filter(area::contains);
         stream = stream.filter(p -> !world.getBlockState(p).isAir());
         stream = stream.filter(p -> instantMinable(p, player));
-        if (filterLiquids)
+        if (filterLiquids) {
             stream = stream.filter(Predicate.not(this::isNextToLiquid));
+        }
         if (filterBlocks) {
             stream = stream.filter(p -> applyFilter(world.getBlockState(p).getBlock()));
         }
@@ -293,7 +317,9 @@ public class Nuker {
 
     private boolean instantMinable(BlockPos pos, LocalPlayer player) {
         ClientLevel world = Minecraft.getInstance().level;
-        if (world == null) return false;
+        if (world == null) {
+            return false;
+        }
         BlockState state = world.getBlockState(pos);
         float delta = state.getDestroyProgress(player, world, pos);
         return delta >= 1;
@@ -301,16 +327,26 @@ public class Nuker {
 
     private boolean isNextToLiquid(BlockPos pos) {
         ClientLevel world = Minecraft.getInstance().level;
-        if (world == null) return true;
+        if (world == null) {
+            return true;
+        }
         //don't care about down
         FluidState state = world.getFluidState(pos.relative(Direction.UP));
-        if (!state.isEmpty()) return true;
+        if (!state.isEmpty()) {
+            return true;
+        }
         state = world.getFluidState(pos.relative(Direction.NORTH));
-        if (!state.isEmpty()) return true;
+        if (!state.isEmpty()) {
+            return true;
+        }
         state = world.getFluidState(pos.relative(Direction.SOUTH));
-        if (!state.isEmpty()) return true;
+        if (!state.isEmpty()) {
+            return true;
+        }
         state = world.getFluidState(pos.relative(Direction.WEST));
-        if (!state.isEmpty()) return true;
+        if (!state.isEmpty()) {
+            return true;
+        }
         state = world.getFluidState(pos.relative(Direction.EAST));
         return !state.isEmpty();
     }

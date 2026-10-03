@@ -12,6 +12,7 @@ import at.haha007.edenclient.utils.pathing.segment.SegmentTaskAccumulator;
 import at.haha007.edenclient.utils.tasks.TaskManager;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import dev.xpple.clientarguments.arguments.CBlockPosArgument;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.kyori.adventure.text.Component;
 import net.minecraft.client.Minecraft;
@@ -100,15 +101,21 @@ public class PathTest {
             shouldRender = !shouldRender;
             PlayerUtils.sendModMessage(shouldRender ? "Enabled" : "Disabled");
             return 1;
-        }).then(argument("distance", DoubleArgumentType.doubleArg(1)).executes(c -> {
+        });
+
+        node.then(argument("distance", DoubleArgumentType.doubleArg(1)).executes(c -> {
             startPathTowards(c.getArgument("distance", Double.class));
             return 1;
-        })).then(literal("clear").executes(_ -> {
+        }));
+
+        node.then(literal("clear").executes(_ -> {
             committedPath = null;
             calculatedPath = null;
             stopPathSearch();
             return 1;
-        })).then(literal("start").executes(_ -> {
+        }));
+
+        node.then(literal("start").executes(_ -> {
             if (segmentTaskAccumulator == null) {
                 PlayerUtils.sendModMessage("No path generated yet. Use /epathtest <distance> to generate a path.");
                 return 1;
@@ -121,11 +128,23 @@ public class PathTest {
             taskManager.then(() -> taskManager = null);
             taskManager.start();
             return 1;
-        })).then(literal("stop").executes(_ -> {
+        }));
+
+        node.then(literal("stop").executes(_ -> {
             if (taskManager != null) {
                 taskManager.cancel();
                 taskManager = null;
             }
+            return 1;
+        }));
+
+        node.then(argument("pos", CBlockPosArgument.blockPos()).executes(c -> {
+            Vec3 target = Vec3.atBottomCenterOf(CBlockPosArgument.getBlockPos(c, "pos"));
+            Vec3 playerPos = PlayerUtils.getPlayer().position();
+            segmentTaskAccumulator = new SegmentTaskAccumulator();
+            pathSearch = PathFinder.createDefault().startSearch(playerPos, target, false, segmentTaskAccumulator::addSegment);
+            startPathSearchThread(pathSearch);
+            PlayerUtils.sendModMessage("Started incremental path search.");
             return 1;
         }));
 
