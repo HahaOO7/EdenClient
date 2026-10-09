@@ -6,26 +6,16 @@ import at.haha007.edenclient.callbacks.AddChatMessageCallback.ChatAddEvent;
 import at.haha007.edenclient.callbacks.Event;
 import at.haha007.edenclient.callbacks.GameRenderCallback;
 import at.haha007.edenclient.mixinterface.ChatComponentAccessor;
+import at.haha007.edenclient.utils.EdenRenderUtils;
 import at.haha007.edenclient.utils.ModInitializer;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
-import com.mojang.blaze3d.pipeline.RenderTarget;
-import com.mojang.renderpearl.api.buffers.GpuBufferSlice;
-import fi.dy.masa.malilib.event.RenderEventHandler;
-import fi.dy.masa.malilib.event.WorldLoadHandler;
-import fi.dy.masa.malilib.interfaces.IRenderer;
-import fi.dy.masa.malilib.interfaces.IWorldLoadListener;
 import lombok.Getter;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.RenderBuffers;
-import net.minecraft.client.renderer.culling.Frustum;
-import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.profiling.ProfilerFiller;
-import org.joml.Vector4f;
-import org.lwjgl.opengl.GL11;
 
 import java.io.File;
 import java.util.Collection;
@@ -50,26 +40,24 @@ public class EdenClient implements ClientModInitializer {
         //noinspection ResultOfMethodCallIgnored
         PerWorldConfig.get();
         modInitializer.initializeMods(c -> c.getAnnotation(Mod.class).required());
-        WorldLoadHandler.getInstance().registerWorldLoadPostHandler(new IWorldLoadListener() {
-
-        });
-        RenderEventHandler.getInstance().registerWorldLastRenderer(new IRenderer() {
-            @Override
-            public void onRenderWorldLast(RenderTarget fb, CameraRenderState cameraState, Frustum culling, RenderBuffers buffers, GpuBufferSlice terrainFog, Vector4f fogColor, ProfilerFiller profiler) {
-                float partialTick = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(true);
+        LevelRenderEvents.COLLECT_SUBMITS.register(context -> {
+            float partialTick = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(true);
+            EdenRenderUtils.beginFrame(context.submitNodeCollector());
+            try {
                 GameRenderCallback.EVENT.invoker().render(partialTick);
-                GL11.glEnable(GL11.GL_DEPTH_TEST);
+            } finally {
+                EdenRenderUtils.endFrame();
+            }
 
-                Component component = chatMessagesToHandle.poll();
-                if (component == null) return;
-                ChatComponentAccessor chat = (ChatComponentAccessor) Minecraft.getInstance().gui.hud.getChat();
-                LocalPlayer player = PlayerUtils.getPlayer();
-                ChatAddEvent event = new ChatAddEvent(player, component, chat.edenClient$getTrimmedMessages());
-                AddChatMessageCallback.EVENT.invoker().onChatAdd(event);
-                Component chatText = event.getChatText();
-                if (chatText != null && !chatText.getString().isBlank() && !event.isCanceled()) {
-                    Minecraft.getInstance().gui.hud.getChat().addClientSystemMessage(chatText);
-                }
+            Component component = chatMessagesToHandle.poll();
+            if (component == null) return;
+            ChatComponentAccessor chat = (ChatComponentAccessor) Minecraft.getInstance().gui.hud.getChat();
+            LocalPlayer player = PlayerUtils.getPlayer();
+            ChatAddEvent event = new ChatAddEvent(player, component, chat.edenClient$getTrimmedMessages());
+            AddChatMessageCallback.EVENT.invoker().onChatAdd(event);
+            Component chatText = event.getChatText();
+            if (chatText != null && !chatText.getString().isBlank() && !event.isCanceled()) {
+                Minecraft.getInstance().gui.hud.getChat().addClientSystemMessage(chatText);
             }
         });
     }

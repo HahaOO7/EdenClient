@@ -16,8 +16,7 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.logging.LogUtils;
-import fi.dy.masa.malilib.render.RenderUtils;
-import fi.dy.masa.malilib.util.data.Color4f;
+import at.haha007.edenclient.render.EdenColor;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientChunkCache;
@@ -34,7 +33,6 @@ import net.minecraft.world.level.block.entity.BlockEntityTypes;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-import org.lwjgl.opengl.GL11;
 
 import java.awt.*;
 import java.util.Comparator;
@@ -88,16 +86,22 @@ public class HeadHunt {
             foundHeads = new HashSet<>();
             return;
         }
-        if (PlayerUtils.shouldPlayLegit()) return;
+        if (PlayerUtils.shouldPlayLegit()) {
+            return;
+        }
         ChunkPos chunkPos = player.chunkPosition();
         ClientLevel level = Minecraft.getInstance().level;
-        if (level == null) return;
+        if (level == null) {
+            return;
+        }
         ClientChunkCache cm = level.getChunkSource();
         BlockPos pp = player.blockPosition();
         heads = ChunkPos.rangeClosed(chunkPos, 20)
                 .flatMap(cp -> {
                     LevelChunk wc = cm.getChunk(cp.x(), cp.z(), false);
-                    if (wc == null) return null;
+                    if (wc == null) {
+                        return null;
+                    }
                     return wc.getBlockEntities().entrySet().stream();
                 })
                 .filter(e -> e.getValue().getType() == BlockEntityTypes.SKULL)
@@ -132,7 +136,9 @@ public class HeadHunt {
                 }
                 //try to create a path to the head
                 PathSegment possiblePath = PathFinder.createDefault().findPath(Vec3.atBottomCenterOf(pp), Vec3.atBottomCenterOf(head), false);
-                if (possiblePath == null) continue;
+                if (possiblePath == null) {
+                    continue;
+                }
                 double dist = possiblePath.to().distanceToSqr(Vec3.atBottomCenterOf(head));
                 if (dist > 15) {
                     //can't get near enough to head
@@ -158,7 +164,9 @@ public class HeadHunt {
     private void clickPos(BlockPos bp) {
         Direction dir = Direction.UP;
         MultiPlayerGameMode im = Minecraft.getInstance().gameMode;
-        if (im == null) return;
+        if (im == null) {
+            return;
+        }
         im.useItemOn(getPlayer(), InteractionHand.MAIN_HAND, new BlockHitResult(Vec3.atLowerCornerOf(bp.relative(dir)), dir, bp, false));
         foundHeads.add(bp);
         path = null;
@@ -229,18 +237,21 @@ public class HeadHunt {
 
 
     private void render(float tickDelta) {
-        if (!enabled) return;
-        if (heads.isEmpty()) return;
-        GL11.glEnable(GL11.GL_LINE_SMOOTH);
-        GL11.glDisable(GL11.GL_DEPTH_TEST);
-        if (path != null)
+        if (!enabled) {
+            return;
+        }
+        if (heads.isEmpty()) {
+            return;
+        }
+        if (path != null) {
             new PathRenderer(Color.BLUE).renderPath(path);
+        }
         if (tracer) {
-            EdenRenderUtils.drawTracers(heads.stream().map(Vec3::atCenterOf).toList(), Color4f.fromColor(new Color(red, green, blue).getRGB()));
+            EdenRenderUtils.drawTracers(heads.stream().map(Vec3::atCenterOf).toList(), EdenColor.fromColor(new Color(red, green, blue).getRGB()));
         }
 
         for (BlockPos c : heads) {
-            RenderUtils.renderBlockOutline(c, 0, 1, Color4f.fromColor(new Color(red, green, blue).getRGB()));
+            EdenRenderUtils.drawBlockOutline(c, 0, 1, EdenColor.fromColor(new Color(red, green, blue).getRGB()));
         }
     }
 }

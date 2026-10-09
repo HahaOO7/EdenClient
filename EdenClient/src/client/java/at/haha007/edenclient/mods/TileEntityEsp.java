@@ -12,7 +12,7 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
-import fi.dy.masa.malilib.util.data.Color4f;
+import at.haha007.edenclient.render.EdenColor;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -28,7 +28,6 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.phys.Vec3;
-import org.lwjgl.opengl.GL11;
 
 import java.awt.*;
 import java.util.*;
@@ -193,15 +192,13 @@ public class TileEntityEsp {
 
     private void render(float v) {
         if (!enabled) return;
-        GL11.glEnable(GL11.GL_LINE_SMOOTH);
-        GL11.glDisable(GL11.GL_DEPTH_TEST);
         if (tracer && !tileEntities.isEmpty()) {
-            EdenRenderUtils.drawTracers(tileEntities.stream().map(Vec3::atCenterOf).toList(), Color4f.fromColor(new Color(red, green, blue).getRGB()));
+            EdenRenderUtils.drawTracers(tileEntities.stream().map(Vec3::atCenterOf).toList(), EdenColor.fromColor(new Color(red, green, blue).getRGB()));
         }
 
         tileEntities.forEach(c -> EdenRenderUtils.drawAreaOutline(
                 Vec3.atLowerCornerOf(c),
                 Vec3.atLowerCornerOf(c.offset(1, 1, 1)),
-                Color4f.fromColor(new Color(red, green, blue).getRGB())));
+                EdenColor.fromColor(new Color(red, green, blue).getRGB())));
     }
 }

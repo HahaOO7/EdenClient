@@ -4,10 +4,8 @@ import at.haha007.edenclient.annotations.Mod;
 import at.haha007.edenclient.callbacks.GameRenderCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.utils.EdenRenderUtils;
-import fi.dy.masa.malilib.util.data.Color4f;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.phys.AABB;
-import org.lwjgl.opengl.GL11;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -32,10 +30,8 @@ public class CubeRenderer {
     }
 
     private void render(float v) {
-        GL11.glDisable(GL11.GL_DEPTH_TEST);
-        GL11.glEnable(GL11.GL_LINE_SMOOTH);
         cubes.values().forEach(s -> s.forEach(boundingBox ->
-                EdenRenderUtils.drawAreaOutline(boundingBox.getMinPosition(), boundingBox.getMaxPosition(), Color4f.WHITE)));
+                EdenRenderUtils.drawAreaOutline(boundingBox.getMinPosition(), boundingBox.getMaxPosition(), EdenColor.WHITE)));
     }
 
     public void add(AABB box, int ticks) {

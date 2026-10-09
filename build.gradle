@@ -51,13 +51,11 @@ tasks.jar {
     exclude('data/**')
     exclude('programmer_art/**')
     exclude('LICENSE**')
-    exclude('**malilib**')
     exclude('assets/fabric**/**')
-    exclude('assets/malilib/**')
 }
 
 jar {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     archiveBaseName.set('EdenClient')
-    archiveVersion.set(project.properties.get("mod_version") as String)
+    archiveVersion.set(project.property("mod_version") as String)
 }

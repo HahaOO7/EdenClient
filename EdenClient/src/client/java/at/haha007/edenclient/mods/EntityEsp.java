@@ -12,7 +12,7 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
-import fi.dy.masa.malilib.util.data.Color4f;
+import at.haha007.edenclient.render.EdenColor;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -24,7 +24,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import org.lwjgl.opengl.GL11;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -151,10 +150,9 @@ public class EntityEsp {
 
     private void render(float tickDelta) {
         if (!enabled) return;
-        GL11.glEnable(GL11.GL_LINE_SMOOTH);
         if (tracer && !entities.isEmpty()) {
             EdenRenderUtils.drawTracers(entities.stream().map(e -> e.getPosition(tickDelta)).toList(),
-                    Color4f.fromColor(new Color(red, green, blue).getRGB()));
+                    EdenColor.fromColor(new Color(red, green, blue).getRGB()));
         }
         for (Entity target : entities) {
             drawOutline(target, tickDelta);
@@ -167,6 +165,6 @@ public class EntityEsp {
         AABB boundingBox = entity.getBoundingBox().move(positionDelta);
         EdenRenderUtils.drawAreaOutline(boundingBox.getMinPosition(),
                 boundingBox.getMaxPosition(),
-                Color4f.fromColor(new Color(red, green, blue).getRGB()));
+                EdenColor.fromColor(new Color(red, green, blue).getRGB()));
     }
 }

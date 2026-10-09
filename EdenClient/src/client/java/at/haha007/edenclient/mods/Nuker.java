@@ -19,7 +19,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.logging.LogUtils;
-import fi.dy.masa.malilib.util.data.Color4f;
+import at.haha007.edenclient.render.EdenColor;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -40,7 +40,6 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.Vec3;
-import org.lwjgl.opengl.GL11;
 
 import java.awt.*;
 import java.util.Comparator;
@@ -97,9 +96,7 @@ public class Nuker {
             return;
         }
         if (renderMining && target != null) {
-            GL11.glDisable(GL11.GL_DEPTH_TEST);
-            EdenRenderUtils.drawAreaOutline(Vec3.atLowerCornerOf(target), Vec3.atLowerCornerOf(target.offset(1, 1, 1)), Color4f.fromColor(Color.WHITE.getRGB()));
-            GL11.glEnable(GL11.GL_DEPTH_TEST);
+            EdenRenderUtils.drawAreaOutline(Vec3.atLowerCornerOf(target), Vec3.atLowerCornerOf(target.offset(1, 1, 1)), EdenColor.fromColor(Color.WHITE.getRGB()));
         }
         if (renderArea) {
             Runnable renderer = rendererCache.computeIfAbsent(area, BlockAreaRenderFactory::createRenderTask);

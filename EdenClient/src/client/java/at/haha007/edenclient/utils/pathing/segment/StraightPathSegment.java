@@ -13,7 +13,7 @@ public class StraightPathSegment extends PathSegment {
 
     static {
         ShouldDoFakeSneakCallback.EVENT.register(() -> fakeSneak > 0, StraightPathSegment.class);
-        PlayerTickCallback.EVENT.register(player ->
+        PlayerTickCallback.EVENT.register(_ ->
                 fakeSneak = fakeSneak > 0 ? fakeSneak - 1 : fakeSneak, StraightPathSegment.class);
     }
 

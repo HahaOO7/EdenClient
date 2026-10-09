@@ -11,14 +11,12 @@ import at.haha007.edenclient.utils.Scheduler;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import dev.xpple.clientarguments.arguments.CBlockPosArgument;
-import fi.dy.masa.malilib.render.RenderUtils;
-import fi.dy.masa.malilib.util.data.Color4f;
+import at.haha007.edenclient.render.EdenColor;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.world.phys.Vec3;
-import org.lwjgl.opengl.GL11;
 
 import java.util.Comparator;
 import java.util.List;
@@ -46,13 +44,11 @@ public class GetTo {
 
     private void render() {
         if (target == null) return;
-        GL11.glDisable(GL11.GL_DEPTH_TEST);
-        GL11.glEnable(GL11.GL_LINE_SMOOTH);
         if (box) {
-            RenderUtils.renderAreaOutline(target, target, 10, Color4f.WHITE, Color4f.WHITE, Color4f.WHITE);
+            EdenRenderUtils.drawAreaOutline(target, target, 10, EdenColor.WHITE);
         }
         if (tracer) {
-            EdenRenderUtils.drawTracers(List.of(Vec3.atCenterOf(target)), Color4f.WHITE);
+            EdenRenderUtils.drawTracers(List.of(Vec3.atCenterOf(target)), EdenColor.WHITE);
         }
     }
 

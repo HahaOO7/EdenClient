@@ -1,8 +1,8 @@
 package at.haha007.edenclient.utils.area;
 
+import at.haha007.edenclient.render.EdenColor;
 import at.haha007.edenclient.utils.EdenRenderUtils;
 import at.haha007.edenclient.utils.SphereTriangulator;
-import fi.dy.masa.malilib.util.data.Color4f;
 import net.minecraft.core.Vec3i;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.phys.Vec3;
@@ -43,10 +43,10 @@ public class BlockAreaRenderFactory {
 
     private static class CubeAreaRenderTask implements Runnable {
         private final List<Pair<Vec3, Vec3>> lines = new ArrayList<>();
-        private final Color4f color;
+        private final EdenColor color;
 
         public CubeAreaRenderTask(CubeArea cubeArea, Vec3i steps, Color color) {
-            this.color = Color4f.fromColor(color.getRGB());
+            this.color = EdenColor.fromColor(color.getRGB());
             BoundingBox box = cubeArea.getBox();
             Vec3 min = new Vec3(
                     box.minX(),
@@ -91,11 +91,11 @@ public class BlockAreaRenderFactory {
     }
 
     private static class SphereAreaRenderTask implements Runnable {
-        private final Color4f color;
+        private final EdenColor color;
         private final List<Pair<Vec3, Vec3>> lines;
 
         public SphereAreaRenderTask(SphereArea sphereArea, int detail, Color color) {
-            this.color = Color4f.fromColor(color.getRGB());
+            this.color = EdenColor.fromColor(color.getRGB());
             lines = SphereTriangulator.triangulateSphere(Vec3.atCenterOf(sphereArea.center()), sphereArea.getRadius(), detail);
         }
 
@@ -106,11 +106,11 @@ public class BlockAreaRenderFactory {
     }
 
     private static class CylinderAreaRenderTask implements Runnable {
-        private final Color4f color;
+        private final EdenColor color;
         private final List<Pair<Vec3, Vec3>> lines = new ArrayList<>();
 
         public CylinderAreaRenderTask(CylinderArea cylinderArea, int horizontalSteps, int verticalSteps, Color color) {
-            this.color = Color4f.fromColor(color.getRGB());
+            this.color = EdenColor.fromColor(color.getRGB());
             Vec3 bottomCenter = Vec3.atBottomCenterOf(cylinderArea.getBottomCenter());
             Vec3 topCenter = bottomCenter.add(0, cylinderArea.getHeight(), 0);
             double radius = cylinderArea.getRadius() - .5;

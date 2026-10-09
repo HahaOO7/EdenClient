@@ -5,10 +5,8 @@ import at.haha007.edenclient.callbacks.GameRenderCallback;
 import at.haha007.edenclient.callbacks.LeaveWorldCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.utils.EdenRenderUtils;
-import fi.dy.masa.malilib.util.data.Color4f;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.phys.Vec3;
-import org.lwjgl.opengl.GL11;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -35,14 +33,12 @@ public class TracerRenderer {
 
     private void render(float delta) {
         if (tracers.isEmpty()) return;
-        GL11.glDisable(GL11.GL_DEPTH_TEST);
-        GL11.glEnable(GL11.GL_LINE_SMOOTH);
-        EdenRenderUtils.drawTracers(tracers.values().stream().flatMap(Set::stream).toList(), Color4f.WHITE);
+        EdenRenderUtils.drawTracers(tracers.values().stream().flatMap(Set::stream).toList(), EdenColor.WHITE);
     }
 
     public void add(Vec3 target, int ticks) {
         ticks += (int) this.tick;
-        Set<Vec3> set = tracers.computeIfAbsent(ticks, k -> new HashSet<>());
+        Set<Vec3> set = tracers.computeIfAbsent(ticks, _ -> new HashSet<>());
         set.add(target);
     }
 

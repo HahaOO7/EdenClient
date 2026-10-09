@@ -18,7 +18,8 @@
     "MinecraftClientMixin",
     "PlayerControllerMixin",
     "PlayerInventoryMixin",
-    "PlayerMixin"
+    "PlayerMixin",
+    "RenderTypeInvoker"
   ],
   "injectors": {
     "defaultRequire": 1

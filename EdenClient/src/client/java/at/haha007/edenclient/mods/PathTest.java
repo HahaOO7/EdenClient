@@ -19,7 +19,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
-import org.lwjgl.opengl.GL11;
 
 import java.awt.*;
 import java.util.concurrent.atomic.AtomicLong;
@@ -80,10 +79,9 @@ public class PathTest {
     }
 
     private void render(float tickDelta) {
-        if (!shouldRender) return;
-        GL11.glEnable(GL11.GL_LINE_SMOOTH);
-        GL11.glEnable(GL11.GL_DEPTH_TEST);
-
+        if (!shouldRender) {
+            return;
+        }
 
         if (committedPath != null) {
             committedPathRenderer.renderPath(committedPath);
