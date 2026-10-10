@@ -13,4 +13,28 @@ public final class EdenRenderTypes {
             RenderTypeInvoker.edenclient$create(
                     "edenclient_lines_no_depth",
                     RenderSetup.builder(EdenPipelines.LINES_NO_DEPTH_NO_CULL).createRenderSetup());
+
+    /** Depth-tested translucent fill for single-colored areas. */
+    public static final RenderType AREA_FILL_DEPTH_TESTED =
+            RenderTypeInvoker.edenclient$create(
+                    "edenclient_area_fill_depth_tested",
+                    RenderSetup.builder(EdenPipelines.AREA_FILL_DEPTH_TESTED).createRenderSetup());
+
+    /** Translucent fill drawn through terrain for single-colored areas. */
+    public static final RenderType AREA_FILL_NO_DEPTH_NO_CULL =
+            RenderTypeInvoker.edenclient$create(
+                    "edenclient_area_fill_no_depth",
+                    RenderSetup.builder(EdenPipelines.AREA_FILL_NO_DEPTH_NO_CULL).createRenderSetup());
+
+    /** Width-capable lines drawn through terrain. */
+    public static final RenderType LINES_WIDTH_NO_DEPTH_NO_CULL =
+            RenderTypeInvoker.edenclient$create(
+                    "edenclient_lines_width_no_depth",
+                    RenderSetup.builder(EdenPipelines.LINES_WIDTH_NO_DEPTH_NO_CULL).createRenderSetup());
+
+    /** Width-capable lines occluded by terrain. */
+    public static final RenderType LINES_WIDTH_DEPTH_TESTED =
+            RenderTypeInvoker.edenclient$create(
+                    "edenclient_lines_width_depth_tested",
+                    RenderSetup.builder(EdenPipelines.LINES_WIDTH_DEPTH_TESTED).createRenderSetup());
 }

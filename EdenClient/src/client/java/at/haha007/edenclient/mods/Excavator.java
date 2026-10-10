@@ -5,14 +5,12 @@ import at.haha007.edenclient.callbacks.ConfigLoadedCallback;
 import at.haha007.edenclient.callbacks.JoinWorldCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.command.CommandManager;
-import at.haha007.edenclient.render.CubeRenderer;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.Scheduler;
 import at.haha007.edenclient.utils.area.BlockArea;
 import at.haha007.edenclient.utils.area.SavableBlockArea;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
-import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.logging.LogUtils;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
@@ -22,13 +20,11 @@ import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.Vec3i;
 import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 
@@ -42,7 +38,7 @@ import java.util.stream.Stream;
 
 import static at.haha007.edenclient.EdenClient.getMod;
 
-@Mod(dependencies = {CubeRenderer.class, Scheduler.class})
+@Mod(dependencies = {Scheduler.class})
 public class Excavator {
     private boolean enabled = false;
     @ConfigSubscriber("0,0,0,0,0,0")
@@ -389,14 +385,6 @@ public class Excavator {
             }));
             return 1;
         }));
-        cmd.then(CommandManager.literal("render").then(CommandManager.argument("time", IntegerArgumentType.integer()).executes(c -> {
-            int time = c.getArgument("time", Integer.class) * 20;
-            CubeRenderer cubeRenderer = getMod(CubeRenderer.class);
-            area.stream().map(Vec3::atBottomCenterOf)
-                    .map(AABB::unitCubeFromLowerCorner)
-                    .forEach(b -> cubeRenderer.add(b, time));
-            return 1;
-        })));
 
         cmd.executes(_ -> {
             PlayerUtils.sendModMessage("/eexcavate <from> <to>");
