@@ -541,12 +541,8 @@ public class PathTimer {
         SavableBlockAreaList loadedPath = path.path;
         Entity cameraEntity = Minecraft.getInstance().getCameraEntity();
         if (cameraEntity == null) return;
-//        float xRot = cameraEntity.getXRot();
-//        float yRot = cameraEntity.getYRot();
-        for (int i = 0; i < loadedPath.size(); i++) {
-            SavableBlockArea area = loadedPath.get(i);
-//            Vec3 center = Vec3.atCenterOf(area.center());
-            rendererCache.computeIfAbsent(area, BlockAreaRenderFactory::createRenderTask).run();
+        for (SavableBlockArea area : loadedPath) {
+            area.renderer().render();
         }
     }
 

@@ -1,8 +1,10 @@
 package at.haha007.edenclient.utils.area;
 
+import at.haha007.edenclient.render.Renderer;
 import net.minecraft.core.BlockPos;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 public class SavableBlockArea implements BlockArea {
@@ -63,5 +65,10 @@ public class SavableBlockArea implements BlockArea {
     @Override
     public String toString() {
         return area.toString();
+    }
+
+    @Override
+    public Renderer renderer() {
+        return area.renderer();
     }
 }

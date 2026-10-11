@@ -11,12 +11,12 @@ public class CubeAreaLoader implements ConfigLoader<CompoundTag, CubeArea> {
 
     @NotNull
     public CompoundTag save(@NotNull CubeArea area) {
-        int minX = area.getBox().minX();
-        int minY = area.getBox().minY();
-        int minZ = area.getBox().minZ();
-        int maxX = area.getBox().maxX();
-        int maxY = area.getBox().maxY();
-        int maxZ = area.getBox().maxZ();
+        int minX = area.box().minX();
+        int minY = area.box().minY();
+        int minZ = area.box().minZ();
+        int maxX = area.box().maxX();
+        int maxY = area.box().maxY();
+        int maxZ = area.box().maxZ();
         CompoundTag tag = new CompoundTag();
         tag.putInt("minX", minX);
         tag.putInt("minY", minY);

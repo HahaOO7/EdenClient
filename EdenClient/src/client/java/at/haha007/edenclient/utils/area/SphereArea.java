@@ -1,15 +1,18 @@
 package at.haha007.edenclient.utils.area;
 
 import at.haha007.edenclient.command.CommandManager;
+import at.haha007.edenclient.render.Renderer;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import dev.xpple.clientarguments.arguments.CBlockPosArgument;
 import dev.xpple.clientarguments.arguments.CCoordinates;
+import lombok.Getter;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.Objects;
 import java.util.function.BiConsumer;
@@ -17,7 +20,9 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 public class SphereArea implements BlockArea {
+    @Getter
     private final BlockPos center;
+    @Getter
     private final double radius;
     private final double radiusSquared;
 
@@ -25,14 +30,6 @@ public class SphereArea implements BlockArea {
         this.center = center;
         this.radius = radius;
         this.radiusSquared = radius * radius;
-    }
-
-    public BlockPos getCenter() {
-        return center;
-    }
-
-    public double getRadius() {
-        return radius;
     }
 
     @Override
@@ -80,6 +77,12 @@ public class SphereArea implements BlockArea {
     @Override
     public BlockPos center() {
         return center;
+    }
+
+    @Override
+    public Renderer renderer() {
+        int detail = (int) Math.clamp(Math.log(radius) * 5, 5, 25);
+        return new SphereAreaRenderer(Vec3.atCenterOf(center), radius, detail);
     }
 
     private static SphereArea fromCommand(CommandContext<FabricClientCommandSource> context, String keyCenter, String keyRadius) {

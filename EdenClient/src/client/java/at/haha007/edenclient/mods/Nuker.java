@@ -4,12 +4,11 @@ import at.haha007.edenclient.annotations.Mod;
 import at.haha007.edenclient.callbacks.ConfigLoadedCallback;
 import at.haha007.edenclient.callbacks.GameRenderCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
+import at.haha007.edenclient.render.EdenColor;
+import at.haha007.edenclient.render.Renderer;
 import at.haha007.edenclient.utils.EdenRenderUtils;
 import at.haha007.edenclient.utils.PlayerUtils;
-import at.haha007.edenclient.utils.area.BlockArea;
-import at.haha007.edenclient.utils.area.BlockAreaRenderFactory;
-import at.haha007.edenclient.utils.area.CubeArea;
-import at.haha007.edenclient.utils.area.SavableBlockArea;
+import at.haha007.edenclient.utils.area.*;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
 import at.haha007.edenclient.utils.config.wrappers.BlockSet;
@@ -19,7 +18,6 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.logging.LogUtils;
-import at.haha007.edenclient.render.EdenColor;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -98,9 +96,25 @@ public class Nuker {
         if (renderMining && target != null) {
             EdenRenderUtils.drawAreaOutline(Vec3.atLowerCornerOf(target), Vec3.atLowerCornerOf(target.offset(1, 1, 1)), EdenColor.fromColor(Color.WHITE.getRGB()));
         }
-        if (renderArea) {
-            Runnable renderer = rendererCache.computeIfAbsent(area, BlockAreaRenderFactory::createRenderTask);
-            renderer.run();
+        if (renderArea && area != null) {
+            Renderer renderer = area.renderer();
+            switch (renderer) {
+                case SphereAreaRenderer sphereAreaRenderer -> {
+                    sphereAreaRenderer.face().color(new EdenColor(1, 0, 1, 0.5f));
+                    sphereAreaRenderer.line().color(new EdenColor(1, 0, 1, 0.5f));
+                }
+                case CubeAreaRenderer cubeAreaRenderer -> {
+                    cubeAreaRenderer.face().color(new EdenColor(0, 0, 1, 0.5f));
+                    cubeAreaRenderer.face().color(new EdenColor(0, 0, 1, 0.5f));
+                }
+                case CylinderAreaRenderer cylinderArea -> {
+                    cylinderArea.face().color(new EdenColor(1, 1, 0, 0.5f));
+                    cylinderArea.line().color(new EdenColor(1, 1, 0, 0.5f));
+                }
+                default -> {
+                }
+            }
+            renderer.render();
         }
     }
 

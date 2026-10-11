@@ -1,16 +1,19 @@
 package at.haha007.edenclient.utils.area;
 
 import at.haha007.edenclient.command.CommandManager;
+import at.haha007.edenclient.render.Renderer;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import dev.xpple.clientarguments.arguments.CBlockPosArgument;
 import dev.xpple.clientarguments.arguments.CCoordinates;
+import lombok.Getter;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.Objects;
 import java.util.function.BiConsumer;
@@ -19,9 +22,12 @@ import java.util.stream.Stream;
 
 public class CylinderArea implements BlockArea {
 
+    @Getter
     private final BlockPos bottomCenter;
+    @Getter
     private final int height;
     private final double radiusSquared;
+    @Getter
     private final double radius;
 
     public CylinderArea(BlockPos bottomCenter, int height, double radius) {
@@ -33,18 +39,6 @@ public class CylinderArea implements BlockArea {
 
     public CylinderArea(int x, int z, int minY, int maxY, double radius) {
         this(new BlockPos(x, minY, z), maxY - minY, radius);
-    }
-
-    public double getRadius() {
-        return radius;
-    }
-
-    public BlockPos getBottomCenter() {
-        return bottomCenter;
-    }
-
-    public int getHeight() {
-        return height;
     }
 
     @Override
@@ -102,6 +96,14 @@ public class CylinderArea implements BlockArea {
         return bottomCenter.offset(0, height / 2, 0);
     }
 
+    @Override
+    public Renderer renderer() {
+        return new CylinderAreaRenderer(Vec3.atBottomCenterOf(bottomCenter),
+                height,
+                radius + .5,
+                (int) Math.clamp(radius * 3, 8, 20),
+                height + 1);
+    }
 
     private Stream<BlockPos> streamArea(BoundingBox box) {
         Vec3i min = new Vec3i(box.minX(), box.minY(), box.minZ());

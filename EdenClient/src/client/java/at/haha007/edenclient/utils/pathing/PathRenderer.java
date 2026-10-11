@@ -1,11 +1,10 @@
 package at.haha007.edenclient.utils.pathing;
 
 import at.haha007.edenclient.render.EdenColor;
+import at.haha007.edenclient.render.Line;
 import at.haha007.edenclient.utils.EdenRenderUtils;
 import at.haha007.edenclient.utils.pathing.segment.MasterPathSegment;
 import at.haha007.edenclient.utils.pathing.segment.PathSegment;
-import net.minecraft.world.phys.Vec3;
-import oshi.util.tuples.Pair;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -29,9 +28,9 @@ public class PathRenderer {
     }
 
     public void renderPath(List<PathSegment> segments) {
-        List<Pair<Vec3, Vec3>> lines = new ArrayList<>();
+        List<Line> lines = new ArrayList<>();
         for (PathSegment segment : segments) {
-            lines.add(new Pair<>(segment.from().add(0, .1, 0), segment.to().add(0, .1, 0)));
+            lines.add(new Line(segment.from().add(0, .1, 0), segment.to().add(0, .1, 0)));
             EdenRenderUtils.drawAreaOutline(
                     segment.to().add(-0.2, .1, -0.2),
                     segment.to().add(0.2, .5, 0.2),

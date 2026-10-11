@@ -9,6 +9,7 @@ import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
+import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -16,19 +17,13 @@ import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-public class CubeArea implements BlockArea {
-    private final BoundingBox box;
-
+public record CubeArea(BoundingBox box) implements BlockArea {
     public CubeArea(@NotNull BoundingBox box) {
         this.box = box;
     }
 
     public CubeArea(Vec3i min, Vec3i max) {
         this(new BoundingBox(min.getX(), min.getY(), min.getZ(), max.getX(), max.getY(), max.getZ()));
-    }
-
-    public BoundingBox getBox() {
-        return box;
     }
 
     @Override
@@ -81,6 +76,18 @@ public class CubeArea implements BlockArea {
         int centerY = (box.minY() + box.maxY()) / 2;
         int centerZ = (box.minZ() + box.maxZ()) / 2;
         return new BlockPos(centerX, centerY, centerZ);
+    }
+
+    @Override
+    public CubeAreaRenderer renderer() {
+        Vec3i steps = box().getLength();
+        steps = new Vec3i(
+                Math.clamp(steps.getX() / 5, 1, 30),
+                Math.clamp(steps.getY() / 5, 1, 30),
+                Math.clamp(steps.getZ() / 5, 1, 30)
+        );
+
+        return new CubeAreaRenderer(AABB.of(box).inflate(.002f), steps);
     }
 
     private Stream<BlockPos> streamArea(BoundingBox box) {
@@ -137,12 +144,5 @@ public class CubeArea implements BlockArea {
         });
         a = a.then(b);
         return a;
-    }
-
-    @Override
-    public String toString() {
-        return "CubeArea{" +
-                "box=" + box +
-                '}';
     }
 }

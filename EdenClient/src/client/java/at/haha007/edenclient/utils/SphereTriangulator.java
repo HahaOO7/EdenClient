@@ -1,17 +1,63 @@
 package at.haha007.edenclient.utils;
 
+import at.haha007.edenclient.render.Line;
+import at.haha007.edenclient.render.Quad;
 import net.minecraft.world.phys.Vec3;
-import oshi.util.tuples.Pair;
 
 import java.util.*;
 
 public class SphereTriangulator {
 
-    public static List<Pair<Vec3, Vec3>> triangulateSphere(
+    public static List<Quad> triangulateSphereToQuads(
             Vec3 centerPos,
             double radius,
-            int latSteps
-    ) {
+            int latSteps) {
+        int lonSteps = latSteps * 2;
+
+        Vec3[][] vertices = new Vec3[latSteps + 1][lonSteps + 1];
+
+        // Generate vertices
+        for (int i = 0; i <= latSteps; i++) {
+            double v = (double) i / latSteps;
+            double theta = Math.PI * v;
+
+            for (int j = 0; j <= lonSteps; j++) {
+                double u = (double) j / lonSteps;
+                double phi = 2.0 * Math.PI * u;
+
+                double x = radius * Math.sin(theta) * Math.cos(phi);
+                double y = radius * Math.cos(theta);
+                double z = radius * Math.sin(theta) * Math.sin(phi);
+
+                vertices[i][j] = new Vec3(
+                        centerPos.x + x,
+                        centerPos.y + y,
+                        centerPos.z + z
+                );
+            }
+        }
+
+        List<Quad> quads = new ArrayList<>();
+
+        // Build quads
+        for (int i = 0; i < latSteps; i++) {
+            for (int j = 0; j < lonSteps; j++) {
+                Vec3 v00 = vertices[i][j];
+                Vec3 v01 = vertices[i][j + 1];
+                Vec3 v10 = vertices[i + 1][j];
+                Vec3 v11 = vertices[i + 1][j + 1];
+
+                quads.add(new Quad(v00, v01, v11, v10));
+            }
+        }
+
+        return quads;
+    }
+
+    public static List<Line> triangulateSphere(
+            Vec3 centerPos,
+            double radius,
+            int latSteps) {
         int lonSteps = latSteps * 2;
 
         Vec3[][] vertices = new Vec3[latSteps + 1][lonSteps + 1];
@@ -60,9 +106,9 @@ public class SphereTriangulator {
         }
 
         // Convert to output list
-        List<Pair<Vec3, Vec3>> result = new ArrayList<>();
+        List<Line> result = new ArrayList<>();
         for (EdgeKey edge : edgeSet) {
-            result.add(new Pair<>(edge.a, edge.b));
+            result.add(new Line(edge.a, edge.b));
         }
 
         return result;

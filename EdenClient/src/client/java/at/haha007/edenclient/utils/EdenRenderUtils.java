@@ -2,12 +2,16 @@ package at.haha007.edenclient.utils;
 
 import at.haha007.edenclient.render.EdenColor;
 import at.haha007.edenclient.render.EdenRenderTypes;
+import at.haha007.edenclient.render.Line;
+import at.haha007.edenclient.render.Quad;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.logging.LogUtils;
 import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.SubmitNodeStorage;
+import net.minecraft.client.renderer.feature.CustomFeatureRenderer;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.state.level.CameraEntityRenderState;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
@@ -18,7 +22,6 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.slf4j.Logger;
-import oshi.util.tuples.Pair;
 
 import java.util.List;
 import java.util.Optional;
@@ -45,6 +48,20 @@ public final class EdenRenderUtils {
         collector = null;
     }
 
+    private static void submitOverlay(RenderType renderType, SubmitNodeCollector.CustomGeometryRenderer renderer) {
+        SubmitNodeCollector target = collector;
+        if (target == null) {
+            return;
+        }
+        PoseStack poseStack = new PoseStack();
+        if (target instanceof SubmitNodeStorage storage) {
+            storage.order(0).afterTerrain.submit(
+                    new CustomFeatureRenderer.Submit(poseStack.last().copy(), renderType, renderer));
+        } else {
+            target.submitCustomGeometry(poseStack, renderType, renderer);
+        }
+    }
+
     /**
      * Camera-entity eye position, or null if there is no camera entity.
      */
@@ -59,14 +76,13 @@ public final class EdenRenderUtils {
     }
 
     public static void drawTracers(List<Vec3> positions, EdenColor color) {
-        SubmitNodeCollector target = collector;
-        if (target == null) {
+        if (collector == null) {
             LOGGER.debug("drawTracers() called outside of a render frame");
             return;
         }
         Vec3 origin = getTracerOrigin();
         Vec3 cameraPos = camPos();
-        target.submitCustomGeometry(new PoseStack(), EdenRenderTypes.LINES_NO_DEPTH_NO_CULL, (pose, buffer) -> {
+        submitOverlay(EdenRenderTypes.LINES_NO_DEPTH_NO_CULL, (pose, buffer) -> {
             for (Vec3 pos : positions) {
                 Vec3 end = pos.subtract(cameraPos);
                 addLine(buffer, pose,
@@ -185,17 +201,16 @@ public final class EdenRenderUtils {
         drawBoxEdges(minX, minY, minZ, maxX, maxY, maxZ, color, lineWidth, lineWidthRenderType(mode));
     }
 
-    public static void drawLines(List<Pair<Vec3, Vec3>> lines, EdenColor color) {
-        SubmitNodeCollector target = collector;
-        if (target == null) {
+    public static void drawLines(List<Line> lines, EdenColor color) {
+        if (collector == null) {
             LOGGER.debug("drawLines(List<Pair<Vec3, Vec3>> lines, EdenColor color) called outside of a render frame");
             return;
         }
         Vec3 cameraPos = camPos();
-        target.submitCustomGeometry(new PoseStack(), EdenRenderTypes.LINES_NO_DEPTH_NO_CULL, (pose, buffer) -> {
-            for (Pair<Vec3, Vec3> line : lines) {
-                Vec3 start = line.getA().subtract(cameraPos);
-                Vec3 end = line.getB().subtract(cameraPos);
+        submitOverlay(EdenRenderTypes.LINES_NO_DEPTH_NO_CULL, (pose, buffer) -> {
+            for (Line line : lines) {
+                Vec3 start = line.start().subtract(cameraPos);
+                Vec3 end = line.end().subtract(cameraPos);
                 addLine(buffer, pose,
                         (float) start.x, (float) start.y, (float) start.z,
                         (float) end.x, (float) end.y, (float) end.z, color);
@@ -203,21 +218,16 @@ public final class EdenRenderUtils {
         });
     }
 
-    public static void drawLines(List<Pair<Vec3, Vec3>> lines, EdenColor color, float lineWidth) {
-        drawLines(lines, color, lineWidth, DepthTest.NO_DEPTH);
-    }
-
-    public static void drawLines(List<Pair<Vec3, Vec3>> lines, EdenColor color, float lineWidth, DepthTest mode) {
-        SubmitNodeCollector target = collector;
-        if (target == null) {
+    public static void drawLines(List<Line> lines, EdenColor color, float lineWidth, DepthTest mode) {
+        if (collector == null) {
             LOGGER.debug("public static void drawLines(List<Pair<Vec3, Vec3>> lines, EdenColor color, float lineWidth, DepthTest mode) called outside of a render frame");
             return;
         }
         Vec3 cameraPos = camPos();
-        target.submitCustomGeometry(new PoseStack(), lineWidthRenderType(mode), (pose, buffer) -> {
-            for (Pair<Vec3, Vec3> line : lines) {
-                Vec3 start = line.getA().subtract(cameraPos);
-                Vec3 end = line.getB().subtract(cameraPos);
+        submitOverlay(lineWidthRenderType(mode), (pose, buffer) -> {
+            for (Line line : lines) {
+                Vec3 start = line.start().subtract(cameraPos);
+                Vec3 end = line.end().subtract(cameraPos);
                 addLine(buffer, pose,
                         (float) start.x, (float) start.y, (float) start.z,
                         (float) end.x, (float) end.y, (float) end.z, color, lineWidth);
@@ -225,13 +235,21 @@ public final class EdenRenderUtils {
         });
     }
 
+    public static void drawFaces(List<Quad> faces, EdenColor color, DepthTest mode) {
+        if (collector == null) {
+            return;
+        }
+        Vec3 cameraPos = camPos();
+        submitOverlay(fillRenderType(mode), (pose, buffer) ->
+                writeFaceQuads(buffer, pose, faces, cameraPos, color));
+    }
+
     public static void drawAreaFill(Vec3 pos1, Vec3 pos2, EdenColor color) {
         drawAreaFill(pos1, pos2, color, DepthTest.DEPTH_TESTED);
     }
 
     public static void drawAreaFill(Vec3 pos1, Vec3 pos2, EdenColor color, DepthTest mode) {
-        SubmitNodeCollector target = collector;
-        if (target == null) {
+        if (collector == null) {
             LOGGER.debug("drawAreaFill() called outside of a render frame");
             return;
         }
@@ -244,7 +262,7 @@ public final class EdenRenderUtils {
         float maxY = (float) (Math.max(pos1.y(), pos2.y()) - cameraPos.y);
         float maxZ = (float) (Math.max(pos1.z(), pos2.z()) - cameraPos.z);
 
-        target.submitCustomGeometry(new PoseStack(), fillRenderType(mode),
+        submitOverlay(fillRenderType(mode),
                 (pose, buffer) -> writeAreaFillQuads(buffer, pose, minX, minY, minZ, maxX, maxY, maxZ, color));
     }
 
@@ -267,11 +285,10 @@ public final class EdenRenderUtils {
     private static void drawBoxEdges(float minX, float minY, float minZ,
                                      float maxX, float maxY, float maxZ,
                                      EdenColor color) {
-        SubmitNodeCollector target = collector;
-        if (target == null) {
+        if (collector == null) {
             return;
         }
-        target.submitCustomGeometry(new PoseStack(), EdenRenderTypes.LINES_NO_DEPTH_NO_CULL, (pose, buffer) ->
+        submitOverlay(EdenRenderTypes.LINES_NO_DEPTH_NO_CULL, (pose, buffer) ->
                 forEachBoxEdge(minX, minY, minZ, maxX, maxY, maxZ,
                         (x1, y1, z1, x2, y2, z2) -> addLine(buffer, pose, x1, y1, z1, x2, y2, z2, color)));
     }
@@ -279,11 +296,10 @@ public final class EdenRenderUtils {
     private static void drawBoxEdges(float minX, float minY, float minZ,
                                      float maxX, float maxY, float maxZ,
                                      EdenColor color, float lineWidth, RenderType renderType) {
-        SubmitNodeCollector target = collector;
-        if (target == null) {
+        if (collector == null) {
             return;
         }
-        target.submitCustomGeometry(new PoseStack(), renderType, (pose, buffer) ->
+        submitOverlay(renderType, (pose, buffer) ->
                 forEachBoxEdge(minX, minY, minZ, maxX, maxY, maxZ,
                         (x1, y1, z1, x2, y2, z2) -> addLine(buffer, pose, x1, y1, z1, x2, y2, z2, color, lineWidth)));
     }
@@ -383,5 +399,34 @@ public final class EdenRenderUtils {
         buffer.addVertex(pose, x1, y1, z1).setColor(color.r(), color.g(), color.b(), color.a());
         buffer.addVertex(pose, x2, y2, z2).setColor(color.r(), color.g(), color.b(), color.a());
         buffer.addVertex(pose, x3, y3, z3).setColor(color.r(), color.g(), color.b(), color.a());
+    }
+
+    private static void addQuad(VertexConsumer buffer, PoseStack.Pose pose,
+                                Quad quad,
+                                Vec3 cameraPos,
+                                EdenColor color) {
+        float x0 = (float) (quad.a().x() - cameraPos.x);
+        float y0 = (float) (quad.a().y() - cameraPos.y);
+        float z0 = (float) (quad.a().z() - cameraPos.z);
+        float x1 = (float) (quad.b().x() - cameraPos.x);
+        float y1 = (float) (quad.b().y() - cameraPos.y);
+        float z1 = (float) (quad.b().z() - cameraPos.z);
+        float x2 = (float) (quad.c().x() - cameraPos.x);
+        float y2 = (float) (quad.c().y() - cameraPos.y);
+        float z2 = (float) (quad.c().z() - cameraPos.z);
+        float x3 = (float) (quad.d().x() - cameraPos.x);
+        float y3 = (float) (quad.d().y() - cameraPos.y);
+        float z3 = (float) (quad.d().z() - cameraPos.z);
+        addQuad(buffer, pose, x0, y0, z0, x1, y1, z1, x2, y2, z2, x3, y3, z3, color);
+    }
+
+    static void writeFaceQuads(VertexConsumer buffer,
+                               PoseStack.Pose pose,
+                               List<Quad> faces,
+                               Vec3 cameraPos,
+                               EdenColor color) {
+        for (Quad face : faces) {
+            addQuad(buffer, pose, face, cameraPos, color);
+        }
     }
 }

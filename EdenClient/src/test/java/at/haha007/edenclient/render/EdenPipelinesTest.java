@@ -58,7 +58,9 @@ class EdenPipelinesTest {
     void areaFillPipelineIsDepthTestedAndWritesNoDepth() {
         DepthStencilState depth = EdenPipelines.AREA_FILL_DEPTH_TESTED.getDepthStencilState();
         assertNotNull(depth);
-        assertEquals(CompareOp.LESS_THAN, depth.depthTest());
+        // This renderer uses a reversed-Z depth buffer (larger value = closer to camera),
+        // so the "closer or equal" test is GREATER_THAN_OR_EQUAL, matching vanilla's DEFAULT.
+        assertEquals(CompareOp.GREATER_THAN_OR_EQUAL, depth.depthTest());
         assertFalse(depth.writeDepth());
         assertFalse(EdenPipelines.AREA_FILL_DEPTH_TESTED.isCull());
     }
@@ -88,10 +90,10 @@ class EdenPipelinesTest {
     }
 
     @Test
-    void widthLineDepthTestedPipelineUsesLessDepth() {
+    void widthLineDepthTestedPipelineUsesReversedZDepthTest() {
         DepthStencilState depth = EdenPipelines.LINES_WIDTH_DEPTH_TESTED.getDepthStencilState();
         assertNotNull(depth);
-        assertEquals(CompareOp.LESS_THAN, depth.depthTest());
+        assertEquals(CompareOp.GREATER_THAN_OR_EQUAL, depth.depthTest());
         assertFalse(depth.writeDepth());
         assertEquals(DefaultVertexFormat.POSITION_COLOR_NORMAL_LINE_WIDTH,
                 EdenPipelines.LINES_WIDTH_DEPTH_TESTED.getVertexFormatBinding(0));

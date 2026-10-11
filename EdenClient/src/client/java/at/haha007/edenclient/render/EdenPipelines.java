@@ -10,9 +10,6 @@ import com.mojang.renderpearl.api.pipeline.RenderPipeline;
 import net.minecraft.client.renderer.BindGroupLayouts;
 import net.minecraft.resources.Identifier;
 
-/**
- * EdenClient-owned render pipelines.
- */
 public final class EdenPipelines {
     private EdenPipelines() {
     }
@@ -40,7 +37,7 @@ public final class EdenPipelines {
 
     /** Translucent, depth-tested quads filling a box area (occluded by terrain). */
     public static final RenderPipeline AREA_FILL_DEPTH_TESTED =
-            buildFill(CompareOp.LESS_THAN, "pipeline/fill/depth_tested");
+            buildFill(CompareOp.GREATER_THAN_OR_EQUAL, "pipeline/fill/depth_tested");
 
     /** Translucent quads filling a box area drawn through terrain (depth test always passes). */
     public static final RenderPipeline AREA_FILL_NO_DEPTH_NO_CULL =
@@ -52,7 +49,7 @@ public final class EdenPipelines {
 
     /** Width-capable lines occluded by terrain. */
     public static final RenderPipeline LINES_WIDTH_DEPTH_TESTED =
-            buildWidthLines(CompareOp.LESS_THAN, "pipeline/lines/width/depth_tested");
+            buildWidthLines(CompareOp.GREATER_THAN_OR_EQUAL, "pipeline/lines/width/depth_tested");
 
     private static RenderPipeline buildFill(CompareOp depthCompare, String location) {
         return RenderPipeline.builder()
