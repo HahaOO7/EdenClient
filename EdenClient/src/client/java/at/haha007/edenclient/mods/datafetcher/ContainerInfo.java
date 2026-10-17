@@ -199,6 +199,7 @@ public class ContainerInfo {
         }
 
         Optional<BlockPos> closest = BlockPos.betweenClosedStream(minBlockPos, maxBlockPos)
+                .map(BlockPos::immutable)
                 .filter(p -> Vec3.atCenterOf(p).subtract(playerEyePosition).lengthSqr() < range * range)
                 .filter(p -> world.getBlockEntity(p) != null)
                 .filter(p -> world.getBlockEntity(p) instanceof BaseContainerBlockEntity)
