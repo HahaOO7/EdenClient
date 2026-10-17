@@ -3,12 +3,14 @@ package at.haha007.edenclient.mods;
 import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.annotations.Mod;
 import at.haha007.edenclient.callbacks.ContainerCloseCallback;
+import at.haha007.edenclient.callbacks.GameRenderCallback;
 import at.haha007.edenclient.callbacks.PlayerBreakBlockCallback;
 import at.haha007.edenclient.callbacks.PlayerTickCallback;
 import at.haha007.edenclient.callbacks.UpdateLevelChunkCallback;
 import at.haha007.edenclient.command.CommandManager;
 import at.haha007.edenclient.mods.datafetcher.ContainerInfo;
 import at.haha007.edenclient.mods.datafetcher.DataFetcher;
+import at.haha007.edenclient.utils.EdenRenderUtils;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.config.ConfigSubscriber;
 import at.haha007.edenclient.utils.config.PerWorldConfig;
@@ -18,8 +20,6 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import dev.xpple.clientarguments.arguments.CBlockPosArgument;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
-import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext;
-import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.JoinConfiguration;
 import net.kyori.adventure.text.TranslatableComponent;
@@ -65,12 +65,16 @@ public class ContainerDisplay {
         UpdateLevelChunkCallback.EVENT.register(_ -> updateLater(), getClass());
         PlayerBreakBlockCallback.EVENT.register((_, _, _) -> updateLater(), getClass());
         PerWorldConfig.get().register(this, "ContainerDisplay");
-        LevelRenderEvents.COLLECT_SUBMITS.register(this::render);
+        GameRenderCallback.EVENT.register(this::render, getClass());
         registerCommand();
     }
 
-    private void render(LevelRenderContext context) {
+    private void render(float partialTick) {
         Minecraft mc = Minecraft.getInstance();
+        SubmitNodeCollector collector = EdenRenderUtils.getCollector();
+        if (collector == null) {
+            return;
+        }
         PoseStack poseStack = new PoseStack();
         poseStack.pushPose();
         Vec3 cam = mc.gameRenderer.mainCamera().position();
@@ -107,7 +111,7 @@ public class ContainerDisplay {
             int loopCount = Math.min(items.size(), 9);
 
             if (loopCount > 1) {
-                render3x3(context, items, direction, poseStack, offset, rotation, mc);
+                render3x3(collector, items, direction, poseStack, offset, rotation, mc);
             } else if (loopCount == 1) {
                 poseStack.pushPose();
                 poseStack.translate(offset);
@@ -122,7 +126,6 @@ public class ContainerDisplay {
                         mc.player,
                         255
                 );
-                SubmitNodeCollector collector = context.submitNodeCollector();
 
                 state.submit(
                         poseStack,
@@ -142,7 +145,7 @@ public class ContainerDisplay {
         poseStack.popPose();
     }
 
-    private static void render3x3(LevelRenderContext context,
+    private static void render3x3(SubmitNodeCollector collector,
                                   List<Item> items,
                                   Direction direction,
                                   PoseStack poseStack,
@@ -197,7 +200,6 @@ public class ContainerDisplay {
                     mc.player,
                     255
             );
-            SubmitNodeCollector collector = context.submitNodeCollector();
             state.submit(
                     poseStack,
                     collector,
