@@ -8,6 +8,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractSignEditScreen;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.Util;
 import net.minecraft.world.level.block.entity.SignBlockEntity;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
@@ -38,11 +39,14 @@ public abstract class AbstractSignEditScreenMixin extends Screen {
     private int line;
 
     @Shadow
-    protected abstract void setMessage(String string);
+    protected abstract void setMessage(String newMessage);
 
     @Shadow
     @Final
     protected SignBlockEntity sign;
+
+    @Shadow
+    private long cursorBlinkStartTime;
 
     protected AbstractSignEditScreenMixin(Component component) {
         super(component);
@@ -50,9 +54,12 @@ public abstract class AbstractSignEditScreenMixin extends Screen {
 
     @Inject(at = @At("HEAD"), method = "init", cancellable = true)
     private void onKeyPressed(CallbackInfo ci) {
+        minecraft.textInputManager().startTextInput(this);
+        cursorBlinkStartTime = Util.getMillis();
         addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, _ -> this.onDone()).bounds(this.width / 2 - 100, this.height / 4 + 144, 200, 20).build());
         this.signField = new TextFieldHelper(() -> this.messages[this.line],
-                this::setMessage, TextFieldHelper.createClipboardGetter(Minecraft.getInstance()),
+                this::setMessage,
+                TextFieldHelper.createClipboardGetter(Minecraft.getInstance()),
                 TextFieldHelper.createClipboardSetter(Minecraft.getInstance()),
                 string -> {
                     int textWidth = this.minecraft.font.width(string);
