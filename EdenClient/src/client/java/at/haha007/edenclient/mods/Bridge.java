@@ -61,7 +61,7 @@ public class Bridge {
         if (level == null) {
             return;
         }
-        if (!defaultState.isCollisionShapeFullBlock(level, player.blockPosition())) {
+        if (defaultState.getCollisionShape(level, player.blockPosition()).isEmpty()) {
             return;
         }
 
@@ -88,11 +88,16 @@ public class Bridge {
         if (level == null) {
             return Stream.of();
         }
-        BlockPos center = player.blockPosition().below();
+        BlockPos center = player.blockPosition().atY((int) (player.position().y - 0.01));
+        if (center.getY() < 0){
+            center = center.below();
+        }
+        BlockPos finalCenter = center;
         Stream<BlockPos> stream = BlockPos.betweenClosedStream(center.offset(-range, -1, -range), center.offset(range, 1, range));
-        stream = stream.filter(p -> p.getY() == center.getY());
+        stream = stream.map(BlockPos::immutable);
+        stream = stream.filter(p -> p.getY() == finalCenter.getY());
         stream = stream.filter(p -> level.getBlockState(p).isAir() || level.getBlockState(p).canBeReplaced());
-        stream = stream.sorted(Comparator.comparingInt(p -> p.distManhattan(center)));
+        stream = stream.sorted(Comparator.comparingInt(p -> p.distManhattan(finalCenter)));
         return stream;
     }
 
