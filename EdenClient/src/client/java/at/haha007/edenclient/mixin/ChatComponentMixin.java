@@ -1,7 +1,7 @@
 package at.haha007.edenclient.mixin;
 
 import at.haha007.edenclient.EdenClient;
-import at.haha007.edenclient.mixinterface.ChatComponentAccessor;
+import at.haha007.edenclient.mixinterface.IChatComponent;
 import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.client.multiplayer.chat.GuiMessage;
 import net.minecraft.client.multiplayer.chat.GuiMessageTag;
@@ -18,7 +18,7 @@ import java.util.List;
 
 
 @Mixin(ChatComponent.class)
-public abstract class ChatComponentMixin implements ChatComponentAccessor {
+public abstract class ChatComponentMixin implements IChatComponent {
 
     @Final
     @Shadow

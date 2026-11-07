@@ -5,7 +5,7 @@ import at.haha007.edenclient.callbacks.AddChatMessageCallback;
 import at.haha007.edenclient.callbacks.AddChatMessageCallback.ChatAddEvent;
 import at.haha007.edenclient.callbacks.Event;
 import at.haha007.edenclient.callbacks.GameRenderCallback;
-import at.haha007.edenclient.mixinterface.ChatComponentAccessor;
+import at.haha007.edenclient.mixinterface.IChatComponent;
 import at.haha007.edenclient.utils.EdenRenderUtils;
 import at.haha007.edenclient.utils.ModInitializer;
 import at.haha007.edenclient.utils.PlayerUtils;
@@ -51,7 +51,7 @@ public class EdenClient implements ClientModInitializer {
 
             Component component = chatMessagesToHandle.poll();
             if (component == null) return;
-            ChatComponentAccessor chat = (ChatComponentAccessor) Minecraft.getInstance().gui.hud.getChat();
+            IChatComponent chat = (IChatComponent) Minecraft.getInstance().gui.hud.getChat();
             LocalPlayer player = PlayerUtils.getPlayer();
             ChatAddEvent event = new ChatAddEvent(player, component, chat.edenClient$getTrimmedMessages());
             AddChatMessageCallback.EVENT.invoker().onChatAdd(event);

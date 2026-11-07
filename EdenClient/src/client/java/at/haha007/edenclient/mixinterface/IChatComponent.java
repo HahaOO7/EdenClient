@@ -4,6 +4,6 @@ import net.minecraft.client.multiplayer.chat.GuiMessage;
 
 import java.util.List;
 
-public interface ChatComponentAccessor {
+public interface IChatComponent {
     List<GuiMessage.Line> edenClient$getTrimmedMessages();
 }

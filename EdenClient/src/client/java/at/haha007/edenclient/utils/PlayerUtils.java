@@ -1,7 +1,7 @@
 package at.haha007.edenclient.utils;
 
 import at.haha007.edenclient.callbacks.JoinWorldCallback;
-import at.haha007.edenclient.mixinterface.HandledScreenAccessor;
+import at.haha007.edenclient.mixinterface.IAbstractContainerScreen;
 import at.haha007.edenclient.utils.tasks.SyncTask;
 import at.haha007.edenclient.utils.tasks.TaskManager;
 import com.google.gson.Gson;
@@ -254,7 +254,7 @@ public class PlayerUtils {
         if (!(screen instanceof ContainerScreen gcs)) {
             return;
         }
-        ((HandledScreenAccessor) screen).edenClient$clickMouse(gcs.getMenu().slots.get(slotId), slotId, 0, ContainerInput.PICKUP_ALL);
+        ((IAbstractContainerScreen) screen).edenClient$clickMouse(gcs.getMenu().slots.get(slotId), slotId, 0, ContainerInput.PICKUP_ALL);
     }
 
     public static Vec3 getClientLookVec(float partialTick) {

@@ -3,6 +3,7 @@ package at.haha007.edenclient.mixin;
 import at.haha007.edenclient.callbacks.PlayerAttackBlockCallback;
 import at.haha007.edenclient.callbacks.PlayerBreakBlockCallback;
 import at.haha007.edenclient.callbacks.PlayerInteractBlockCallback;
+import at.haha007.edenclient.mixinterface.IMultiPlayerGameMode;
 import at.haha007.edenclient.utils.PlayerUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
@@ -13,12 +14,16 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.phys.BlockHitResult;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(MultiPlayerGameMode.class)
-public class PlayerControllerMixin {
+public class MultiPlayerGameModeMixin implements IMultiPlayerGameMode {
+
+    @Shadow
+    private int destroyDelay;
 
     @Inject(at = @At("HEAD"),
             method = "useItemOn",
@@ -50,4 +55,8 @@ public class PlayerControllerMixin {
         if (result == InteractionResult.FAIL) cir.setReturnValue(false);
     }
 
+    @Override
+    public void edenClient$setBreakDelay(int delay) {
+        destroyDelay = delay;
+    }
 }

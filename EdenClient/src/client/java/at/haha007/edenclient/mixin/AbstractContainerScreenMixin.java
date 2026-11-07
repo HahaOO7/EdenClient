@@ -2,10 +2,11 @@ package at.haha007.edenclient.mixin;
 
 import at.haha007.edenclient.callbacks.ContainerCloseCallback;
 import at.haha007.edenclient.callbacks.InventoryKeyCallback;
-import at.haha007.edenclient.mixinterface.HoveredSlotAccessor;
+import at.haha007.edenclient.mixinterface.IAbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import org.jspecify.annotations.Nullable;
@@ -20,7 +21,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import java.util.List;
 
 @Mixin(AbstractContainerScreen.class)
-public class AbstractContainerScreenMixin<T extends AbstractContainerMenu> implements HoveredSlotAccessor {
+public abstract class AbstractContainerScreenMixin<T extends AbstractContainerMenu> implements IAbstractContainerScreen {
     @Shadow
     @Final
     protected T menu;
@@ -28,6 +29,9 @@ public class AbstractContainerScreenMixin<T extends AbstractContainerMenu> imple
     @Shadow
     @Nullable
     protected Slot hoveredSlot;
+
+    @Shadow
+    protected abstract void slotClicked(Slot slot, int slotId, int buttonNum, ContainerInput containerInput);
 
     @Inject(method = "onClose", at = @At("HEAD"))
     void onOnClose(CallbackInfo ci) {
@@ -44,5 +48,10 @@ public class AbstractContainerScreenMixin<T extends AbstractContainerMenu> imple
     @Override
     public Slot edenClient$getHoveredSlot() {
         return this.hoveredSlot;
+    }
+
+    @Override
+    public void edenClient$clickMouse(Slot slot, int slotId, int button, ContainerInput actionType) {
+        slotClicked(slot, slotId, button, actionType);
     }
 }

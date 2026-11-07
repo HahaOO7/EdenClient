@@ -4,7 +4,7 @@ import at.haha007.edenclient.EdenClient;
 import at.haha007.edenclient.annotations.Mod;
 import at.haha007.edenclient.callbacks.InventoryKeyCallback;
 import at.haha007.edenclient.command.CommandManager;
-import at.haha007.edenclient.mixinterface.HoveredSlotAccessor;
+import at.haha007.edenclient.mixinterface.IAbstractContainerScreen;
 import at.haha007.edenclient.utils.NbtFormatter;
 import at.haha007.edenclient.utils.PlayerUtils;
 import at.haha007.edenclient.utils.Scheduler;
@@ -74,7 +74,7 @@ public class NbtInfo {
         if (event.key() != key) {
             return false;
         }
-        Slot slot = ((HoveredSlotAccessor) screen).edenClient$getHoveredSlot();
+        Slot slot = ((IAbstractContainerScreen) screen).edenClient$getHoveredSlot();
         if (slot == null) {
             return false;
         }
